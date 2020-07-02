@@ -116,12 +116,38 @@ if ! shopt -oq posix; then
   fi
 fi
 
-#Custom aliases
-alias home='ssh pashb@10.111.104.229'
-alias lab='ssh -p 922 pashbyl@linux.cs.wwu.edu'
-alias panoply='cd ~/Desktop/PanoplyJ/;./panoply.sh'
-alias cluster='ssh -p 922 pashbyl@csci-head.cluster.cs.wwu.edu'
-alias vpn='protonvpn c -f'
+#Get git branch
+parse_git_branch() {
+     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+}
 
 #Change bash prompt
-export PS1="\[\033[38;5;46m\]\W\[$(tput sgr0)\]\[\033[38;5;15m\][\[$(tput sgr0)\]\[\033[38;5;11m\]\j\[$(tput sgr0)\]\[\033[38;5;15m\]]\[$(tput sgr0)\]\[\033[38;5;9m\]\\$\[$(tput sgr0)\]"
+export PS1="\[\e[38;5;50m\]\W\[\e[38;5;104m\]|\[\e[38;5;201m\]\$(parse_git_branch)\[\e[38;5;50m\]\\$\[\e[38;5;231m\]"
+
+#If ssh-add has previously been run, no key reauthorization
+source ~/.ssh/ssh-find-agent/ssh-find-agent.sh
+set_ssh_agent_socket
+
+#ssh agent on startup
+SSH_ENV="$HOME/.ssh/environment"
+
+function start_agent {
+    echo "Initialising new SSH agent..."
+    /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
+    echo succeeded
+    chmod 600 "${SSH_ENV}"
+    . "${SSH_ENV}" > /dev/null
+    /usr/bin/ssh-add;
+}
+
+# Source SSH settings, if applicable
+
+if [ -f "${SSH_ENV}" ]; then
+    . "${SSH_ENV}" > /dev/null
+    #ps ${SSH_AGENT_PID} doesn't work under cywgin
+    ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
+        start_agent;
+    }
+else
+    start_agent;
+fi
