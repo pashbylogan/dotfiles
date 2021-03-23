@@ -30,3 +30,4 @@ set nowritebackup
 set noswapfile
 
 " Plugin Config
+set laststatus=2
