@@ -14,6 +14,7 @@ colors simple-dark
 " Spellchecking
 set spell spelllang=en_us
 nnoremap <leader>s :set spell!
+inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
 
 " 4 spaces for tabs
 set tabstop=4
