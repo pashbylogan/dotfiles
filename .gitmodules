@@ -16,3 +16,9 @@
 [submodule ".vim/pack/syntax/start/ale"]
 	path = .vim/pack/syntax/start/ale
 	url = git@github.com:dense-analysis/ale.git
+[submodule ".vim/pack/plugins/start/lightline"]
+	path = .vim/pack/plugins/start/lightline
+	url = git@github.com:itchyny/lightline.vim.git
+[submodule ".vim/pack/syntax/start/YouCompleteMe"]
+	path = .vim/pack/syntax/start/YouCompleteMe
+	url = git@github.com:ycm-core/YouCompleteMe.git
