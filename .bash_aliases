@@ -9,6 +9,7 @@ alias k2='echo 0 | sudo tee /sys/module/hid_apple/parameters/fnmode'
 alias ve='source ~/.venv/bin/activate'
 alias server='java -Xmx8G -Xms1G -jar server.jar nogui'
 alias sql='ssh -N -p922 -L4321:mysql.cs.wwu.edu:3306 pashbyl@proxy.cs.wwu.edu'
+alias dotf='cd ~/projects/dotfiles'
 copyTo(){
     scp -r -P 922 "$1" pashbyl@linux.cs.wwu.edu:"$2";
 }
