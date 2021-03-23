@@ -1,0 +1,18 @@
+[submodule ".vim/pack/plugins/start/fzf"]
+	path = .vim/pack/plugins/start/fzf
+	url = git@github.com:junegunn/fzf.vim.git
+[submodule ".vim/pack/colors/start/lightline"]
+	path = .vim/pack/colors/start/lightline
+	url = git@github.com:itchyny/lightline.vim.git
+[submodule ".vim/pack/plugins/start/nerdtree"]
+	path = .vim/pack/plugins/start/nerdtree
+	url = https://github.com/scrooloose/nerdtree
+[submodule ".vim/pack/plugins/start/nerdtree-git-plugin"]
+	path = .vim/pack/plugins/start/nerdtree-git-plugin
+	url = https://github.com/Xuyuanp/nerdtree-git-plugin
+[submodule ".vim/pack/plugins/start/indentLine"]
+	path = .vim/pack/plugins/start/indentLine
+	url = git@github.com:Yggdroot/indentLine.git
+[submodule ".vim/pack/syntax/start/ale"]
+	path = .vim/pack/syntax/start/ale
+	url = git@github.com:dense-analysis/ale.git
