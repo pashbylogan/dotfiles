@@ -22,3 +22,12 @@
 [submodule ".vim/pack/syntax/start/YouCompleteMe"]
 	path = .vim/pack/syntax/start/YouCompleteMe
 	url = git@github.com:ycm-core/YouCompleteMe.git
+[submodule ".vim/pack/colors/start/molokai"]
+	path = .vim/pack/colors/start/molokai
+	url = git@github.com:tomasr/molokai.git
+[submodule ".vim/pack/colors/start/gruvbox"]
+	path = .vim/pack/colors/start/gruvbox
+	url = git@github.com:morhetz/gruvbox.git
+[submodule ".vim/pack/syntax/opt/vim-flake8"]
+	path = .vim/pack/syntax/opt/vim-flake8
+	url = git@github.com:nvie/vim-flake8.git
