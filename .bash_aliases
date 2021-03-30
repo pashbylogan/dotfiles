@@ -8,8 +8,20 @@ alias sudo='sudo '
 alias k2='echo 0 | sudo tee /sys/module/hid_apple/parameters/fnmode'
 alias ve='source ~/.venv/bin/activate'
 alias server='java -Xmx8G -Xms1G -jar server.jar nogui'
-alias sql='ssh -N -p922 -L4321:mysql.cs.wwu.edu:3306 pashbyl@proxy.cs.wwu.edu'
 alias dotf='cd ~/projects/dotfiles'
+alias createVenv='python3 -m venv .venv'
+# Attaches tmux to the last session; creates a new session if none exists.
+alias t='tmux attach || tmux new-session'
+
+# Attaches tmux to a session (example: ta portal)
+alias ta='tmux attach -t'
+
+# Creates a new session
+alias tn='tmux new-session'
+
+# Lists all ongoing sessions
+alias tl='tmux list-sessions'
+
 copyTo(){
     scp -r -P 922 "$1" pashbyl@linux.cs.wwu.edu:"$2";
 }

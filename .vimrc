@@ -31,26 +31,27 @@ set expandtab
 set autoindent
 
 " PEP 8 formatting for python
-au BufNewFile,BufRead *.py
-    \ set tabstop=4
-    \ set softtabstop=4
-    \ set shiftwidth=4
-    \ set textwidth=79
-    \ set expandtab
-    \ set autoindent
+au BufNewFile, BufRead *.py
+    \ set tabstop=4 |
+    \ set softtabstop=4 |
+    \ set shiftwidth=4 |
+    \ set textwidth=79 |
+    \ set expandtab |
+    \ set autoindent |
     \ set fileformat=unix
+
 set foldmethod=indent
 set foldlevel=99
 let python_highlight_all=1
 
 " Formatting for others
-au BufNewFile,BufRead *.js, *.html, *.css
-    \ set tabstop=2
-    \ set softtabstop=2
+au BufNewFile, BufRead *.js, *.html, *.css
+    \ set tabstop=2 |
+    \ set softtabstop=2 |
     \ set shiftwidth=2
 
 " Flag whitespace
-au BufRead,BufNewFile *.py,*.pyw,*.c,*.h match BadWhitespace /\s\+$/
+" au BufRead,BufNewFile *.py,*.pyw,*.c,*.h match BadWhitespace /\s\+$/
 
 "split navigations
 nnoremap <C-J> <C-W><C-J>
@@ -75,7 +76,3 @@ set laststatus=2
 
 " Autocomplete window leaves
 let g:ycm_autoclose_preview_window_after_completion=1
-
-" TO be installed
-" syntastic, vim-flake-8
-
