@@ -125,3 +125,5 @@ parse_git_branch() {
 export PS1="\[\e[38;5;50m\]\W\[\e[38;5;104m\]|\[\e[38;5;201m\]\$(parse_git_branch)\[\e[38;5;50m\]\\$\[\e[38;5;231m\]"
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+
+source "$HOME/.vim/pack/colors/start/gruvbox/gruvbox_256palette.sh"

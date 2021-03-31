@@ -10,7 +10,7 @@ set rtp+=~/.fzf
 
 " Colorscheme
 set bg=dark
-let g:gruvbox_italic=1
+" let g:gruvbox_italic=1
 colors gruvbox 
 
 " Spellchecking
