@@ -31,3 +31,6 @@
 [submodule ".vim/pack/syntax/opt/vim-flake8"]
 	path = .vim/pack/syntax/opt/vim-flake8
 	url = git@github.com:nvie/vim-flake8.git
+[submodule ".tmux"]
+	path = .tmux
+	url = git@github.com:gpakosz/.tmux.git
