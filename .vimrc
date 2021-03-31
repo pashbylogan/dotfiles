@@ -42,6 +42,10 @@ au BufNewFile, BufRead *.py
 
 set foldmethod=indent
 set foldlevel=99
+
+" Enable folding with the spacebar
+nnoremap <space> za
+
 let python_highlight_all=1
 
 " Formatting for others
@@ -73,6 +77,11 @@ set noswapfile
 
 " Plugin Config
 set laststatus=2
+" NERD Tree
+nnoremap <leader>n :NERDTreeFocus<CR>
+nnoremap <C-n> :NERDTree<CR>
+nnoremap <C-t> :NERDTreeToggle<CR>
+nnoremap <C-f> :NERDTreeFind<CR>
 
 " Autocomplete window leaves
 let g:ycm_autoclose_preview_window_after_completion=1
