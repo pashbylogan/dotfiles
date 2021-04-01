@@ -23,9 +23,11 @@ Plug 'itchyny/lightline.vim'
     set laststatus=2
 
 Plug 'sirver/ultisnips'
-    let g:UltiSnipsExpandTrigger = '<tab>'
-    let g:UltiSnipsJumpForwardTrigger = '<tab>'
+    let g:UltiSnipsExpandTrigger = '<m>'
+    let g:UltiSnipsJumpForwardTrigger = '<m>'
     let g:UltiSnipsJumpBackwardTrigger = '<s-tab>'
+
+Plug 'honza/vim-snippets'
 
 Plug 'lervag/vimtex'
     let g:tex_flavor='latex'
@@ -45,9 +47,8 @@ Plug 'preservim/nerdtree' |
 Plug 'dense-analysis/ale'
     let python_highlight_all=1
 
-" Plug 'zxqfl/tabnine-vim'
+Plug 'zxqfl/tabnine-vim'
 " Plug 'mhartington/oceanic-next'
-" Plug vim-syntastic/syntastic'
 " Plug vim-syntastic/syntastic'
 
 " List ends here. Plugins become visible to Vim after this call.
@@ -63,7 +64,7 @@ call plug#end()
 " Syntax highlighting
 syntax on
 filetype on            " enables filetype detection
-filetype plugin on     " enables filetype specific plugins
+filetype plugin indent on     " enables filetype specific plugins
 set hlsearch
 set ignorecase
 set incsearch
