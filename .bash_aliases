@@ -1,7 +1,6 @@
 #Custom aliases
 alias home='ssh pashb@4musicians.ddns.net'
 alias gimli='ssh pashbyl@192.168.1.200'
-alias panoply='cd ~/Desktop/PanoplyJ/;./panoply.sh'
 alias cluster='ssh -p 922 pashbyl@csci-head.cluster.cs.wwu.edu'
 alias vpn='sudo protonvpn c -f'
 alias sudo='sudo '
@@ -10,6 +9,7 @@ alias ve='source ~/.venv/bin/activate'
 alias server='java -Xmx8G -Xms1G -jar server.jar nogui'
 alias dotf='cd ~/projects/dotfiles'
 alias createVenv='python3 -m venv .venv'
+alias note='cd ~/projects/notes/bachelor-3/quarter-3/'
 # Attaches tmux to the last session; creates a new session if none exists.
 alias t='tmux attach || tmux new-session'
 

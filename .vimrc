@@ -23,8 +23,8 @@ Plug 'itchyny/lightline.vim'
     set laststatus=2
 
 Plug 'sirver/ultisnips'
-    let g:UltiSnipsExpandTrigger = '<m>'
-    let g:UltiSnipsJumpForwardTrigger = '<m>'
+    let g:UltiSnipsExpandTrigger = ';'
+    let g:UltiSnipsJumpForwardTrigger = ';'
     let g:UltiSnipsJumpBackwardTrigger = '<s-tab>'
 
 Plug 'honza/vim-snippets'
