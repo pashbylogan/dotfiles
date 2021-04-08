@@ -38,3 +38,6 @@ function jptt(){
     # Forwards port $1 into port $2 and listens to it
     ssh -p 922 -N -f -L localhost:$2:localhost:$1 pashbyl@cf408-hut-10.cs.wwu.edu
 }
+listOpenPorts(){
+    sudo netstat -lpn |grep :$1
+}
