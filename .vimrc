@@ -113,6 +113,9 @@ au BufNewFile, BufRead *.js, *.html, *.css
 " Show linenumbers
 set number
 
+" Set vim to autoupdate
+set autoread
+
 " Command Line Autocomplete
 set wildmenu
 set wildmode=longest,list,full
