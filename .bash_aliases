@@ -23,7 +23,7 @@ alias tn='tmux new-session'
 alias tl='tmux list-sessions'
 
 copyTo(){
-    scp -r -P 922 "$1" pashbyl@cf408-hut-02.cs.wwu.edu:"$2";
+    scp -r -P 922 "$1" pashbyl@linux.cs.wwu.edu:"$2";
 }
 copyFrom(){
     scp -r -P 922 pashbyl@linux.cs.wwu.edu:"$1" "$2";
@@ -43,7 +43,7 @@ hour(){
 
 function jptt(){
     # Forwards port $1 into port $2 and listens to it
-    ssh -p 922 -N -f -L localhost:$2:localhost:$1 pashbyl@cf408-hut-02.cs.wwu.edu
+    ssh -p 922 -N -f -L localhost:$2:localhost:$1 pashbyl@cf408-hut-12.cs.wwu.edu
 }
 listOpenPorts(){
     sudo netstat -lpn |grep :$1
