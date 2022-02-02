@@ -51,7 +51,7 @@ sudo apt-get install zsh -y
 sh -c "$(wget https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
 chsh -s $(which zsh)
 
-echo 'Cloning your .zshrc from gist'
+echo 'Copying dotfiles .zshrc to home'
 cp $PATH+.zshrc ~
 cp -r $PATH+.oh-my-zsh ~
 
@@ -102,7 +102,7 @@ heroku --version
 echo 'Installing Neovim'
 sudo apt install neovim
 mkdir ~/.config
-cp -r $PATH+.config ~/.config
+cp -r $PATH+nvim ~/.config
 
 echo 'Installing Tmux'
 sudo apt install tmux
