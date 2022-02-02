@@ -5,15 +5,20 @@
 "|_|   |_|\__,_|\__, |_|_| |_|___/
                "|___/
 
-" Automatically install vim-plug if not available
-let data_dir = has('nvim') ? stdpath('data') . '/site' : '~/.vim'
-if empty(glob(data_dir . '/autoload/plug.vim'))
-  silent execute '!curl -fLo '.data_dir.'/autoload/plug.vim --create-dirs  https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
-  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+" Install vim-plug if not found
+if empty(glob('~/.config/nvim/autoload/plug.vim'))
+  silent !curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs
+    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 endif
 
+" Run PlugInstall if there are missing plugins
+autocmd VimEnter * if len(filter(values(g:plugs), '!isdirectory(v:val.dir)'))
+  \| PlugInstall --sync | source $MYVIMRC
+\| endif
+
 " Plugins will be downloaded under the specified directory.
-call plug#begin('~/.vim/plugged')
+call plug#begin('~/.config/nvim/plugged') 
+Plug 'neovim/nvim-lspconfig'
 
 " Declare the list of plugins.
 Plug 'morhetz/gruvbox'
@@ -21,18 +26,6 @@ Plug 'morhetz/gruvbox'
 
 Plug 'itchyny/lightline.vim'
     set laststatus=2
-
-Plug 'sirver/ultisnips'
-    let g:UltiSnipsExpandTrigger = ';'
-    let g:UltiSnipsJumpForwardTrigger = ';'
-    let g:UltiSnipsJumpBackwardTrigger = '<s-tab>'
-
-Plug 'honza/vim-snippets'
-
-Plug 'lervag/vimtex'
-    let g:tex_flavor='latex'
-    let g:vimtex_view_method='zathura'
-    let g:vimtex_quickfix_mode=0
 
 Plug 'ctrlpvim/ctrlp.vim'
     let g:ctrlp_map = '<c-p>'
@@ -44,15 +37,34 @@ Plug 'Yggdroot/indentLine'
 Plug 'preservim/nerdtree' |
             \ Plug 'Xuyuanp/nerdtree-git-plugin'
 
-Plug 'dense-analysis/ale'
-    let python_highlight_all=1
+" Plug 'mattn/emmet-vim'
+" Plug 'yuezk/vim-js'
+" Plug 'HerringtonDarkholme/yats.vim'
+" Plug 'maxmellon/vim-jsx-pretty'
+" Plug 'tpope/vim-commentary'
 
-Plug 'zxqfl/tabnine-vim'
-" Plug 'mhartington/oceanic-next'
-" Plug vim-syntastic/syntastic'
+" Telescope requires plenary to function
+Plug 'nvim-lua/plenary.nvim'
+" The main Telescope plugin
+Plug 'nvim-telescope/telescope.nvim'
+" An optional plugin recommended by Telescope docs
+Plug 'nvim-telescope/telescope-fzf-native.nvim', {'do': 'make' }
+
+" Autocompletion
+Plug 'hrsh7th/nvim-cmp'
+Plug 'hrsh7th/cmp-nvim-lsp'
+Plug 'L3MON4D3/LuaSnip'
+Plug 'saadparwaiz1/cmp_luasnip'
+Plug 'onsails/lspkind-nvim'
+
+" Treesitter
+Plug 'nvim-treesitter/nvim-treesitter', { 'do': ':TSUpdate' }
 
 " List ends here. Plugins become visible to Vim after this call.
 call plug#end()
+
+" Neovim Plugin Configs
+lua require('plugin_configs')
 
 
 "  ____            __
@@ -68,10 +80,13 @@ filetype plugin indent on     " enables filetype specific plugins
 set hlsearch
 set ignorecase
 set incsearch
+set cursorline
+set noshowmode " Don't need to show because lightline does
 
 " Colorscheme
-colors gruvbox 
+colors gruvbox
 set bg=dark
+highlight Comment cterm=italic gui=italic
 
 " fzf Fuzzy finder
 set rtp+=~/.fzf
@@ -85,30 +100,11 @@ hi SpellBad ctermfg=red
 " UTF
 set encoding=utf-8
 
-" 4 spaces for tabs
-set tabstop=4
-set shiftwidth=4
-set expandtab
+set backspace=2 softtabstop=2 shiftwidth=2 expandtab
 set autoindent
-
-" PEP 8 formatting for python
-au BufNewFile, BufRead *.py
-    \ set tabstop=4 |
-    \ set softtabstop=4 |
-    \ set shiftwidth=4 |
-    \ set textwidth=79 |
-    \ set expandtab |
-    \ set autoindent |
-    \ set fileformat=unix
 
 set foldmethod=indent
 set foldlevel=99
-
-" Formatting for others
-au BufNewFile, BufRead *.js, *.html, *.css
-    \ set tabstop=2 |
-    \ set softtabstop=2 |
-    \ set shiftwidth=2
 
 " Show linenumbers
 set number
