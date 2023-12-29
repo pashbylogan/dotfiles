@@ -1,9 +1,12 @@
 #!/usr/bin/env zsh
+
+DOTFILES = "." # "." if running this script from the dotfiles folder
+
 pushd $DOTFILES
 for folder in $(echo $STOW_FOLDERS | sed "s/,/ /g")
 do
     echo "stow $folder"
-    stow -D $folder
-    stow $folder
+    stow -t $HOME -D $folder
+    stow -t $HOME $folder
 done
 popd

@@ -1,0 +1,28 @@
+# ALIASES
+
+alias createVenv='python3 -m venv .venv && source .venv/bin/activate && pip install --upgrade pip setuptools'
+alias de='conda deactivate'
+# Attaches tmux to the last session; creates a new session if none exists.
+alias t='tmux attach || tmux new-session'
+
+# Attaches tmux to a session (example: ta portal)
+alias ta='tmux attach -t'
+
+# Creates a new session
+alias tn='tmux new-session'
+
+# Lists all ongoing sessions
+alias tl='tmux list-sessions'
+
+# use specific terminal bc alacritty breaks shit
+alias ssh='TERM=xterm-256color ssh'
+alias gssh='TERM=xterm-256color gcloud compute ssh'
+
+alias dev='/usr/local/bin/dev-environment'
+
+alias vim='nvim'
+
+alias update="brew update; brew upgrade; brew cu -ay; brew cleanup; pip install --upgrade `pip list --outdated | awk 'NR>2 {print $1}'`"
+
+# PATH
+addPathFront $HOME/bin
