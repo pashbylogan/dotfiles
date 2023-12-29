@@ -18,8 +18,6 @@ alias tl='tmux list-sessions'
 alias ssh='TERM=xterm-256color ssh'
 alias gssh='TERM=xterm-256color gcloud compute ssh'
 
-alias dev='/usr/local/bin/dev-environment'
-
 alias vim='nvim'
 
 alias update="brew update; brew upgrade; brew cu -ay; brew cleanup; pip install --upgrade `pip list --outdated | awk 'NR>2 {print $1}'`"
