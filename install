@@ -1,6 +1,12 @@
 #!/usr/bin/env zsh
 
-DOTFILES = "." # "." if running this script from the dotfiles folder
+if [[ -z $STOW_FOLDERS ]]; then
+    STOW_FOLDERS="ssh,nvim,tmux,zsh"
+fi
+
+if [[ -z $DOTFILES ]]; then
+    DOTFILES=$HOME/projects/dotfiles
+fi
 
 pushd $DOTFILES
 for folder in $(echo $STOW_FOLDERS | sed "s/,/ /g")

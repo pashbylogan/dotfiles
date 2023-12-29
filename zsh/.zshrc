@@ -1,7 +1,6 @@
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
-
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
@@ -78,7 +77,7 @@ plugins=(git
 fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
 
 # Path to your oh-my-zsh installation.
-export ZSH="/home/pashbyl/.oh-my-zsh"
+export ZSH="$HOME/.oh-my-zsh"
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
@@ -108,40 +107,20 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 source ~/.zsh_profile
 
-# LOGAN'S EDITS
-# export $EDITOR="vim"
-
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-# Some fzf relating functions
-# fd - cd to selected directory
-fd() {
-  local dir
-  dir=$(find ${1:-.} -path '*/\.*' -prune \
-                  -o -type d -print 2> /dev/null | fzf +m) &&
-  cd "$dir"
-}
-# fh - search in your command history and execute selected command
-fh() {
-  eval $( ([ -n "$ZSH_NAME" ] && fc -l 1 || history) | fzf +s --tac | sed 's/ *[0-9]* *//')
-}
-
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/home/pashbyl/apps/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/home/pashbyl/apps/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "/home/pashbyl/apps/miniconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/home/pashbyl/apps/miniconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
+ __conda_setup="$(eval "$HOME/apps/miniconda3/bin/conda 'shell.zsh' 'hook' 2> /dev/null")"
+ if [ $? -eq 0 ]; then
+     eval "$__conda_setup"
+ else
+     if [ -f "$HOME/apps/miniconda3/etc/profile.d/conda.sh" ]; then
+         . "$HOME/apps/miniconda3/etc/profile.d/conda.sh"
+     else
+         export PATH="$HOME/apps/miniconda3/bin:$PATH"
+     fi
+ fi
+ unset __conda_setup
 # <<< conda initialize <<<
-
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"

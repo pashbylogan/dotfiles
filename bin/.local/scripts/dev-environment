@@ -1,0 +1,8 @@
+#!/bin/sh
+tmux new-session -d
+tmux send-keys 'cd ~/projects/cypris' C-m
+tmux send-keys 'vim -c NERDTree' C-m
+tmux split-window -v -p 30
+tmux send-keys 'cd ~/projects/cypris' C-m
+tmux select-pane -t 1
+tmux -2 attach-session
