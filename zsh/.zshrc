@@ -70,8 +70,6 @@ ZSH_THEME="robbyrussell"
 plugins=(git
     zsh-completions
     zsh-autosuggestions
-    git-flow-completion
-    python
     fzf)
 
 fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src

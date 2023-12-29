@@ -1,4 +1,14 @@
-# ALIASES
+#      ___                                     ___           ___           ___           ___     
+#     /  /\                      ___          /  /\         /  /\         /  /\         /  /\    
+#    /  /::\                    /  /\        /  /::\       /  /:/_       /  /:/_       /  /:/_   
+#   /  /:/\:\    ___     ___   /  /:/       /  /:/\:\     /  /:/ /\     /  /:/ /\     /  /:/ /\  
+#  /  /:/~/::\  /__/\   /  /\ /__/::\      /  /:/~/::\   /  /:/ /::\   /  /:/ /:/_   /  /:/ /::\ 
+# /__/:/ /:/\:\ \  \:\ /  /:/ \__\/\:\__  /__/:/ /:/\:\ /__/:/ /:/\:\ /__/:/ /:/ /\ /__/:/ /:/\:\
+# \  \:\/:/__\/  \  \:\  /:/     \  \:\/\ \  \:\/:/__\/ \  \:\/:/~/:/ \  \:\/:/ /:/ \  \:\/:/~/:/
+#  \  \::/        \  \:\/:/       \__\::/  \  \::/       \  \::/ /:/   \  \::/ /:/   \  \::/ /:/ 
+#   \  \:\         \  \::/        /__/:/    \  \:\        \__\/ /:/     \  \:\/:/     \__\/ /:/  
+#    \  \:\         \__\/         \__\/      \  \:\         /__/:/       \  \::/        /__/:/   
+#     \__\/                                   \__\/         \__\/         \__\/         \__\/    
 
 alias createVenv='python3 -m venv .venv && source .venv/bin/activate && pip install --upgrade pip setuptools'
 alias de='conda deactivate'
@@ -20,27 +30,26 @@ alias gssh='TERM=xterm-256color gcloud compute ssh'
 
 alias vim='nvim'
 alias vi='nvim'
-alias vimrc='nvim $HOME/.config/nvim/init.vim'
+alias vimrc='nvim $HOME/.config/nvim/'
 
 alias sz='source ~/.zshrc'
 
 alias update="brew update; brew upgrade; brew cu -ay; brew cleanup; pip install --upgrade `pip list --outdated | awk 'NR>2 {print $1}'`"
 
-# Git Aliases
-alias ga='git add'
-alias gco='git checkout'
-alias gcp='git cherry-pick'
-alias gd='git diff'
-alias ggl='git grep --files-with-matches'
-alias gl="git log --graph --abbrev-commit --date-order --format=format:'%Cblue%h%Creset%C(bold red)%d%Creset %s <%an> %Cgreen(%ar)%Creset' --all'"
-alias gs='git status --short'
-
-# Custom Scripts
-alias memory='/home/pashbyl/Documents/scripts/memory_test.sh'
 alias mnf='/home/pashbyl/Documents/scripts/mullvad-tailscale/mnf up -c us'
 alias android='scrcpy --serial=R5CN20E1A4W'
 
-# FUNCTIONS
+#      ___         ___           ___           ___                                   ___           ___           ___     
+#     /  /\       /__/\         /__/\         /  /\          ___       ___          /  /\         /__/\         /  /\    
+#    /  /:/_      \  \:\        \  \:\       /  /:/         /  /\     /  /\        /  /::\        \  \:\       /  /:/_   
+#   /  /:/ /\      \  \:\        \  \:\     /  /:/         /  /:/    /  /:/       /  /:/\:\        \  \:\     /  /:/ /\  
+#  /  /:/ /:/  ___  \  \:\   _____\__\:\   /  /:/  ___    /  /:/    /__/::\      /  /:/  \:\   _____\__\:\   /  /:/ /::\ 
+# /__/:/ /:/  /__/\  \__\:\ /__/::::::::\ /__/:/  /  /\  /  /::\    \__\/\:\__  /__/:/ \__\:\ /__/::::::::\ /__/:/ /:/\:\
+# \  \:\/:/   \  \:\ /  /:/ \  \:\~~\~~\/ \  \:\ /  /:/ /__/:/\:\      \  \:\/\ \  \:\ /  /:/ \  \:\~~\~~\/ \  \:\/:/~/:/
+#  \  \::/     \  \:\  /:/   \  \:\  ~~~   \  \:\  /:/  \__\/  \:\      \__\::/  \  \:\  /:/   \  \:\  ~~~   \  \::/ /:/ 
+#   \  \:\      \  \:\/:/     \  \:\        \  \:\/:/        \  \:\     /__/:/    \  \:\/:/     \  \:\        \__\/ /:/  
+#    \  \:\      \  \::/       \  \:\        \  \::/          \__\/     \__\/      \  \::/       \  \:\         /__/:/   
+#     \__\/       \__\/         \__\/         \__\/                                 \__\/         \__\/         \__\/
 
 function ve(){
     dirname="$PWD"
@@ -77,6 +86,17 @@ function dev(){
   fi
 }
 
-# PATH
+#      ___         ___                       ___     
+#     /  /\       /  /\          ___        /__/\    
+#    /  /::\     /  /::\        /  /\       \  \:\   
+#   /  /:/\:\   /  /:/\:\      /  /:/        \__\:\  
+#  /  /:/~/:/  /  /:/~/::\    /  /:/     ___ /  /::\ 
+# /__/:/ /:/  /__/:/ /:/\:\  /  /::\    /__/\  /:/\:\
+# \  \:\/:/   \  \:\/:/__\/ /__/:/\:\   \  \:\/:/__\/
+#  \  \::/     \  \::/      \__\/  \:\   \  \::/     
+#   \  \:\      \  \:\           \  \:\   \  \:\     
+#    \  \:\      \  \:\           \__\/    \  \:\    
+#     \__\/       \__\/                     \__\/
+
 path+=('/usr/local/go/bin')
-path=("$HOME/scripts" $path)
+path=("$HOME/.local/scripts" $path)
