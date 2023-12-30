@@ -67,10 +67,7 @@ ZSH_THEME="robbyrussell"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git
-    zsh-completions
-    zsh-autosuggestions
-    fzf)
+plugins=(git fzf)
 
 fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
 
@@ -105,24 +102,30 @@ fi
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 source ~/.zsh_profile
 
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$(eval "$HOME/apps/miniconda3/bin/conda 'shell.zsh' 'hook' 2> /dev/null")"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "$HOME/apps/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "$HOME/apps/miniconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="$HOME/apps/miniconda3/bin:$PATH"
+# Lazy load conda
+conda() {
+    unset -f conda
+    # Evaluate the conda shell script
+    eval "$($HOME/apps/miniconda3/bin/conda 'shell.zsh' 'hook' 2> /dev/null)"
+    # If the above fails, fall back to modifying PATH
+    if [ $? -ne 0 ]; then
+        if [ -f "$HOME/apps/miniconda3/etc/profile.d/conda.sh" ]; then
+            . "$HOME/apps/miniconda3/etc/profile.d/conda.sh"
+        else
+            export PATH="$HOME/apps/miniconda3/bin:$PATH"
+        fi
     fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
-#
+    conda "$@"
+}
+
+# Lazy load nvm
 export NVM_DIR="$HOME/.config/nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+nvm() {
+    unset -f nvm
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    nvm "$@"
+}
 
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"
