@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Get external IP address using ifconfig.me service
+external_ip=$(curl -s ipinfo.io/ip)
+
+# Check if the IP address was successfully retrieved
+if [[ -z "$external_ip" ]]; then
+    echo "Unable to retrieve external IP address."
+else
+    echo $external_ip
+fi
