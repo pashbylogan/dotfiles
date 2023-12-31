@@ -10,6 +10,9 @@
 #    \  \:\         \__\/         \__\/      \  \:\         /__/:/       \  \::/        /__/:/   
 #     \__\/                                   \__\/         \__\/         \__\/         \__\/    
 
+# primeagen tmux-sessionizer
+bindkey -s ^f "tmux-sessionizer\n"
+
 alias createVenv='python3 -m venv .venv && source .venv/bin/activate && pip install --upgrade pip setuptools'
 alias de='conda deactivate'
 # Attaches tmux to the last session; creates a new session if none exists.
