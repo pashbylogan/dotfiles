@@ -1,6 +1,6 @@
 #!/bin/bash
 
-p=$(find ~/projects -name "$1" -type d)
+p=$(find ~/projects -type d -maxdepth 3 | fzf)
 
 if [ -z "$p" ]; then
     p="-"
@@ -9,7 +9,7 @@ fi
 if [ "$p" != "-" ]; then
     tmux new-session -d
     tmux send-keys "cd $p" C-m
-    tmux send-keys "vim" C-m
+    tmux send-keys "vim ." C-m
     tmux split-window -v -p 1
     tmux send-keys "cd $p" C-m
     tmux send-keys "ve" C-m
