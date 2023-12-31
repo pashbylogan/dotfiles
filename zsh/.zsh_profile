@@ -39,6 +39,19 @@ alias gs='git status'
 alias mnf='/home/pashbyl/Documents/scripts/mullvad-tailscale/mnf up -c us'
 alias android='scrcpy --serial=R5CN20E1A4W'
 
+function ve(){
+    dirname="$PWD"
+    result="${dirname%"${dirname##*[!/]}"}" # extglob-free multi-trailing-/ trim
+    result="${result##*/}"                  # remove everything before the last /
+    if [[ -d $HOME/apps/miniconda3/envs/$result ]] ; then
+      conda activate $result
+    elif [[ $result == "utils" ]] ; then
+      conda activate "local_cypris"
+    else
+      conda activate "base"
+    fi
+}
+
 #      ___         ___                       ___     
 #     /  /\       /  /\          ___        /__/\    
 #    /  /::\     /  /::\        /  /\       \  \:\   
