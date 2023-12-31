@@ -1,0 +1,14 @@
+#!bin/bash
+
+# Updating Homebrew packages
+brew update
+brew upgrade
+
+# Updating Cask packages with brew-cask-upgrade
+brew cu -ay
+
+# Cleaning up old Homebrew files
+brew cleanup
+
+# Updating outdated Python packages
+pip install --upgrade $(pip list --outdated | awk 'NR>2 {print $1}')

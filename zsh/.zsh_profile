@@ -36,57 +36,8 @@ alias sz='source ~/.zshrc'
 
 alias gs='git status'
 
-alias update="brew update; brew upgrade; brew cu -ay; brew cleanup; pip install --upgrade `pip list --outdated | awk 'NR>2 {print $1}'`"
-
 alias mnf='/home/pashbyl/Documents/scripts/mullvad-tailscale/mnf up -c us'
 alias android='scrcpy --serial=R5CN20E1A4W'
-
-#      ___         ___           ___           ___                                   ___           ___           ___     
-#     /  /\       /__/\         /__/\         /  /\          ___       ___          /  /\         /__/\         /  /\    
-#    /  /:/_      \  \:\        \  \:\       /  /:/         /  /\     /  /\        /  /::\        \  \:\       /  /:/_   
-#   /  /:/ /\      \  \:\        \  \:\     /  /:/         /  /:/    /  /:/       /  /:/\:\        \  \:\     /  /:/ /\  
-#  /  /:/ /:/  ___  \  \:\   _____\__\:\   /  /:/  ___    /  /:/    /__/::\      /  /:/  \:\   _____\__\:\   /  /:/ /::\ 
-# /__/:/ /:/  /__/\  \__\:\ /__/::::::::\ /__/:/  /  /\  /  /::\    \__\/\:\__  /__/:/ \__\:\ /__/::::::::\ /__/:/ /:/\:\
-# \  \:\/:/   \  \:\ /  /:/ \  \:\~~\~~\/ \  \:\ /  /:/ /__/:/\:\      \  \:\/\ \  \:\ /  /:/ \  \:\~~\~~\/ \  \:\/:/~/:/
-#  \  \::/     \  \:\  /:/   \  \:\  ~~~   \  \:\  /:/  \__\/  \:\      \__\::/  \  \:\  /:/   \  \:\  ~~~   \  \::/ /:/ 
-#   \  \:\      \  \:\/:/     \  \:\        \  \:\/:/        \  \:\     /__/:/    \  \:\/:/     \  \:\        \__\/ /:/  
-#    \  \:\      \  \::/       \  \:\        \  \::/          \__\/     \__\/      \  \::/       \  \:\         /__/:/   
-#     \__\/       \__\/         \__\/         \__\/                                 \__\/         \__\/         \__\/
-
-function ve(){
-    dirname="$PWD"
-    result="${dirname%"${dirname##*[!/]}"}" # extglob-free multi-trailing-/ trim
-    result="${result##*/}"                  # remove everything before the last /
-    if [[ -d $HOME/apps/miniconda3/envs/$result ]] ; then
-      conda activate $result
-    elif [[ $result == "utils" ]] ; then
-      conda activate "local_cypris"
-    else
-      conda activate "base"
-    fi
-}
-
-function dev(){
-  p=$(find ~/projects -name "$1" -type d)
-
-  if [ -z "$p" ]; then
-    p="-"
-  fi
-  
-  if [ "$p" != "-" ]; then
-    tmux new-session -d
-    tmux send-keys "cd $p" C-m
-    tmux send-keys "vim" C-m
-    tmux split-window -v -p 1
-    tmux send-keys "cd $p" C-m
-    tmux send-keys "ve" C-m
-    tmux send-keys "clear" C-m
-    tmux select-pane -t 1
-    tmux -2 attach-session
-  else
-    echo "Try again..."
-  fi
-}
 
 #      ___         ___                       ___     
 #     /  /\       /  /\          ___        /__/\    
