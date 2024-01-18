@@ -1,3 +1,15 @@
+require('telescope').setup({
+    defaults = {
+        mappings = {
+            i = {
+                ["<esc>"] = require('telescope.actions').close,
+                ["<C-j>"] = require('telescope.actions').move_selection_next,
+                ["<C-k>"] = require('telescope.actions').move_selection_previous,
+            },
+        },
+    }
+})
+
 local builtin = require('telescope.builtin')
 vim.keymap.set('n', '<leader>ff', function()
     builtin.find_files({

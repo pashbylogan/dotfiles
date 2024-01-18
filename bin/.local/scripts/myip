@@ -2,10 +2,15 @@
 
 # Get external IP address using ifconfig.me service
 external_ip=$(curl -s ipinfo.io/ip)
+location=$(curl -s https://ipinfo.io/$external_ip)
+city=$(echo $location | jq -r '.city')
+state=$(echo $location | jq -r '.region')
+country=$(echo $location | jq -r '.country')
 
 # Check if the IP address was successfully retrieved
-if [[ -z "$external_ip" ]]; then
-    echo "Unable to retrieve external IP address."
+if [[ -z "$external_ip" || -z "$city" || -z "$country" ]]; then
+    echo "Unable to retrieve external IP address or location details."
 else
     echo $external_ip
+    echo $city, $state, $country
 fi
