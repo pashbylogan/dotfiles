@@ -68,4 +68,5 @@ function ve(){
 #     \__\/       \__\/                     \__\/
 
 path+=('/usr/local/go/bin')
+path+=("$HOME/apps/nvim/bin") # NEOVIM
 path=("$HOME/.local/scripts" $path)

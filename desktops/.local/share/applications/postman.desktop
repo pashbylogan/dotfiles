@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Postman
+Exec=/home/pashbyl/apps/postman/Postman
+Icon=/home/pashbyl/apps/postman/app/icons/icon_128x128.png
+Terminal=false
+Categories=Development;WebDevelopment;Network;
+Comment=API Development Environment

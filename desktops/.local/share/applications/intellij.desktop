@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Intellij
+Icon=/home/pashbyl/apps/intellij/bin/idea.png
+Exec="/home/pashbyl/apps/intellij/bin/idea.sh" %f
+Categories=Development;
+Terminal=false
+StartupWMClass=jetbrains-idea

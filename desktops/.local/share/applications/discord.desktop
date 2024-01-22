@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Discord
+Exec=/home/pashbyl/apps/discord/Discord
+Icon=/home/pashbyl/apps/discord/discord.png
+Terminal=false
+Categories=Network;InstantMessaging;Chat;
