@@ -6,4 +6,3 @@ Icon=/home/pashbyl/apps/datagrip/bin/datagrip.png
 Exec="/home/pashbyl/apps/datagrip/bin/datagrip.sh" %f
 Categories=Development;
 Terminal=false
-StartupWMClass=jetbrains-idea

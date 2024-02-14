@@ -38,6 +38,7 @@ alias vimrc='nvim $HOME/.config/nvim/'
 alias sz='source ~/.zshrc'
 
 alias gs='git status'
+alias gap='git add -p'
 
 alias mnf='/home/pashbyl/Documents/scripts/mullvad-tailscale/mnf up -c us'
 alias android='scrcpy --serial=R5CN20E1A4W'
@@ -66,7 +67,12 @@ function ve(){
 #   \  \:\      \  \:\           \  \:\   \  \:\     
 #    \  \:\      \  \:\           \__\/    \  \:\    
 #     \__\/       \__\/                     \__\/
+source "$HOME/apps/google-cloud-sdk/completion.zsh.inc" # GCLOUD COMPLETIONS
+source "$HOME/apps/google-cloud-sdk/path.zsh.inc" # GCLOUD CLI
 
 path+=('/usr/local/go/bin')
 path+=("$HOME/apps/nvim/bin") # NEOVIM
+path+=("$HOME/apps/go/bin") # GO
+path+=("$HOME/apps/hugo") # HUGO
+path+=("$HOME/apps/heroku/bin") # HEROKU
 path=("$HOME/.local/scripts" $path)
