@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Pycharm
+Icon=/home/pashbyl/apps/pycharm/bin/pycharm.png
+Exec="/home/pashbyl/apps/pycharm/bin/pycharm.sh" %f
+Categories=Development;
+Terminal=false

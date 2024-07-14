@@ -1,0 +1,18 @@
+#!/bin/bash
+
+FORMATTERPATH="formatters/google-java-format-1.6-all-deps.jar"
+FORMATTER="/home/pashbyl/apps/java/jdk8u402-b06/bin/java -jar $FORMATTERPATH -i -aosp"
+
+format_then_commit_diff() {
+  files=$(git diff --name-only HEAD^ HEAD *.java)
+  if [ -n "$files" ]; then
+    echo "Formatting files..."
+    $FORMATTER $files
+    git add $files
+    git commit -m ".git/hook/post-commit: auto formatting .java code" --no-verify
+  fi
+}
+
+format_then_commit_diff
+
+exit 0
