@@ -31,8 +31,8 @@ alias tl='tmux list-sessions'
 alias ssh='TERM=xterm-256color ssh'
 alias gssh='TERM=xterm-256color gcloud compute ssh'
 
-alias vim='nvim'
-alias vi='nvim'
+alias nvim='$HOME/apps/nvim/nvim.appimage'
+alias vim='$HOME/apps/nvim/nvim.appimage'
 alias vimrc='nvim $HOME/.config/nvim/'
 
 alias sz='source ~/.zshrc'
@@ -71,7 +71,6 @@ source "$HOME/apps/google-cloud-sdk/completion.zsh.inc" # GCLOUD COMPLETIONS
 source "$HOME/apps/google-cloud-sdk/path.zsh.inc" # GCLOUD CLI
 
 path+=('/usr/local/go/bin')
-path+=("$HOME/apps/nvim/bin") # NEOVIM
 path+=("$HOME/apps/go/bin") # GO
 path+=("$HOME/apps/hugo") # HUGO
 path+=("$HOME/apps/heroku/bin") # HEROKU
