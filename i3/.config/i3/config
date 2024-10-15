@@ -56,7 +56,7 @@ bindsym $mod+Shift+q kill
 
 # start dmenu (a program launcher)
 # bindsym $mod+d exec --no-startup-id dmenu_run
-bindsym $mod+d exec --no-startup-id rofi -show run
+bindsym $mod+d exec --no-startup-id rofi -show drun
 # A more modern dmenu replacement is rofi:
 # bindcode $mod+40 exec "rofi -modi drun,run -show drun"
 # There also is i3-dmenu-desktop which only displays applications shipping a
@@ -200,16 +200,27 @@ for_window [class="^.*"] border pixel 2
                           # class                 border  backgr. text    indicator child_border
 for_window [class="^.*"] client.focused          #77dd77 #285577 #ffffff #2e9ef4   #285577
 
+# workspace allocation
+for_window [class="Gnome-terminal"] move workspace $ws1
+for_window [class="firefox"] move workspace $ws2
+for_window [class="Slack"] move workspace $ws3
+for_window [class="obsidian"] move workspace $ws3
+for_window [class="Spotify"] move workspace $ws4
+
 # visual
 # set background
 exec_always --no-startup-id feh --bg-fill /home/pashbyl/.local/share/backgrounds/2024-01-17-18-06-42-spiral.png
+
+# set up picom for transparency and for avoiding tearing
+exec_always --no-startup-id picom --backend xrender --vsync
 
 # QoL
 # repeat keys
 exec_always --no-startup-id xset r rate 300 35 
 
-# increase mouse pointer speed
+# increase mouse pointer speed (Logitech USB Receiver Mouse | Logitech MX Master)
 exec_always --no-startup-id xinput --set-prop "pointer:Logitech MX Master" "libinput Accel Speed" 0.6
+exec_always --no-startup-id xinput --set-prop "pointer:Logitech USB Receiver Mouse" "libinput Accel Speed" 0.6
 
 # zoom settings
 # for_window [class="(.*join\?action\=join.*|.*zoom.*)"] floating enable
