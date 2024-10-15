@@ -240,3 +240,6 @@ bindsym $mod+Ctrl+greater move workspace to output next
 # sreen brightness controls
 bindsym XF86MonBrightnessUp exec xbacklight -inc 10
 bindsym XF86MonBrightnessDown exec xbacklight -dec 10
+
+# screenshot with print screen
+bindsym --release Print exec --no-startup-id import ~/Downloads/Screenshot_$(date +'%Y-%m-%d-%I.%M.%S_%p').png
