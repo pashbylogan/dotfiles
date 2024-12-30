@@ -72,6 +72,8 @@ source "$HOME/apps/google-cloud-sdk/path.zsh.inc" # GCLOUD CLI
 
 path+=('/usr/local/go/bin')
 path+=("$HOME/apps/go/bin") # GO
+path+=("$HOME/apps/zig") # ZIG
+path+=("$HOME/apps/ghostty/bin") # GHOSTTY
 path+=("$HOME/apps/hugo") # HUGO
 path+=("$HOME/apps/heroku/bin") # HEROKU
 path=("$HOME/.local/scripts" $path)

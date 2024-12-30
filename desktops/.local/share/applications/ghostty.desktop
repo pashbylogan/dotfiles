@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Ghostty
+Exec=/home/pashbyl/apps/ghostty/bin/ghostty
+Icon=/home/pashbyl/apps/ghostty/share/icons/hicolor/32x32/apps/com.mitchellh.ghostty.png
+Terminal=false
+Categories=Terminal;

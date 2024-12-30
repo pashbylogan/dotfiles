@@ -1,0 +1,4 @@
+cursor-style = block
+shell-integration-features = no-cursor
+gtk-titlebar = false
+background-opacity = 0.80

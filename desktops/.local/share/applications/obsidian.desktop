@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Obsidian
+Exec=/home/pashbyl/apps/obsidian/Obsidian.AppImage --no-sandbox
+Icon=/home/pashbyl/apps/obsidian/logo.png
+Terminal=false
+Categories=Office;Notes;
+MimeType=x-scheme-handler/obsidian;
