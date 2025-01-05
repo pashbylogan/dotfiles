@@ -1,11 +1,6 @@
---  __  __                   _
--- |  \/  | __ _ _ __  _ __ (_)_ __   __ _ ___
--- | |\/| |/ _` | '_ \| '_ \| | '_ \ / _` / __|
--- | |  | | (_| | |_) | |_) | | | | | (_| \__ \
--- |_|  |_|\__,_| .__/| .__/|_|_| |_|\__, |___/
---              |_|   |_|            |___/
-
--- source: https://github.com/ThePrimeagen/init.lua/blob/master/lua/theprimeagen/remap.lua
+-- Keymaps are automatically loaded on the VeryLazy event
+-- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
+-- Add any additional keymaps here
 vim.g.mapleader = " "
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 
@@ -19,10 +14,10 @@ vim.keymap.set("n", "<C-u>", "<C-u>zz")
 vim.keymap.set("x", "<leader>p", [["_dP]])
 
 -- next greatest remap ever : asbjornHaland
-vim.keymap.set({"n", "v"}, "<leader>y", [["+y]]) -- copy to clipboard
+vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]]) -- copy to clipboard
 vim.keymap.set("n", "<leader>Y", [["+Y]])
 
-vim.keymap.set({"n", "v"}, "<leader>d", [["_d]]) -- delete to void register
+vim.keymap.set({ "n", "v" }, "<leader>d", [["_d]]) -- delete to void register
 
 -- my favorite :)
 vim.keymap.set("i", "<C-c>", "<Esc>")
@@ -37,8 +32,3 @@ vim.keymap.set("n", "<leader>s", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><
 
 -- make current file executible
 vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
-
-vim.keymap.set("n", "<leader>vpp", "<cmd>e ~/.dotfiles/nvim/.config/nvim/lua/personal/packer.lua<CR>");
-vim.keymap.set("n", "<leader><leader>", function()
-    vim.cmd("so")
-end)
