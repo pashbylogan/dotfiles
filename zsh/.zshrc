@@ -101,22 +101,39 @@ source ~/.zsh_profile
 setopt globdots
 
 # Lazy load conda
-conda() {
-    unset -f conda
-    # Evaluate the conda shell script
-    eval "$($HOME/apps/miniconda3/bin/conda 'shell.zsh' 'hook' 2> /dev/null)"
-    # If the above fails, fall back to modifying PATH
-    if [ $? -ne 0 ]; then
-        if [ -f "$HOME/apps/miniconda3/etc/profile.d/conda.sh" ]; then
-            . "$HOME/apps/miniconda3/etc/profile.d/conda.sh"
-        else
-            export PATH="$HOME/apps/miniconda3/bin:$PATH"
-        fi
-    fi
-    conda "$@"
-}
+# conda() {
+#     unset -f conda
+#     # Evaluate the conda shell script
+#     eval "$($HOME/apps/miniconda3/bin/conda 'shell.zsh' 'hook' 2> /dev/null)"
+#     # If the above fails, fall back to modifying PATH
+#     if [ $? -ne 0 ]; then
+#         if [ -f "$HOME/apps/miniconda3/etc/profile.d/conda.sh" ]; then
+#             . "$HOME/apps/miniconda3/etc/profile.d/conda.sh"
+#         else
+#             export PATH="$HOME/apps/miniconda3/bin:$PATH"
+#         fi
+#     fi
+#     conda "$@"
+# }
 
 # Lazy load nvm
 export NVM_DIR="$HOME/apps/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# UV env variables
+uv_dir="/home/pashbyl/apps/uv"
+export UV_UNMANAGED_INSTALL=$uv_dir
+export UV_INSTALL_DIR=$uv_dir
+export UV_TOOL_DIR="$uv_dir/tools"
+export UV_PYTHON_INSTALL_DIR="$uv_dir/python"
+export UV_TOOL_BIN_DIR="$uv_dir/bin"
+export UV_CACHE_DIR="$uv_dir/cache"
+export UV_PYTHON_BIN_DIR="$uv_dir/python/bin"
+
+# pnpm
+export PNPM_HOME="/home/pashbyl/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac

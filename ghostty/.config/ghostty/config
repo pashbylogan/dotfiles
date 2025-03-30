@@ -1,5 +1,5 @@
 cursor-style = block
 shell-integration-features = no-cursor
 gtk-titlebar = false
-background-opacity = 0.4
+background-opacity = 0.8
 theme = tokyonight

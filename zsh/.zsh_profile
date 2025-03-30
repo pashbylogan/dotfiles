@@ -31,14 +31,34 @@ alias tl='tmux list-sessions'
 alias ssh='TERM=xterm-256color ssh'
 alias gssh='TERM=xterm-256color gcloud compute ssh'
 
+# vim
 alias nvim='$HOME/apps/nvim/nvim.appimage'
 alias vim='$HOME/apps/nvim/nvim.appimage'
 alias vimrc='nvim $HOME/.config/nvim/'
 
-alias sz='source ~/.zshrc'
-
+# git
 alias gs='git status'
 alias gap='git add -p'
+
+alias wta='f() { (cd "$(git rev-parse --show-toplevel)/.." && git worktree add "$@") && "$(git rev-parse --show-toplevel)/../$@"; }; f'
+alias wtr='git worktree remove'
+alias wtl='git worktree list'
+alias wtp='git worktree prune'
+alias cdwt='f() { cd "$(git worktree list | grep $1 | awk "{print \$1}")"; }; f'
+
+# vpn
+exitnode() {
+  if [ "$1" == "up" ]; then
+    tailscale exit-node suggest | awk -F ": " '/Suggested exit node/ {print $2}' | xargs -I {} sudo tailscale set --exit-node={}
+  elif [ "$1" == "down" ]; then
+    sudo tailscale set --exit-node=
+  else
+    echo "Usage: exitnode up|down"
+  fi
+}
+
+# other
+alias sz='source ~/.zshrc'
 
 alias mnf='/home/pashbyl/Documents/scripts/mullvad-tailscale/mnf up -c us'
 alias android='scrcpy --serial=R5CN20E1A4W'
@@ -70,10 +90,15 @@ function ve(){
 source "$HOME/apps/google-cloud-sdk/completion.zsh.inc" # GCLOUD COMPLETIONS
 source "$HOME/apps/google-cloud-sdk/path.zsh.inc" # GCLOUD CLI
 
+path+=("$HOME/.local/bin")
 path+=('/usr/local/go/bin')
 path+=("$HOME/apps/go/bin") # GO
 path+=("$HOME/apps/zig") # ZIG
 path+=("$HOME/apps/ghostty/bin") # GHOSTTY
 path+=("$HOME/apps/hugo") # HUGO
 path+=("$HOME/apps/heroku/bin") # HEROKU
+path+=("$HOME/apps/uv") # UV
+path+=("$HOME/apps/uv/bin") # UV BIN
+path+=("$HOME/apps/uv/python/bin") # UV global python
+path+=("$HOME/apps/cloud-sql-proxy") # GCP SQL Auth Proxy
 path=("$HOME/.local/scripts" $path)

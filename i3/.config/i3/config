@@ -201,7 +201,7 @@ for_window [class="^.*"] border pixel 2
 for_window [class="^.*"] client.focused          #77dd77 #285577 #ffffff #2e9ef4   #285577
 
 # workspace allocation
-for_window [class="Gnome-terminal"] move workspace $ws1
+for_window [class="com.mitchellh.ghostty"] move workspace $ws1
 for_window [class="firefox"] move workspace $ws2
 for_window [class="Slack"] move workspace $ws3
 for_window [class="obsidian"] move workspace $ws3
@@ -222,7 +222,8 @@ exec_always --no-startup-id xset r rate 300 35
 exec_always --no-startup-id xinput --set-prop "pointer:Logitech MX Master" "libinput Accel Speed" 0.6
 exec_always --no-startup-id xinput --set-prop "pointer:Logitech USB Receiver Mouse" "libinput Accel Speed" 0.6
 
-# zoom settings
+# zoom/slack settings
+for_window [class="Slack"] floating disable
 # for_window [class="(.*join\?action\=join.*|.*zoom.*)"] floating enable
 # for_window [class="(.*join\?action\=join.*|.*zoom.*)" title="Zoom - Licensed Account"] floating disable
 # for_window [class="(.*join\?action\=join.*|.*zoom.*)" title="Zoom Meeting"] floating disable
