@@ -1,8 +1,0 @@
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=DataGrip
-Icon=/home/pashbyl/apps/datagrip/bin/datagrip.png
-Exec="/home/pashbyl/apps/datagrip/bin/datagrip.sh" %f
-Categories=Development;
-Terminal=false

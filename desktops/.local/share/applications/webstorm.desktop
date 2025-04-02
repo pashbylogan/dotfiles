@@ -1,8 +1,0 @@
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=WebStorm
-Icon=/home/pashbyl/apps/webstorm/bin/webstorm.png
-Exec="/home/pashbyl/apps/webstorm/bin/webstorm.sh" %f
-Categories=Development;
-Terminal=false
