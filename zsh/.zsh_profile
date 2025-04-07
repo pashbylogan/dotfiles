@@ -48,9 +48,9 @@ alias cdwt='f() { cd "$(git worktree list | grep $1 | awk "{print \$1}")"; }; f'
 
 # vpn
 exitnode() {
-  if [ "$1" == "up" ]; then
+  if [ "$1" = "up" ]; then
     tailscale exit-node suggest | awk -F ": " '/Suggested exit node/ {print $2}' | xargs -I {} sudo tailscale set --exit-node={}
-  elif [ "$1" == "down" ]; then
+  elif [ "$1" = "down" ]; then
     sudo tailscale set --exit-node=
   else
     echo "Usage: exitnode up|down"

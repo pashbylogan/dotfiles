@@ -205,6 +205,7 @@ for_window [class="com.mitchellh.ghostty"] move workspace $ws1
 for_window [class="firefox"] move workspace $ws2
 for_window [class="Slack"] move workspace $ws3
 for_window [class="obsidian"] move workspace $ws3
+for_window [class="jetbrains-idea"] move workspace $ws5
 for_window [class="Spotify"] move workspace $ws10
 
 # visual
