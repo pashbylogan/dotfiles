@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Thunderbird
+Exec=/home/pashbyl/apps/thunderbird/thunderbird %U
+Icon=/home/pashbyl/apps/thunderbird/chrome/icons/default/default128.png
+Terminal=false
+Categories=Network;Email;
+StartupWMClass=thunderbird
+MimeType=x-scheme-handler/mailto;
+Actions=compose-new;

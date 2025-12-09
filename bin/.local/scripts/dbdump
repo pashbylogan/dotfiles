@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+: "${DATABASE_URL:=postgresql://postgres:postgres@127.0.0.1:5432/dev?sslmode=disable}"
+
+~/apps/dbmate --url "$DATABASE_URL" \
+  --schema-file ~/projects/cypris/ms/database/platform/schema.sql \
+  dump
