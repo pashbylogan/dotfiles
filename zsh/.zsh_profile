@@ -13,8 +13,10 @@
 # primeagen tmux-sessionizer
 bindkey -s ^f "tmux-sessionizer\n"
 
-alias createVenv='python3 -m venv .venv && source .venv/bin/activate && pip install --upgrade pip setuptools'
-alias de='conda deactivate'
+alias de='deactivate'
+alias ar='autorandr '
+alias uf='uvx ruff format '
+
 # Attaches tmux to the last session; creates a new session if none exists.
 alias t='tmux attach || tmux new-session'
 
@@ -46,10 +48,38 @@ alias wtl='git worktree list'
 alias wtp='git worktree prune'
 alias cdwt='f() { cd "$(git worktree list | grep $1 | awk "{print \$1}")"; }; f'
 
+# claude code
+CLAUDE_LOCATION="/home/pashbyl/.claude/local/claude"
+
+_claude_run() {
+  export CLAUDE_CODE_USE_VERTEX=1
+  export CLOUD_ML_REGION=us-east5
+  export ANTHROPIC_VERTEX_PROJECT_ID=ipweb-240115
+  # export DISABLE_PROMPT_CACHING=1
+
+  "$CLAUDE_LOCATION" update && "$CLAUDE_LOCATION" "$@"
+}
+
+# alias claude='_claude_run'
+# alias bigclaude='export ANTHROPIC_MODEL=claude-opus-4@20250514 && _claude_run'
+
+# gemini cli
+GEMINI_LOCATION="gemini"
+
+_gemini_run() {
+  export GOOGLE_GENAI_USE_VERTEXAI=true
+  export GOOGLE_CLOUD_LOCATION=us-central1
+  export GOOGLE_CLOUD_PROJECT=ipweb-240115
+
+  "$GEMINI_LOCATION" "$@"
+}
+
+alias gemini='_gemini_run'
+
 # vpn
 exitnode() {
   if [ "$1" = "up" ]; then
-    tailscale exit-node suggest | awk -F ": " '/Suggested exit node/ {print $2}' | xargs -I {} sudo tailscale set --exit-node={}
+    tailscale exit-node suggest | awk -F ": " '/Suggested exit node/ {print $2}' | xargs -I {} sudo tailscale set --exit-node={} --exit-node-allow-lan-access=true
   elif [ "$1" = "down" ]; then
     sudo tailscale set --exit-node=
   else
@@ -59,20 +89,17 @@ exitnode() {
 
 # other
 alias sz='source ~/.zshrc'
-
-alias mnf='/home/pashbyl/Documents/scripts/mullvad-tailscale/mnf up -c us'
 alias android='scrcpy --serial=R5CN20E1A4W'
+alias dbmate='/home/pashbyl/apps/dbmate'
 
-function ve(){
-    dirname="$PWD"
-    result="${dirname%"${dirname##*[!/]}"}" # extglob-free multi-trailing-/ trim
-    result="${result##*/}"                  # remove everything before the last /
-    if [[ -d $HOME/apps/miniconda3/envs/$result ]] ; then
-      conda activate $result
-    elif [[ $result == "utils" ]] ; then
-      conda activate "local_cypris"
-    else
-      conda activate "base"
+function ve() {
+    local local_activate=".venv/bin/activate"
+    local base_activate="$HOME/apps/uv/central_venv_repo/base/.venv/bin/activate"
+
+    if [[ -f "$local_activate" ]]; then
+        source "$local_activate"
+    elif [[ -f "$base_activate" ]]; then
+        source "$base_activate"
     fi
 }
 
@@ -101,4 +128,5 @@ path+=("$HOME/apps/uv") # UV
 path+=("$HOME/apps/uv/bin") # UV BIN
 path+=("$HOME/apps/uv/python/bin") # UV global python
 path+=("$HOME/apps/cloud-sql-proxy") # GCP SQL Auth Proxy
-path=("$HOME/.local/scripts" $path)
+path+=("$HOME/.local/scripts")
+path+=("$HOME/.opencode/bin") # opencode

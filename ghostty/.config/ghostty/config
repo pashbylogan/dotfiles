@@ -3,3 +3,4 @@ shell-integration-features = no-cursor
 gtk-titlebar = false
 background-opacity = 0.8
 theme = tokyonight
+keybind = shift+enter=text:\n

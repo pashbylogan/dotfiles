@@ -223,6 +223,9 @@ exec_always --no-startup-id xset r rate 300 35
 exec_always --no-startup-id xinput --set-prop "pointer:Logitech MX Master" "libinput Accel Speed" 0.6
 exec_always --no-startup-id xinput --set-prop "pointer:Logitech USB Receiver Mouse" "libinput Accel Speed" 0.6
 
+# disable trackpad
+exec_always --no-startup-id xinput set-prop "VEN_04F3:00 04F3:32AA Touchpad" "Device Enabled" 0
+
 # zoom/slack settings
 for_window [class="Slack"] floating disable
 # for_window [class="(.*join\?action\=join.*|.*zoom.*)"] floating enable
@@ -240,8 +243,8 @@ bindsym $mod+Shift+x exec --no-startup-id i3lock -c 000000
 bindsym $mod+Ctrl+greater move workspace to output next
 
 # sreen brightness controls
-bindsym XF86MonBrightnessUp exec xbacklight -inc 10
-bindsym XF86MonBrightnessDown exec xbacklight -dec 10
+bindsym XF86MonBrightnessUp exec --no-startup-id light -A 10; exec notify-send 'brightness up 10%'
+bindsym XF86MonBrightnessDown exec --no-startup-id light -U 10; exec notify-send 'brightness down 10%'
 
 # screenshot with print screen
 bindsym --release Print exec --no-startup-id sh -c "import ~/Downloads/Screenshot_$(date +'%Y-%m-%d-%I.%M.%S_%p').png && xclip -selection clipboard -t image/png ~/Downloads/Screenshot_$(date +'%Y-%m-%d-%I.%M.%S_%p').png"

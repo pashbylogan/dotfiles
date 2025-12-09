@@ -100,22 +100,6 @@ fi
 source ~/.zsh_profile
 setopt globdots
 
-# Lazy load conda
-# conda() {
-#     unset -f conda
-#     # Evaluate the conda shell script
-#     eval "$($HOME/apps/miniconda3/bin/conda 'shell.zsh' 'hook' 2> /dev/null)"
-#     # If the above fails, fall back to modifying PATH
-#     if [ $? -ne 0 ]; then
-#         if [ -f "$HOME/apps/miniconda3/etc/profile.d/conda.sh" ]; then
-#             . "$HOME/apps/miniconda3/etc/profile.d/conda.sh"
-#         else
-#             export PATH="$HOME/apps/miniconda3/bin:$PATH"
-#         fi
-#     fi
-#     conda "$@"
-# }
-
 # Lazy load nvm
 export NVM_DIR="$HOME/apps/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
@@ -137,3 +121,6 @@ case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
+
+# Claude requires the alias to be in here rather than zsh_profile for some reason
+alias claude="~/.claude/local/claude"
