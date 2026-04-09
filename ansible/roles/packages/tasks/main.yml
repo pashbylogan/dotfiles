@@ -63,6 +63,8 @@
     - name: Install Homebrew formulae
       ansible.builtin.command: "brew install {{ item.item }}"
       loop: "{{ brew_formula_status.results }}"
+      loop_control:
+        label: "{{ item.item }}"
       when: item.rc != 0
       changed_when: true
 
@@ -76,6 +78,8 @@
     - name: Install Homebrew casks
       ansible.builtin.command: "brew install --cask {{ item.item }}"
       loop: "{{ brew_cask_status.results }}"
+      loop_control:
+        label: "{{ item.item }}"
       when: item.rc != 0
       changed_when: true
 

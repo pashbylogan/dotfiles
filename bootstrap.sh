@@ -7,9 +7,23 @@ REPO_REF="${DOTFILES_REPO_REF:-master}"
 REPO_DIR="${DOTFILES_REPO_DIR:-$HOME/projects/dotfiles}"
 PROFILE="${DOTFILES_PROFILE:-auto}"
 
-log() {
-  printf '%s\n' "$*"
-}
+# ─── Colors & helpers ────────────────────────────────────────────────────────
+# Self-contained — cannot source common.sh because the repo may not exist yet.
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+info()    { printf "${CYAN}ℹ ${NC}%s\n" "$*"; }
+success() { printf "${GREEN}✔ ${NC}%s\n" "$*"; }
+warn()    { printf "${YELLOW}⚠ ${NC}%s\n" "$*"; }
+error()   { printf "${RED}✖ ${NC}%s\n" "$*" >&2; }
+step()    { printf "\n${BOLD}── %s ──${NC}\n" "$*"; }
+
+die() { error "$@"; exit 1; }
 
 have() {
   command -v "$1" >/dev/null 2>&1
@@ -31,9 +45,11 @@ detect_os() {
   uname -s
 }
 
+# ─── Prerequisite installation ───────────────────────────────────────────────
+
 install_homebrew() {
   if ! have brew; then
-    log "Installing Homebrew"
+    info "Installing Homebrew"
     NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   fi
 }
@@ -64,8 +80,7 @@ install_linux_prereqs() {
     return
   fi
 
-  log "Unsupported Linux package manager. Install git, stow, age, python3, and ansible manually."
-  exit 1
+  die "Unsupported Linux package manager. Install git, stow, age, python3, and ansible manually."
 }
 
 install_macos_prereqs() {
@@ -74,22 +89,32 @@ install_macos_prereqs() {
   brew install git stow age ansible
 }
 
+# ─── Repo clone / update ────────────────────────────────────────────────────
+
 clone_or_update_repo() {
   mkdir -p "$(dirname "$REPO_DIR")"
 
   if [ -d "$REPO_DIR/.git" ]; then
-    log "Updating existing dotfiles repo"
+    info "Updating existing dotfiles repo"
     git -C "$REPO_DIR" fetch --all --prune
     git -C "$REPO_DIR" checkout "$REPO_REF"
     git -C "$REPO_DIR" pull --ff-only origin "$REPO_REF"
   else
-    log "Cloning dotfiles repo"
+    info "Cloning dotfiles repo"
     git clone --branch "$REPO_REF" "$REPO_URL" "$REPO_DIR"
   fi
 }
 
+# ─── Main ────────────────────────────────────────────────────────────────────
+
 main() {
+  step "Bootstrap — $(detect_os)"
+  info "Repo: ${REPO_URL} (${REPO_REF})"
+  info "Target: ${REPO_DIR}"
+
   os="$(detect_os)"
+
+  step "Installing prerequisites"
   case "$os" in
     Linux)
       install_linux_prereqs
@@ -98,14 +123,16 @@ main() {
       install_macos_prereqs
       ;;
     *)
-      log "Unsupported OS: $os"
-      exit 1
+      die "Unsupported OS: $os"
       ;;
   esac
+  success "Prerequisites installed"
 
+  step "Cloning dotfiles"
   clone_or_update_repo
+  success "Repo ready at ${REPO_DIR}"
 
-  log "Applying dotfiles"
+  step "Handing off to apply"
   DOTFILES_PROFILE="$PROFILE" "$REPO_DIR/scripts/apply"
 }
 

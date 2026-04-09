@@ -2,17 +2,31 @@
 
 set -euo pipefail
 
-log() {
-  printf '%s\n' "$*"
-}
+# ─── Colors & helpers ────────────────────────────────────────────────────────
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+info()    { echo -e "${CYAN}ℹ ${NC}$*"; }
+success() { echo -e "${GREEN}✔ ${NC}$*"; }
+warn()    { echo -e "${YELLOW}⚠ ${NC}$*"; }
+error()   { echo -e "${RED}✖ ${NC}$*" >&2; }
+step()    { echo -e "\n${BOLD}── $* ──${NC}"; }
+
+die() { error "$@"; exit 1; }
+
+# ─── Core utilities ──────────────────────────────────────────────────────────
 
 repo_root() {
   cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd
 }
 
-detect_os() {
-  uname -s
-}
+_DOTFILES_OS="$(uname -s)"
+detect_os() { echo "$_DOTFILES_OS"; }
 
 default_profile() {
   case "$(detect_os)" in
@@ -30,12 +44,8 @@ resolved_profile() {
   fi
 }
 
-require_cmd() {
-  local cmd="$1"
-  if ! command -v "$cmd" >/dev/null 2>&1; then
-    echo "Missing required command: $cmd" >&2
-    exit 1
-  fi
+have() {
+  command -v "$1" >/dev/null 2>&1
 }
 
 need_sudo() {
@@ -50,9 +60,7 @@ run_root() {
   fi
 }
 
-have() {
-  command -v "$1" >/dev/null 2>&1
-}
+# ─── Prerequisite installation ───────────────────────────────────────────────
 
 ensure_linux_prereqs() {
   if have apt-get; then
@@ -80,14 +88,12 @@ ensure_linux_prereqs() {
     return
   fi
 
-  log "Unsupported Linux package manager. Install stow, python3, and ansible manually."
-  exit 1
+  die "Unsupported Linux package manager. Install stow, python3, and ansible manually."
 }
 
 ensure_macos_prereqs() {
   if ! have brew; then
-    log "Homebrew is required on macOS. Run bootstrap.sh or install Homebrew first."
-    exit 1
+    die "Homebrew is required on macOS. Run bootstrap.sh or install Homebrew first."
   fi
 
   eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
@@ -99,7 +105,7 @@ ensure_prereqs() {
     return
   fi
 
-  log "Installing missing prerequisites"
+  step "Installing missing prerequisites"
   case "$(detect_os)" in
     Linux)
       ensure_linux_prereqs
@@ -108,11 +114,13 @@ ensure_prereqs() {
       ensure_macos_prereqs
       ;;
     *)
-      log "Unsupported OS: $(detect_os)"
-      exit 1
+      die "Unsupported OS: $(detect_os)"
       ;;
   esac
+  success "Prerequisites installed"
 }
+
+# ─── Playbook runner ─────────────────────────────────────────────────────────
 
 run_playbook() {
   local mode="$1"
@@ -120,15 +128,34 @@ run_playbook() {
 
   local root
   root="$(repo_root)"
+  local profile
+  profile="$(resolved_profile)"
+
+  step "Dotfiles ${mode} — profile: ${BOLD}${profile}${NC}"
+  info "Repo root: ${root}"
 
   ensure_prereqs
-  require_cmd ansible-playbook
+
+  if [[ "$mode" == "check" ]]; then
+    info "Running in ${BOLD}check mode${NC} (no changes will be made)"
+  fi
+
+  step "Running Ansible playbook"
 
   ANSIBLE_CONFIG="$root/ansible/ansible.cfg" ansible-playbook \
     -i "$root/ansible/inventory/hosts.yml" \
     "$root/ansible/site.yml" \
     -e "dotfiles_repo_root=$root" \
     -e "dotfiles_mode=$mode" \
-    -e "dotfiles_profile=$(resolved_profile)" \
+    -e "dotfiles_profile=$profile" \
     "$@"
+
+  local rc=$?
+  echo ""
+  if [[ $rc -eq 0 ]]; then
+    success "${BOLD}${mode^} complete.${NC}"
+  else
+    error "${BOLD}${mode^} failed${NC} (exit code $rc)"
+  fi
+  return $rc
 }
