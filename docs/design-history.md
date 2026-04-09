@@ -375,14 +375,91 @@ The `dex-autostart` package is only installed for the `linux_desktop` profile, b
 
 ## Current State
 
-The repo now aims to be:
+The system has been validated in Docker containers across Ubuntu, Fedora, Arch, and openSUSE. Both `scripts/apply` (fresh install) and `scripts/update` (upgrade path) pass on all four distros.
 
-- bootstrappable from a near-empty machine
-- idempotent on repeat runs
-- able to self-heal missing packages and config
-- opinionated about install locations
-- smaller and more testable than the original personal environment dump
+### Full Managed Software List
 
-The known Ansible implementation bugs have been caught and fixed before the first live run. The next major step is validation in Docker containers and then tightening whatever breaks under a genuinely fresh-machine workflow.
+Everything below is installed and kept up to date by the playbook.
 
-A full list of deliberately cut items that can be added back later is maintained in the README under "Not Managed (Optional Add-Backs)."
+**OS packages (all profiles):**
+
+| Abstract name | What it is |
+|---------------|-----------|
+| `git` | version control |
+| `curl` | HTTP client |
+| `ca-certificates` | root certificate bundle |
+| `stow` | symlink farm manager |
+| `zsh` | shell |
+| `tmux` | terminal multiplexer |
+| `neovim` | editor |
+| `fzf` | fuzzy finder |
+| `ripgrep` | search |
+| `fd` | file finder |
+| `age` | encryption |
+| `unzip` | archive utility |
+| `build_tools` | compiler toolchain (gcc, make, etc.) |
+| `python` | Python 3 + pip |
+| `xterm_terminal` | fallback terminal for first boot |
+
+**OS packages (linux_desktop profile only):**
+
+| Abstract name | What it is |
+|---------------|-----------|
+| `i3` | tiling window manager |
+| `i3status` | status bar |
+| `i3lock` | screen locker |
+| `xss-lock` | auto-lock on idle |
+| `feh` | wallpaper / image viewer |
+| `pavucontrol` | PulseAudio volume control |
+| `thunar` | file manager |
+| `rofi` | application launcher |
+| `picom` | compositor |
+| `dex` | autostart `.desktop` entries |
+| `nm_applet` | NetworkManager tray applet |
+| `jetbrains_mono_fonts` | terminal/editor font |
+
+**OS packages (macOS via Homebrew):**
+
+All core CLI packages above via `brew install`, plus `ansible`. Ghostty via `brew install --cask ghostty`.
+
+**User-managed runtimes (~/apps):**
+
+| Tool | Location | Install method | Update method |
+|------|----------|---------------|---------------|
+| uv | `~/apps/uv` | astral.sh installer | re-run installer |
+| nvm | `~/apps/nvm` | git clone (pinned tag) | git pull |
+| Node.js LTS | via nvm | `nvm install --lts` | re-run install |
+| npm (latest) | via nvm/node | `npm install -g npm@latest` | re-run install |
+
+**Shell tooling:**
+
+| Tool | Location | Install method | Update method |
+|------|----------|---------------|---------------|
+| oh-my-zsh | `~/.oh-my-zsh` | git clone | git pull |
+
+**Stow packages (symlinked into $HOME):**
+
+| Package | What it manages |
+|---------|----------------|
+| `ssh` | `~/.ssh/config`, `~/.ssh/config.local.example` |
+| `nvim` | `~/.config/nvim/` |
+| `tmux` | `~/.tmux.conf` |
+| `zsh` | `~/.zshrc`, `~/.zsh_profile` |
+| `bin` | `~/.local/scripts/*` (user utility scripts) |
+| `ghostty` | `~/.config/ghostty/` |
+| `i3` | `~/.config/i3/config` (linux_desktop only) |
+| `i3status` | `~/.config/i3status/config` (linux_desktop only) |
+| `picom` | `~/.config/picom/picom.conf` (linux_desktop only) |
+
+**Directories created by the filesystem role:**
+
+`~/apps`, `~/apps/bin`, `~/apps/go` (+ bin, cache, config, pkg subdirs), `~/apps/src`, `~/apps/tmp`, `~/.local/bin`, `~/.local/scripts`, `~/.local/share`, `~/.local/share/backgrounds`
+
+### Deferred Software (Not Managed)
+
+The following were deliberately cut to keep the base small. See the README for the full list. They can be added back behind profile flags or host-specific roles.
+
+- Desktop `.desktop` launchers (Discord, IntelliJ, Obsidian, Postman, Thunderbird)
+- i3 workspace rules (Firefox, Slack, Obsidian, JetBrains IDEA, Spotify)
+- Shell wrappers (claude, gemini, gssh, vpns/exitnode, android, dbmate/dbdump, autorandr, cdwt, gcloud, cloud-sql-proxy)
+- Linux packages (blueman, xbacklight, lxappearance, autorandr)
