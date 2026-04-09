@@ -5,28 +5,13 @@
   loop: "{{ dotfiles_stow_packages_resolved }}"
   register: dotfiles_stow_package_stats
 
-- name: Preview stow changes
-  ansible.builtin.command:
-    cmd: >-
-      stow
-      -S
-      -n
-      -v
-      -t {{ dotfiles_stow_target }}
-      {{ item.item }}
-    chdir: "{{ dotfiles_repo_root }}"
-  loop: "{{ dotfiles_stow_package_stats.results }}"
-  when: item.stat.exists
-  register: dotfiles_stow_preview
-  changed_when: "(stderr | default('')) is search('LINK:')"
-
 - name: Apply stow packages
   ansible.builtin.command:
-    cmd: "stow -t {{ dotfiles_stow_target }} -R {{ item.item.item }}"
+    cmd: "stow -v -t {{ dotfiles_stow_target }} -R {{ item.item }}"
     chdir: "{{ dotfiles_repo_root }}"
-  loop: "{{ dotfiles_stow_preview.results }}"
+  loop: "{{ dotfiles_stow_package_stats.results }}"
   when:
     - dotfiles_mode != 'check'
-    - not (item.skipped | default(false))
-    - item.changed | default(false) or dotfiles_mode == 'update'
-  changed_when: item.changed | default(false)
+    - item.stat.exists
+  register: dotfiles_stow_apply
+  changed_when: "'LINK:' in (dotfiles_stow_apply.stderr | default(''))"

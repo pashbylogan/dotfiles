@@ -34,13 +34,21 @@
   changed_when: true
 
 - name: Update uv
-  ansible.builtin.command: "{{ dotfiles_uv_bin_dir }}/uv self update"
+  ansible.builtin.shell: |
+    set -euo pipefail
+    curl -LsSf https://astral.sh/uv/install.sh | env \
+      UV_UNMANAGED_INSTALL="{{ dotfiles_uv_bin_dir }}" \
+      UV_INSTALL_DIR="{{ dotfiles_uv_bin_dir }}" \
+      UV_NO_MODIFY_PATH=1 \
+      sh
+  args:
+    executable: /bin/bash
   register: dotfiles_uv_update
   when:
     - dotfiles_uv_enabled
     - dotfiles_mode == "update"
     - dotfiles_uv_binary.stat.exists
-  changed_when: "'already' not in (dotfiles_uv_update.stderr | default('') + dotfiles_uv_update.stdout | default(''))"
+  changed_when: "'is already installed' not in (dotfiles_uv_update.stderr | default(''))"
 
 - name: Install nvm
   ansible.builtin.git:
