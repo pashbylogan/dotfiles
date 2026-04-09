@@ -48,6 +48,7 @@
     dest: "{{ dotfiles_nvm_dir }}"
     version: "{{ dotfiles_nvm_version }}"
     update: "{{ dotfiles_mode == 'update' }}"
+    recursive: false
   when: dotfiles_nvm_enabled
 
 - name: Check if a Node.js default is installed

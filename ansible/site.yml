@@ -18,9 +18,15 @@
       ansible.builtin.include_vars:
         file: "{{ playbook_dir }}/vars/profiles/{{ dotfiles_resolved_profile }}.yml"
 
+    - name: Normalize package manager name
+      ansible.builtin.set_fact:
+        dotfiles_pkg_mgr: >-
+          {{ 'dnf' if ansible_pkg_mgr in ['dnf', 'dnf5'] else ansible_pkg_mgr }}
+      when: ansible_system == "Linux"
+
     - name: Load Linux package-manager map
       ansible.builtin.include_vars:
-        file: "{{ playbook_dir }}/vars/linux_pkg_mgr/{{ ansible_pkg_mgr }}.yml"
+        file: "{{ playbook_dir }}/vars/linux_pkg_mgr/{{ dotfiles_pkg_mgr }}.yml"
       when: ansible_system == "Linux"
 
     - name: Resolve Linux package list

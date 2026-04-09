@@ -37,8 +37,7 @@ dotfiles_linux_pkg_map:
     - i3status
   i3lock:
     - i3lock
-  xss-lock:
-    - xss-lock
+  xss-lock: []
   feh:
     - feh
   pavucontrol:
