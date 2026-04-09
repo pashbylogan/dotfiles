@@ -20,6 +20,8 @@ dotfiles_linux_pkg_map:
     - ripgrep
   age:
     - age
+  gh:
+    - gh
   unzip:
     - unzip
   build_tools:

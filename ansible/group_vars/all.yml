@@ -31,6 +31,7 @@ dotfiles_common_linux_packages:
   - ripgrep
   - fd
   - age
+  - gh
   - unzip
   - build_tools
   - python
@@ -47,6 +48,7 @@ dotfiles_common_macos_packages:
   - ripgrep
   - fd
   - age
+  - gh
 
 dotfiles_oh_my_zsh_enabled: true
 dotfiles_oh_my_zsh_dir: "{{ ansible_env.HOME }}/.oh-my-zsh"
