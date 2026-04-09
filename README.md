@@ -4,10 +4,12 @@ Personal environment managed by [stow](https://www.gnu.org/software/stow/) + [An
 
 ## Quick Start
 
-**Fresh machine** (needs only `curl` and a package manager):
+**Fresh machine** (needs only `curl` or `wget` and a package manager):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/pashbyl/dotfiles/master/bootstrap.sh | sh
+# or
+wget -qO- https://raw.githubusercontent.com/pashbyl/dotfiles/master/bootstrap.sh | sh
 ```
 
 **Day-to-day** (inside the repo):
