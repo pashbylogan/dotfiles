@@ -1,11 +1,14 @@
 #!/bin/bash
 
-# Get external IP address using ifconfig.me service
+# Get external IP address using ipinfo.io service
 external_ip=$(curl -s ipinfo.io/ip)
 location=$(curl -s https://ipinfo.io/$external_ip)
 city=$(echo $location | jq -r '.city')
 state=$(echo $location | jq -r '.region')
 country=$(echo $location | jq -r '.country')
+
+# Check Mullvad VPN connection status
+mullvad_status=$(curl -s https://am.i.mullvad.net/connected)
 
 # Check if the IP address was successfully retrieved
 if [[ -z "$external_ip" || -z "$city" || -z "$country" ]]; then
@@ -13,4 +16,9 @@ if [[ -z "$external_ip" || -z "$city" || -z "$country" ]]; then
 else
     echo $external_ip
     echo $city, $state, $country
+    if [[ "$mullvad_status" == *"You are connected"* ]]; then
+        echo "Mullvad: Connected"
+    else
+        echo "Mullvad: Not connected"
+    fi
 fi

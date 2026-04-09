@@ -121,6 +121,3 @@ case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
-
-# Claude requires the alias to be in here rather than zsh_profile for some reason
-alias claude="~/.claude/local/claude"

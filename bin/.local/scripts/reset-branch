@@ -1,0 +1,446 @@
+#!/usr/bin/env bash
+#
+# reset-branch.sh
+#
+# Resets a GitHub branch to the exact state of another branch.
+# Handles branch protections, default branch swaps, and safe recreation
+# entirely via the GitHub API (no clone needed).
+#
+# Requirements: gh CLI (authenticated), jq
+#
+# Usage:
+#   ./reset-branch.sh <owner/repo> <branch-to-reset> <source-branch>
+#
+# Examples:
+#   ./reset-branch.sh cypris-ai/frontend dev uat
+#   ./reset-branch.sh cypris-ai/backend dev prod
+#   ./reset-branch.sh cypris-ai/backend uat prod
+#
+
+set -euo pipefail
+
+# ─── Colors & helpers ────────────────────────────────────────────────────────
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+info()    { echo -e "${CYAN}ℹ ${NC}$*"; }
+success() { echo -e "${GREEN}✔ ${NC}$*"; }
+warn()    { echo -e "${YELLOW}⚠ ${NC}$*"; }
+error()   { echo -e "${RED}✖ ${NC}$*" >&2; }
+step()    { echo -e "\n${BOLD}── $* ──${NC}"; }
+
+die() { error "$@"; exit 1; }
+
+# ─── Args ────────────────────────────────────────────────────────────────────
+
+if [[ $# -ne 3 ]]; then
+    echo -e "${BOLD}Usage:${NC} $0 <owner/repo> <branch-to-reset> <source-branch>"
+    echo ""
+    echo "  Resets <branch-to-reset> to the exact state of <source-branch>."
+    echo "  Handles branch protections and default branch swaps automatically."
+    echo ""
+    echo "  Examples:"
+    echo "    $0 cypris-ai/frontend dev uat"
+    echo "    $0 cypris-ai/backend uat prod"
+    exit 1
+fi
+
+REPO="$1"
+TARGET_BRANCH="$2"
+SOURCE_BRANCH="$3"
+
+# ─── Preflight checks ───────────────────────────────────────────────────────
+
+step "Preflight checks"
+
+command -v gh  >/dev/null 2>&1 || die "gh CLI is not installed. Install: https://cli.github.com"
+command -v jq  >/dev/null 2>&1 || die "jq is not installed. Install: sudo apt install jq / brew install jq"
+
+# Verify authentication
+gh auth status >/dev/null 2>&1 || die "gh CLI is not authenticated. Run: gh auth login"
+info "gh CLI authenticated"
+
+# Verify repo exists and we have admin access
+VIEWER_PERMISSION=$(gh api "repos/${REPO}" --jq '.permissions.admin' 2>/dev/null) \
+    || die "Repository ${REPO} not found or not accessible"
+[[ "$VIEWER_PERMISSION" == "true" ]] || die "You need admin access to ${REPO} to manage branch protections"
+success "Admin access confirmed on ${REPO}"
+
+# Verify source branch exists
+SOURCE_SHA=$(gh api "repos/${REPO}/git/ref/heads/${SOURCE_BRANCH}" --jq '.object.sha' 2>/dev/null) \
+    || die "Source branch '${SOURCE_BRANCH}' does not exist on ${REPO}"
+info "Source branch '${SOURCE_BRANCH}' exists at ${SOURCE_SHA:0:12}"
+
+# Verify target branch exists
+TARGET_SHA=$(gh api "repos/${REPO}/git/ref/heads/${TARGET_BRANCH}" --jq '.object.sha' 2>/dev/null) \
+    || die "Target branch '${TARGET_BRANCH}' does not exist on ${REPO}"
+info "Target branch '${TARGET_BRANCH}' exists at ${TARGET_SHA:0:12}"
+
+# Check if they're already identical
+if [[ "$SOURCE_SHA" == "$TARGET_SHA" ]]; then
+    success "'${TARGET_BRANCH}' is already at the same commit as '${SOURCE_BRANCH}'. Nothing to do."
+    exit 0
+fi
+
+# Get default branch
+DEFAULT_BRANCH=$(gh api "repos/${REPO}" --jq '.default_branch' 2>/dev/null)
+info "Default branch: ${DEFAULT_BRANCH}"
+
+NEED_DEFAULT_SWAP=false
+if [[ "$DEFAULT_BRANCH" == "$TARGET_BRANCH" ]]; then
+    NEED_DEFAULT_SWAP=true
+    warn "'${TARGET_BRANCH}' is the default branch — will temporarily swap default to '${SOURCE_BRANCH}'"
+fi
+
+# ─── Summary & confirmation ─────────────────────────────────────────────────
+
+step "Operation summary"
+
+echo ""
+echo -e "  Repository:     ${BOLD}${REPO}${NC}"
+echo -e "  Reset branch:   ${BOLD}${TARGET_BRANCH}${NC}  (${TARGET_SHA:0:12})"
+echo -e "  To match:       ${BOLD}${SOURCE_BRANCH}${NC}  (${SOURCE_SHA:0:12})"
+if [[ "$NEED_DEFAULT_SWAP" == true ]]; then
+    echo -e "  Default swap:   ${YELLOW}yes${NC} (${TARGET_BRANCH} → ${SOURCE_BRANCH} → ${TARGET_BRANCH})"
+fi
+echo ""
+warn "This will ${BOLD}DELETE${NC} the '${TARGET_BRANCH}' branch and recreate it from '${SOURCE_BRANCH}'."
+warn "All commits on '${TARGET_BRANCH}' that are not on '${SOURCE_BRANCH}' will be lost."
+echo ""
+
+# Show what will be lost (commits on target not on source)
+AHEAD_COUNT=$(gh api "repos/${REPO}/compare/${SOURCE_BRANCH}...${TARGET_BRANCH}" --jq '.ahead_by' 2>/dev/null || echo "unknown")
+if [[ "$AHEAD_COUNT" != "0" && "$AHEAD_COUNT" != "unknown" ]]; then
+    warn "${TARGET_BRANCH} is ${BOLD}${AHEAD_COUNT} commits ahead${NC} of ${SOURCE_BRANCH}. These will be lost:"
+    echo ""
+    gh api "repos/${REPO}/compare/${SOURCE_BRANCH}...${TARGET_BRANCH}" \
+        --jq '.commits[] | "    \(.sha[0:12])  \(.commit.message | split("\n")[0])"' 2>/dev/null || true
+    echo ""
+fi
+
+# Detect open PRs targeting the branch that will be deleted
+PR_FILE=$(mktemp /tmp/open-prs-XXXXXX.json)
+OPEN_PR_COUNT=0
+
+info "Checking for open pull requests targeting '${TARGET_BRANCH}'..."
+
+# Paginate through all open PRs with this base branch
+PAGE=1
+echo "[]" > "$PR_FILE"
+while true; do
+    PAGE_RESULTS=$(gh api "repos/${REPO}/pulls?base=${TARGET_BRANCH}&state=open&per_page=100&page=${PAGE}" 2>/dev/null) || break
+    PAGE_COUNT=$(echo "$PAGE_RESULTS" | jq 'length')
+    if [[ "$PAGE_COUNT" -eq 0 ]]; then
+        break
+    fi
+    # Merge into our collected results
+    EXISTING=$(cat "$PR_FILE")
+    echo "$EXISTING" "$PAGE_RESULTS" | jq -s 'add' > "$PR_FILE"
+    if [[ "$PAGE_COUNT" -lt 100 ]]; then
+        break
+    fi
+    PAGE=$((PAGE + 1))
+done
+
+OPEN_PR_COUNT=$(jq 'length' "$PR_FILE")
+
+if [[ "$OPEN_PR_COUNT" -gt 0 ]]; then
+    warn "Found ${BOLD}${OPEN_PR_COUNT} open PR(s)${NC} targeting '${TARGET_BRANCH}'. These will be auto-closed by GitHub when the branch is deleted, then reopened after recreation:"
+    echo ""
+    jq -r '.[] | "    #\(.number)  \(.title)  ← \(.head.ref)  (@\(.user.login))"' "$PR_FILE"
+    echo ""
+    # Also save draft status, labels, assignees, reviewers, milestone for full restoration
+    jq '[.[] | {
+        number: .number,
+        title: .title,
+        head_ref: .head.ref,
+        head_sha: .head.sha,
+        draft: .draft,
+        labels: [.labels[].name],
+        assignees: [.assignees[].login],
+        requested_reviewers: [.requested_reviewers[].login],
+        requested_teams: [.requested_teams[].slug],
+        milestone_number: (.milestone.number // null),
+        user: .user.login
+    }]' "$PR_FILE" > "${PR_FILE}.meta"
+else
+    info "No open pull requests targeting '${TARGET_BRANCH}'"
+fi
+
+read -rp "$(echo -e "${YELLOW}Continue? (type 'yes' to confirm): ${NC}")" CONFIRM
+[[ "$CONFIRM" == "yes" ]] || { rm -f "$PR_FILE" "${PR_FILE}.meta"; info "Aborted."; exit 0; }
+
+# ─── Save branch protection ─────────────────────────────────────────────────
+
+step "Saving branch protection rules for '${TARGET_BRANCH}'"
+
+PROTECTION_FILE=$(mktemp /tmp/branch-protection-XXXXXX.json)
+HAS_PROTECTION=false
+
+if gh api "repos/${REPO}/branches/${TARGET_BRANCH}/protection" > "$PROTECTION_FILE" 2>/dev/null; then
+    HAS_PROTECTION=true
+    success "Branch protection rules saved to temp file"
+
+    # Log what we captured for transparency
+    info "Protection includes:"
+    jq -r '
+        if .required_pull_request_reviews then "  • Required PR reviews (approvals: \(.required_pull_request_reviews.required_approving_review_count // "?"))" else empty end,
+        if .required_status_checks then "  • Required status checks (strict: \(.required_status_checks.strict))" else empty end,
+        if .enforce_admins.enabled then "  • Enforce admins" else empty end,
+        if .required_linear_history.enabled then "  • Required linear history" else empty end,
+        if .restrictions then "  • Push restrictions" else empty end
+    ' "$PROTECTION_FILE" 2>/dev/null || true
+else
+    info "No branch protection rules found on '${TARGET_BRANCH}'"
+fi
+
+# ─── Remove branch protection ───────────────────────────────────────────────
+
+if [[ "$HAS_PROTECTION" == true ]]; then
+    step "Removing branch protection on '${TARGET_BRANCH}'"
+    gh api -X DELETE "repos/${REPO}/branches/${TARGET_BRANCH}/protection" >/dev/null 2>&1 \
+        && success "Branch protection removed" \
+        || warn "Could not remove branch protection (may already be gone)"
+fi
+
+# ─── Swap default branch if needed ──────────────────────────────────────────
+
+if [[ "$NEED_DEFAULT_SWAP" == true ]]; then
+    step "Temporarily changing default branch to '${SOURCE_BRANCH}'"
+    gh api -X PATCH "repos/${REPO}" \
+        -f "default_branch=${SOURCE_BRANCH}" \
+        --silent \
+        && success "Default branch changed to '${SOURCE_BRANCH}'" \
+        || die "Failed to change default branch. Aborting to prevent data loss."
+fi
+
+# ─── Delete and recreate the target branch ───────────────────────────────────
+
+step "Deleting branch '${TARGET_BRANCH}'"
+
+gh api -X DELETE "repos/${REPO}/git/refs/heads/${TARGET_BRANCH}" >/dev/null 2>&1 \
+    && success "Branch '${TARGET_BRANCH}' deleted" \
+    || die "Failed to delete branch '${TARGET_BRANCH}'. Check permissions."
+
+step "Recreating '${TARGET_BRANCH}' from '${SOURCE_BRANCH}' (${SOURCE_SHA:0:12})"
+
+gh api -X POST "repos/${REPO}/git/refs" \
+    -f "ref=refs/heads/${TARGET_BRANCH}" \
+    -f "sha=${SOURCE_SHA}" \
+    --silent \
+    && success "Branch '${TARGET_BRANCH}' created at ${SOURCE_SHA:0:12}" \
+    || {
+        error "Failed to create branch. Attempting recovery..."
+        # Try to recreate at old SHA so we don't lose the branch entirely
+        gh api -X POST "repos/${REPO}/git/refs" \
+            -f "ref=refs/heads/${TARGET_BRANCH}" \
+            -f "sha=${TARGET_SHA}" \
+            --silent \
+            && warn "RECOVERED: Branch restored to original state at ${TARGET_SHA:0:12}" \
+            || error "RECOVERY FAILED: Branch '${TARGET_BRANCH}' is gone! Original SHA was ${TARGET_SHA}"
+        die "Branch recreation failed."
+    }
+
+# ─── Restore default branch ─────────────────────────────────────────────────
+
+if [[ "$NEED_DEFAULT_SWAP" == true ]]; then
+    step "Restoring default branch to '${TARGET_BRANCH}'"
+    gh api -X PATCH "repos/${REPO}" \
+        -f "default_branch=${TARGET_BRANCH}" \
+        --silent \
+        && success "Default branch restored to '${TARGET_BRANCH}'" \
+        || warn "Could not restore default branch! Manually set it to '${TARGET_BRANCH}' in repo settings."
+fi
+
+# ─── Restore branch protection ──────────────────────────────────────────────
+
+if [[ "$HAS_PROTECTION" == true ]]; then
+    step "Restoring branch protection on '${TARGET_BRANCH}'"
+
+    # Build the protection payload from saved data.
+    # The GET response format differs from the PUT request format,
+    # so we need to transform it.
+    PROTECTION_PAYLOAD=$(jq '{
+        required_status_checks: (
+            if .required_status_checks then {
+                strict: .required_status_checks.strict,
+                checks: [
+                    (.required_status_checks.checks // [] | .[] | {context: .context, app_id: .app_id})
+                ]
+            } else null end
+        ),
+        enforce_admins: (.enforce_admins.enabled // false),
+        required_pull_request_reviews: (
+            if .required_pull_request_reviews then {
+                dismiss_stale_reviews: (.required_pull_request_reviews.dismiss_stale_reviews // false),
+                require_code_owner_reviews: (.required_pull_request_reviews.require_code_owner_reviews // false),
+                required_approving_review_count: (.required_pull_request_reviews.required_approving_review_count // 1),
+                require_last_push_approval: (.required_pull_request_reviews.require_last_push_approval // false)
+            } + (
+                if .required_pull_request_reviews.dismissal_restrictions then {
+                    dismissal_restrictions: {
+                        users: [.required_pull_request_reviews.dismissal_restrictions.users[]?.login] ,
+                        teams: [.required_pull_request_reviews.dismissal_restrictions.teams[]?.slug]
+                    }
+                } else {} end
+            ) + (
+                if .required_pull_request_reviews.bypass_pull_request_allowances then {
+                    bypass_pull_request_allowances: {
+                        users: [.required_pull_request_reviews.bypass_pull_request_allowances.users[]?.login],
+                        teams: [.required_pull_request_reviews.bypass_pull_request_allowances.teams[]?.slug]
+                    }
+                } else {} end
+            ) else null end
+        ),
+        restrictions: (
+            if .restrictions then {
+                users: [.restrictions.users[]?.login],
+                teams: [.restrictions.teams[]?.slug],
+                apps: [.restrictions.apps[]?.slug]
+            } else null end
+        ),
+        required_linear_history: (.required_linear_history.enabled // false),
+        allow_force_pushes: (.allow_force_pushes.enabled // false),
+        allow_deletions: (.allow_deletions.enabled // false),
+        block_creations: (.block_creations.enabled // false),
+        required_conversation_resolution: (.required_conversation_resolution.enabled // false),
+        lock_branch: (.lock_branch.enabled // false),
+        allow_fork_syncing: (.allow_fork_syncing.enabled // false)
+    }' "$PROTECTION_FILE")
+
+    echo "$PROTECTION_PAYLOAD" | gh api -X PUT "repos/${REPO}/branches/${TARGET_BRANCH}/protection" \
+        --input - \
+        --silent \
+        && success "Branch protection restored" \
+        || {
+            warn "Automated protection restore failed. Saving payload for manual review."
+            FALLBACK_FILE="/tmp/protection-restore-${REPO//\//-}-${TARGET_BRANCH}.json"
+            echo "$PROTECTION_PAYLOAD" > "$FALLBACK_FILE"
+            warn "Protection payload saved to: ${FALLBACK_FILE}"
+            warn "You may need to re-apply protections manually in GitHub settings."
+        }
+fi
+
+# ─── Reopen pull requests ────────────────────────────────────────────────────
+
+if [[ "$OPEN_PR_COUNT" -gt 0 ]]; then
+    step "Reopening ${OPEN_PR_COUNT} pull request(s) targeting '${TARGET_BRANCH}'"
+
+    # GitHub needs a moment after branch recreation before PRs can be reopened
+    info "Waiting a few seconds for GitHub to register the new branch..."
+    sleep 3
+
+    REOPEN_SUCCESS=0
+    REOPEN_FAIL=0
+
+    for PR_NUMBER in $(jq -r '.[].number' "${PR_FILE}.meta"); do
+        PR_TITLE=$(jq -r ".[] | select(.number == ${PR_NUMBER}) | .title" "${PR_FILE}.meta")
+        PR_HEAD=$(jq -r ".[] | select(.number == ${PR_NUMBER}) | .head_ref" "${PR_FILE}.meta")
+        PR_DRAFT=$(jq -r ".[] | select(.number == ${PR_NUMBER}) | .draft" "${PR_FILE}.meta")
+
+        # Check that the head (source) branch still exists — if it was also deleted, we can't reopen
+        if ! gh api "repos/${REPO}/git/ref/heads/${PR_HEAD}" >/dev/null 2>&1; then
+            warn "PR #${PR_NUMBER}: head branch '${PR_HEAD}' no longer exists — cannot reopen"
+            REOPEN_FAIL=$((REOPEN_FAIL + 1))
+            continue
+        fi
+
+        # Reopen the PR
+        if gh api -X PATCH "repos/${REPO}/pulls/${PR_NUMBER}" \
+            -f "state=open" \
+            --silent 2>/dev/null; then
+            success "PR #${PR_NUMBER} reopened: ${PR_TITLE}"
+            REOPEN_SUCCESS=$((REOPEN_SUCCESS + 1))
+
+            # Re-request reviewers if there were any
+            PR_REVIEWERS=$(jq -r ".[] | select(.number == ${PR_NUMBER}) | .requested_reviewers | join(\",\")" "${PR_FILE}.meta")
+            PR_TEAMS=$(jq -r ".[] | select(.number == ${PR_NUMBER}) | .requested_teams | join(\",\")" "${PR_FILE}.meta")
+
+            if [[ -n "$PR_REVIEWERS" || -n "$PR_TEAMS" ]]; then
+                REVIEWER_PAYLOAD="{}"
+                if [[ -n "$PR_REVIEWERS" ]]; then
+                    REVIEWER_PAYLOAD=$(echo "$REVIEWER_PAYLOAD" | jq --arg r "$PR_REVIEWERS" '. + {reviewers: ($r | split(","))}')
+                fi
+                if [[ -n "$PR_TEAMS" ]]; then
+                    REVIEWER_PAYLOAD=$(echo "$REVIEWER_PAYLOAD" | jq --arg t "$PR_TEAMS" '. + {team_reviewers: ($t | split(","))}')
+                fi
+                echo "$REVIEWER_PAYLOAD" | gh api -X POST "repos/${REPO}/pulls/${PR_NUMBER}/requested_reviewers" \
+                    --input - --silent 2>/dev/null \
+                    && info "  Restored review requests for PR #${PR_NUMBER}" \
+                    || warn "  Could not restore review requests for PR #${PR_NUMBER}"
+            fi
+        else
+            warn "PR #${PR_NUMBER}: failed to reopen — may need manual intervention"
+            warn "  Title: ${PR_TITLE}"
+            warn "  Head:  ${PR_HEAD}"
+            REOPEN_FAIL=$((REOPEN_FAIL + 1))
+        fi
+    done
+
+    echo ""
+    if [[ "$REOPEN_FAIL" -eq 0 ]]; then
+        success "All ${REOPEN_SUCCESS} PR(s) reopened successfully"
+    else
+        warn "${REOPEN_SUCCESS} PR(s) reopened, ${REOPEN_FAIL} failed — check GitHub for details"
+    fi
+fi
+
+# ─── Verify ──────────────────────────────────────────────────────────────────
+
+step "Verification"
+
+NEW_SHA=$(gh api "repos/${REPO}/git/ref/heads/${TARGET_BRANCH}" --jq '.object.sha' 2>/dev/null) || true
+
+if [[ "$NEW_SHA" == "$SOURCE_SHA" ]]; then
+    success "'${TARGET_BRANCH}' is now at ${NEW_SHA:0:12} (matches '${SOURCE_BRANCH}')"
+else
+    warn "SHA mismatch! ${TARGET_BRANCH}=${NEW_SHA:0:12}, expected ${SOURCE_SHA:0:12}"
+fi
+
+# Verify protection was restored
+if [[ "$HAS_PROTECTION" == true ]]; then
+    if gh api "repos/${REPO}/branches/${TARGET_BRANCH}/protection" >/dev/null 2>&1; then
+        success "Branch protection is active on '${TARGET_BRANCH}'"
+    else
+        warn "Branch protection may not be fully restored — check GitHub settings"
+    fi
+fi
+
+# Verify default branch
+if [[ "$NEED_DEFAULT_SWAP" == true ]]; then
+    CURRENT_DEFAULT=$(gh api "repos/${REPO}" --jq '.default_branch' 2>/dev/null)
+    if [[ "$CURRENT_DEFAULT" == "$TARGET_BRANCH" ]]; then
+        success "Default branch is '${TARGET_BRANCH}'"
+    else
+        warn "Default branch is '${CURRENT_DEFAULT}', expected '${TARGET_BRANCH}'"
+    fi
+fi
+
+# Verify PRs were reopened
+if [[ "$OPEN_PR_COUNT" -gt 0 ]]; then
+    STILL_OPEN=$(gh api "repos/${REPO}/pulls?base=${TARGET_BRANCH}&state=open&per_page=100" --jq 'length' 2>/dev/null || echo "unknown")
+    if [[ "$STILL_OPEN" == "$OPEN_PR_COUNT" ]]; then
+        success "All ${OPEN_PR_COUNT} PR(s) confirmed open"
+    elif [[ "$STILL_OPEN" != "unknown" ]]; then
+        warn "${STILL_OPEN} of ${OPEN_PR_COUNT} PR(s) are open — some may need manual reopening"
+    fi
+fi
+
+# Cleanup
+rm -f "$PROTECTION_FILE" "$PR_FILE" "${PR_FILE}.meta"
+
+echo ""
+success "${BOLD}Done!${NC} Branch '${TARGET_BRANCH}' has been reset to match '${SOURCE_BRANCH}'."
+if [[ "$OPEN_PR_COUNT" -gt 0 ]]; then
+    info "${OPEN_PR_COUNT} pull request(s) were preserved across the reset."
+fi
+echo ""
+info "If you have a local clone, run:"
+echo "    git fetch origin"
+echo "    git checkout ${TARGET_BRANCH}"
+echo "    git reset --hard origin/${TARGET_BRANCH}"

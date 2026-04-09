@@ -31,11 +31,14 @@ alias tl='tmux list-sessions'
 
 # use specific terminal bc alacritty breaks shit
 alias ssh='TERM=xterm-256color ssh'
-alias gssh='TERM=xterm-256color gcloud compute ssh'
+function gssh() {
+  local ip=$(gcloud compute instances describe "$1" --format='get(networkInterfaces[0].networkIP)' "${@:2}")
+  echo $ip
+  TERM=xterm-256color ssh "$ip"
+}
 
 # vim
-alias nvim='$HOME/apps/nvim/nvim.appimage'
-alias vim='$HOME/apps/nvim/nvim.appimage'
+alias vim='nvim'
 alias vimrc='nvim $HOME/.config/nvim/'
 
 # git
@@ -49,7 +52,7 @@ alias wtp='git worktree prune'
 alias cdwt='f() { cd "$(git worktree list | grep $1 | awk "{print \$1}")"; }; f'
 
 # claude code
-CLAUDE_LOCATION="/home/pashbyl/.claude/local/claude"
+CLAUDE_LOCATION="/home/pashbyl/.local/bin/claude"
 
 _claude_run() {
   export CLAUDE_CODE_USE_VERTEX=1
@@ -84,6 +87,27 @@ exitnode() {
     sudo tailscale set --exit-node=
   else
     echo "Usage: exitnode up|down"
+  fi
+}
+
+vpns() {
+  local wg_up=false
+  local ts_up=false
+
+  ip link show cypris &>/dev/null && wg_up=true
+  tailscale status --json 2>/dev/null | grep -q '"ExitNode": true' && ts_up=true
+
+  if $wg_up; then
+    echo "Switching from wireguard to mullvad..."
+    sudo wg-quick down cypris
+    exitnode up
+  elif $ts_up; then
+    echo "Switching from mullvad to wireguard..."
+    exitnode down
+    sudo wg-quick up cypris
+  else
+    echo "Error: neither wireguard nor mullvad is active"
+    return 1
   fi
 }
 
