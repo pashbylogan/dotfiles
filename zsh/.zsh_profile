@@ -78,22 +78,20 @@ export GOMODCACHE="${GOMODCACHE:-$GOPATH/pkg/mod}"
 export GOCACHE="${GOCACHE:-$GOPATH/cache/build}"
 export GOENV="${GOENV:-$GOPATH/config/env}"
 
-for extra_path in \
-  "$DOTFILES_LOCAL_BIN" \
-  "/usr/local/go/bin" \
-  "$DOTFILES_APPS_ROOT/bin" \
-  "$GOBIN" \
-  "$DOTFILES_APPS_ROOT/zig" \
-  "$DOTFILES_APPS_ROOT/hugo" \
-  "$DOTFILES_APPS_ROOT/heroku/bin" \
-  "$DOTFILES_APPS_ROOT/uv" \
-  "$DOTFILES_APPS_ROOT/uv/bin" \
-  "$DOTFILES_APPS_ROOT/uv/python/bin" \
-  "$DOTFILES_LOCAL_SCRIPTS" \
+path+=(
+  "$DOTFILES_LOCAL_BIN"
+  "/usr/local/go/bin"
+  "$DOTFILES_APPS_ROOT/bin"
+  "$GOBIN"
+  "$DOTFILES_APPS_ROOT/zig"
+  "$DOTFILES_APPS_ROOT/hugo"
+  "$DOTFILES_APPS_ROOT/heroku/bin"
+  "$DOTFILES_APPS_ROOT/uv"
+  "$DOTFILES_APPS_ROOT/uv/bin"
+  "$DOTFILES_APPS_ROOT/uv/python/bin"
+  "$DOTFILES_LOCAL_SCRIPTS"
   "$HOME/.opencode/bin"
-do
-  [[ -d "$extra_path" ]] && path+=("$extra_path")
-done
+)
 
 # Load optional extras (not managed by Ansible).
 # Copy what you need from zsh/.zsh_extras.example into ~/.zsh_extras.
