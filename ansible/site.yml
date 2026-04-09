@@ -3,6 +3,8 @@
   hosts: localhost
   connection: local
   gather_facts: true
+  gather_subset:
+    - min
 
   pre_tasks:
     - name: Resolve profile

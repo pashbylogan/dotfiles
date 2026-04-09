@@ -23,6 +23,9 @@ ZSH_THEME="robbyrussell"
 # Ansible manages oh-my-zsh updates; disable the built-in auto-update check.
 DISABLE_AUTO_UPDATE="true"
 
+# Skip compaudit permission checks — saves ~30-80ms per shell open.
+ZSH_DISABLE_COMPFIX="true"
+
 # Uncomment the following line to automatically update without prompting.
 # DISABLE_UPDATE_PROMPT="true"
 
