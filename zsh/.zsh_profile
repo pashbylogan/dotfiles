@@ -94,3 +94,7 @@ for extra_path in \
 do
   [[ -d "$extra_path" ]] && path+=("$extra_path")
 done
+
+# Load optional extras (not managed by Ansible).
+# Copy what you need from zsh/.zsh_extras.example into ~/.zsh_extras.
+[[ -f ~/.zsh_extras ]] && source ~/.zsh_extras

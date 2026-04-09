@@ -1,0 +1,86 @@
+# Optional aliases and functions that were removed from the managed shell config.
+# Copy what you need into ~/.zsh_extras and it will be loaded automatically.
+#
+# cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
+
+# ─── Autorandr ───────────────────────────────────────────────────────────────
+
+alias ar='autorandr '
+
+# ─── Git worktree cd ─────────────────────────────────────────────────────────
+
+alias cdwt='f() { cd "$(git worktree list | grep $1 | awk "{print \$1}")"; }; f'
+
+# ─── gcloud SSH ──────────────────────────────────────────────────────────────
+
+function gssh() {
+  local ip=$(gcloud compute instances describe "$1" --format='get(networkInterfaces[0].networkIP)' "${@:2}")
+  echo $ip
+  TERM=xterm-256color ssh "$ip"
+}
+
+# ─── gcloud CLI ──────────────────────────────────────────────────────────────
+
+# source "$HOME/apps/google-cloud-sdk/completion.zsh.inc"
+# source "$HOME/apps/google-cloud-sdk/path.zsh.inc"
+# path+=("$HOME/apps/cloud-sql-proxy")
+
+# ─── Claude Code (Vertex AI) ────────────────────────────────────────────────
+
+# _claude_run() {
+#   export CLAUDE_CODE_USE_VERTEX=1
+#   export CLOUD_ML_REGION=us-east5
+#   export ANTHROPIC_VERTEX_PROJECT_ID=your-project-id
+#   local claude="${HOME}/.local/bin/claude"
+#   "$claude" update && "$claude" "$@"
+# }
+# alias claude='_claude_run'
+
+# ─── Gemini CLI (Vertex AI) ─────────────────────────────────────────────────
+
+# _gemini_run() {
+#   export GOOGLE_GENAI_USE_VERTEXAI=true
+#   export GOOGLE_CLOUD_LOCATION=us-central1
+#   export GOOGLE_CLOUD_PROJECT=your-project-id
+#   gemini "$@"
+# }
+# alias gemini='_gemini_run'
+
+# ─── VPN switching (WireGuard ↔ Tailscale) ───────────────────────────────────
+
+# exitnode() {
+#   if [ "$1" = "up" ]; then
+#     tailscale exit-node suggest | awk -F ": " '/Suggested exit node/ {print $2}' | xargs -I {} sudo tailscale set --exit-node={} --exit-node-allow-lan-access=true
+#   elif [ "$1" = "down" ]; then
+#     sudo tailscale set --exit-node=
+#   else
+#     echo "Usage: exitnode up|down"
+#   fi
+# }
+#
+# vpns() {
+#   local wg_up=false
+#   local ts_up=false
+#   ip link show cypris &>/dev/null && wg_up=true
+#   tailscale status --json 2>/dev/null | grep -q '"ExitNode": true' && ts_up=true
+#   if $wg_up; then
+#     echo "Switching from wireguard to mullvad..."
+#     sudo wg-quick down cypris
+#     exitnode up
+#   elif $ts_up; then
+#     echo "Switching from mullvad to wireguard..."
+#     exitnode down
+#     sudo wg-quick up cypris
+#   else
+#     echo "Error: neither wireguard nor mullvad is active"
+#     return 1
+#   fi
+# }
+
+# ─── Android (scrcpy) ───────────────────────────────────────────────────────
+
+# alias android='scrcpy --serial=YOUR_DEVICE_SERIAL'
+
+# ─── dbmate ──────────────────────────────────────────────────────────────────
+
+# alias dbmate="$HOME/apps/dbmate"
