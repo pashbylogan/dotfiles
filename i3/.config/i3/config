@@ -204,18 +204,15 @@ for_window [class="^.*"] client.focused          #77dd77 #285577 #ffffff #2e9ef4
 for_window [class="com.mitchellh.ghostty"] move workspace $ws1
 
 # visual
-# set background when the configured wallpaper exists
-exec_always --no-startup-id sh -lc 'wallpaper="$HOME/.local/share/backgrounds/2024-01-17-18-06-42-spiral.png"; [ -f "$wallpaper" ] && exec feh --bg-fill "$wallpaper"'
+# set background (one-shot — persists across i3 reload)
+exec --no-startup-id sh -c '[ -f "$HOME/.local/share/backgrounds/2024-01-17-18-06-42-spiral.png" ] && feh --bg-fill "$HOME/.local/share/backgrounds/2024-01-17-18-06-42-spiral.png"'
 
-# set up picom for transparency and for avoiding tearing
-exec_always --no-startup-id sh -lc 'command -v picom >/dev/null 2>&1 && { killall picom 2>/dev/null; sleep 0.1; exec picom --backend glx --vsync; }'
+# picom — must restart on reload to pick up config changes
+exec_always --no-startup-id sh -c 'killall -w picom 2>/dev/null; exec picom'
 
-# QoL
-# repeat keys
-exec_always --no-startup-id xset r rate 300 35 
-
-# host-local pointer and touchpad tuning
-exec_always --no-startup-id sh -lc '[ -x "$HOME/.local/scripts/apply-xinput-settings" ] && "$HOME/.local/scripts/apply-xinput-settings"'
+# QoL (one-shot — settings persist across i3 reload)
+exec --no-startup-id xset r rate 300 35
+exec --no-startup-id sh -c '[ -x "$HOME/.local/scripts/apply-xinput-settings" ] && "$HOME/.local/scripts/apply-xinput-settings"'
 
 # zoom settings
 # for_window [class="(.*join\?action\=join.*|.*zoom.*)"] floating enable
@@ -224,7 +221,7 @@ exec_always --no-startup-id sh -lc '[ -x "$HOME/.local/scripts/apply-xinput-sett
 
 # remaps
 # caps lock to control
-exec_always --no-startup-id setxkbmap -option ctrl:nocaps
+exec --no-startup-id setxkbmap -option ctrl:nocaps
 
 # key for i3lock
 bindsym $mod+Shift+x exec --no-startup-id i3lock -c 000000
