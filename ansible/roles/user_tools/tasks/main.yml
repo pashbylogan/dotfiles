@@ -50,58 +50,82 @@
     - dotfiles_uv_binary.stat.exists
   changed_when: "'is already installed' not in (dotfiles_uv_update.stderr | default(''))"
 
-- name: Install nvm
-  ansible.builtin.git:
-    repo: https://github.com/nvm-sh/nvm.git
-    dest: "{{ dotfiles_nvm_dir }}"
-    version: "{{ dotfiles_nvm_version }}"
-    update: "{{ dotfiles_mode == 'update' }}"
-    recursive: false
-  when: dotfiles_nvm_enabled
+- name: Check if fnm is installed
+  ansible.builtin.stat:
+    path: "{{ dotfiles_fnm_dir }}/fnm"
+  register: dotfiles_fnm_binary
+  when: dotfiles_fnm_enabled
 
-- name: Check if a Node.js default is installed
+- name: Install fnm
   ansible.builtin.shell: |
     set -euo pipefail
-    export NVM_DIR="{{ dotfiles_nvm_dir }}"
-    . "{{ dotfiles_nvm_dir }}/nvm.sh"
-    nvm version default
+    curl -fsSL https://fnm.vercel.app/install | bash -s -- \
+      --install-dir "{{ dotfiles_fnm_dir }}" \
+      --skip-shell
   args:
     executable: /bin/bash
-  register: dotfiles_node_default
+  when:
+    - dotfiles_fnm_enabled
+    - not dotfiles_fnm_binary.stat.exists
+  changed_when: true
+
+- name: Update fnm
+  ansible.builtin.shell: |
+    set -euo pipefail
+    curl -fsSL https://fnm.vercel.app/install | bash -s -- \
+      --install-dir "{{ dotfiles_fnm_dir }}" \
+      --skip-shell
+  args:
+    executable: /bin/bash
+  register: dotfiles_fnm_update
+  when:
+    - dotfiles_fnm_enabled
+    - dotfiles_mode == "update"
+    - dotfiles_fnm_binary.stat.exists
+  changed_when: "'already installed' not in (dotfiles_fnm_update.stderr | default(''))"
+
+- name: Check if Node.js LTS is installed
+  ansible.builtin.shell: |
+    set -euo pipefail
+    export PATH="{{ dotfiles_fnm_dir }}:$PATH"
+    eval "$(fnm env)"
+    fnm ls | grep -q lts-latest
+  args:
+    executable: /bin/bash
+  register: dotfiles_node_check
   changed_when: false
   failed_when: false
   when:
-    - dotfiles_nvm_enabled
+    - dotfiles_fnm_enabled
     - dotfiles_node_lts_enabled
 
-- name: Install latest Node.js LTS
+- name: Install Node.js LTS
   ansible.builtin.shell: |
     set -euo pipefail
-    export NVM_DIR="{{ dotfiles_nvm_dir }}"
-    . "{{ dotfiles_nvm_dir }}/nvm.sh"
-    nvm install --lts
-    nvm alias default 'lts/*'
+    export PATH="{{ dotfiles_fnm_dir }}:$PATH"
+    eval "$(fnm env)"
+    fnm install --lts
+    installed="$(fnm ls | grep lts-latest | head -1 | awk '{print $2}')"
+    [ -n "$installed" ] && fnm default "$installed"
   args:
     executable: /bin/bash
   when:
-    - dotfiles_nvm_enabled
+    - dotfiles_fnm_enabled
     - dotfiles_node_lts_enabled
-    - >-
-      not (dotfiles_node_default.stdout | default('') | trim) is match('^v\d+')
-      or dotfiles_mode == 'update'
+    - dotfiles_node_check.rc != 0 or dotfiles_mode == 'update'
   register: dotfiles_node_install
-  changed_when: "'already installed' not in (dotfiles_node_install.stdout | default(''))"
+  changed_when: "'already installed' not in (dotfiles_node_install.stderr | default(''))"
 
 - name: Upgrade npm to latest
   ansible.builtin.shell: |
     set -euo pipefail
-    export NVM_DIR="{{ dotfiles_nvm_dir }}"
-    . "{{ dotfiles_nvm_dir }}/nvm.sh"
+    export PATH="{{ dotfiles_fnm_dir }}:$PATH"
+    eval "$(fnm env)"
     npm install -g npm@latest
   args:
     executable: /bin/bash
   when:
-    - dotfiles_nvm_enabled
+    - dotfiles_fnm_enabled
     - dotfiles_node_lts_enabled
     - dotfiles_node_install is changed or dotfiles_mode == 'update'
   register: dotfiles_npm_upgrade

@@ -23,9 +23,6 @@ ZSH_THEME="robbyrussell"
 # Ansible manages oh-my-zsh updates; disable the built-in auto-update check.
 DISABLE_AUTO_UPDATE="true"
 
-# Skip compaudit permission checks — saves ~30-80ms per shell open.
-ZSH_DISABLE_COMPFIX="true"
-
 # Uncomment the following line to automatically update without prompting.
 # DISABLE_UPDATE_PROMPT="true"
 
@@ -104,17 +101,12 @@ if [[ -f ~/.zsh_profile ]]; then
 fi
 setopt globdots
 
-# Lazy-load nvm — sourcing nvm.sh eagerly adds ~200-500ms per shell.
-export NVM_DIR="$DOTFILES_APPS_ROOT/nvm"
-_dotfiles_load_nvm() {
-  unset -f nvm node npm npx 2>/dev/null
-  [[ -s "$NVM_DIR/nvm.sh" ]] && \. "$NVM_DIR/nvm.sh"
-  [[ -s "$NVM_DIR/bash_completion" ]] && \. "$NVM_DIR/bash_completion"
-}
-nvm()  { _dotfiles_load_nvm; nvm  "$@"; }
-node() { _dotfiles_load_nvm; node "$@"; }
-npm()  { _dotfiles_load_nvm; npm  "$@"; }
-npx()  { _dotfiles_load_nvm; npx  "$@"; }
+# fnm — fast Node manager (<1ms init vs nvm's ~300ms)
+export FNM_DIR="$HOME/.local/share/fnm"
+if [[ -x "$FNM_DIR/fnm" ]]; then
+  path+=("$FNM_DIR")
+  eval "$(fnm env --use-on-cd --version-file-strategy=recursive)"
+fi
 
 # UV env variables
 uv_dir="$DOTFILES_APPS_ROOT/uv"
