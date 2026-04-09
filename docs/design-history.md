@@ -463,3 +463,53 @@ The following were deliberately cut to keep the base small. See the README for t
 - i3 workspace rules (Firefox, Slack, Obsidian, JetBrains IDEA, Spotify)
 - Shell wrappers (claude, gemini, gssh, vpns/exitnode, android, dbmate/dbdump, autorandr, cdwt, gcloud, cloud-sql-proxy)
 - Linux packages (blueman, xbacklight, lxappearance, autorandr)
+
+### Future Work
+
+Potential additions that are well-maintained and widely adopted. None are blocking — the current setup is fully functional without them.
+
+**Shell plugins** (add to oh-my-zsh `plugins` list or `$ZSH_CUSTOM/plugins`):
+
+| Plugin | Stars | What it does |
+|--------|-------|-------------|
+| [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | ~35k | Fish-like inline history suggestions as you type |
+| [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting) | ~22k | Colors valid/invalid commands in real time |
+| [zoxide](https://github.com/ajeetdsouza/zoxide) | ~35k | Smarter `cd` — learns your frequent directories, replaces `z`/`autojump` |
+
+**Terminal tools** (install via package manager, alias in shell config):
+
+| Tool | Stars | What it does |
+|------|-------|-------------|
+| [bat](https://github.com/sharkdp/bat) | ~58k | `cat` with syntax highlighting and line numbers |
+| [eza](https://github.com/eza-community/eza) | ~21k | Modern `ls` with git status, icons, tree view |
+| [delta](https://github.com/dandavison/delta) | ~30k | Syntax-highlighted git diffs, set as `core.pager` in gitconfig |
+| [lazygit](https://github.com/jesseduffield/lazygit) | ~76k | Full TUI for git — staging, rebasing, conflict resolution |
+| [tldr](https://github.com/tldr-pages/tldr) | ~62k | Simplified man pages with practical examples |
+
+**Tmux plugins** (via [tpm](https://github.com/tmux-plugins/tpm), ~14k stars):
+
+| Plugin | Stars | What it does |
+|--------|-------|-------------|
+| [tmux-resurrect](https://github.com/tmux-plugins/tmux-resurrect) | ~13k | Persist tmux sessions across reboots |
+| [tmux-yank](https://github.com/tmux-plugins/tmux-yank) | ~3k | Standardized system clipboard integration |
+
+**Neovim** (already has lazy.nvim via stow):
+
+| Plugin | Stars | What it does |
+|--------|-------|-------------|
+| [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) | ~19k | Fuzzy finder for files, grep, buffers — pairs with fzf/rg/fd |
+| [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) | ~14k | AST-based syntax highlighting and code navigation |
+
+**i3 desktop** (Linux only):
+
+| Tool | Stars | What it does |
+|------|-------|-------------|
+| [dunst](https://github.com/dunst-project/dunst) | ~5.4k | Notification daemon — needed for `notify-send` to display anything |
+| [flameshot](https://github.com/flameshot-org/flameshot) | ~30k | Screenshot tool with annotation GUI, replaces `import + xclip` |
+| [polybar](https://github.com/polybar/polybar) | ~15k | Highly configurable status bar replacement for i3status (high effort) |
+
+**Security/privacy**:
+
+| Tool | Stars | What it does |
+|------|-------|-------------|
+| [gopass](https://github.com/gopasspw/gopass) | ~6.8k | CLI password manager, compatible with `pass`, works with GPG or age |
