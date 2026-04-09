@@ -79,7 +79,7 @@
     set -euo pipefail
     export NVM_DIR="{{ dotfiles_nvm_dir }}"
     . "{{ dotfiles_nvm_dir }}/nvm.sh"
-    nvm install --lts --latest-npm
+    nvm install --lts
     nvm alias default 'lts/*'
   args:
     executable: /bin/bash
@@ -91,3 +91,18 @@
       or dotfiles_mode == 'update'
   register: dotfiles_node_install
   changed_when: "'already installed' not in (dotfiles_node_install.stdout | default(''))"
+
+- name: Upgrade npm to latest
+  ansible.builtin.shell: |
+    set -euo pipefail
+    export NVM_DIR="{{ dotfiles_nvm_dir }}"
+    . "{{ dotfiles_nvm_dir }}/nvm.sh"
+    npm install -g npm@latest
+  args:
+    executable: /bin/bash
+  when:
+    - dotfiles_nvm_enabled
+    - dotfiles_node_lts_enabled
+    - dotfiles_node_install is changed or dotfiles_mode == 'update'
+  register: dotfiles_npm_upgrade
+  changed_when: "'added' in (dotfiles_npm_upgrade.stdout | default('')) or 'updated' in (dotfiles_npm_upgrade.stdout | default(''))"
