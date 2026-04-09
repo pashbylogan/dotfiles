@@ -1,0 +1,91 @@
+---
+- name: Install Linux packages
+  become: true
+  when: ansible_system == "Linux"
+  block:
+    - name: Refresh apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_pkg_mgr == "apt"
+
+    - name: Upgrade apt packages during update runs
+      ansible.builtin.apt:
+        upgrade: dist
+        update_cache: true
+      when:
+        - ansible_pkg_mgr == "apt"
+        - dotfiles_mode == "update"
+
+    - name: Install declared Linux packages
+      ansible.builtin.package:
+        name: "{{ dotfiles_linux_packages_resolved }}"
+        state: present
+
+- name: Provide fd compatibility shim when distro installs fdfind
+  ansible.builtin.file:
+    src: /usr/bin/fdfind
+    dest: "{{ dotfiles_local_bin_dir }}/fd"
+    state: link
+  when:
+    - ansible_system == "Linux"
+    - ansible_pkg_mgr == "apt"
+
+- name: Provide dex compatibility shim when distro installs dex-autostart
+  ansible.builtin.file:
+    src: /usr/bin/dex-autostart
+    dest: "{{ dotfiles_local_bin_dir }}/dex"
+    state: link
+  when:
+    - ansible_system == "Linux"
+    - ansible_pkg_mgr == "dnf"
+    - dotfiles_resolved_profile == "linux_desktop"
+
+- name: Install Homebrew formulae
+  when: ansible_system == "Darwin"
+  block:
+    - name: Ensure Homebrew is available
+      ansible.builtin.command: brew --version
+      changed_when: false
+
+    - name: Update Homebrew metadata
+      ansible.builtin.command: brew update
+      when: dotfiles_mode == "update"
+      changed_when: false
+
+    - name: Check installed Homebrew formulae
+      ansible.builtin.command: "brew list --formula --versions {{ item }}"
+      loop: "{{ dotfiles_common_macos_packages + dotfiles_profile_brew_packages }}"
+      register: brew_formula_status
+      changed_when: false
+      failed_when: false
+
+    - name: Install Homebrew formulae
+      ansible.builtin.command: "brew install {{ item.item }}"
+      loop: "{{ brew_formula_status.results }}"
+      when: item.rc != 0
+      changed_when: true
+
+    - name: Check installed Homebrew casks
+      ansible.builtin.command: "brew list --cask --versions {{ item }}"
+      loop: "{{ dotfiles_profile_brew_casks }}"
+      register: brew_cask_status
+      changed_when: false
+      failed_when: false
+
+    - name: Install Homebrew casks
+      ansible.builtin.command: "brew install --cask {{ item.item }}"
+      loop: "{{ brew_cask_status.results }}"
+      when: item.rc != 0
+      changed_when: true
+
+    - name: Check for outdated Homebrew packages
+      ansible.builtin.command: brew outdated --quiet
+      when: dotfiles_mode == "update"
+      register: brew_outdated
+      changed_when: false
+
+    - name: Upgrade Homebrew packages during update runs
+      ansible.builtin.command: brew upgrade
+      when: dotfiles_mode == "update"
+      changed_when: "(brew_outdated.stdout | default('') | trim) != ''"

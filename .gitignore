@@ -1,1 +1,3 @@
 nvim/.config/nvim/plugin/packer_compiled.lua
+ghostty/.config/ghostty/*.bak
+ssh/.ssh/config.local

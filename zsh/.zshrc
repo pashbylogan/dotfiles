@@ -20,8 +20,8 @@ ZSH_THEME="robbyrussell"
 # Case-sensitive completion must be off. _ and - will be interchangeable.
 # HYPHEN_INSENSITIVE="true"
 
-# Uncomment the following line to disable bi-weekly auto-update checks.
-# DISABLE_AUTO_UPDATE="true"
+# Ansible manages oh-my-zsh updates; disable the built-in auto-update check.
+DISABLE_AUTO_UPDATE="true"
 
 # Uncomment the following line to automatically update without prompting.
 # DISABLE_UPDATE_PROMPT="true"
@@ -70,7 +70,9 @@ ZSH_THEME="robbyrussell"
 plugins=(git fzf)
 
 # Path to your oh-my-zsh installation.
-source $ZSH/oh-my-zsh.sh
+if [[ -s "$ZSH/oh-my-zsh.sh" ]]; then
+  source "$ZSH/oh-my-zsh.sh"
+fi
 
 # User configuration
 
@@ -80,11 +82,8 @@ source $ZSH/oh-my-zsh.sh
 # export LANG=en_US.UTF-8
 
 # Preferred editor for local and remote sessions
-if [[ -n $SSH_CONNECTION ]]; then
-  export EDITOR='vim'
-else
-  export EDITOR='$HOME/apps/nvim/nvim.appimage'
-fi
+export EDITOR='nvim'
+export VISUAL='nvim'
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
@@ -97,16 +96,25 @@ fi
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-source ~/.zsh_profile
+if [[ -f ~/.zsh_profile ]]; then
+  source ~/.zsh_profile
+fi
 setopt globdots
 
-# Lazy load nvm
-export NVM_DIR="$HOME/apps/nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+# Lazy-load nvm — sourcing nvm.sh eagerly adds ~200-500ms per shell.
+export NVM_DIR="$DOTFILES_APPS_ROOT/nvm"
+_dotfiles_load_nvm() {
+  unset -f nvm node npm npx 2>/dev/null
+  [[ -s "$NVM_DIR/nvm.sh" ]] && \. "$NVM_DIR/nvm.sh"
+  [[ -s "$NVM_DIR/bash_completion" ]] && \. "$NVM_DIR/bash_completion"
+}
+nvm()  { _dotfiles_load_nvm; nvm  "$@"; }
+node() { _dotfiles_load_nvm; node "$@"; }
+npm()  { _dotfiles_load_nvm; npm  "$@"; }
+npx()  { _dotfiles_load_nvm; npx  "$@"; }
 
 # UV env variables
-uv_dir="/home/pashbyl/apps/uv"
+uv_dir="$DOTFILES_APPS_ROOT/uv"
 export UV_UNMANAGED_INSTALL=$uv_dir
 export UV_INSTALL_DIR=$uv_dir
 export UV_TOOL_DIR="$uv_dir/tools"
@@ -116,7 +124,7 @@ export UV_CACHE_DIR="$uv_dir/cache"
 export UV_PYTHON_BIN_DIR="$uv_dir/python/bin"
 
 # pnpm
-export PNPM_HOME="/home/pashbyl/.local/share/pnpm"
+export PNPM_HOME="$HOME/.local/share/pnpm"
 case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;

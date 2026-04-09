@@ -1,0 +1,22 @@
+---
+- name: Ensure standard user directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ dotfiles_apps_root }}"
+    - "{{ dotfiles_local_bin_dir }}"
+    - "{{ dotfiles_local_scripts_dir }}"
+    - "{{ dotfiles_share_root }}"
+    - "{{ dotfiles_share_root }}/backgrounds"
+    - "{{ dotfiles_apps_root }}/bin"
+    - "{{ dotfiles_apps_root }}/go"
+    - "{{ dotfiles_apps_root }}/go/bin"
+    - "{{ dotfiles_apps_root }}/go/cache"
+    - "{{ dotfiles_apps_root }}/go/cache/build"
+    - "{{ dotfiles_apps_root }}/go/config"
+    - "{{ dotfiles_apps_root }}/go/pkg"
+    - "{{ dotfiles_apps_root }}/go/pkg/mod"
+    - "{{ dotfiles_apps_root }}/src"
+    - "{{ dotfiles_apps_root }}/tmp"

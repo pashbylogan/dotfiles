@@ -49,7 +49,7 @@ floating_modifier $mod
 tiling_drag modifier titlebar
 
 # start a terminal
-bindsym $mod+Return exec /home/pashbyl/apps/ghostty/bin/ghostty
+bindsym $mod+Return exec --no-startup-id sh -lc 'if command -v ghostty >/dev/null 2>&1; then exec ghostty; elif command -v x-terminal-emulator >/dev/null 2>&1; then exec x-terminal-emulator; elif command -v xterm >/dev/null 2>&1; then exec xterm; fi'
 
 # kill focused window
 bindsym $mod+Shift+q kill
@@ -202,32 +202,22 @@ for_window [class="^.*"] client.focused          #77dd77 #285577 #ffffff #2e9ef4
 
 # workspace allocation
 for_window [class="com.mitchellh.ghostty"] move workspace $ws1
-for_window [class="firefox"] move workspace $ws2
-for_window [class="Slack"] move workspace $ws3
-for_window [class="obsidian"] move workspace $ws3
-for_window [class="jetbrains-idea"] move workspace $ws5
-for_window [class="Spotify"] move workspace $ws10
 
 # visual
-# set background
-exec_always --no-startup-id feh --bg-fill /home/pashbyl/.local/share/backgrounds/2024-01-17-18-06-42-spiral.png
+# set background when the configured wallpaper exists
+exec_always --no-startup-id sh -lc 'wallpaper="$HOME/.local/share/backgrounds/2024-01-17-18-06-42-spiral.png"; [ -f "$wallpaper" ] && exec feh --bg-fill "$wallpaper"'
 
 # set up picom for transparency and for avoiding tearing
-exec_always --no-startup-id picom --backend glx --vsync
+exec_always --no-startup-id sh -lc 'command -v picom >/dev/null 2>&1 && { killall picom 2>/dev/null; sleep 0.1; exec picom --backend glx --vsync; }'
 
 # QoL
 # repeat keys
 exec_always --no-startup-id xset r rate 300 35 
 
-# increase mouse pointer speed (Logitech USB Receiver Mouse | Logitech MX Master)
-exec_always --no-startup-id xinput --set-prop "pointer:Logitech MX Master" "libinput Accel Speed" 0.6
-exec_always --no-startup-id xinput --set-prop "pointer:Logitech USB Receiver Mouse" "libinput Accel Speed" 0.6
+# host-local pointer and touchpad tuning
+exec_always --no-startup-id sh -lc '[ -x "$HOME/.local/scripts/apply-xinput-settings" ] && "$HOME/.local/scripts/apply-xinput-settings"'
 
-# enable trackpad tap-to-click
-exec_always --no-startup-id xinput set-prop "VEN_04F3:00 04F3:32AA Touchpad" "libinput Tapping Enabled" 1
-
-# zoom/slack settings
-for_window [class="Slack"] floating disable
+# zoom settings
 # for_window [class="(.*join\?action\=join.*|.*zoom.*)"] floating enable
 # for_window [class="(.*join\?action\=join.*|.*zoom.*)" title="Zoom - Licensed Account"] floating disable
 # for_window [class="(.*join\?action\=join.*|.*zoom.*)" title="Zoom Meeting"] floating disable

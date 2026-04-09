@@ -1,0 +1,17 @@
+---
+dotfiles_profile_linux_packages_common:
+  - i3
+  - i3status
+  - i3lock
+  - xss-lock
+  - feh
+  - pavucontrol
+  - thunar
+  - rofi
+  - picom
+  - dex
+  - nm_applet
+  - jetbrains_mono_fonts
+
+dotfiles_profile_brew_packages: []
+dotfiles_profile_brew_casks: []

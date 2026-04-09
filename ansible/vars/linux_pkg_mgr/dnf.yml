@@ -1,0 +1,59 @@
+---
+dotfiles_linux_pkg_map:
+  git:
+    - git
+  curl:
+    - curl
+  ca-certificates:
+    - ca-certificates
+  stow:
+    - stow
+  zsh:
+    - zsh
+  tmux:
+    - tmux
+  neovim:
+    - neovim
+  fzf:
+    - fzf
+  ripgrep:
+    - ripgrep
+  age:
+    - age
+  unzip:
+    - unzip
+  build_tools:
+    - gcc
+    - gcc-c++
+    - make
+  fd:
+    - fd-find
+  python:
+    - python3
+    - python3-pip
+  i3:
+    - i3
+  i3status:
+    - i3status
+  i3lock:
+    - i3lock
+  xss-lock:
+    - xss-lock
+  feh:
+    - feh
+  pavucontrol:
+    - pavucontrol
+  thunar:
+    - thunar
+  rofi:
+    - rofi
+  picom:
+    - picom
+  dex:
+    - dex-autostart
+  nm_applet:
+    - network-manager-applet
+  jetbrains_mono_fonts:
+    - jetbrains-mono-fonts-all
+  xterm_terminal:
+    - xterm

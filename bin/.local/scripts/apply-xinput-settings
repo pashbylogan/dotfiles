@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+have() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+if ! have xinput; then
+  exit 0
+fi
+
+devices="$(xinput list --name-only)"
+
+set_prop_if_present() {
+  local device="$1"
+  local prop="$2"
+  local value="$3"
+
+  if echo "$devices" | grep -Fxq "$device"; then
+    xinput set-prop "$device" "$prop" "$value"
+  fi
+}
+
+set_prop_if_present "pointer:Logitech MX Master" "libinput Accel Speed" "0.6"
+set_prop_if_present "pointer:Logitech USB Receiver Mouse" "libinput Accel Speed" "0.6"
+set_prop_if_present "VEN_04F3:00 04F3:32AA Touchpad" "libinput Tapping Enabled" "1"

@@ -1,0 +1,84 @@
+---
+- name: Ensure uv directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ dotfiles_uv_root }}"
+    - "{{ dotfiles_uv_bin_dir }}"
+    - "{{ dotfiles_uv_root }}/tools"
+    - "{{ dotfiles_uv_root }}/python"
+    - "{{ dotfiles_uv_root }}/cache"
+  when: dotfiles_uv_enabled
+
+- name: Check if uv is installed
+  ansible.builtin.stat:
+    path: "{{ dotfiles_uv_bin_dir }}/uv"
+  register: dotfiles_uv_binary
+  when: dotfiles_uv_enabled
+
+- name: Install or update uv
+  ansible.builtin.shell: |
+    set -euo pipefail
+    curl -LsSf https://astral.sh/uv/install.sh | env \
+      UV_UNMANAGED_INSTALL="{{ dotfiles_uv_bin_dir }}" \
+      UV_INSTALL_DIR="{{ dotfiles_uv_bin_dir }}" \
+      UV_NO_MODIFY_PATH=1 \
+      sh
+  args:
+    executable: /bin/bash
+  when:
+    - dotfiles_uv_enabled
+    - not dotfiles_uv_binary.stat.exists
+  changed_when: true
+
+- name: Update uv
+  ansible.builtin.command: "{{ dotfiles_uv_bin_dir }}/uv self update"
+  register: dotfiles_uv_update
+  when:
+    - dotfiles_uv_enabled
+    - dotfiles_mode == "update"
+    - dotfiles_uv_binary.stat.exists
+  changed_when: "'already' not in (dotfiles_uv_update.stderr | default('') + dotfiles_uv_update.stdout | default(''))"
+
+- name: Install nvm
+  ansible.builtin.git:
+    repo: https://github.com/nvm-sh/nvm.git
+    dest: "{{ dotfiles_nvm_dir }}"
+    version: "{{ dotfiles_nvm_version }}"
+    update: "{{ dotfiles_mode == 'update' }}"
+  when: dotfiles_nvm_enabled
+
+- name: Check if a Node.js default is installed
+  ansible.builtin.shell: |
+    set -euo pipefail
+    export NVM_DIR="{{ dotfiles_nvm_dir }}"
+    . "{{ dotfiles_nvm_dir }}/nvm.sh"
+    nvm version default
+  args:
+    executable: /bin/bash
+  register: dotfiles_node_default
+  changed_when: false
+  failed_when: false
+  when:
+    - dotfiles_nvm_enabled
+    - dotfiles_node_lts_enabled
+
+- name: Install latest Node.js LTS
+  ansible.builtin.shell: |
+    set -euo pipefail
+    export NVM_DIR="{{ dotfiles_nvm_dir }}"
+    . "{{ dotfiles_nvm_dir }}/nvm.sh"
+    nvm install --lts --latest-npm
+    nvm alias default 'lts/*'
+  args:
+    executable: /bin/bash
+  when:
+    - dotfiles_nvm_enabled
+    - dotfiles_node_lts_enabled
+    - >-
+      not (dotfiles_node_default.stdout | default('') | trim) is match('^v\d+')
+      or dotfiles_mode == 'update'
+  register: dotfiles_node_install
+  changed_when: "'already installed' not in (dotfiles_node_install.stdout | default(''))"

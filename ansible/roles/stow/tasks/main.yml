@@ -1,0 +1,32 @@
+---
+- name: Check stow packages exist
+  ansible.builtin.stat:
+    path: "{{ dotfiles_repo_root }}/{{ item }}"
+  loop: "{{ dotfiles_stow_packages_resolved }}"
+  register: dotfiles_stow_package_stats
+
+- name: Preview stow changes
+  ansible.builtin.command:
+    cmd: >-
+      stow
+      -S
+      -n
+      -v
+      -t {{ dotfiles_stow_target }}
+      {{ item.item }}
+    chdir: "{{ dotfiles_repo_root }}"
+  loop: "{{ dotfiles_stow_package_stats.results }}"
+  when: item.stat.exists
+  register: dotfiles_stow_preview
+  changed_when: "(stderr | default('')) is search('LINK:')"
+
+- name: Apply stow packages
+  ansible.builtin.command:
+    cmd: "stow -t {{ dotfiles_stow_target }} -R {{ item.item.item }}"
+    chdir: "{{ dotfiles_repo_root }}"
+  loop: "{{ dotfiles_stow_preview.results }}"
+  when:
+    - dotfiles_mode != 'check'
+    - not (item.skipped | default(false))
+    - item.changed | default(false) or dotfiles_mode == 'update'
+  changed_when: item.changed | default(false)
