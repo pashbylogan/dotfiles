@@ -35,7 +35,7 @@ wget -qO- https://raw.githubusercontent.com/pashbyl/dotfiles/master/bootstrap.sh
 | Tool | Location | What `update` does |
 |------|----------|--------------------|
 | [uv](https://github.com/astral-sh/uv) | `~/apps/uv` | re-runs installer |
-| [nvm](https://github.com/nvm-sh/nvm) + Node LTS | `~/apps/nvm` | pulls latest nvm, checks for newer LTS |
+| [fnm](https://github.com/Schniz/fnm) + Node LTS | `~/.local/share/fnm` | re-runs installer, checks for newer LTS |
 
 ### Config (via stow symlinks)
 
@@ -44,7 +44,7 @@ wget -qO- https://raw.githubusercontent.com/pashbyl/dotfiles/master/bootstrap.sh
 ### Also
 
 - **oh-my-zsh** — managed install, auto-update disabled (Ansible handles it)
-- **nvm lazy-loaded** — shell startup doesn't pay the ~300ms nvm sourcing cost
+- **fnm** — Rust-based Node version manager, <1ms shell init (replaces nvm)
 
 ## Profiles
 
@@ -86,7 +86,7 @@ Shared config lives in `ssh/.ssh/config`. Machine-specific overrides go in `~/.s
 
 ## Not Managed (Optional Add-Backs)
 
-Cut from the first-pass managed set to keep the base small. Can be added back behind profile flags or host-specific roles.
+Cut from the first-pass managed set to keep the base small. Can be added back behind profile flags, host-specific roles, or by copying entries from [`zsh/.zsh_extras.example`](zsh/.zsh_extras.example) into `~/.zsh_extras`.
 
 <details>
 <summary>Full list of deferred items</summary>

@@ -427,9 +427,9 @@ All core CLI packages above via `brew install`, plus `ansible`. Ghostty via `bre
 | Tool | Location | Install method | Update method |
 |------|----------|---------------|---------------|
 | uv | `~/apps/uv` | astral.sh installer | re-run installer |
-| nvm | `~/apps/nvm` | git clone (pinned tag) | git pull |
-| Node.js LTS | via nvm | `nvm install --lts` | re-run install |
-| npm (latest) | via nvm/node | `npm install -g npm@latest` | re-run install |
+| fnm | `~/.local/share/fnm` | fnm.vercel.app installer | re-run installer |
+| Node.js LTS | via fnm | `fnm install --lts` | re-run install |
+| npm (latest) | via fnm/node | `npm install -g npm@latest` | re-run install |
 
 **Shell tooling:**
 
@@ -444,7 +444,7 @@ All core CLI packages above via `brew install`, plus `ansible`. Ghostty via `bre
 | `ssh` | `~/.ssh/config`, `~/.ssh/config.local.example` |
 | `nvim` | `~/.config/nvim/` |
 | `tmux` | `~/.tmux.conf` |
-| `zsh` | `~/.zshrc`, `~/.zsh_profile` |
+| `zsh` | `~/.zshrc`, `~/.zsh_profile`, `~/.zsh_extras.example` |
 | `bin` | `~/.local/scripts/*` (user utility scripts) |
 | `ghostty` | `~/.config/ghostty/` |
 | `i3` | `~/.config/i3/config` (linux_desktop only) |
