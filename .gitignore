@@ -2,3 +2,16 @@ nvim/.config/nvim/plugin/packer_compiled.lua
 ghostty/.config/ghostty/*.bak
 ssh/.ssh/config.local
 zsh/.zsh_extras
+
+# Keys and secrets
+*.pem
+*.key
+id_*
+.env
+.env.*
+**/known_hosts
+**/authorized_keys
+
+# Ansible vault
+ansible/*vault*
+ansible/vault_password*

@@ -3,7 +3,7 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    mode: "0755"
+    mode: "0700"
   loop:
     - "{{ dotfiles_apps_root }}"
     - "{{ dotfiles_local_bin_dir }}"

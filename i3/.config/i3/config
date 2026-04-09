@@ -237,4 +237,4 @@ bindsym XF86MonBrightnessUp exec --no-startup-id light -A 10; exec notify-send '
 bindsym XF86MonBrightnessDown exec --no-startup-id light -U 10; exec notify-send 'brightness down 10%'
 
 # screenshot with print screen
-bindsym --release Print exec --no-startup-id sh -c 'f=~/Downloads/Screenshot_$(date +%Y-%m-%d-%I.%M.%S_%p).png && import $f && xclip -selection clipboard -t image/png $f'
+bindsym --release Print exec --no-startup-id sh -c 'f="$HOME/Downloads/Screenshot_$(date +%Y-%m-%d-%I.%M.%S_%p).png" && import "$f" && xclip -selection clipboard -t image/png "$f"'

@@ -19,3 +19,15 @@
     - item.stat.exists
   register: dotfiles_stow_apply
   changed_when: "'LINK:' in (dotfiles_stow_apply.stderr | default(''))"
+
+- name: Restrict SSH config permissions
+  ansible.builtin.file:
+    path: "{{ dotfiles_stow_target }}/.ssh"
+    state: directory
+    mode: "0700"
+
+- name: Restrict SSH config file permissions
+  ansible.builtin.file:
+    path: "{{ dotfiles_stow_target }}/.ssh/config"
+    mode: "0600"
+  when: dotfiles_mode != 'check'

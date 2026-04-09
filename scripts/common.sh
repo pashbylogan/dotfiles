@@ -11,11 +11,11 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
 
-info()    { echo -e "${CYAN}ℹ ${NC}$*"; }
-success() { echo -e "${GREEN}✔ ${NC}$*"; }
-warn()    { echo -e "${YELLOW}⚠ ${NC}$*"; }
-error()   { echo -e "${RED}✖ ${NC}$*" >&2; }
-step()    { echo -e "\n${BOLD}── $* ──${NC}"; }
+info()    { printf "${CYAN}ℹ ${NC}%s\n" "$*"; }
+success() { printf "${GREEN}✔ ${NC}%s\n" "$*"; }
+warn()    { printf "${YELLOW}⚠ ${NC}%s\n" "$*"; }
+error()   { printf "${RED}✖ ${NC}%s\n" "$*" >&2; }
+step()    { printf "\n${BOLD}── %s ──${NC}\n" "$*"; }
 
 die() { error "$@"; exit 1; }
 

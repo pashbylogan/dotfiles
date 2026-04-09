@@ -105,11 +105,11 @@ setopt globdots
 export FNM_DIR="$HOME/.local/share/fnm"
 if [[ -x "$FNM_DIR/fnm" ]]; then
   path+=("$FNM_DIR")
-  eval "$(fnm env --use-on-cd --version-file-strategy=recursive)"
+  eval "$("$FNM_DIR/fnm" env --use-on-cd --version-file-strategy=recursive)"
 fi
 
 # UV env variables
-uv_dir="$DOTFILES_APPS_ROOT/uv"
+uv_dir="${DOTFILES_APPS_ROOT:-$HOME/apps}/uv"
 export UV_UNMANAGED_INSTALL=$uv_dir
 export UV_INSTALL_DIR=$uv_dir
 export UV_TOOL_DIR="$uv_dir/tools"
