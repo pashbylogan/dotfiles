@@ -22,6 +22,7 @@ set_prop_if_present() {
   fi
 }
 
+# ─── Mouse acceleration ─────────────────────────────────────────────────────
+
 set_prop_if_present "pointer:Logitech MX Master" "libinput Accel Speed" "0.6"
 set_prop_if_present "pointer:Logitech USB Receiver Mouse" "libinput Accel Speed" "0.6"
-set_prop_if_present "VEN_04F3:00 04F3:32AA Touchpad" "libinput Tapping Enabled" "1"
