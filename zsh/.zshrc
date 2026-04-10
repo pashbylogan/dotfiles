@@ -107,11 +107,3 @@ export UV_PYTHON_INSTALL_DIR="$uv_dir/python"
 export UV_TOOL_BIN_DIR="$uv_dir/bin"
 export UV_CACHE_DIR="$uv_dir/cache"
 export UV_PYTHON_BIN_DIR="$uv_dir/python/bin"
-
-# ─── pnpm ────────────────────────────────────────────────────────────────────
-
-export PNPM_HOME="$HOME/.local/share/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac

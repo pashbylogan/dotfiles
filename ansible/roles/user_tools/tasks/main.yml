@@ -160,3 +160,16 @@
     - dotfiles_node_install is changed or dotfiles_mode == 'update'
   register: dotfiles_npm_upgrade
   changed_when: "'added' in (dotfiles_npm_upgrade.stdout | default('')) or 'updated' in (dotfiles_npm_upgrade.stdout | default(''))"
+
+- name: Enable corepack
+  ansible.builtin.shell: |
+    set -euo pipefail
+    export PATH="{{ dotfiles_fnm_dir }}:$PATH"
+    eval "$(fnm env)"
+    corepack enable
+  args:
+    executable: /bin/bash
+  when:
+    - dotfiles_fnm_enabled
+    - dotfiles_node_lts_enabled
+  changed_when: false
