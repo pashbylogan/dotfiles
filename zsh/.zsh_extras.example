@@ -3,6 +3,10 @@
 #
 # cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
 
+# ─── ~/apps PATH entries (uncomment if installed locally, not via pkg mgr) ───
+
+# path+=("$HOME/apps/ghostty/bin")
+
 # ─── Autorandr ───────────────────────────────────────────────────────────────
 
 alias ar='autorandr '
