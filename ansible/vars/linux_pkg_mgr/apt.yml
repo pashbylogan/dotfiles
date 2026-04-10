@@ -24,6 +24,8 @@ dotfiles_linux_pkg_map:
     - gh
   unzip:
     - unzip
+  xclip:
+    - xclip
   build_tools:
     - build-essential
   fd:

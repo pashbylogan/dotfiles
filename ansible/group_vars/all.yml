@@ -33,6 +33,7 @@ dotfiles_common_linux_packages:
   - age
   - gh
   - unzip
+  - xclip
   - build_tools
   - python
   - xterm_terminal
