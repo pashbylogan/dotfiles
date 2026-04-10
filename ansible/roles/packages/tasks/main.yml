@@ -20,7 +20,7 @@
     - name: Install declared Linux packages
       ansible.builtin.package:
         name: "{{ dotfiles_linux_packages_resolved }}"
-        state: present
+        state: "{{ 'latest' if dotfiles_mode == 'update' else 'present' }}"
 
 - name: Provide fd compatibility shim when distro installs fdfind
   ansible.builtin.file:
