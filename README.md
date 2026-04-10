@@ -43,8 +43,9 @@ wget -qO- https://raw.githubusercontent.com/pashbyl/dotfiles/master/bootstrap.sh
 
 ### Also
 
-- **oh-my-zsh** — managed install, auto-update disabled (Ansible handles it)
-- **fnm** — Rust-based Node version manager, <1ms shell init (replaces nvm)
+- **[Starship](https://starship.rs)** prompt — Rust binary, ~2ms init, git-aware (in `~/apps/bin`)
+- **[fnm](https://github.com/Schniz/fnm)** — Rust-based Node version manager, <1ms shell init
+- **corepack** enabled — `pnpm`/`yarn` available on-demand per-project, no global install
 
 ## Profiles
 

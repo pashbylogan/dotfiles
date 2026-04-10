@@ -438,7 +438,8 @@ All core CLI packages above via `brew install`, plus `ansible`. Ghostty via `bre
 
 | Tool | Location | Install method | Update method |
 |------|----------|---------------|---------------|
-| oh-my-zsh | `~/.oh-my-zsh` | git clone | git pull |
+| starship | `~/apps/bin/starship` | starship.rs installer | re-run installer |
+| corepack | via Node.js | `corepack enable` | ships with Node |
 
 **Stow packages (symlinked into $HOME):**
 
@@ -471,7 +472,7 @@ The following were deliberately cut to keep the base small. See the README for t
 
 Potential additions that are well-maintained and widely adopted. None are blocking — the current setup is fully functional without them.
 
-**Shell plugins** (add to oh-my-zsh `plugins` list or `$ZSH_CUSTOM/plugins`):
+**Shell plugins** (source directly in `.zshrc` or use a lightweight plugin manager like Antidote):
 
 | Plugin | Stars | What it does |
 |--------|-------|-------------|
