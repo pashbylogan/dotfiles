@@ -1,0 +1,19 @@
+# Machine-local i3 overrides. Copy to ~/.config/i3/config.local.
+# This file is gitignored and auto-included by the main config.
+#
+# cp ~/projects/dotfiles/i3/.config/i3/config.local.example ~/.config/i3/config.local
+
+# ─── Workspace assignments ───────────────────────────────────────────────────
+
+# for_window [class="firefox"] move workspace $ws2
+# for_window [class="Slack"] move workspace $ws3
+# for_window [class="obsidian"] move workspace $ws3
+# for_window [class="jetbrains-idea"] move workspace $ws5
+# for_window [class="Spotify"] move workspace $ws10
+
+# ─── Floating rules ─────────────────────────────────────────────────────────
+
+# for_window [class="Slack"] floating disable
+# for_window [class="(.*join\?action\=join.*|.*zoom.*)"] floating enable
+# for_window [class="(.*join\?action\=join.*|.*zoom.*)" title="Zoom - Licensed Account"] floating disable
+# for_window [class="(.*join\?action\=join.*|.*zoom.*)" title="Zoom Meeting"] floating disable

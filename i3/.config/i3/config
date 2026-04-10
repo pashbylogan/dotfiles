@@ -236,3 +236,7 @@ bindsym XF86MonBrightnessDown exec --no-startup-id light -U 10; exec notify-send
 # screenshot with print screen
 bindsym Print exec --no-startup-id sh -c 'f="$HOME/Downloads/Screenshot_$(date +%Y-%m-%d-%I.%M.%S_%p).png" && maim "$f" && xclip -selection clipboard -t image/png "$f"'
 bindsym --release Shift+Print exec --no-startup-id sh -c 'f="$HOME/Downloads/Screenshot_$(date +%Y-%m-%d-%I.%M.%S_%p).png" && maim -s "$f" && xclip -selection clipboard -t image/png "$f"'
+
+# Machine-local overrides (workspace rules, app launchers, device tuning).
+# Copy from i3/.config/i3/config.local.example to ~/.config/i3/config.local.
+include ~/.config/i3/config.local

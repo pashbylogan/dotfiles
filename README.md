@@ -81,13 +81,43 @@ ssh/ zsh/ tmux/ …     # stow packages → symlinked into $HOME
 docs/                 # design history and rationale
 ```
 
-## SSH
+## Machine-Local Overrides
 
-Shared config lives in `ssh/.ssh/config`. Machine-specific overrides go in `~/.ssh/config.local` (gitignored, auto-included). See [`config.local.example`](ssh/.ssh/config.local.example).
+Shared config stays generic in the repo. Machine-specific values go in local files that are gitignored and auto-included:
+
+| What | Local file | Example |
+|------|-----------|---------|
+| SSH hosts | `~/.ssh/config.local` | [`config.local.example`](ssh/.ssh/config.local.example) |
+| Shell aliases/functions | `~/.zsh_extras` | [`zsh_extras.example`](zsh/.zsh_extras.example) |
+| i3 workspace rules | `~/.config/i3/config.local` | [`config.local.example`](i3/.config/i3/config.local.example) |
+| Desktop launchers | `~/.local/share/applications/*.desktop` | manage directly (not stowed) |
+
+## Migrating From the Old Setup
+
+If you previously used the old `install` script, run these steps before `./scripts/apply`:
+
+```sh
+# 1. Preserve desktop launchers (old stow symlinks → real files)
+cd ~/.local/share/applications
+for f in *.desktop; do
+  [ -L "$f" ] && cp --remove-destination "$(readlink -f "$f")" "$f"
+done
+
+# 2. Move SSH hosts to config.local
+# Copy your Host entries from ~/.ssh/config into ~/.ssh/config.local
+
+# 3. Move personal aliases to ~/.zsh_extras
+cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
+# Edit and uncomment what you need
+
+# 4. Move i3 workspace rules to config.local
+cp ~/projects/dotfiles/i3/.config/i3/config.local.example ~/.config/i3/config.local
+# Edit and uncomment what you need
+```
 
 ## Not Managed (Optional Add-Backs)
 
-Cut from the first-pass managed set to keep the base small. Can be added back behind profile flags, host-specific roles, or by copying entries from [`zsh/.zsh_extras.example`](zsh/.zsh_extras.example) into `~/.zsh_extras`.
+Cut from the first-pass managed set to keep the base small. Can be added back via the local override files above.
 
 <details>
 <summary>Full list of deferred items</summary>
