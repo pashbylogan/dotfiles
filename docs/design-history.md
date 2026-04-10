@@ -33,11 +33,11 @@ That setup worked for syncing config files, but it did not solve full machine se
 
 New files:
 
-- [bootstrap.sh](/home/pashbyl/projects/dotfiles/bootstrap.sh)
-- [scripts/common.sh](/home/pashbyl/projects/dotfiles/scripts/common.sh)
-- [scripts/apply](/home/pashbyl/projects/dotfiles/scripts/apply)
-- [scripts/update](/home/pashbyl/projects/dotfiles/scripts/update)
-- [scripts/check](/home/pashbyl/projects/dotfiles/scripts/check)
+- [bootstrap.sh](../bootstrap.sh)
+- [scripts/common.sh](../scripts/common.sh)
+- [scripts/apply](../scripts/apply)
+- [scripts/update](../scripts/update)
+- [scripts/check](../scripts/check)
 
 Why:
 
@@ -55,10 +55,10 @@ Decision:
 
 New structure:
 
-- [ansible/site.yml](/home/pashbyl/projects/dotfiles/ansible/site.yml)
-- [ansible/group_vars/all.yml](/home/pashbyl/projects/dotfiles/ansible/group_vars/all.yml)
-- [ansible/vars/profiles/linux_desktop.yml](/home/pashbyl/projects/dotfiles/ansible/vars/profiles/linux_desktop.yml)
-- [ansible/vars/profiles/macos_cli.yml](/home/pashbyl/projects/dotfiles/ansible/vars/profiles/macos_cli.yml)
+- [ansible/site.yml](../ansible/site.yml)
+- [ansible/group_vars/all.yml](../ansible/group_vars/all.yml)
+- [ansible/vars/profiles/linux_desktop.yml](../ansible/vars/profiles/linux_desktop.yml)
+- [ansible/vars/profiles/macos_cli.yml](../ansible/vars/profiles/macos_cli.yml)
 - roles under `ansible/roles/`
 
 Why:
@@ -113,8 +113,8 @@ Why:
 
 Updated files:
 
-- [zsh/.zshrc](/home/pashbyl/projects/dotfiles/zsh/.zshrc)
-- [zsh/.zsh_profile](/home/pashbyl/projects/dotfiles/zsh/.zsh_profile)
+- [zsh/.zshrc](../zsh/.zshrc)
+- [zsh/.zsh_profile](../zsh/.zsh_profile)
 
 What changed:
 
@@ -134,14 +134,14 @@ Why:
 
 Updated file:
 
-- [i3/.config/i3/config](/home/pashbyl/projects/dotfiles/i3/.config/i3/config)
+- [i3/.config/i3/config](../i3/.config/i3/config)
 
 What changed:
 
 - terminal launch now prefers `ghostty` from `PATH`, with the old app-bundle path as fallback
 - wallpaper setup only runs if the wallpaper exists
 - `picom` startup checks whether `picom` is installed
-- host-specific `xinput` tuning moved into [bin/.local/scripts/apply-xinput-settings](/home/pashbyl/projects/dotfiles/bin/.local/scripts/apply-xinput-settings)
+- host-specific `xinput` tuning moved into [bin/.local/scripts/apply-xinput-settings](../bin/.local/scripts/apply-xinput-settings)
 - app-specific workspace assignment rules were reduced to the core terminal case
 
 Why:
@@ -154,9 +154,9 @@ Why:
 
 Updated files:
 
-- [ssh/.ssh/config](/home/pashbyl/projects/dotfiles/ssh/.ssh/config)
-- [ssh/.ssh/config.local.example](/home/pashbyl/projects/dotfiles/ssh/.ssh/config.local.example)
-- [tmux/.tmux.conf](/home/pashbyl/projects/dotfiles/tmux/.tmux.conf)
+- [ssh/.ssh/config](../ssh/.ssh/config)
+- [ssh/.ssh/config.local.example](../ssh/.ssh/config.local.example)
+- [tmux/.tmux.conf](../tmux/.tmux.conf)
 
 What changed:
 
