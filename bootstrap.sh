@@ -71,7 +71,7 @@ install_linux_prereqs() {
   fi
 
   if have pacman; then
-    run_root pacman -Sy --noconfirm git curl stow age zsh python python-pip ansible
+    run_root pacman -Syu --noconfirm --needed git curl stow age zsh python python-pip ansible
     return
   fi
 

@@ -58,5 +58,7 @@ dotfiles_linux_pkg_map:
     - NetworkManager-applet
   jetbrains_mono_fonts:
     - jetbrains-mono-fonts
+  maim:
+    - maim
   xterm_terminal:
     - xterm

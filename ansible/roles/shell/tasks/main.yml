@@ -1,8 +1,5 @@
 ---
-- name: Install oh-my-zsh
-  ansible.builtin.git:
-    repo: https://github.com/ohmyzsh/ohmyzsh.git
-    dest: "{{ dotfiles_oh_my_zsh_dir }}"
-    version: master
-    update: "{{ dotfiles_mode == 'update' }}"
-  when: dotfiles_oh_my_zsh_enabled
+# Shell role — zsh is installed by the packages role; config is stowed.
+# Prompt is handled by starship (installed via packages role).
+# No framework (oh-my-zsh) needed — completion, history, and keybindings
+# are configured directly in .zshrc.

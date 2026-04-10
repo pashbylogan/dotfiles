@@ -79,7 +79,7 @@ ensure_linux_prereqs() {
   fi
 
   if have pacman; then
-    run_root pacman -Sy --noconfirm stow python python-pip ansible
+    run_root pacman -Syu --noconfirm --needed stow python python-pip ansible
     return
   fi
 

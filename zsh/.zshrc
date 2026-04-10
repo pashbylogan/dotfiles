@@ -1,114 +1,104 @@
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:/usr/local/bin:$PATH
-export ZSH="$HOME/.oh-my-zsh"
+# ─── Completion ──────────────────────────────────────────────────────────────
 
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time oh-my-zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="robbyrussell"
-# Set list of themes to pick from when loading at random
-# Setting this variable when ZSH_THEME=random will cause zsh to load
-# a theme from this variable instead of looking in $ZSH/themes/
-# If set to an empty array, this variable will have no effect.
-# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
+autoload -Uz compinit
+compinit -C
 
-# Uncomment the following line to use case-sensitive completion.
-# CASE_SENSITIVE="true"
+zmodload -i zsh/complist
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' special-dirs true
+zstyle ':completion:*' use-cache yes
+zstyle ':completion:*' cache-path "$HOME/.cache/zsh/compcache"
+zstyle ':completion:*' list-colors ''
 
-# Uncomment the following line to use hyphen-insensitive completion.
-# Case-sensitive completion must be off. _ and - will be interchangeable.
-# HYPHEN_INSENSITIVE="true"
+# ─── History ─────────────────────────────────────────────────────────────────
 
-# Ansible manages oh-my-zsh updates; disable the built-in auto-update check.
-DISABLE_AUTO_UPDATE="true"
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=50000
+setopt extended_history
+setopt share_history
+setopt hist_expire_dups_first
+setopt hist_ignore_dups
+setopt hist_ignore_space
+setopt hist_verify
 
-# Uncomment the following line to automatically update without prompting.
-# DISABLE_UPDATE_PROMPT="true"
+# ─── Key bindings ────────────────────────────────────────────────────────────
 
-# Uncomment the following line to change how often to auto-update (in days).
-# export UPDATE_ZSH_DAYS=13
+bindkey -e
 
-# Uncomment the following line if pasting URLs and other text is messed up.
-# DISABLE_MAGIC_FUNCTIONS="true"
+# History prefix search (type partial command + up/down)
+autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+bindkey '^[[A' up-line-or-beginning-search
+bindkey '^[[B' down-line-or-beginning-search
 
-# Uncomment the following line to disable colors in ls.
-# DISABLE_LS_COLORS="true"
+# Navigation
+bindkey '^[[H'    beginning-of-line      # Home
+bindkey '^[[F'    end-of-line            # End
+bindkey '^[[3~'   delete-char            # Delete
+bindkey '^[[1;5C' forward-word           # Ctrl-Right
+bindkey '^[[1;5D' backward-word          # Ctrl-Left
+bindkey '^[[Z'    reverse-menu-complete  # Shift-Tab
 
-# Uncomment the following line to disable auto-setting terminal title.
-# DISABLE_AUTO_TITLE="true"
+# Edit command in $EDITOR
+autoload -Uz edit-command-line
+zle -N edit-command-line
+bindkey '\C-x\C-e' edit-command-line
 
-# Uncomment the following line to enable command auto-correction.
-# ENABLE_CORRECTION="true"
+# ─── Options ─────────────────────────────────────────────────────────────────
 
-# Uncomment the following line to display red dots whilst waiting for completion.
-# Caution: this setting can cause issues with multiline prompts (zsh 5.7.1 and newer seem to work)
-# See https://github.com/ohmyzsh/ohmyzsh/issues/5765
-# COMPLETION_WAITING_DOTS="true"
+setopt auto_cd
+setopt auto_pushd
+setopt globdots
+setopt interactive_comments
 
-# Uncomment the following line if you want to disable marking untracked files
-# under VCS as dirty. This makes repository status check for large repositories
-# much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
+# ─── Editor ──────────────────────────────────────────────────────────────────
 
-# Uncomment the following line if you want to change the command execution time
-# stamp shown in the history command output.
-# You can set one of the optional three formats:
-# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
-# or set a custom format using the strftime function format specifications,
-# see 'man strftime' for details.
-# HIST_STAMPS="mm/dd/yyyy"
-
-# Would you like to use another custom folder than $ZSH/custom?
-# ZSH_CUSTOM=/path/to/new-custom-folder
-
-# Which plugins would you like to load?
-# Standard plugins can be found in $ZSH/plugins/
-# Custom plugins may be added to $ZSH_CUSTOM/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
-plugins=(git fzf)
-
-# Path to your oh-my-zsh installation.
-if [[ -s "$ZSH/oh-my-zsh.sh" ]]; then
-  source "$ZSH/oh-my-zsh.sh"
-fi
-
-# User configuration
-
-# export MANPATH="/usr/local/man:$MANPATH"
-
-# You may need to manually set your language environment
-# export LANG=en_US.UTF-8
-
-# Preferred editor for local and remote sessions
 export EDITOR='nvim'
 export VISUAL='nvim'
 
-# Compilation flags
-# export ARCHFLAGS="-arch x86_64"
+# ─── Prompt (Starship) ──────────────────────────────────────────────────────
 
-# Set personal aliases, overriding those provided by oh-my-zsh libs,
-# plugins, and themes. Aliases can be placed here, though oh-my-zsh
-# users are encouraged to define aliases within the ZSH_CUSTOM folder.
-# For a full list of active aliases, run `alias`.
-#
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
+if command -v starship >/dev/null 2>&1; then
+  eval "$(starship init zsh)"
+fi
+
+# ─── fzf ─────────────────────────────────────────────────────────────────────
+
+if command -v fzf >/dev/null 2>&1; then
+  if fzf --zsh >/dev/null 2>&1; then
+    eval "$(fzf --zsh)"
+  else
+    # Fallback for fzf < 0.48
+    for f in \
+      /usr/share/fzf/key-bindings.zsh \
+      /usr/share/fzf/completion.zsh \
+      /usr/share/doc/fzf/examples/key-bindings.zsh \
+      /usr/share/doc/fzf/examples/completion.zsh
+    do
+      [[ -f "$f" ]] && source "$f"
+    done
+  fi
+fi
+
+# ─── Profile ─────────────────────────────────────────────────────────────────
+
 if [[ -f ~/.zsh_profile ]]; then
   source ~/.zsh_profile
 fi
-setopt globdots
 
-# fnm — fast Node manager (<1ms init vs nvm's ~300ms)
+# ─── fnm ─────────────────────────────────────────────────────────────────────
+
 export FNM_DIR="$HOME/.local/share/fnm"
 if [[ -x "$FNM_DIR/fnm" ]]; then
   path+=("$FNM_DIR")
   eval "$("$FNM_DIR/fnm" env --use-on-cd --version-file-strategy=recursive)"
 fi
 
-# UV env variables
+# ─── UV ──────────────────────────────────────────────────────────────────────
+
 uv_dir="${DOTFILES_APPS_ROOT:-$HOME/apps}/uv"
 export UV_UNMANAGED_INSTALL=$uv_dir
 export UV_INSTALL_DIR=$uv_dir
@@ -118,7 +108,8 @@ export UV_TOOL_BIN_DIR="$uv_dir/bin"
 export UV_CACHE_DIR="$uv_dir/cache"
 export UV_PYTHON_BIN_DIR="$uv_dir/python/bin"
 
-# pnpm
+# ─── pnpm ────────────────────────────────────────────────────────────────────
+
 export PNPM_HOME="$HOME/.local/share/pnpm"
 case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;

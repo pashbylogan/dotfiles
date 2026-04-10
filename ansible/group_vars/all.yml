@@ -50,9 +50,9 @@ dotfiles_common_macos_packages:
   - fd
   - age
   - gh
+  - starship
 
-dotfiles_oh_my_zsh_enabled: true
-dotfiles_oh_my_zsh_dir: "{{ ansible_env.HOME }}/.oh-my-zsh"
+dotfiles_starship_enabled: true
 dotfiles_uv_enabled: true
 dotfiles_uv_root: "{{ dotfiles_apps_root }}/uv"
 dotfiles_uv_bin_dir: "{{ dotfiles_uv_root }}/bin"

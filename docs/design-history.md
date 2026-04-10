@@ -98,10 +98,13 @@ Current policy:
 Concrete decisions:
 
 - `uv` lives in `~/apps/uv`
-- `nvm` lives in `~/apps/nvm`
+- `fnm` lives in `~/.local/share/fnm`
+- `starship` lives in `~/apps/bin` (single-binary tools installed by curl go here)
 - Go state lives in `~/apps/go`
 - package-manager-installed software stays in package-manager defaults
 - Neovim is package-manager-managed rather than AppImage-managed
+
+Rule: if a tool is installed via a curl installer (not a package manager), its binary goes under `~/apps` — either `~/apps/<tool>` for tools with their own directory structure (uv, fnm) or `~/apps/bin` for single-binary tools (starship). `~/.local/bin` is reserved for user scripts and wrappers managed by stow, not for curl-installed binaries.
 
 Why:
 
