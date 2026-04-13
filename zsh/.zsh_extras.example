@@ -61,16 +61,16 @@ function gssh() {
 # vpns() {
 #   local wg_up=false
 #   local ts_up=false
-#   ip link show cypris &>/dev/null && wg_up=true
+#   ip link show wg0 &>/dev/null && wg_up=true
 #   tailscale status --json 2>/dev/null | grep -q '"ExitNode": true' && ts_up=true
 #   if $wg_up; then
 #     echo "Switching from wireguard to mullvad..."
-#     sudo wg-quick down cypris
+#     sudo wg-quick down wg0
 #     exitnode up
 #   elif $ts_up; then
 #     echo "Switching from mullvad to wireguard..."
 #     exitnode down
-#     sudo wg-quick up cypris
+#     sudo wg-quick up wg0
 #   else
 #     echo "Error: neither wireguard nor mullvad is active"
 #     return 1

@@ -28,13 +28,13 @@ profile laptop {
 
 # Example: single external monitor at the office
 # profile work {
-#     output "DEL DELL U2719DC GGBR4N2" mode 2560x1440@59.951Hz position 0,0
+#     output "<MAKE> <MODEL> <SERIAL>" mode 2560x1440@59.951Hz position 0,0
 #     output eDP-1 disable
 # }
 
 # Example: dual externals side-by-side at home
 # profile home {
-#     output "ACR XV272U 0x01822E61"        mode 2560x1440@59.951Hz position 0,0
-#     output "ACR XV272U V 332506A1C3LIJ"   mode 2560x1440@60Hz     position 2560,0
+#     output "<MAKE> <MODEL> <SERIAL_A>" mode 2560x1440@59.951Hz position 0,0
+#     output "<MAKE> <MODEL> <SERIAL_B>" mode 2560x1440@60Hz     position 2560,0
 #     output eDP-1 disable
 # }
