@@ -482,6 +482,57 @@ Libadwaita and the `settings.ini` mechanism target different codepaths and don't
 
 The role runs as the logged-in user (no `become`) and requires `scripts/apply` to be executed from inside a graphical session so `DBUS_SESSION_BUS_ADDRESS` is set. This is consistent with how the rest of the playbook runs.
 
+### 22. Omarchy-inspired audio, Bluetooth, and power management
+
+Borrowed selectively from [Omarchy](https://github.com/basecamp/omarchy) (DHH's opinionated Arch distribution, known for excellent laptop battery life). Took the portable pieces; skipped anything Hyprland-specific, Arch-specific, or that conflicted with our multi-distro promise.
+
+**Audio — PipeWire + WirePlumber.** Previously implicit (pavucontrol assumed it was there but we never installed it). Now explicit: `pipewire`, `wireplumber`, `pipewire-pulse` (PulseAudio compat), `pipewire-alsa`, `pipewire-jack`. A new `wireplumber` stow package ships `api.alsa.soft-mixer = true` for consistent bluetooth audio volume. User services (`pipewire.socket`, `pipewire-pulse.socket`, `wireplumber.service`) are explicitly enabled to work around Arch's manual-enable quirk.
+
+**Bluetooth — BlueZ + Blueman.** Omarchy uses `bluetui` (Rust TUI) but it's only in Arch and openSUSE repos. Blueman is universally available, provides a GTK tray applet people expect, and matches what was originally in the pre-ansible README. `bluetooth.service` is enabled at boot.
+
+**Power management — `power-profiles-daemon`, not TLP.** Omarchy's key insight: on modern hardware (2022+), the kernel's own power management is good enough that TLP's aggressive tuning is counterproductive. `power-profiles-daemon` with udev-driven profile switching is the right abstraction. Installed pieces:
+
+- `/etc/udev/rules.d/99-power-profile.rules` — switches `balanced` on battery, `performance` on AC, via `powerprofilesctl`.
+- `/etc/udev/rules.d/99-wifi-powersave.rules` + `/usr/local/bin/wifi-powersave` — toggles `iw dev <iface> set power_save on/off` to match AC state.
+- `/usr/lib/systemd/system-sleep/unmount-fuse` — unmounts `gvfsd-fuse` mounts before suspend to prevent Nautilus from hanging suspend.
+- `/etc/systemd/system.conf.d/10-faster-shutdown.conf` — `DefaultTimeoutStopSec=5s` (kills the 90-second shutdown hang).
+- `/etc/systemd/system/user@.service.d/10-faster-shutdown.conf` — same for user services.
+- `/etc/systemd/system/plocate-updatedb.service.d/ac-only.conf` — `ConditionACPower=true` so disk indexing doesn't run on battery.
+- `~/.config/systemd/user/battery-monitor.{service,timer}` + `~/.local/scripts/battery-monitor` — systemd user timer fires every 30s, sends a critical `notify-send` at ≤10% battery, flag file prevents repeat notifications until charging resumes.
+
+**Skipped:** `thermald` (Intel-only; user is moving to AMD), `intel-lpmd` (Arch-only). These can be added later if needed.
+
+### 23. iwd as NetworkManager's WiFi backend (opt-in)
+
+Omarchy uses pure `iwd` + `impala` (no NetworkManager). Full swap is too invasive for a portable dotfiles repo — NetworkManager is the default on all four distros and handles VPN plugins, enterprise WiFi, cellular, and the tray applet. But the Arch wiki-recommended middle ground — NetworkManager with `wifi.backend=iwd` — gives us iwd's battery and connect-speed benefits while keeping NM's ergonomics.
+
+Gated behind `dotfiles_iwd_backend_enabled: false` in `group_vars/all.yml` because the swap disables `wpa_supplicant` and restarts NetworkManager, which briefly drops active WiFi connections. Opt-in by flipping the default to `true`.
+
+When enabled, the role writes `/etc/NetworkManager/conf.d/wifi-backend.conf`, disables `wpa_supplicant.service`, enables `iwd.service`, and restarts NetworkManager in the correct order.
+
+### 24. Modernised git defaults
+
+Four upstream git-recommended defaults added to the existing delta pager config:
+
+- `diff.algorithm=histogram` — smarter hunking than the default `myers`.
+- `rerere.enabled=true` — remembers conflict resolutions so you don't replay them on every rebase.
+- `push.autoSetupRemote=true` — first push on a new branch works without `--set-upstream`.
+- `branch.sort=-committerdate` — recent branches at the top of `git branch` output.
+
+These are baked in via the existing `community.general.git_config` task in the shell role, so they pin idempotently across runs.
+
+### 25. Downstream adjustments for the new stack
+
+Three follow-on tweaks to actually exercise the new backends rather than leave them installed but unused:
+
+**Sway volume bindings → `wpctl`.** Old bindings used `pactl set-sink-volume` which still works via pipewire-pulse compat, but the PipeWire-native command is `wpctl set-volume @DEFAULT_AUDIO_SINK@ 10%+`. The `-l 1.0` flag caps raise at 100% so a stuck repeat key can't overdrive speakers (wpctl allows boost-above-100% by default, pactl didn't). Same for mute toggles (`wpctl set-mute … toggle`).
+
+**Fontconfig fallbacks for CSS `system-ui`.** New `fontconfig` stow package ships a `fonts.conf` that maps `system-ui`, `-apple-system`, and `BlinkMacSystemFont` → Liberation Sans + Noto Color Emoji. Without this, websites that specify the macOS system font stack (common on modern sites copying Apple's design system) fall through to a serif, making them look broken on Linux. Adapted from Omarchy.
+
+**`xdg-desktop-portal-gtk` for Firefox / Electron dark mode.** `xdg-desktop-portal-wlr` handles screen sharing but doesn't implement the `org.freedesktop.portal.Settings` interface. Without a Settings-capable portal, Firefox can't find our `color-scheme` dconf key and its chrome stays light. `xdg-desktop-portal-gtk` fills that gap — it reads GSettings and exposes `color-scheme` over D-Bus. Works fine on non-GNOME systems. New `xdg-portals` stow package writes `~/.config/xdg-desktop-portal/sway-portals.conf` to route Settings to `gtk` while keeping Screenshot/ScreenCast on `wlr`.
+
+**Cleanup script extensions.** `scripts/cleanup` now also offers to remove packages that conflict with the new stack if they were previously installed: `tlp`, `tlp-rdw`, `auto-cpufreq`, `tuned`, `tuned-ppd`, `powertop` (fight power-profiles-daemon for the same kernel knobs), `pulseaudio`/`pulseaudio-utils`/`pulseaudio-bluetooth` (replaced by pipewire + pipewire-pulse compat), and `mlocate`/`locate` (replaced by plocate).
+
 ## Current State
 
 The system has been validated in Docker containers across Ubuntu, Fedora, Arch, and openSUSE. Both `scripts/apply` (fresh install) and `scripts/update` (upgrade path) pass on all four distros.
@@ -529,9 +580,20 @@ Everything below is installed and kept up to date by the playbook.
 | `mako_notifier`          | notification daemon                             |
 | `xdg_desktop_portal`     | desktop integration                             |
 | `xdg_desktop_portal_wlr` | screen sharing for Zoom/Slack/Teams             |
+| `xdg_desktop_portal_gtk` | Settings portal (bridges dark mode to apps)     |
 | `foot`                   | lightweight Wayland terminal (ghostty fallback) |
 | `kanshi`                 | automatic display profile switching (Wayland)   |
 | `pavucontrol`            | PulseAudio volume control                       |
+| `pipewire`               | audio/video server (replaces PulseAudio)        |
+| `wireplumber`            | PipeWire session manager                        |
+| `pipewire_pulse`         | PulseAudio compatibility shim for PipeWire      |
+| `pipewire_alsa`          | ALSA compatibility shim for PipeWire            |
+| `pipewire_jack`          | JACK compatibility shim for PipeWire            |
+| `bluez`                  | Bluetooth protocol stack                        |
+| `blueman`                | GTK Bluetooth manager with tray applet          |
+| `power_profiles_daemon`  | battery/balanced/performance profile switcher   |
+| `plocate`                | fast file indexer (`locate`)                    |
+| `upower`                 | power / battery state D-Bus service             |
 | `nautilus`               | file manager (GTK4/libadwaita, dark-mode-aware) |
 | `rofi`                   | application launcher                            |
 | `dex`                    | XDG autostart                                   |
@@ -570,6 +632,10 @@ All core CLI packages above via `brew install`, plus `ansible`, `starship`. Ghos
 | `mako`     | `~/.config/mako/config` (linux_desktop only)                         |
 | `kanshi`   | `~/.config/kanshi/config.example` (linux_desktop only)               |
 | `gtk`      | `~/.config/gtk-3.0/settings.ini`, `gtk-4.0/settings.ini` (linux_desktop only) |
+| `wireplumber` | `~/.config/wireplumber/wireplumber.conf.d/` (linux_desktop only) |
+| `systemd`  | `~/.config/systemd/user/` — user timers like battery-monitor (linux_desktop only) |
+| `fontconfig` | `~/.config/fontconfig/fonts.conf` — web system-font fallbacks (linux_desktop only) |
+| `xdg-portals` | `~/.config/xdg-desktop-portal/sway-portals.conf` — portal routing (linux_desktop only) |
 
 **Directories created by the filesystem role:**
 

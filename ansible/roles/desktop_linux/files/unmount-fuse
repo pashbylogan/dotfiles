@@ -1,0 +1,19 @@
+#!/bin/bash
+# systemd-sleep hook: unmount gvfsd-fuse mounts before suspend.
+#
+# Without this, Nautilus's gvfsd-fuse mountpoints (e.g. SMB shares) can
+# block suspend or cause it to hang. Adapted from Omarchy.
+#
+# Installed to /usr/lib/systemd/system-sleep/unmount-fuse.
+case $1 in
+  pre)
+    while IFS=' ' read -r _ mountpoint fstype _; do
+      if [[ $fstype == fuse.gvfsd-fuse ]]; then
+        mountpoint=$(printf '%b' "$mountpoint")
+        fusermount3 -uz "$mountpoint" 2>/dev/null \
+          || fusermount -uz "$mountpoint" 2>/dev/null \
+          || true
+      fi
+    done < /proc/mounts
+    ;;
+esac

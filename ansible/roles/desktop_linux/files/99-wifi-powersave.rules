@@ -1,0 +1,4 @@
+# Toggle WiFi power save on battery / off on AC.
+# Adapted from Omarchy.
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="0", RUN+="/usr/local/bin/wifi-powersave on"
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="1", RUN+="/usr/local/bin/wifi-powersave off"

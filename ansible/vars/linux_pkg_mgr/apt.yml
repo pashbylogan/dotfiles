@@ -76,10 +76,32 @@ dotfiles_linux_pkg_map:
     - xdg-desktop-portal
   xdg_desktop_portal_wlr:
     - xdg-desktop-portal-wlr
+  xdg_desktop_portal_gtk:
+    - xdg-desktop-portal-gtk
   foot:
     - foot
+  pipewire:
+    - pipewire
+  wireplumber:
+    - wireplumber
+  pipewire_pulse:
+    - pipewire-pulse
+  pipewire_alsa:
+    - pipewire-alsa
+  pipewire_jack:
+    - pipewire-jack
   pavucontrol:
     - pavucontrol
+  bluez:
+    - bluez
+  blueman:
+    - blueman
+  power_profiles_daemon:
+    - power-profiles-daemon
+  plocate:
+    - plocate
+  upower:
+    - upower
   nautilus:
     - nautilus
   rofi:

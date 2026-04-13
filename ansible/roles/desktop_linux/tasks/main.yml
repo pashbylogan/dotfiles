@@ -25,3 +25,155 @@
     key: /org/freedesktop/Tracker3/Miner/Files/index-single-directories
     value: "@as []"
     state: present
+
+# ─── Audio stack (PipeWire + WirePlumber) ───────────────────────────────────
+# Packages are installed by the `packages` role. Explicit user-service enable
+# is required on Arch; harmless idempotent no-op on distros that enable via
+# postinst (Ubuntu/Fedora/openSUSE).
+
+- name: Enable PipeWire user services
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    scope: user
+    enabled: true
+    state: started
+  loop:
+    - pipewire.socket
+    - pipewire-pulse.socket
+    - wireplumber.service
+  failed_when: false
+
+# ─── Bluetooth ──────────────────────────────────────────────────────────────
+
+- name: Enable bluetooth.service (system)
+  ansible.builtin.systemd_service:
+    name: bluetooth.service
+    enabled: true
+    state: started
+  become: true
+  failed_when: false
+
+# ─── Power management ──────────────────────────────────────────────────────
+# Auto-switch power profile and WiFi powersave on AC plug/unplug, drop
+# system shutdown timeout to 5s, restrict plocate indexing to AC power,
+# unmount gvfsd-fuse mounts before suspend. Adapted from Omarchy defaults.
+
+- name: Install power-profile switching udev rule
+  ansible.builtin.copy:
+    src: 99-power-profile.rules
+    dest: /etc/udev/rules.d/99-power-profile.rules
+    mode: "0644"
+  become: true
+  notify: Reload udev
+
+- name: Install WiFi-powersave udev rule
+  ansible.builtin.copy:
+    src: 99-wifi-powersave.rules
+    dest: /etc/udev/rules.d/99-wifi-powersave.rules
+    mode: "0644"
+  become: true
+  notify: Reload udev
+
+- name: Install wifi-powersave helper script
+  ansible.builtin.copy:
+    src: wifi-powersave
+    dest: /usr/local/bin/wifi-powersave
+    mode: "0755"
+  become: true
+
+- name: Install FUSE sleep hook
+  ansible.builtin.copy:
+    src: unmount-fuse
+    dest: /usr/lib/systemd/system-sleep/unmount-fuse
+    mode: "0755"
+  become: true
+
+- name: Create systemd drop-in directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  become: true
+  loop:
+    - /etc/systemd/system.conf.d
+    - /etc/systemd/system/user@.service.d
+    - /etc/systemd/system/plocate-updatedb.service.d
+
+- name: Install 5s shutdown timeout (system)
+  ansible.builtin.copy:
+    src: faster-shutdown.conf
+    dest: /etc/systemd/system.conf.d/10-faster-shutdown.conf
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+- name: Install 5s shutdown timeout (user services)
+  ansible.builtin.copy:
+    src: faster-shutdown-user.conf
+    dest: /etc/systemd/system/user@.service.d/10-faster-shutdown.conf
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+- name: Restrict plocate indexing to AC power
+  ansible.builtin.copy:
+    src: plocate-ac-only.conf
+    dest: /etc/systemd/system/plocate-updatedb.service.d/ac-only.conf
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+- name: Enable power-profiles-daemon
+  ansible.builtin.systemd_service:
+    name: power-profiles-daemon.service
+    enabled: true
+    state: started
+  become: true
+  failed_when: false
+
+- name: Enable battery-monitor user timer
+  ansible.builtin.systemd_service:
+    name: battery-monitor.timer
+    scope: user
+    enabled: true
+    state: started
+  failed_when: false
+
+# ─── iwd as NetworkManager WiFi backend (opt-in) ────────────────────────────
+# Better battery and faster connects; keep NetworkManager for VPNs, enterprise
+# WiFi, and the tray applet. See dotfiles_iwd_backend_enabled in group_vars.
+
+- name: iwd backend setup
+  when: dotfiles_iwd_backend_enabled | default(false)
+  become: true
+  block:
+    - name: Install iwd
+      ansible.builtin.package:
+        name: iwd
+        state: present
+
+    - name: Configure NetworkManager to use iwd as WiFi backend
+      ansible.builtin.copy:
+        dest: /etc/NetworkManager/conf.d/wifi-backend.conf
+        mode: "0644"
+        content: |
+          [device]
+          wifi.backend=iwd
+
+    - name: Disable wpa_supplicant (conflicts with iwd)
+      ansible.builtin.systemd_service:
+        name: wpa_supplicant.service
+        enabled: false
+        state: stopped
+      failed_when: false
+
+    - name: Enable iwd
+      ansible.builtin.systemd_service:
+        name: iwd.service
+        enabled: true
+        state: started
+
+    - name: Restart NetworkManager to pick up new backend
+      ansible.builtin.systemd_service:
+        name: NetworkManager.service
+        state: restarted

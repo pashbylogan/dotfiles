@@ -13,8 +13,19 @@ dotfiles_profile_linux_packages_common:
   - mako_notifier
   - xdg_desktop_portal
   - xdg_desktop_portal_wlr
+  - xdg_desktop_portal_gtk
   - foot
+  - pipewire
+  - wireplumber
+  - pipewire_pulse
+  - pipewire_alsa
+  - pipewire_jack
   - pavucontrol
+  - bluez
+  - blueman
+  - power_profiles_daemon
+  - plocate
+  - upower
   - nautilus
   - rofi
   - dex

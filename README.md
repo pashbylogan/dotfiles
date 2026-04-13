@@ -52,7 +52,7 @@ cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
 | Category        | Packages                                                                                                                               |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Core CLI        | `git`, `zsh`, `tmux`, `neovim`, `fzf`, `ripgrep`, `fd`, `age`, `gh`, `delta`, `btop`, `jq`, `rsync`, `netcat`, `lsof`, `patch`, `stow` |
-| Desktop (Linux) | `sway`, `swaylock`, `swayidle`, `kanshi`, `i3status`, `rofi`, `grim`, `slurp`, `wl-clipboard`, `brightnessctl`, `mako`, `nautilus`, `pavucontrol`  |
+| Desktop (Linux) | `sway`, `swaylock`, `swayidle`, `kanshi`, `i3status`, `rofi`, `grim`, `slurp`, `wl-clipboard`, `brightnessctl`, `mako`, `nautilus`, `pavucontrol`, `pipewire`, `wireplumber`, `bluez`, `blueman`, `power-profiles-daemon`, `plocate`, `upower`, `xdg-desktop-portal-gtk`  |
 | Networking      | `wireguard-tools`, `tailscale`                                                                                                         |
 | macOS           | same core CLI via Homebrew, plus Ghostty via cask                                                                                      |
 
@@ -66,7 +66,7 @@ cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
 
 ### Config (via stow symlinks)
 
-`zsh`, `tmux`, `nvim`, `ssh`, `ghostty`, `sway`, `i3status`, `mako`, `kanshi`, `gtk`, plus user scripts in `bin`.
+`zsh`, `tmux`, `nvim`, `ssh`, `ghostty`, `sway`, `i3status`, `mako`, `kanshi`, `gtk`, `wireplumber`, `systemd` (user timers), `fontconfig`, `xdg-portals`, plus user scripts in `bin`.
 
 ### Also
 

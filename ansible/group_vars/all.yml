@@ -21,6 +21,10 @@ dotfiles_stow_packages_linux_desktop:
   - mako
   - kanshi
   - gtk
+  - wireplumber
+  - systemd
+  - fontconfig
+  - xdg-portals
 
 dotfiles_common_linux_packages:
   - git
@@ -65,6 +69,10 @@ dotfiles_common_macos_packages:
 
 dotfiles_starship_enabled: true
 dotfiles_tailscale_enabled: true
+# Use iwd as NetworkManager's WiFi backend (better battery, faster connects).
+# Off by default because it swaps wpa_supplicant for iwd on your machine —
+# flip to true after you've confirmed the trade-off is safe for you.
+dotfiles_iwd_backend_enabled: false
 dotfiles_uv_enabled: true
 dotfiles_uv_root: "{{ dotfiles_apps_root }}/uv"
 dotfiles_uv_bin_dir: "{{ dotfiles_uv_root }}/bin"

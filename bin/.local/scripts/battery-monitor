@@ -1,0 +1,26 @@
+#!/bin/bash
+# Poll UPower and fire a critical notification when battery is low.
+# Called every 30 seconds by ~/.config/systemd/user/battery-monitor.timer.
+#
+# Adapted from Omarchy (https://github.com/basecamp/omarchy).
+
+set -euo pipefail
+
+THRESHOLD=10
+FLAG="/run/user/$UID/battery-low-notified"
+
+battery="$(upower -e | grep -m1 BAT || true)"
+[[ -z $battery ]] && exit 0
+
+state="$(upower -i "$battery")"
+status="$(awk '/state:/ {print $2}' <<<"$state")"
+level="$(awk '/percentage:/ {print $2}' <<<"$state" | tr -d '%' | cut -d. -f1)"
+
+if [[ $status == "discharging" && $level -le $THRESHOLD ]]; then
+  if [[ ! -f $FLAG ]]; then
+    notify-send -u critical "Battery low" "Battery is at ${level}% — plug in soon."
+    touch "$FLAG"
+  fi
+elif [[ $status != "discharging" ]]; then
+  rm -f "$FLAG"
+fi

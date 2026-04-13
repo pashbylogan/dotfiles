@@ -61,6 +61,16 @@ collect_removable_packages() {
     light  # replaced by brightnessctl
     htop  # replaced by btop
     thunar  # replaced by nautilus
+    # Battery daemons that fight power-profiles-daemon on the same knobs.
+    # If any of these were installed previously, remove them.
+    tlp tlp-rdw
+    auto-cpufreq
+    tuned tuned-ppd
+    powertop
+    # Legacy PulseAudio — replaced by pipewire + pipewire-pulse compat.
+    pulseaudio pulseaudio-utils pulseaudio-bluetooth
+    # Legacy updatedb — plocate replaces it.
+    mlocate locate
   )
 
   for pkg in "${de_packages[@]}" "${dm_packages[@]}" "${replaced_packages[@]}"; do

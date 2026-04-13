@@ -22,17 +22,23 @@
     shell: "{{ zsh_path.stdout }}"
   become: true
 
-- name: Configure git to use delta as pager
+- name: Configure git (delta pager + modern defaults)
   community.general.git_config:
     name: "{{ item.name }}"
     value: "{{ item.value }}"
     scope: global
   loop:
+    # Delta as pager
     - { name: "core.pager", value: "delta" }
     - { name: "interactive.diffFilter", value: "delta --color-only" }
     - { name: "delta.navigate", value: "true" }
     - { name: "delta.line-numbers", value: "true" }
     - { name: "delta.syntax-theme", value: "base16" }
     - { name: "merge.conflictstyle", value: "diff3" }
+    # Modern defaults (adopted from Omarchy; all upstream git recommended).
+    - { name: "diff.algorithm", value: "histogram" }       # smarter hunking than myers
+    - { name: "rerere.enabled", value: "true" }            # remember conflict resolutions
+    - { name: "push.autoSetupRemote", value: "true" }      # no more --set-upstream
+    - { name: "branch.sort", value: "-committerdate" }     # recent branches first in git branch
   loop_control:
     label: "{{ item.name }}"
