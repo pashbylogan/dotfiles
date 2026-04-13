@@ -22,6 +22,10 @@ dotfiles_linux_pkg_map:
     - age
   gh:
     - gh
+  delta:
+    - git-delta
+  btop:
+    - btop
   unzip:
     - unzip
   wireguard_tools:

@@ -32,6 +32,8 @@ dotfiles_common_linux_packages:
   - fd
   - age
   - gh
+  - delta
+  - btop
   - unzip
   - wireguard_tools
   - build_tools
@@ -49,6 +51,8 @@ dotfiles_common_macos_packages:
   - fd
   - age
   - gh
+  - git-delta
+  - btop
   - starship
 
 dotfiles_starship_enabled: true

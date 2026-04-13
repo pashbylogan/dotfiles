@@ -3,3 +3,18 @@
 # Prompt is handled by starship (installed via packages role).
 # No framework (oh-my-zsh) needed — completion, history, and keybindings
 # are configured directly in .zshrc.
+
+- name: Configure git to use delta as pager
+  community.general.git_config:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    scope: global
+  loop:
+    - { name: "core.pager", value: "delta" }
+    - { name: "interactive.diffFilter", value: "delta --color-only" }
+    - { name: "delta.navigate", value: "true" }
+    - { name: "delta.line-numbers", value: "true" }
+    - { name: "delta.syntax-theme", value: "base16" }
+    - { name: "merge.conflictstyle", value: "diff3" }
+  loop_control:
+    label: "{{ item.name }}"
