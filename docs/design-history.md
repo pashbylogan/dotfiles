@@ -393,6 +393,50 @@ Switched the preview to `stow -S` (stow-only, not restow). With `-S`, stow only 
 
 The `dex-autostart` package is only installed for the `linux_desktop` profile, but the symlink task ran on all dnf systems, creating a broken symlink on non-desktop profiles. Added a `dotfiles_resolved_profile == "linux_desktop"` guard.
 
+### 11. Replaced oh-my-zsh with Plain Zsh + Starship
+
+oh-my-zsh loaded 150+ files for 2 plugins (`git`, `fzf`) that were both redundant — we already had custom git aliases and fzf ships its own shell integration. Replaced with ~100 lines of direct zsh config preserving everything that mattered: completion (case-insensitive, substring matching, menu select), history (50k shared, dedup, prefix search with arrow keys), key bindings (Home/End/Ctrl-arrows, edit-command-line), and fzf integration with fallback for older versions.
+
+Prompt replaced with Starship (Rust binary, ~2ms init). Installed to `~/apps/bin` via curl installer.
+
+### 12. Replaced nvm with fnm
+
+nvm added ~300ms to every shell open (even with lazy-loading, the first `node`/`npm` call paid the full penalty). fnm is a Rust binary with <1ms shell init, reads `.nvmrc` natively, and is a near-drop-in replacement. Installed to `~/.local/share/fnm` via curl installer.
+
+### 13. Replaced pnpm with corepack
+
+pnpm was installed globally to `~/.local/share/pnpm` with a PATH entry. Replaced with corepack (ships with Node.js) — `pnpm`/`yarn` are available on-demand per-project when `package.json` specifies a `packageManager` field. No global install, no PATH entry, no version to maintain.
+
+### 14. Migrated from i3+X11 to Sway+Wayland
+
+X11 is in maintenance mode — no new development upstream. All major distros now default to Wayland. The migration was motivated by three goals:
+
+1. Should be on actively maintained software (X11 is maintenance-only)
+2. Should align with Linux defaults (Fedora, Ubuntu, Arch, openSUSE all ship Wayland)
+3. Should simplify the desktop environment setup, config, and maintenance
+
+Sway was chosen over Hyprland because it is in default repos on all four distros (Hyprland is not in Ubuntu/Debian), uses i3-compatible config syntax (near-trivial migration), and uses the standard wlroots tool ecosystem (no parallel lock/idle/wallpaper tools to track). Hyprland optimizes for visual polish at the cost of stability, portability, and simplicity.
+
+The migration eliminated picom (Sway is the compositor), the `apply-xinput-settings` script (replaced by sway `input {}` blocks), feh, maim, xclip, i3lock, xss-lock, xterm, xset, and setxkbmap. The empty `desktop_linux` Ansible role was also deleted.
+
+Added: sway, swaylock, swayidle, swaybg, grim, slurp, wl-clipboard, brightnessctl (replaces orphaned `light`), mako (notification daemon — we had none before), xdg-desktop-portal-wlr (screen sharing), and foot (lightweight Wayland terminal fallback).
+
+**Blur**: Sway does not support compositor-level blur (dual_kawase). Ghostty's own `background-opacity = 0.8` still works natively. A new `ext-background-effect-v1` Wayland protocol was merged into wayland-protocols in May 2025, which will let any client request blur from any supporting compositor. No compositor has shipped a stable implementation yet. When Sway adds support, blur will return without needing SwayFX or Hyprland. This is the planned path.
+
+### 15. Added delta and btop
+
+delta: syntax-highlighted git diffs with line numbers, configured via `git config` in the Ansible shell role. Replaces raw `diff` output.
+
+btop: modern process viewer replacing `top`/`htop`. Both are in default repos on all four distros.
+
+### 16. Security Hardening
+
+Full audit resulted in: SSH config consolidated with `ForwardAgent no`, `ForwardX11 no`, `HashKnownHosts yes`; host-specific entries moved to gitignored `config.local`; post-stow `chmod 700 ~/.ssh` and `chmod 600 ~/.ssh/config`; `host_key_checking = False` removed from `ansible.cfg`; profile and package manager names validated before `include_vars`; directory permissions tightened to `0700`; absolute path for fnm eval; defensive `.gitignore` patterns for keys, `.env`, vault files; quoted variables in shell scripts and i3 config.
+
+### 17. Added WireGuard and Tailscale
+
+WireGuard tools added to common Linux packages (in default repos on all distros). Tailscale added via a dedicated Ansible role that adds the Tailscale repo on apt/dnf, then installs the package. Arch and openSUSE have Tailscale in their default repos.
+
 ## Current State
 
 The system has been validated in Docker containers across Ubuntu, Fedora, Arch, and openSUSE. Both `scripts/apply` (fresh install) and `scripts/update` (upgrade path) pass on all four distros.
@@ -413,49 +457,56 @@ Everything below is installed and kept up to date by the playbook.
 | `tmux` | terminal multiplexer |
 | `neovim` | editor |
 | `fzf` | fuzzy finder |
-| `ripgrep` | search |
-| `fd` | file finder |
+| `ripgrep` | search (replaces grep) |
+| `fd` | file finder (replaces find) |
 | `age` | encryption |
+| `gh` | GitHub CLI |
+| `delta` | syntax-highlighted git diffs |
+| `btop` | process viewer (replaces top/htop) |
 | `unzip` | archive utility |
+| `wireguard_tools` | VPN tooling |
 | `build_tools` | compiler toolchain (gcc, make, etc.) |
 | `python` | Python 3 + pip |
-| `xterm_terminal` | fallback terminal for first boot |
 
 **OS packages (linux_desktop profile only):**
 
 | Abstract name | What it is |
 |---------------|-----------|
-| `i3` | tiling window manager |
-| `i3status` | status bar |
-| `i3lock` | screen locker |
-| `xss-lock` | auto-lock on idle |
-| `feh` | wallpaper / image viewer |
+| `sway` | Wayland tiling compositor |
+| `swaylock` | screen locker |
+| `swayidle` | idle management (auto-lock, display off) |
+| `swaybg` | wallpaper |
+| `i3status` | status bar (works with swaybar) |
+| `grim` | screenshot capture |
+| `slurp` | region selection for screenshots |
+| `wl_clipboard` | Wayland clipboard (wl-copy/wl-paste) |
+| `brightnessctl` | backlight control |
+| `mako_notifier` | notification daemon |
+| `xdg_desktop_portal` | desktop integration |
+| `xdg_desktop_portal_wlr` | screen sharing for Zoom/Slack/Teams |
+| `foot` | lightweight Wayland terminal (ghostty fallback) |
 | `pavucontrol` | PulseAudio volume control |
 | `thunar` | file manager |
 | `rofi` | application launcher |
-| `picom` | compositor |
-| `dex` | autostart `.desktop` entries |
+| `dex` | XDG autostart |
 | `nm_applet` | NetworkManager tray applet |
 | `jetbrains_mono_fonts` | terminal/editor font |
 
 **OS packages (macOS via Homebrew):**
 
-All core CLI packages above via `brew install`, plus `ansible`. Ghostty via `brew install --cask ghostty`.
+All core CLI packages above via `brew install`, plus `ansible`, `starship`. Ghostty via `brew install --cask ghostty`.
+
+**Tailscale** (via dedicated Ansible role — adds repo on apt/dnf, installs from default repos on Arch/openSUSE).
 
 **User-managed runtimes (~/apps):**
 
 | Tool | Location | Install method | Update method |
 |------|----------|---------------|---------------|
 | uv | `~/apps/uv` | astral.sh installer | re-run installer |
+| starship | `~/apps/bin/starship` | starship.rs installer | re-run installer |
 | fnm | `~/.local/share/fnm` | fnm.vercel.app installer | re-run installer |
 | Node.js LTS | via fnm | `fnm install --lts` | re-run install |
 | npm (latest) | via fnm/node | `npm install -g npm@latest` | re-run install |
-
-**Shell tooling:**
-
-| Tool | Location | Install method | Update method |
-|------|----------|---------------|---------------|
-| starship | `~/apps/bin/starship` | starship.rs installer | re-run installer |
 | corepack | via Node.js | `corepack enable` | ships with Node |
 
 **Stow packages (symlinked into $HOME):**
@@ -463,14 +514,14 @@ All core CLI packages above via `brew install`, plus `ansible`. Ghostty via `bre
 | Package | What it manages |
 |---------|----------------|
 | `ssh` | `~/.ssh/config`, `~/.ssh/config.local.example` |
-| `nvim` | `~/.config/nvim/` |
+| `nvim` | `~/.config/nvim/` (includes lazy.nvim) |
 | `tmux` | `~/.tmux.conf` |
 | `zsh` | `~/.zshrc`, `~/.zsh_profile`, `~/.zsh_extras.example` |
 | `bin` | `~/.local/scripts/*` (user utility scripts) |
 | `ghostty` | `~/.config/ghostty/` |
-| `i3` | `~/.config/i3/config` (linux_desktop only) |
+| `sway` | `~/.config/sway/config`, `config.local.example` (linux_desktop only) |
 | `i3status` | `~/.config/i3status/config` (linux_desktop only) |
-| `picom` | `~/.config/picom/picom.conf` (linux_desktop only) |
+| `mako` | `~/.config/mako/config` (linux_desktop only) |
 
 **Directories created by the filesystem role:**
 
@@ -478,16 +529,17 @@ All core CLI packages above via `brew install`, plus `ansible`. Ghostty via `bre
 
 ### Deferred Software (Not Managed)
 
-The following were deliberately cut to keep the base small. See the README for the full list. They can be added back behind profile flags or host-specific roles.
+The following were deliberately cut to keep the base small. See the README for the full list. They can be added back via local override files (`~/.zsh_extras`, `~/.config/sway/config.local`).
 
-- Desktop `.desktop` launchers (Discord, IntelliJ, Obsidian, Postman, Thunderbird)
-- i3 workspace rules (Firefox, Slack, Obsidian, JetBrains IDEA, Spotify)
-- Shell wrappers (claude, gemini, gssh, vpns/exitnode, android, dbmate/dbdump, autorandr, cdwt, gcloud, cloud-sql-proxy)
-- Linux packages (blueman, xbacklight, lxappearance, autorandr)
+- Desktop apps (Discord, IntelliJ, Obsidian, Postman, Thunderbird) — use Flatpak or JetBrains Toolbox
+- Sway workspace rules (Firefox, Slack, Obsidian, JetBrains IDEA, Spotify) — in `config.local.example`
+- Shell wrappers (claude, gemini, gssh, vpns/exitnode, android, dbmate/dbdump, cdwt, gcloud, cloud-sql-proxy) — in `zsh_extras.example`
+- Java/Gradle — managed per-project by IntelliJ (`~/.jdks/`) and `./gradlew`; use `mise` if CLI JDK needed
+- Linux packages (blueman, lxappearance)
 
 ### Future Work
 
-Potential additions that are well-maintained and widely adopted. None are blocking — the current setup is fully functional without them.
+Potential additions that are well-maintained and widely adopted. None are blocking.
 
 **Shell plugins** (source directly in `.zshrc` or use a lightweight plugin manager like Antidote):
 
@@ -495,39 +547,35 @@ Potential additions that are well-maintained and widely adopted. None are blocki
 |--------|-------|-------------|
 | [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | ~35k | Fish-like inline history suggestions as you type |
 | [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting) | ~22k | Colors valid/invalid commands in real time |
-| [zoxide](https://github.com/ajeetdsouza/zoxide) | ~35k | Smarter `cd` — learns your frequent directories, replaces `z`/`autojump` |
+| [zoxide](https://github.com/ajeetdsouza/zoxide) | ~28k | Smarter `cd` — learns your frequent directories |
 
-**Terminal tools** (install via package manager, alias in shell config):
+**Terminal tools**:
 
 | Tool | Stars | What it does |
 |------|-------|-------------|
 | [bat](https://github.com/sharkdp/bat) | ~58k | `cat` with syntax highlighting and line numbers |
-| [eza](https://github.com/eza-community/eza) | ~21k | Modern `ls` with git status, icons, tree view |
-| [delta](https://github.com/dandavison/delta) | ~30k | Syntax-highlighted git diffs, set as `core.pager` in gitconfig |
+| [eza](https://github.com/eza-community/eza) | ~17k | Modern `ls` with git status, icons, tree view |
 | [lazygit](https://github.com/jesseduffield/lazygit) | ~76k | Full TUI for git — staging, rebasing, conflict resolution |
-| [tldr](https://github.com/tldr-pages/tldr) | ~62k | Simplified man pages with practical examples |
 
-**Tmux plugins** (via [tpm](https://github.com/tmux-plugins/tpm), ~14k stars):
+**Tmux plugins** (via [tpm](https://github.com/tmux-plugins/tpm)):
 
 | Plugin | Stars | What it does |
 |--------|-------|-------------|
 | [tmux-resurrect](https://github.com/tmux-plugins/tmux-resurrect) | ~13k | Persist tmux sessions across reboots |
-| [tmux-yank](https://github.com/tmux-plugins/tmux-yank) | ~3k | Standardized system clipboard integration |
 
 **Neovim** (already has lazy.nvim via stow):
 
 | Plugin | Stars | What it does |
 |--------|-------|-------------|
-| [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) | ~19k | Fuzzy finder for files, grep, buffers — pairs with fzf/rg/fd |
+| [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) | ~19k | Fuzzy finder for files, grep, buffers |
 | [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) | ~14k | AST-based syntax highlighting and code navigation |
 
-**i3 desktop** (Linux only):
+**Desktop**:
 
-| Tool | Stars | What it does |
-|------|-------|-------------|
-| [dunst](https://github.com/dunst-project/dunst) | ~5.4k | Notification daemon — needed for `notify-send` to display anything |
-| [flameshot](https://github.com/flameshot-org/flameshot) | ~30k | Screenshot tool with annotation GUI, replaces `import + xclip` |
-| [polybar](https://github.com/polybar/polybar) | ~15k | Highly configurable status bar replacement for i3status (high effort) |
+| Tool | What it does |
+|------|-------------|
+| `ext-background-effect-v1` | Wayland protocol for compositor blur — merged May 2025, awaiting Sway implementation |
+| [SwayFX](https://github.com/WillPower3309/swayfx) | Drop-in Sway fork with blur/shadows/rounded corners (interim option) |
 
 **Security/privacy**:
 
