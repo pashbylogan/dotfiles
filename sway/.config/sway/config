@@ -139,6 +139,14 @@ bar {
 
 for_window [app_id="com.mitchellh.ghostty"] move workspace 1
 
+# ─── Idle inhibit (keep display awake during fullscreen video) ──────────────
+# Catch-all compositor-level safety net: any fullscreen window inhibits
+# idle/lock. Covers apps that don't speak the Wayland idle-inhibit protocol
+# (Electron apps, some games, legacy X11 via XWayland). The first line
+# matches native Wayland clients (app_id); the second covers XWayland (class).
+for_window [app_id=".*"] inhibit_idle fullscreen
+for_window [class=".*"] inhibit_idle fullscreen
+
 # ─── Custom keybindings ──────────────────────────────────────────────────────
 
 bindsym $mod+Shift+x exec swaylock -f -c 000000

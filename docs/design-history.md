@@ -533,6 +533,23 @@ Three follow-on tweaks to actually exercise the new backends rather than leave t
 
 **Cleanup script extensions.** `scripts/cleanup` now also offers to remove packages that conflict with the new stack if they were previously installed: `tlp`, `tlp-rdw`, `auto-cpufreq`, `tuned`, `tuned-ppd`, `powertop` (fight power-profiles-daemon for the same kernel knobs), `pulseaudio`/`pulseaudio-utils`/`pulseaudio-bluetooth` (replaced by pipewire + pipewire-pulse compat), and `mlocate`/`locate` (replaced by plocate).
 
+### 26. Idle inhibit for fullscreen video
+
+On stock Sway, fullscreen YouTube / Netflix / Jellyfin etc. would trigger the screen lock after 5 minutes because two different bugs in the idle-inhibit chain defeated the normal "video is playing, stay awake" path:
+
+1. **Portal misdirect.** Firefox and Chromium prefer the D-Bus `org.freedesktop.ScreenSaver.Inhibit` route when a portal backend advertises it. `xdg-desktop-portal-gtk` does advertise it, but it forwards to `org.gnome.SessionManager` — which doesn't exist on a Sway session. Browsers consider the request "handled," never fall back to the native Wayland protocol, and the inhibit request goes into a void. Fixed by adding `org.freedesktop.impl.portal.Inhibit=none` to our `sway-portals.conf` — this tells xdg-desktop-portal to refuse to handle Inhibit, which makes browsers fall back to `idle-inhibit-unstable-v1` (which Sway implements correctly).
+
+2. **No compositor-level safety net.** Apps that don't speak the Wayland protocol at all (many Electron apps, X11 apps via XWayland, some games) can't inhibit idle no matter what. Fixed by adding two `for_window` rules:
+
+   ```
+   for_window [app_id=".*"] inhibit_idle fullscreen
+   for_window [class=".*"] inhibit_idle fullscreen
+   ```
+
+   These tell Sway: for any matching window, inhibit idle *only while it's fullscreen*. The first matches native Wayland clients (`app_id`), the second matches XWayland clients (`class`). Sway creates the inhibitor itself — no app cooperation required.
+
+Defence in depth: the portal fix handles windowed/PiP video playback in browsers; the catch-all fullscreen rule handles everything else. Together, `swayidle` never fires its lock timeout while a fullscreen window or actively-playing browser tab is on screen.
+
 ## Current State
 
 The system has been validated in Docker containers across Ubuntu, Fedora, Arch, and openSUSE. Both `scripts/apply` (fresh install) and `scripts/update` (upgrade path) pass on all four distros.
