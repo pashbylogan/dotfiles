@@ -26,7 +26,7 @@ wget -qO- https://raw.githubusercontent.com/pashbyl/dotfiles/master/bootstrap.sh
 
 | Category | Packages |
 |----------|----------|
-| Core CLI | `git`, `zsh`, `tmux`, `neovim`, `fzf`, `ripgrep`, `fd`, `age`, `gh`, `stow` |
+| Core CLI | `git`, `zsh`, `tmux`, `neovim`, `fzf`, `ripgrep`, `fd`, `age`, `gh`, `delta`, `btop`, `jq`, `rsync`, `netcat`, `lsof`, `patch`, `stow` |
 | Desktop (Linux) | `sway`, `swaylock`, `swayidle`, `i3status`, `rofi`, `grim`, `slurp`, `wl-clipboard`, `brightnessctl`, `mako`, `thunar`, `pavucontrol` |
 | Networking | `wireguard-tools`, `tailscale` |
 | macOS | same core CLI via Homebrew, plus Ghostty via cask |

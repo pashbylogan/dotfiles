@@ -28,6 +28,16 @@ dotfiles_linux_pkg_map:
     - btop
   unzip:
     - unzip
+  jq:
+    - jq
+  rsync:
+    - rsync
+  netcat:
+    - netcat-openbsd
+  lsof:
+    - lsof
+  patch:
+    - patch
   wireguard_tools:
     - wireguard
   build_tools:

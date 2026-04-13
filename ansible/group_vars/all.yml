@@ -35,6 +35,11 @@ dotfiles_common_linux_packages:
   - delta
   - btop
   - unzip
+  - jq
+  - rsync
+  - netcat
+  - lsof
+  - patch
   - wireguard_tools
   - build_tools
   - python
