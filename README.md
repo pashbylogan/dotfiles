@@ -20,6 +20,30 @@ wget -qO- https://raw.githubusercontent.com/pashbyl/dotfiles/master/bootstrap.sh
 ./scripts/check     # dry-run — show what would change
 ```
 
+**After first install** — one-time manual steps:
+
+```sh
+# Git identity
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+
+# SSH key (if not migrated from another machine)
+ssh-keygen -t ed25519
+
+# Tailscale
+sudo tailscale up
+
+# GitHub CLI
+gh auth login
+
+# Optional: gcloud CLI (if using GCP)
+# gcloud auth login
+
+# Optional: copy local overrides from examples
+cp ~/projects/dotfiles/sway/.config/sway/config.local.example ~/.config/sway/config.local
+cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
+```
+
 ## What Gets Installed
 
 ### Packages (via OS package manager)
