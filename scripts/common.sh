@@ -84,7 +84,7 @@ ensure_linux_prereqs() {
   fi
 
   if have zypper; then
-    run_root zypper --non-interactive install stow python3 python3-pip ansible
+    run_root zypper --non-interactive install stow python3 python3-pip ansible gawk
     return
   fi
 

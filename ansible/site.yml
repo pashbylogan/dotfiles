@@ -75,7 +75,6 @@
     - role: user_tools
     - role: shell
     - role: stow
-    - role: desktop_linux
-      when: dotfiles_resolved_profile == "linux_desktop"
+    - role: tailscale
     - role: macos_cli
       when: dotfiles_resolved_profile == "macos_cli"

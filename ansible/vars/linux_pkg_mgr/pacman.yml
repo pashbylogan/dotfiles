@@ -24,8 +24,8 @@ dotfiles_linux_pkg_map:
     - github-cli
   unzip:
     - unzip
-  xclip:
-    - xclip
+  wireguard_tools:
+    - wireguard-tools
   build_tools:
     - gcc
     - make
@@ -34,31 +34,41 @@ dotfiles_linux_pkg_map:
   python:
     - python
     - python-pip
-  i3:
-    - i3-wm
+  sway:
+    - sway
+  swaylock:
+    - swaylock
+  swayidle:
+    - swayidle
+  swaybg:
+    - swaybg
   i3status:
     - i3status
-  i3lock:
-    - i3lock
-  xss-lock:
-    - xss-lock
-  feh:
-    - feh
+  grim:
+    - grim
+  slurp:
+    - slurp
+  wl_clipboard:
+    - wl-clipboard
+  brightnessctl:
+    - brightnessctl
+  mako_notifier:
+    - mako
+  xdg_desktop_portal:
+    - xdg-desktop-portal
+  xdg_desktop_portal_wlr:
+    - xdg-desktop-portal-wlr
+  foot:
+    - foot
   pavucontrol:
     - pavucontrol
   thunar:
     - thunar
   rofi:
     - rofi
-  picom:
-    - picom
   dex:
     - dex
   nm_applet:
     - network-manager-applet
   jetbrains_mono_fonts:
     - ttf-jetbrains-mono
-  maim:
-    - maim
-  xterm_terminal:
-    - xterm

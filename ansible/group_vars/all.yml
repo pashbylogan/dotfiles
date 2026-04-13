@@ -15,9 +15,9 @@ dotfiles_stow_packages_common:
   - ghostty
 
 dotfiles_stow_packages_linux_desktop:
-  - i3
+  - sway
   - i3status
-  - picom
+  - mako
 
 dotfiles_common_linux_packages:
   - git
@@ -33,10 +33,9 @@ dotfiles_common_linux_packages:
   - age
   - gh
   - unzip
-  - xclip
+  - wireguard_tools
   - build_tools
   - python
-  - xterm_terminal
 
 dotfiles_common_macos_packages:
   - git
@@ -53,6 +52,7 @@ dotfiles_common_macos_packages:
   - starship
 
 dotfiles_starship_enabled: true
+dotfiles_tailscale_enabled: true
 dotfiles_uv_enabled: true
 dotfiles_uv_root: "{{ dotfiles_apps_root }}/uv"
 dotfiles_uv_bin_dir: "{{ dotfiles_uv_root }}/bin"

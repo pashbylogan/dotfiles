@@ -26,8 +26,9 @@ wget -qO- https://raw.githubusercontent.com/pashbyl/dotfiles/master/bootstrap.sh
 
 | Category | Packages |
 |----------|----------|
-| Core CLI | `git`, `zsh`, `tmux`, `neovim`, `fzf`, `ripgrep`, `fd`, `age`, `stow` |
-| Desktop (Linux) | `i3`, `i3status`, `picom`, `rofi`, `feh`, `thunar`, `pavucontrol` |
+| Core CLI | `git`, `zsh`, `tmux`, `neovim`, `fzf`, `ripgrep`, `fd`, `age`, `gh`, `stow` |
+| Desktop (Linux) | `sway`, `swaylock`, `swayidle`, `i3status`, `rofi`, `grim`, `slurp`, `wl-clipboard`, `brightnessctl`, `mako`, `thunar`, `pavucontrol` |
+| Networking | `wireguard-tools`, `tailscale` |
 | macOS | same core CLI via Homebrew, plus Ghostty via cask |
 
 ### User-managed runtimes (in `~/apps`)
@@ -36,14 +37,15 @@ wget -qO- https://raw.githubusercontent.com/pashbyl/dotfiles/master/bootstrap.sh
 |------|----------|--------------------|
 | [uv](https://github.com/astral-sh/uv) | `~/apps/uv` | re-runs installer |
 | [fnm](https://github.com/Schniz/fnm) + Node LTS | `~/.local/share/fnm` | re-runs installer, checks for newer LTS |
+| [Starship](https://starship.rs) | `~/apps/bin/starship` | re-runs installer |
 
 ### Config (via stow symlinks)
 
-`zsh`, `tmux`, `nvim`, `ssh`, `ghostty`, `i3`, `i3status`, `picom`, plus user scripts in `bin`.
+`zsh`, `tmux`, `nvim`, `ssh`, `ghostty`, `sway`, `i3status`, `mako`, plus user scripts in `bin`.
 
 ### Also
 
-- **[Starship](https://starship.rs)** prompt — Rust binary, ~2ms init, git-aware (in `~/apps/bin`)
+- **[Starship](https://starship.rs)** prompt — Rust binary, ~2ms init, git-aware
 - **[fnm](https://github.com/Schniz/fnm)** — Rust-based Node version manager, <1ms shell init
 - **corepack** enabled — `pnpm`/`yarn` available on-demand per-project, no global install
 
@@ -57,7 +59,7 @@ DOTFILES_PROFILE=macos_cli ./scripts/apply
 
 | Profile | Default on | Notes |
 |---------|-----------|-------|
-| `linux_desktop` | Linux | full desktop environment |
+| `linux_desktop` | Linux | Sway (Wayland) desktop environment |
 | `macos_cli` | macOS | CLI + terminal parity, no desktop management |
 
 ## Distro Support
@@ -89,12 +91,12 @@ Shared config stays generic in the repo. Machine-specific values go in local fil
 |------|-----------|---------|
 | SSH hosts | `~/.ssh/config.local` | [`config.local.example`](ssh/.ssh/config.local.example) |
 | Shell aliases/functions | `~/.zsh_extras` | [`zsh_extras.example`](zsh/.zsh_extras.example) |
-| i3 workspace rules | `~/.config/i3/config.local` | [`config.local.example`](i3/.config/i3/config.local.example) |
-| Desktop launchers | `~/.local/share/applications/*.desktop` | manage directly (not stowed) |
+| Sway workspace/input/output rules | `~/.config/sway/config.local` | [`config.local.example`](sway/.config/sway/config.local.example) |
+| Desktop launchers | `~/.local/share/applications/*.desktop` | manage via Flatpak or directly |
 
 ## Migrating From the Old Setup
 
-If you previously used the old `install` script, run these steps before `./scripts/apply`:
+If you previously used the old `install` script with i3, run these steps before `./scripts/apply`:
 
 ```sh
 # 1. Preserve desktop launchers (old stow symlinks → real files)
@@ -103,15 +105,20 @@ for f in *.desktop; do
   [ -L "$f" ] && cp --remove-destination "$(readlink -f "$f")" "$f"
 done
 
-# 2. Move SSH hosts to config.local
+# 2. Unstow old packages
+cd ~/projects/dotfiles
+stow -D i3 2>/dev/null; stow -D picom 2>/dev/null
+
+# 3. Move SSH hosts to config.local
 # Copy your Host entries from ~/.ssh/config into ~/.ssh/config.local
 
-# 3. Move personal aliases to ~/.zsh_extras
+# 4. Move personal aliases to ~/.zsh_extras
 cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
 # Edit and uncomment what you need
 
-# 4. Move i3 workspace rules to config.local
-cp ~/projects/dotfiles/i3/.config/i3/config.local.example ~/.config/i3/config.local
+# 5. Move workspace rules to sway config.local
+mkdir -p ~/.config/sway
+cp ~/projects/dotfiles/sway/.config/sway/config.local.example ~/.config/sway/config.local
 # Edit and uncomment what you need
 ```
 
@@ -122,19 +129,20 @@ Cut from the first-pass managed set to keep the base small. Can be added back vi
 <details>
 <summary>Full list of deferred items</summary>
 
-**Desktop app launchers** — Discord, IntelliJ, Obsidian, Postman, Thunderbird `.desktop` files
+**Desktop app launchers** — Discord, IntelliJ, Obsidian, Postman, Thunderbird (use Flatpak or JetBrains Toolbox)
 
-**i3 workspace rules** — Firefox (ws2), Slack (ws3), Obsidian (ws3), JetBrains IDEA (ws5), Spotify (ws10)
+**Sway workspace rules** — Firefox (ws2), Slack (ws3), Obsidian (ws3), JetBrains IDEA (ws5), Spotify (ws10)
 
-**Shell aliases/functions** — `claude`/`bigclaude`, `gemini`, `gssh`, `vpns`/`exitnode`, `android`, `dbmate`/`dbdump`, `ar`, `cdwt`, gcloud sourcing, cloud-sql-proxy
+**Shell aliases/functions** — `claude`/`bigclaude`, `gemini`, `gssh`, `vpns`/`exitnode`, `android`, `dbmate`/`dbdump`, `cdwt`, gcloud sourcing, cloud-sql-proxy
 
-**Linux packages** — `blueman`, `xbacklight`, `lxappearance`, `autorandr`
+**Linux packages** — `blueman`, `lxappearance`
 
 </details>
 
 ## Design Decisions
 
 - Package manager for standard software; `~/apps` only for self-contained runtimes
+- Sway (Wayland) for the desktop — no X11 compositor, input scripts, or separate lock daemon needed
 - Stow for file placement, Ansible for everything else (packages, upgrades, convergence)
 - Shared config stays generic; machine-specific values go in local override files
 - Secrets stay out of the repo entirely

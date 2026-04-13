@@ -76,7 +76,7 @@ install_linux_prereqs() {
   fi
 
   if have zypper; then
-    run_root zypper --non-interactive install git curl stow age zsh python3 python3-pip ansible
+    run_root zypper --non-interactive install git curl stow age zsh python3 python3-pip ansible gawk
     return
   fi
 

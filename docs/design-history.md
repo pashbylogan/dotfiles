@@ -106,6 +106,23 @@ Concrete decisions:
 
 Rule: if a tool is installed via a curl installer (not a package manager), its binary goes under `~/apps` — either `~/apps/<tool>` for tools with their own directory structure (uv, fnm) or `~/apps/bin` for single-binary tools (starship). `~/.local/bin` is reserved for user scripts and wrappers managed by stow, not for curl-installed binaries.
 
+Explicitly **not** managed globally:
+
+- **Java** — managed per-project by IntelliJ (downloads JDKs to `~/.jdks/`) or `mise` if needed from the command line. No global JDK install.
+- **Gradle** — always use the Gradle Wrapper (`./gradlew`). Each project's `gradle-wrapper.properties` pins its version. A global Gradle install is unnecessary.
+
+Both `~/apps/java` and `~/apps/gradle` can be removed from existing machines. If a CLI JDK is ever needed outside IntelliJ, use `mise` (Rust-based universal version manager with per-project `.mise.toml` support) rather than a global install.
+
+**Desktop apps** (Discord, Obsidian, Postman, Thunderbird, IntelliJ, etc.) are not managed by this repo. Install them manually using:
+
+- **Flatpak** (preferred) — `flatpak install flathub com.discordapp.Discord` etc. Auto-creates `.desktop` entries, handles updates, works across distros.
+- **JetBrains Toolbox** — for IntelliJ and other JetBrains IDEs. Self-updates, creates `.desktop` files.
+- **Package manager** — for apps in default repos (e.g., Thunderbird).
+
+Avoid manual extract-to-`~/apps` + hand-written `.desktop` files for desktop apps. That pattern doesn't handle updates and breaks when paths change.
+
+`~/apps/bin` is for single-binary CLI tools. `~/apps/<tool>` is for CLI tools with their own directory structure. Desktop app bundles should not live in `~/apps`.
+
 Why:
 
 - The repo already had a `~/apps` convention.

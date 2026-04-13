@@ -2,7 +2,7 @@ nvim/.config/nvim/plugin/packer_compiled.lua
 ghostty/.config/ghostty/*.bak
 ssh/.ssh/config.local
 zsh/.zsh_extras
-i3/.config/i3/config.local
+sway/.config/sway/config.local
 
 # Keys and secrets
 *.pem

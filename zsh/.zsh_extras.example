@@ -7,9 +7,10 @@
 
 # path+=("$HOME/apps/ghostty/bin")
 
-# ─── Autorandr ───────────────────────────────────────────────────────────────
-
-alias ar='autorandr '
+# ─── Display profiles (Wayland) ──────────────────────────────────────────────
+# Use kanshi for automatic display profile switching, or configure
+# outputs directly in ~/.config/sway/config.local.
+# alias ar='kanshi '
 
 # ─── Git worktree cd ─────────────────────────────────────────────────────────
 

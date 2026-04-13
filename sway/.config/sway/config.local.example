@@ -1,0 +1,34 @@
+# Machine-local sway overrides. Copy to ~/.config/sway/config.local.
+# This file is gitignored and auto-included by the main config.
+#
+# cp ~/projects/dotfiles/sway/.config/sway/config.local.example ~/.config/sway/config.local
+#
+# Wayland-native apps use app_id; XWayland apps (Zoom, Slack, older Electron) use class.
+# Find identifiers: swaymsg -t get_tree | grep -E 'app_id|class'
+
+# ─── Workspace assignments ───────────────────────────────────────────────────
+
+# for_window [app_id="firefox"] move workspace $ws2
+# for_window [app_id="Slack"] move workspace $ws3
+# for_window [class="obsidian"] move workspace $ws3
+# for_window [class="jetbrains-idea"] move workspace $ws5
+# for_window [app_id="Spotify"] move workspace $ws10
+
+# ─── Floating rules ─────────────────────────────────────────────────────────
+
+# for_window [app_id="Slack"] floating disable
+# for_window [app_id="zoom"] floating enable
+# for_window [app_id="zoom" title="Zoom Meeting"] floating disable
+
+# ─── Input overrides ────────────────────────────────────────────────────────
+# Find device identifiers: swaymsg -t get_inputs
+
+# input "1133:16505:Logitech_MX_Master" {
+#     pointer_accel 0.6
+# }
+
+# ─── Output configuration ───────────────────────────────────────────────────
+# Find output names: swaymsg -t get_outputs
+
+# output DP-1 resolution 2560x1440 position 0,0
+# output eDP-1 resolution 1920x1080 position 2560,0

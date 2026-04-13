@@ -118,7 +118,7 @@
   ansible.builtin.shell: |
     set -euo pipefail
     export PATH="{{ dotfiles_fnm_dir }}:$PATH"
-    eval "$(fnm env)"
+    eval "$(fnm env --shell bash)"
     fnm ls | grep -q lts-latest
   args:
     executable: /bin/bash
@@ -133,7 +133,7 @@
   ansible.builtin.shell: |
     set -euo pipefail
     export PATH="{{ dotfiles_fnm_dir }}:$PATH"
-    eval "$(fnm env)"
+    eval "$(fnm env --shell bash)"
     fnm install --lts
     installed="$(fnm ls | grep lts-latest | head -1 | awk '{print $2}')"
     [ -n "$installed" ] && fnm default "$installed"
@@ -150,7 +150,7 @@
   ansible.builtin.shell: |
     set -euo pipefail
     export PATH="{{ dotfiles_fnm_dir }}:$PATH"
-    eval "$(fnm env)"
+    eval "$(fnm env --shell bash)"
     npm install -g npm@latest
   args:
     executable: /bin/bash
@@ -165,7 +165,7 @@
   ansible.builtin.shell: |
     set -euo pipefail
     export PATH="{{ dotfiles_fnm_dir }}:$PATH"
-    eval "$(fnm env)"
+    eval "$(fnm env --shell bash)"
     corepack enable
   args:
     executable: /bin/bash

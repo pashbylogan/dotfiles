@@ -1,18 +1,24 @@
 ---
 dotfiles_profile_linux_packages_common:
-  - i3
+  - sway
+  - swaylock
+  - swayidle
+  - swaybg
   - i3status
-  - i3lock
-  - xss-lock
-  - feh
+  - grim
+  - slurp
+  - wl_clipboard
+  - brightnessctl
+  - mako_notifier
+  - xdg_desktop_portal
+  - xdg_desktop_portal_wlr
+  - foot
   - pavucontrol
   - thunar
   - rofi
-  - picom
   - dex
   - nm_applet
   - jetbrains_mono_fonts
-  - maim
 
 dotfiles_profile_brew_packages: []
 dotfiles_profile_brew_casks: []

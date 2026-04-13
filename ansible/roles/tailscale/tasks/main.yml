@@ -1,0 +1,52 @@
+---
+- name: Check if Tailscale is installed
+  ansible.builtin.command: tailscale --version
+  register: dotfiles_tailscale_check
+  changed_when: false
+  failed_when: false
+  when:
+    - dotfiles_tailscale_enabled
+    - ansible_system == "Linux"
+
+- name: Add Tailscale apt repo
+  become: true
+  when:
+    - dotfiles_tailscale_enabled
+    - ansible_system == "Linux"
+    - ansible_pkg_mgr == "apt"
+    - dotfiles_tailscale_check.rc != 0
+  block:
+    - name: Add Tailscale GPG key
+      ansible.builtin.get_url:
+        url: "https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }}/{{ ansible_distribution_release }}.noarmor.gpg"
+        dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+        mode: "0644"
+
+    - name: Add Tailscale apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"
+        filename: tailscale
+        state: present
+
+- name: Add Tailscale dnf repo
+  become: true
+  when:
+    - dotfiles_tailscale_enabled
+    - ansible_system == "Linux"
+    - dotfiles_pkg_mgr == "dnf"
+    - dotfiles_tailscale_check.rc != 0
+  block:
+    - name: Add Tailscale yum repo
+      ansible.builtin.get_url:
+        url: "https://pkgs.tailscale.com/stable/fedora/tailscale.repo"
+        dest: /etc/yum.repos.d/tailscale.repo
+        mode: "0644"
+
+- name: Install Tailscale
+  become: true
+  ansible.builtin.package:
+    name: tailscale
+    state: "{{ 'latest' if dotfiles_mode == 'update' else 'present' }}"
+  when:
+    - dotfiles_tailscale_enabled
+    - ansible_system == "Linux"
