@@ -5,7 +5,7 @@
 # are configured directly in .zshrc.
 
 - name: Locate zsh binary
-  ansible.builtin.command: command -v zsh
+  ansible.builtin.shell: command -v zsh
   register: zsh_path
   changed_when: false
 

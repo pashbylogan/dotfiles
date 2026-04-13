@@ -97,7 +97,7 @@ fi
 export FNM_DIR="$HOME/.local/share/fnm"
 if [[ -x "$FNM_DIR/fnm" ]]; then
   path+=("$FNM_DIR")
-  eval "$("$FNM_DIR/fnm" env --use-on-cd --version-file-strategy=recursive)"
+  eval "$("$FNM_DIR/fnm" env --shell zsh --use-on-cd --version-file-strategy=recursive)"
 fi
 
 # ─── UV ──────────────────────────────────────────────────────────────────────
