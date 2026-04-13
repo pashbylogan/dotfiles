@@ -162,6 +162,8 @@ Cut from the first-pass managed set to keep the base small. Can be added back vi
 
 **Linux packages** — `blueman`, `lxappearance`
 
+**Docker + Docker Compose** — follow the official per-OS install guide: https://docs.docker.com/engine/install/ (Compose ships as the `docker compose` plugin)
+
 </details>
 
 ## Design Decisions
