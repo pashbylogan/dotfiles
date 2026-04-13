@@ -17,6 +17,7 @@ exec swayidle -w \
 exec nm-applet --indicator
 exec mako
 exec kanshi
+exec waybar
 
 # ─── Input ───────────────────────────────────────────────────────────────────
 
@@ -129,12 +130,6 @@ bindsym $mod+r mode "resize"
 default_border pixel 2
 client.focused #77dd77 #285577 #ffffff #2e9ef4 #285577
 
-# ─── Bar ─────────────────────────────────────────────────────────────────────
-
-bar {
-    status_command i3status
-}
-
 # ─── Workspace assignments ───────────────────────────────────────────────────
 
 for_window [app_id="com.mitchellh.ghostty"] move workspace 1
@@ -152,12 +147,12 @@ for_window [class=".*"] inhibit_idle fullscreen
 bindsym $mod+Shift+x exec swaylock -f -c 000000
 bindsym $mod+Ctrl+greater move workspace to output next
 
-# Volume
-set $refresh_i3status killall -SIGUSR1 i3status
-bindsym XF86AudioRaiseVolume exec wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 10%+ && $refresh_i3status
-bindsym XF86AudioLowerVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 10%- && $refresh_i3status
-bindsym XF86AudioMute exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle && $refresh_i3status
-bindsym XF86AudioMicMute exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle && $refresh_i3status
+# Volume — waybar's pulseaudio module auto-updates via PipeWire events,
+# no explicit bar refresh needed.
+bindsym XF86AudioRaiseVolume exec wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 10%+
+bindsym XF86AudioLowerVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 10%-
+bindsym XF86AudioMute exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+bindsym XF86AudioMicMute exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
 
 # Brightness
 bindsym XF86MonBrightnessUp exec brightnessctl set +10% && notify-send "brightness up"

@@ -60,8 +60,8 @@ dotfiles_linux_pkg_map:
     - swaybg
   kanshi:
     - kanshi
-  i3status:
-    - i3status
+  waybar:
+    - waybar
   grim:
     - grim
   slurp:

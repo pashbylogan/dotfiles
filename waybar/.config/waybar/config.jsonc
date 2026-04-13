@@ -1,0 +1,25 @@
+// Waybar configuration.
+//
+// Intentionally minimal — we inherit defaults for everything we don't
+// explicitly override. No style.css is stowed; waybar falls back to
+// /etc/xdg/waybar/style.css shipped with the package.
+//
+// The module list below is the only real opinion: which modules appear
+// in each section. Module formats, colours, icons, polling intervals —
+// all at upstream defaults.
+{
+  "modules-left": ["sway/workspaces", "sway/mode"],
+  "modules-center": ["sway/window"],
+  "modules-right": [
+    "idle_inhibitor",
+    "power-profiles-daemon",
+    "pulseaudio",
+    "bluetooth",
+    "network",
+    "cpu",
+    "memory",
+    "battery",
+    "tray",
+    "clock"
+  ]
+}

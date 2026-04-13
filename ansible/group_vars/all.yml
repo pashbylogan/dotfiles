@@ -17,7 +17,7 @@ dotfiles_stow_packages_common:
 
 dotfiles_stow_packages_linux_desktop:
   - sway
-  - i3status
+  - waybar
   - mako
   - kanshi
   - gtk

@@ -550,6 +550,14 @@ On stock Sway, fullscreen YouTube / Netflix / Jellyfin etc. would trigger the sc
 
 Defence in depth: the portal fix handles windowed/PiP video playback in browsers; the catch-all fullscreen rule handles everything else. Together, `swayidle` never fires its lock timeout while a fullscreen window or actively-playing browser tab is on screen.
 
+### 27. Replaced swaybar + i3status with Waybar
+
+i3status had no modules for bluetooth state, the active power profile, or idle-inhibit status — three things that became relevant after recent additions (`power-profiles-daemon`, `bluez`/`blueman`, the fullscreen idle-inhibit fix). Waybar ships all three as native modules, plus `sway/workspaces` integration. Available as `waybar` in all four distros.
+
+Migration is a clean replacement: swaybar (the compositor's fallback bar) goes away with the `bar { }` block, i3status is uninstalled, and waybar runs as a standalone bar via `exec waybar`. The `killall -SIGUSR1 i3status` kick after volume changes is also gone — waybar's `[pulseaudio]` module listens to PipeWire events directly.
+
+The config deliberately leans on upstream defaults. Only the module list is opinionated — heights, margins, module formats, and the stylesheet are all left at waybar's defaults so cosmetic drift is upstream's problem. No `style.css` is stowed; waybar falls back to `/etc/xdg/waybar/style.css` from the package.
+
 ## Current State
 
 The system has been validated in Docker containers across Ubuntu, Fedora, Arch, and openSUSE. Both `scripts/apply` (fresh install) and `scripts/update` (upgrade path) pass on all four distros.
@@ -589,7 +597,7 @@ Everything below is installed and kept up to date by the playbook.
 | `swaylock`               | screen locker                                   |
 | `swayidle`               | idle management (auto-lock, display off)        |
 | `swaybg`                 | wallpaper                                       |
-| `i3status`               | status bar (works with swaybar)                 |
+| `waybar`                 | status bar (replaces swaybar + i3status)        |
 | `grim`                   | screenshot capture                              |
 | `slurp`                  | region selection for screenshots                |
 | `wl_clipboard`           | Wayland clipboard (wl-copy/wl-paste)            |
@@ -645,7 +653,7 @@ All core CLI packages above via `brew install`, plus `ansible`, `starship`. Ghos
 | `bin`      | `~/.local/scripts/*` (user utility scripts)                          |
 | `ghostty`  | `~/.config/ghostty/`                                                 |
 | `sway`     | `~/.config/sway/config`, `config.local.example` (linux_desktop only) |
-| `i3status` | `~/.config/i3status/config` (linux_desktop only)                     |
+| `waybar`   | `~/.config/waybar/config.jsonc` (linux_desktop only)                 |
 | `mako`     | `~/.config/mako/config` (linux_desktop only)                         |
 | `kanshi`   | `~/.config/kanshi/config.example` (linux_desktop only)               |
 | `gtk`      | `~/.config/gtk-3.0/settings.ini`, `gtk-4.0/settings.ini` (linux_desktop only) |

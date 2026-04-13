@@ -50,7 +50,7 @@ collect_removable_packages() {
 
   # X11 tools we replaced with Wayland equivalents
   local replaced_packages=(
-    i3 i3-wm i3lock i3status xss-lock
+    i3 i3-wm i3lock i3status xss-lock  # i3status replaced by waybar
     picom compton
     feh
     maim scrot
@@ -137,6 +137,7 @@ collect_orphaned_configs() {
     ["$HOME/.local/share/kwalletd"]=kwalletd5
     # X11 tools we replaced
     ["$HOME/.config/i3"]=i3
+    ["$HOME/.config/i3status"]=i3status
     ["$HOME/.config/picom"]=picom
     ["$HOME/.config/compton"]=compton
     ["$HOME/.fehbg"]=feh

@@ -5,7 +5,7 @@ dotfiles_profile_linux_packages_common:
   - swayidle
   - swaybg
   - kanshi
-  - i3status
+  - waybar
   - grim
   - slurp
   - wl_clipboard
