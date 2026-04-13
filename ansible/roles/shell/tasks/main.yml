@@ -4,6 +4,24 @@
 # No framework (oh-my-zsh) needed — completion, history, and keybindings
 # are configured directly in .zshrc.
 
+- name: Locate zsh binary
+  ansible.builtin.command: command -v zsh
+  register: zsh_path
+  changed_when: false
+
+- name: Ensure zsh is listed in /etc/shells
+  ansible.builtin.lineinfile:
+    path: /etc/shells
+    line: "{{ zsh_path.stdout }}"
+    state: present
+  become: true
+
+- name: Set zsh as login shell for {{ ansible_user_id }}
+  ansible.builtin.user:
+    name: "{{ ansible_user_id }}"
+    shell: "{{ zsh_path.stdout }}"
+  become: true
+
 - name: Configure git to use delta as pager
   community.general.git_config:
     name: "{{ item.name }}"
