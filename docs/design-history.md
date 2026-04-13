@@ -447,50 +447,50 @@ Everything below is installed and kept up to date by the playbook.
 
 **OS packages (all profiles):**
 
-| Abstract name | What it is |
-|---------------|-----------|
-| `git` | version control |
-| `curl` | HTTP client |
-| `ca-certificates` | root certificate bundle |
-| `stow` | symlink farm manager |
-| `zsh` | shell |
-| `tmux` | terminal multiplexer |
-| `neovim` | editor |
-| `fzf` | fuzzy finder |
-| `ripgrep` | search (replaces grep) |
-| `fd` | file finder (replaces find) |
-| `age` | encryption |
-| `gh` | GitHub CLI |
-| `delta` | syntax-highlighted git diffs |
-| `btop` | process viewer (replaces top/htop) |
-| `unzip` | archive utility |
-| `wireguard_tools` | VPN tooling |
-| `build_tools` | compiler toolchain (gcc, make, etc.) |
-| `python` | Python 3 + pip |
+| Abstract name     | What it is                           |
+| ----------------- | ------------------------------------ |
+| `git`             | version control                      |
+| `curl`            | HTTP client                          |
+| `ca-certificates` | root certificate bundle              |
+| `stow`            | symlink farm manager                 |
+| `zsh`             | shell                                |
+| `tmux`            | terminal multiplexer                 |
+| `neovim`          | editor                               |
+| `fzf`             | fuzzy finder                         |
+| `ripgrep`         | search (replaces grep)               |
+| `fd`              | file finder (replaces find)          |
+| `age`             | encryption                           |
+| `gh`              | GitHub CLI                           |
+| `delta`           | syntax-highlighted git diffs         |
+| `btop`            | process viewer (replaces top/htop)   |
+| `unzip`           | archive utility                      |
+| `wireguard_tools` | VPN tooling                          |
+| `build_tools`     | compiler toolchain (gcc, make, etc.) |
+| `python`          | Python 3 + pip                       |
 
 **OS packages (linux_desktop profile only):**
 
-| Abstract name | What it is |
-|---------------|-----------|
-| `sway` | Wayland tiling compositor |
-| `swaylock` | screen locker |
-| `swayidle` | idle management (auto-lock, display off) |
-| `swaybg` | wallpaper |
-| `i3status` | status bar (works with swaybar) |
-| `grim` | screenshot capture |
-| `slurp` | region selection for screenshots |
-| `wl_clipboard` | Wayland clipboard (wl-copy/wl-paste) |
-| `brightnessctl` | backlight control |
-| `mako_notifier` | notification daemon |
-| `xdg_desktop_portal` | desktop integration |
-| `xdg_desktop_portal_wlr` | screen sharing for Zoom/Slack/Teams |
-| `foot` | lightweight Wayland terminal (ghostty fallback) |
-| `pavucontrol` | PulseAudio volume control |
-| `thunar` | file manager |
-| `rofi` | application launcher |
-| `dex` | XDG autostart |
-| `nm_applet` | NetworkManager tray applet |
-| `jetbrains_mono_fonts` | terminal/editor font |
+| Abstract name            | What it is                                      |
+| ------------------------ | ----------------------------------------------- |
+| `sway`                   | Wayland tiling compositor                       |
+| `swaylock`               | screen locker                                   |
+| `swayidle`               | idle management (auto-lock, display off)        |
+| `swaybg`                 | wallpaper                                       |
+| `i3status`               | status bar (works with swaybar)                 |
+| `grim`                   | screenshot capture                              |
+| `slurp`                  | region selection for screenshots                |
+| `wl_clipboard`           | Wayland clipboard (wl-copy/wl-paste)            |
+| `brightnessctl`          | backlight control                               |
+| `mako_notifier`          | notification daemon                             |
+| `xdg_desktop_portal`     | desktop integration                             |
+| `xdg_desktop_portal_wlr` | screen sharing for Zoom/Slack/Teams             |
+| `foot`                   | lightweight Wayland terminal (ghostty fallback) |
+| `pavucontrol`            | PulseAudio volume control                       |
+| `thunar`                 | file manager                                    |
+| `rofi`                   | application launcher                            |
+| `dex`                    | XDG autostart                                   |
+| `nm_applet`              | NetworkManager tray applet                      |
+| `jetbrains_mono_fonts`   | terminal/editor font                            |
 
 **OS packages (macOS via Homebrew):**
 
@@ -500,28 +500,28 @@ All core CLI packages above via `brew install`, plus `ansible`, `starship`. Ghos
 
 **User-managed runtimes (~/apps):**
 
-| Tool | Location | Install method | Update method |
-|------|----------|---------------|---------------|
-| uv | `~/apps/uv` | astral.sh installer | re-run installer |
-| starship | `~/apps/bin/starship` | starship.rs installer | re-run installer |
-| fnm | `~/.local/share/fnm` | fnm.vercel.app installer | re-run installer |
-| Node.js LTS | via fnm | `fnm install --lts` | re-run install |
-| npm (latest) | via fnm/node | `npm install -g npm@latest` | re-run install |
-| corepack | via Node.js | `corepack enable` | ships with Node |
+| Tool         | Location              | Install method              | Update method    |
+| ------------ | --------------------- | --------------------------- | ---------------- |
+| uv           | `~/apps/uv`           | astral.sh installer         | re-run installer |
+| starship     | `~/apps/bin/starship` | starship.rs installer       | re-run installer |
+| fnm          | `~/.local/share/fnm`  | fnm.vercel.app installer    | re-run installer |
+| Node.js LTS  | via fnm               | `fnm install --lts`         | re-run install   |
+| npm (latest) | via fnm/node          | `npm install -g npm@latest` | re-run install   |
+| corepack     | via Node.js           | `corepack enable`           | ships with Node  |
 
 **Stow packages (symlinked into $HOME):**
 
-| Package | What it manages |
-|---------|----------------|
-| `ssh` | `~/.ssh/config`, `~/.ssh/config.local.example` |
-| `nvim` | `~/.config/nvim/` (includes lazy.nvim) |
-| `tmux` | `~/.tmux.conf` |
-| `zsh` | `~/.zshrc`, `~/.zsh_profile`, `~/.zsh_extras.example` |
-| `bin` | `~/.local/scripts/*` (user utility scripts) |
-| `ghostty` | `~/.config/ghostty/` |
-| `sway` | `~/.config/sway/config`, `config.local.example` (linux_desktop only) |
-| `i3status` | `~/.config/i3status/config` (linux_desktop only) |
-| `mako` | `~/.config/mako/config` (linux_desktop only) |
+| Package    | What it manages                                                      |
+| ---------- | -------------------------------------------------------------------- |
+| `ssh`      | `~/.ssh/config`, `~/.ssh/config.local.example`                       |
+| `nvim`     | `~/.config/nvim/` (includes lazy.nvim)                               |
+| `tmux`     | `~/.tmux.conf`                                                       |
+| `zsh`      | `~/.zshrc`, `~/.zsh_profile`, `~/.zsh_extras.example`                |
+| `bin`      | `~/.local/scripts/*` (user utility scripts)                          |
+| `ghostty`  | `~/.config/ghostty/`                                                 |
+| `sway`     | `~/.config/sway/config`, `config.local.example` (linux_desktop only) |
+| `i3status` | `~/.config/i3status/config` (linux_desktop only)                     |
+| `mako`     | `~/.config/mako/config` (linux_desktop only)                         |
 
 **Directories created by the filesystem role:**
 
@@ -543,42 +543,42 @@ Potential additions that are well-maintained and widely adopted. None are blocki
 
 **Shell plugins** (source directly in `.zshrc` or use a lightweight plugin manager like Antidote):
 
-| Plugin | Stars | What it does |
-|--------|-------|-------------|
-| [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | ~35k | Fish-like inline history suggestions as you type |
-| [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting) | ~22k | Colors valid/invalid commands in real time |
-| [zoxide](https://github.com/ajeetdsouza/zoxide) | ~28k | Smarter `cd` — learns your frequent directories |
+| Plugin                                                                          | Stars | What it does                                     |
+| ------------------------------------------------------------------------------- | ----- | ------------------------------------------------ |
+| [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions)         | ~35k  | Fish-like inline history suggestions as you type |
+| [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting) | ~22k  | Colors valid/invalid commands in real time       |
+| [zoxide](https://github.com/ajeetdsouza/zoxide)                                 | ~28k  | Smarter `cd` — learns your frequent directories  |
 
 **Terminal tools**:
 
-| Tool | Stars | What it does |
-|------|-------|-------------|
-| [bat](https://github.com/sharkdp/bat) | ~58k | `cat` with syntax highlighting and line numbers |
-| [eza](https://github.com/eza-community/eza) | ~17k | Modern `ls` with git status, icons, tree view |
-| [lazygit](https://github.com/jesseduffield/lazygit) | ~76k | Full TUI for git — staging, rebasing, conflict resolution |
+| Tool                                                | Stars | What it does                                              |
+| --------------------------------------------------- | ----- | --------------------------------------------------------- |
+| [bat](https://github.com/sharkdp/bat)               | ~58k  | `cat` with syntax highlighting and line numbers           |
+| [eza](https://github.com/eza-community/eza)         | ~17k  | Modern `ls` with git status, icons, tree view             |
+| [lazygit](https://github.com/jesseduffield/lazygit) | ~76k  | Full TUI for git — staging, rebasing, conflict resolution |
 
 **Tmux plugins** (via [tpm](https://github.com/tmux-plugins/tpm)):
 
-| Plugin | Stars | What it does |
-|--------|-------|-------------|
-| [tmux-resurrect](https://github.com/tmux-plugins/tmux-resurrect) | ~13k | Persist tmux sessions across reboots |
+| Plugin                                                           | Stars | What it does                         |
+| ---------------------------------------------------------------- | ----- | ------------------------------------ |
+| [tmux-resurrect](https://github.com/tmux-plugins/tmux-resurrect) | ~13k  | Persist tmux sessions across reboots |
 
 **Neovim** (already has lazy.nvim via stow):
 
-| Plugin | Stars | What it does |
-|--------|-------|-------------|
-| [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) | ~19k | Fuzzy finder for files, grep, buffers |
-| [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) | ~14k | AST-based syntax highlighting and code navigation |
+| Plugin                                                                | Stars | What it does                                      |
+| --------------------------------------------------------------------- | ----- | ------------------------------------------------- |
+| [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim)    | ~19k  | Fuzzy finder for files, grep, buffers             |
+| [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) | ~14k  | AST-based syntax highlighting and code navigation |
 
 **Desktop**:
 
-| Tool | What it does |
-|------|-------------|
-| `ext-background-effect-v1` | Wayland protocol for compositor blur — merged May 2025, awaiting Sway implementation |
-| [SwayFX](https://github.com/WillPower3309/swayfx) | Drop-in Sway fork with blur/shadows/rounded corners (interim option) |
+| Tool                                              | What it does                                                                         |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `ext-background-effect-v1`                        | Wayland protocol for compositor blur — merged May 2025, awaiting Sway implementation |
+| [SwayFX](https://github.com/WillPower3309/swayfx) | Drop-in Sway fork with blur/shadows/rounded corners (interim option)                 |
 
 **Security/privacy**:
 
-| Tool | Stars | What it does |
-|------|-------|-------------|
+| Tool                                         | Stars | What it does                                                        |
+| -------------------------------------------- | ----- | ------------------------------------------------------------------- |
 | [gopass](https://github.com/gopasspw/gopass) | ~6.8k | CLI password manager, compatible with `pass`, works with GPG or age |

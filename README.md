@@ -49,20 +49,20 @@ cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
 
 ### Packages (via OS package manager)
 
-| Category | Packages |
-|----------|----------|
-| Core CLI | `git`, `zsh`, `tmux`, `neovim`, `fzf`, `ripgrep`, `fd`, `age`, `gh`, `delta`, `btop`, `jq`, `rsync`, `netcat`, `lsof`, `patch`, `stow` |
-| Desktop (Linux) | `sway`, `swaylock`, `swayidle`, `i3status`, `rofi`, `grim`, `slurp`, `wl-clipboard`, `brightnessctl`, `mako`, `thunar`, `pavucontrol` |
-| Networking | `wireguard-tools`, `tailscale` |
-| macOS | same core CLI via Homebrew, plus Ghostty via cask |
+| Category        | Packages                                                                                                                               |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Core CLI        | `git`, `zsh`, `tmux`, `neovim`, `fzf`, `ripgrep`, `fd`, `age`, `gh`, `delta`, `btop`, `jq`, `rsync`, `netcat`, `lsof`, `patch`, `stow` |
+| Desktop (Linux) | `sway`, `swaylock`, `swayidle`, `i3status`, `rofi`, `grim`, `slurp`, `wl-clipboard`, `brightnessctl`, `mako`, `thunar`, `pavucontrol`  |
+| Networking      | `wireguard-tools`, `tailscale`                                                                                                         |
+| macOS           | same core CLI via Homebrew, plus Ghostty via cask                                                                                      |
 
 ### User-managed runtimes (in `~/apps`)
 
-| Tool | Location | What `update` does |
-|------|----------|--------------------|
-| [uv](https://github.com/astral-sh/uv) | `~/apps/uv` | re-runs installer |
-| [fnm](https://github.com/Schniz/fnm) + Node LTS | `~/.local/share/fnm` | re-runs installer, checks for newer LTS |
-| [Starship](https://starship.rs) | `~/apps/bin/starship` | re-runs installer |
+| Tool                                            | Location              | What `update` does                      |
+| ----------------------------------------------- | --------------------- | --------------------------------------- |
+| [uv](https://github.com/astral-sh/uv)           | `~/apps/uv`           | re-runs installer                       |
+| [fnm](https://github.com/Schniz/fnm) + Node LTS | `~/.local/share/fnm`  | re-runs installer, checks for newer LTS |
+| [Starship](https://starship.rs)                 | `~/apps/bin/starship` | re-runs installer                       |
 
 ### Config (via stow symlinks)
 
@@ -82,21 +82,21 @@ Auto-detected by OS. Override with:
 DOTFILES_PROFILE=macos_cli ./scripts/apply
 ```
 
-| Profile | Default on | Notes |
-|---------|-----------|-------|
-| `linux_desktop` | Linux | Sway (Wayland) desktop environment |
-| `macos_cli` | macOS | CLI + terminal parity, no desktop management |
+| Profile         | Default on | Notes                                        |
+| --------------- | ---------- | -------------------------------------------- |
+| `linux_desktop` | Linux      | Sway (Wayland) desktop environment           |
+| `macos_cli`     | macOS      | CLI + terminal parity, no desktop management |
 
 ## Distro Support
 
 Tested on:
 
-| Distro | Package manager | Status |
-|--------|----------------|--------|
-| Ubuntu / Debian | apt | full pass |
-| Fedora | dnf / dnf5 | full pass |
-| Arch | pacman | full pass |
-| openSUSE Tumbleweed | zypper | full pass |
+| Distro              | Package manager | Status    |
+| ------------------- | --------------- | --------- |
+| Ubuntu / Debian     | apt             | full pass |
+| Fedora              | dnf / dnf5      | full pass |
+| Arch                | pacman          | full pass |
+| openSUSE Tumbleweed | zypper          | full pass |
 
 ## Repo Layout
 
@@ -112,12 +112,12 @@ docs/                 # design history and rationale
 
 Shared config stays generic in the repo. Machine-specific values go in local files that are gitignored and auto-included:
 
-| What | Local file | Example |
-|------|-----------|---------|
-| SSH hosts | `~/.ssh/config.local` | [`config.local.example`](ssh/.ssh/config.local.example) |
-| Shell aliases/functions | `~/.zsh_extras` | [`zsh_extras.example`](zsh/.zsh_extras.example) |
-| Sway workspace/input/output rules | `~/.config/sway/config.local` | [`config.local.example`](sway/.config/sway/config.local.example) |
-| Desktop launchers | `~/.local/share/applications/*.desktop` | manage via Flatpak or directly |
+| What                              | Local file                              | Example                                                          |
+| --------------------------------- | --------------------------------------- | ---------------------------------------------------------------- |
+| SSH hosts                         | `~/.ssh/config.local`                   | [`config.local.example`](ssh/.ssh/config.local.example)          |
+| Shell aliases/functions           | `~/.zsh_extras`                         | [`zsh_extras.example`](zsh/.zsh_extras.example)                  |
+| Sway workspace/input/output rules | `~/.config/sway/config.local`           | [`config.local.example`](sway/.config/sway/config.local.example) |
+| Desktop launchers                 | `~/.local/share/applications/*.desktop` | manage via Flatpak or directly                                   |
 
 ## Migrating From the Old Setup
 
