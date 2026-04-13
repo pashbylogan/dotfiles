@@ -20,6 +20,7 @@ dotfiles_stow_packages_linux_desktop:
   - i3status
   - mako
   - kanshi
+  - gtk
 
 dotfiles_common_linux_packages:
   - git

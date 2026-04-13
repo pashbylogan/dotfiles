@@ -417,7 +417,7 @@ X11 is in maintenance mode — no new development upstream. All major distros no
 
 Sway was chosen over Hyprland because it is in default repos on all four distros (Hyprland is not in Ubuntu/Debian), uses i3-compatible config syntax (near-trivial migration), and uses the standard wlroots tool ecosystem (no parallel lock/idle/wallpaper tools to track). Hyprland optimizes for visual polish at the cost of stability, portability, and simplicity.
 
-The migration eliminated picom (Sway is the compositor), the `apply-xinput-settings` script (replaced by sway `input {}` blocks), feh, maim, xclip, i3lock, xss-lock, xterm, xset, and setxkbmap. The empty `desktop_linux` Ansible role was also deleted.
+The migration eliminated picom (Sway is the compositor), the `apply-xinput-settings` script (replaced by sway `input {}` blocks), feh, maim, xclip, i3lock, xss-lock, xterm, xset, and setxkbmap. The empty `desktop_linux` Ansible role was also deleted at the time (later brought back with real content for dark-mode / Tracker dconf tasks — see section 21).
 
 Added: sway, swaylock, swayidle, swaybg, grim, slurp, wl-clipboard, brightnessctl (replaces orphaned `light`), mako (notification daemon — we had none before), xdg-desktop-portal-wlr (screen sharing), foot (lightweight Wayland terminal fallback), and kanshi (replaces autorandr for per-dock display profiles; see section 20).
 
@@ -460,6 +460,27 @@ autorandr drives `xrandr` and doesn't work under Wayland. The Wayland equivalent
 Kanshi config is ~100% machine-specific (monitor make/model/serial strings, dock layouts), so the repo ships only a template at `~/.config/kanshi/config.example`. The real `~/.config/kanshi/config` is gitignored and created by the user via `cp config.example config`, following the same pattern as `~/.zsh_extras` and `~/.config/sway/config.local`.
 
 Started by `exec kanshi` in sway config, so no separate service to manage. No alias needed — it auto-switches when monitors are plugged or unplugged.
+
+### 21. Replaced Thunar with Nautilus (and added system-wide dark mode)
+
+Thunar was originally chosen for its light dependency footprint, but it looks dated in 2026. Nautilus (GNOME Files) has had a GTK4 / libadwaita rewrite and is now the best-looking portable Linux file manager. Available by the same package name (`nautilus`) on all four distros, Wayland-native, and actively maintained.
+
+Considered and rejected: **Dolphin** (pulls 300-500 MB of KDE frameworks), **Nemo** (no real visual upgrade over Thunar and still GTK3/XWayland), **PCManFM-Qt** (looks worse than Thunar), and **Cosmic Files** (not yet in distro repos — likely the right pick in 1-2 years).
+
+Nautilus's GNOME footprint is kept minimal:
+
+- **libadwaita, gsettings-desktop-schemas, gvfs** come along as deps. These are theming/schema/VFS libs, not desktop-environment components.
+- **Tracker3** (the indexer daemon) is a dep but we neutralise it via dconf: `/org/freedesktop/Tracker3/Miner/Files/index-recursive-directories` and `index-single-directories` are both set to empty arrays, so the miner runs but has nothing to scan. Cleaner than masking the systemd unit because Tracker can also be D-Bus activated.
+- **No GNOME shell, gnome-session, gnome-control-center, or other DE components**. `scripts/cleanup` explicitly keeps Nautilus out of the GNOME-removal list.
+
+**Dark mode** is set system-wide via a new `desktop_linux` Ansible role using `community.general.dconf`:
+
+- `/org/gnome/desktop/interface/color-scheme` → `'prefer-dark'` — the canonical switch for libadwaita / modern GTK4. Nautilus picks this up directly from dconf even without `xdg-desktop-portal-gtk` providing the Settings portal.
+- New `gtk` stow package writes `gtk-application-prefer-dark-theme=1` to `~/.config/gtk-3.0/settings.ini` and `~/.config/gtk-4.0/settings.ini` as a fallback for legacy GTK3 apps and plain (non-libadwaita) GTK4 apps.
+
+Libadwaita and the `settings.ini` mechanism target different codepaths and don't conflict. `gtk-theme` is deliberately NOT forced to `Adwaita-dark` so users who install a different GTK theme still see it.
+
+The role runs as the logged-in user (no `become`) and requires `scripts/apply` to be executed from inside a graphical session so `DBUS_SESSION_BUS_ADDRESS` is set. This is consistent with how the rest of the playbook runs.
 
 ## Current State
 
@@ -511,7 +532,7 @@ Everything below is installed and kept up to date by the playbook.
 | `foot`                   | lightweight Wayland terminal (ghostty fallback) |
 | `kanshi`                 | automatic display profile switching (Wayland)   |
 | `pavucontrol`            | PulseAudio volume control                       |
-| `thunar`                 | file manager                                    |
+| `nautilus`               | file manager (GTK4/libadwaita, dark-mode-aware) |
 | `rofi`                   | application launcher                            |
 | `dex`                    | XDG autostart                                   |
 | `nm_applet`              | NetworkManager tray applet                      |
@@ -548,6 +569,7 @@ All core CLI packages above via `brew install`, plus `ansible`, `starship`. Ghos
 | `i3status` | `~/.config/i3status/config` (linux_desktop only)                     |
 | `mako`     | `~/.config/mako/config` (linux_desktop only)                         |
 | `kanshi`   | `~/.config/kanshi/config.example` (linux_desktop only)               |
+| `gtk`      | `~/.config/gtk-3.0/settings.ini`, `gtk-4.0/settings.ini` (linux_desktop only) |
 
 **Directories created by the filesystem role:**
 

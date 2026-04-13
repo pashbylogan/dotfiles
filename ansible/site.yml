@@ -79,3 +79,5 @@
     - role: tailscale
     - role: macos_cli
       when: dotfiles_resolved_profile == "macos_cli"
+    - role: desktop_linux
+      when: dotfiles_resolved_profile == "linux_desktop"

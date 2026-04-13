@@ -15,7 +15,7 @@ dotfiles_profile_linux_packages_common:
   - xdg_desktop_portal_wlr
   - foot
   - pavucontrol
-  - thunar
+  - nautilus
   - rofi
   - dex
   - nm_applet

@@ -1,0 +1,27 @@
+---
+# Linux-desktop-only preferences. GTK3/GTK4 fallback dark-theme hints are
+# shipped via the `gtk` stow package (settings.ini). Here we set the
+# libadwaita / modern GTK keys via dconf, and neutralise Tracker so the
+# Nautilus indexer doesn't scan $HOME.
+#
+# Runs as the logged-in user against their own dconf / D-Bus session.
+# Requires the user's DBUS_SESSION_BUS_ADDRESS, which is available when
+# `scripts/apply` is run from inside a graphical session.
+
+- name: Prefer dark colour scheme for libadwaita apps (Nautilus, GTK4)
+  community.general.dconf:
+    key: /org/gnome/desktop/interface/color-scheme
+    value: "'prefer-dark'"
+    state: present
+
+- name: Empty Tracker recursive index list (stop Nautilus indexer from scanning $HOME)
+  community.general.dconf:
+    key: /org/freedesktop/Tracker3/Miner/Files/index-recursive-directories
+    value: "@as []"
+    state: present
+
+- name: Empty Tracker single-directory index list
+  community.general.dconf:
+    key: /org/freedesktop/Tracker3/Miner/Files/index-single-directories
+    value: "@as []"
+    state: present

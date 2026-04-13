@@ -81,8 +81,8 @@ dotfiles_linux_pkg_map:
     - foot
   pavucontrol:
     - pavucontrol
-  thunar:
-    - thunar
+  nautilus:
+    - nautilus
   rofi:
     - rofi
   dex:

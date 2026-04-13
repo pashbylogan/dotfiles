@@ -31,9 +31,10 @@ collect_removable_packages() {
   local -n pkgs=$1
   pkgs=()
 
-  # Desktop environments (we use sway)
+  # Desktop environments (we use sway). Nautilus is intentionally NOT listed —
+  # we install it as our file manager even without the rest of GNOME.
   local de_packages=(
-    gnome-shell gnome-session mutter nautilus gnome-control-center
+    gnome-shell gnome-session mutter gnome-control-center
     gnome-terminal gnome-text-editor gnome-calculator gnome-calendar
     gnome-characters gnome-clocks gnome-contacts gnome-font-viewer
     gnome-logs gnome-maps gnome-music gnome-photos gnome-screenshot
@@ -59,6 +60,7 @@ collect_removable_packages() {
     rofi  # we install rofi ourselves, but distro may have an old one
     light  # replaced by brightnessctl
     htop  # replaced by btop
+    thunar  # replaced by nautilus
   )
 
   for pkg in "${de_packages[@]}" "${dm_packages[@]}" "${replaced_packages[@]}"; do
@@ -131,6 +133,8 @@ collect_orphaned_configs() {
     ["$HOME/.screenlayout"]=arandr
     # Replaced tools
     ["$HOME/.config/htop"]=htop
+    ["$HOME/.config/Thunar"]=thunar
+    ["$HOME/.config/xfce4"]=thunar
     # oh-my-zsh (replaced by plain zsh + starship)
     ["$HOME/.oh-my-zsh"]=omz
     # nvm (replaced by fnm)
