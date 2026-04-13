@@ -58,6 +58,8 @@ dotfiles_linux_pkg_map:
     - swayidle
   swaybg:
     - swaybg
+  kanshi:
+    - kanshi
   i3status:
     - i3status
   grim:

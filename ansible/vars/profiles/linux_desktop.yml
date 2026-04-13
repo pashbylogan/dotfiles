@@ -4,6 +4,7 @@ dotfiles_profile_linux_packages_common:
   - swaylock
   - swayidle
   - swaybg
+  - kanshi
   - i3status
   - grim
   - slurp

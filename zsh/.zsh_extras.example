@@ -7,11 +7,6 @@
 
 # path+=("$HOME/apps/ghostty/bin")
 
-# ─── Display profiles (Wayland) ──────────────────────────────────────────────
-# Use kanshi for automatic display profile switching, or configure
-# outputs directly in ~/.config/sway/config.local.
-# alias ar='kanshi '
-
 # ─── Git worktree cd ─────────────────────────────────────────────────────────
 
 alias cdwt='f() { cd "$(git worktree list | grep $1 | awk "{print \$1}")"; }; f'

@@ -419,7 +419,7 @@ Sway was chosen over Hyprland because it is in default repos on all four distros
 
 The migration eliminated picom (Sway is the compositor), the `apply-xinput-settings` script (replaced by sway `input {}` blocks), feh, maim, xclip, i3lock, xss-lock, xterm, xset, and setxkbmap. The empty `desktop_linux` Ansible role was also deleted.
 
-Added: sway, swaylock, swayidle, swaybg, grim, slurp, wl-clipboard, brightnessctl (replaces orphaned `light`), mako (notification daemon — we had none before), xdg-desktop-portal-wlr (screen sharing), and foot (lightweight Wayland terminal fallback).
+Added: sway, swaylock, swayidle, swaybg, grim, slurp, wl-clipboard, brightnessctl (replaces orphaned `light`), mako (notification daemon — we had none before), xdg-desktop-portal-wlr (screen sharing), foot (lightweight Wayland terminal fallback), and kanshi (replaces autorandr for per-dock display profiles; see section 20).
 
 **Blur**: Sway does not support compositor-level blur (dual_kawase). Ghostty's own `background-opacity = 0.8` still works natively. A new `ext-background-effect-v1` Wayland protocol was merged into wayland-protocols in May 2025, which will let any client request blur from any supporting compositor. No compositor has shipped a stable implementation yet. When Sway adds support, blur will return without needing SwayFX or Hyprland. This is the planned path.
 
@@ -448,10 +448,18 @@ Added `scripts/cleanup` — an interactive script that, after confirming the new
 - Default desktop environments (GNOME shell, KDE, etc.) that are no longer used
 - Display managers (GDM, SDDM, LightDM) replaced by TTY login + `exec sway`
 - X11 tools replaced by Wayland equivalents (i3, picom, feh, maim, xclip, xterm, xss-lock, htop, light)
-- Orphaned config/cache directories in `$HOME` for software that's no longer installed
+- Orphaned config/cache directories in `$HOME` for software that's no longer installed (including `~/.screenlayout/` from arandr/autorandr, replaced by kanshi)
 - Package manager caches
 
 Interactive by design — shows exactly what would be removed and asks before each phase. Never runs automatically. Complements the install-only policy from section 17 (we never auto-remove packages; this is an explicit user-invoked cleanup).
+
+### 20. Replaced autorandr with kanshi
+
+autorandr drives `xrandr` and doesn't work under Wayland. The Wayland equivalent is kanshi — a small daemon that listens for output hotplug events and applies profiles based on which monitors are connected. Available by the same package name (`kanshi`) on all four distros, actively maintained, and the standard recommendation in the Sway wiki.
+
+Kanshi config is ~100% machine-specific (monitor make/model/serial strings, dock layouts), so the repo ships only a template at `~/.config/kanshi/config.example`. The real `~/.config/kanshi/config` is gitignored and created by the user via `cp config.example config`, following the same pattern as `~/.zsh_extras` and `~/.config/sway/config.local`.
+
+Started by `exec kanshi` in sway config, so no separate service to manage. No alias needed — it auto-switches when monitors are plugged or unplugged.
 
 ## Current State
 
@@ -501,6 +509,7 @@ Everything below is installed and kept up to date by the playbook.
 | `xdg_desktop_portal`     | desktop integration                             |
 | `xdg_desktop_portal_wlr` | screen sharing for Zoom/Slack/Teams             |
 | `foot`                   | lightweight Wayland terminal (ghostty fallback) |
+| `kanshi`                 | automatic display profile switching (Wayland)   |
 | `pavucontrol`            | PulseAudio volume control                       |
 | `thunar`                 | file manager                                    |
 | `rofi`                   | application launcher                            |
@@ -538,6 +547,7 @@ All core CLI packages above via `brew install`, plus `ansible`, `starship`. Ghos
 | `sway`     | `~/.config/sway/config`, `config.local.example` (linux_desktop only) |
 | `i3status` | `~/.config/i3status/config` (linux_desktop only)                     |
 | `mako`     | `~/.config/mako/config` (linux_desktop only)                         |
+| `kanshi`   | `~/.config/kanshi/config.example` (linux_desktop only)               |
 
 **Directories created by the filesystem role:**
 

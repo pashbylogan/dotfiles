@@ -19,6 +19,7 @@ dotfiles_stow_packages_linux_desktop:
   - sway
   - i3status
   - mako
+  - kanshi
 
 dotfiles_common_linux_packages:
   - git

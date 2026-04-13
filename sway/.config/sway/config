@@ -16,6 +16,7 @@ exec swayidle -w \
     before-sleep 'swaylock -f -c 000000'
 exec nm-applet --indicator
 exec mako
+exec kanshi
 
 # ─── Input ───────────────────────────────────────────────────────────────────
 

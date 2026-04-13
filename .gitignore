@@ -3,6 +3,7 @@ ghostty/.config/ghostty/*.bak
 ssh/.ssh/config.local
 zsh/.zsh_extras
 sway/.config/sway/config.local
+kanshi/.config/kanshi/config
 
 # Keys and secrets
 *.pem

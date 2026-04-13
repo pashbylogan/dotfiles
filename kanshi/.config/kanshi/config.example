@@ -1,0 +1,40 @@
+# kanshi — automatic display profile switching for Wayland.
+#
+# Copy this file to ~/.config/kanshi/config and fill in your monitors:
+#
+#     cp ~/.config/kanshi/config.example ~/.config/kanshi/config
+#
+# Started automatically by sway via `exec kanshi`. Listens for hotplug
+# events and swaps profiles as outputs come and go.
+#
+# ─── Finding your output identifiers ────────────────────────────────────────
+# After sway is running, plug in each monitor and run:
+#
+#     swaymsg -t get_outputs | jq '.[] | {name, make, model, serial}'
+#
+# The `name` field is what you quote in `output "<name>"` below. Format is
+# usually "<make> <model> <serial>". For the built-in laptop panel, use the
+# connector name directly (e.g. eDP-1, unquoted) — it's more stable.
+#
+# ─── Profile matching ───────────────────────────────────────────────────────
+# A profile matches only when every listed output is connected AND every
+# connected output is listed. So in docked profiles you must explicitly
+# `disable` eDP-1, otherwise the profile won't match with the lid open.
+
+# Laptop-only — no externals connected
+profile laptop {
+    output eDP-1 enable
+}
+
+# Example: single external monitor at the office
+# profile work {
+#     output "DEL DELL U2719DC GGBR4N2" mode 2560x1440@59.951Hz position 0,0
+#     output eDP-1 disable
+# }
+
+# Example: dual externals side-by-side at home
+# profile home {
+#     output "ACR XV272U 0x01822E61"        mode 2560x1440@59.951Hz position 0,0
+#     output "ACR XV272U V 332506A1C3LIJ"   mode 2560x1440@60Hz     position 2560,0
+#     output eDP-1 disable
+# }

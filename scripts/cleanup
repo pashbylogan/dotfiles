@@ -128,6 +128,7 @@ collect_orphaned_configs() {
     ["$HOME/.config/picom"]=picom
     ["$HOME/.config/compton"]=compton
     ["$HOME/.fehbg"]=feh
+    ["$HOME/.screenlayout"]=arandr
     # Replaced tools
     ["$HOME/.config/htop"]=htop
     # oh-my-zsh (replaced by plain zsh + starship)
