@@ -33,11 +33,13 @@ dotfiles_linux_pkg_map:
   rsync:
     - rsync
   netcat:
-    - gnu-netcat
+    - openbsd-netcat
   lsof:
     - lsof
   patch:
     - patch
+  openssh_client:
+    - openssh
   wireguard_tools:
     - wireguard-tools
   build_tools:

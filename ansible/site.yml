@@ -5,6 +5,7 @@
   gather_facts: true
   gather_subset:
     - min
+    - pkg_mgr
 
   pre_tasks:
     - name: Resolve profile

@@ -1,3 +1,6 @@
+# Deduplicate PATH entries on re-source
+typeset -U path
+
 # ─── Completion ──────────────────────────────────────────────────────────────
 
 autoload -Uz compinit

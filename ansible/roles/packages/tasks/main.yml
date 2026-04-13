@@ -29,7 +29,7 @@
     state: link
   when:
     - ansible_system == "Linux"
-    - ansible_pkg_mgr == "apt"
+    - dotfiles_pkg_mgr | default(ansible_pkg_mgr) == "apt"
 
 - name: Provide dex compatibility shim when distro installs dex-autostart
   ansible.builtin.file:
@@ -38,7 +38,7 @@
     state: link
   when:
     - ansible_system == "Linux"
-    - ansible_pkg_mgr == "dnf"
+    - dotfiles_pkg_mgr | default(ansible_pkg_mgr) == "dnf"
     - dotfiles_resolved_profile == "linux_desktop"
 
 - name: Install Homebrew formulae

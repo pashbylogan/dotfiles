@@ -8,11 +8,11 @@
 
 # ─── Workspace assignments ───────────────────────────────────────────────────
 
-# for_window [app_id="firefox"] move workspace $ws2
-# for_window [app_id="Slack"] move workspace $ws3
-# for_window [class="obsidian"] move workspace $ws3
-# for_window [class="jetbrains-idea"] move workspace $ws5
-# for_window [app_id="Spotify"] move workspace $ws10
+# for_window [app_id="firefox"] move workspace 2
+# for_window [app_id="Slack"] move workspace 3
+# for_window [class="obsidian"] move workspace 3
+# for_window [class="jetbrains-idea"] move workspace 5
+# for_window [app_id="Spotify"] move workspace 10
 
 # ─── Floating rules ─────────────────────────────────────────────────────────
 

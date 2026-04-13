@@ -170,5 +170,6 @@ Cut from the first-pass managed set to keep the base small. Can be added back vi
 - Stow for file placement, Ansible for everything else (packages, upgrades, convergence)
 - Shared config stays generic; machine-specific values go in local override files
 - Secrets stay out of the repo entirely
+- Packages are never auto-removed — old packages stay harmlessly until the next clean OS install. Each new machine only gets what's declared.
 
 Full rationale and implementation history: [docs/design-history.md](docs/design-history.md)

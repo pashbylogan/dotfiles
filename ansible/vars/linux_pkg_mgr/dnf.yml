@@ -38,6 +38,8 @@ dotfiles_linux_pkg_map:
     - lsof
   patch:
     - patch
+  openssh_client:
+    - openssh-clients
   wireguard_tools:
     - wireguard-tools
   build_tools:
