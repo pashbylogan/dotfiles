@@ -18,6 +18,7 @@ wget -qO- https://raw.githubusercontent.com/pashbyl/dotfiles/master/bootstrap.sh
 ./scripts/apply     # converge to repo state
 ./scripts/update    # apply + upgrade everything to latest
 ./scripts/check     # dry-run — show what would change
+./scripts/cleanup   # remove replaced software + orphaned configs (optional, interactive)
 ```
 
 **After first install** — one-time manual steps:

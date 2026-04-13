@@ -1,0 +1,265 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# ─── Colors ──────────────────────────────────────────────────────────────────
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+info()    { printf "${CYAN}ℹ ${NC}%s\n" "$*"; }
+success() { printf "${GREEN}✔ ${NC}%s\n" "$*"; }
+warn()    { printf "${YELLOW}⚠ ${NC}%s\n" "$*"; }
+error()   { printf "${RED}✖ ${NC}%s\n" "$*" >&2; }
+step()    { printf "\n${BOLD}── %s ──${NC}\n" "$*"; }
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+need_sudo() { [[ "$(id -u)" -ne 0 ]]; }
+
+run_root() {
+  if need_sudo; then sudo "$@"; else "$@"; fi
+}
+
+# ─── Package removal ────────────────────────────────────────────────────────
+
+collect_removable_packages() {
+  local -n pkgs=$1
+  pkgs=()
+
+  # Desktop environments (we use sway)
+  local de_packages=(
+    gnome-shell gnome-session mutter nautilus gnome-control-center
+    gnome-terminal gnome-text-editor gnome-calculator gnome-calendar
+    gnome-characters gnome-clocks gnome-contacts gnome-font-viewer
+    gnome-logs gnome-maps gnome-music gnome-photos gnome-screenshot
+    gnome-system-monitor gnome-weather gnome-disk-utility
+    totem eog evince gedit cheese baobab yelp
+    gnome-software gnome-tour gnome-user-docs
+    plasma-desktop plasma-workspace kwin-wayland dolphin konsole kate
+    sddm
+  )
+
+  # Display managers (we use TTY login)
+  local dm_packages=(gdm gdm3 sddm lightdm)
+
+  # X11 tools we replaced with Wayland equivalents
+  local replaced_packages=(
+    i3 i3-wm i3lock i3status xss-lock
+    picom compton
+    feh
+    maim scrot
+    xclip xsel
+    xterm
+    xdotool xdg-utils
+    rofi  # we install rofi ourselves, but distro may have an old one
+    light  # replaced by brightnessctl
+    htop  # replaced by btop
+  )
+
+  for pkg in "${de_packages[@]}" "${dm_packages[@]}" "${replaced_packages[@]}"; do
+    if is_installed "$pkg"; then
+      pkgs+=("$pkg")
+    fi
+  done
+}
+
+is_installed() {
+  local pkg="$1"
+  if have dpkg; then
+    dpkg -l "$pkg" 2>/dev/null | grep -q "^ii" && return 0
+  elif have rpm; then
+    rpm -q "$pkg" >/dev/null 2>&1 && return 0
+  elif have pacman; then
+    pacman -Q "$pkg" >/dev/null 2>&1 && return 0
+  fi
+  return 1
+}
+
+remove_packages() {
+  local -a pkgs=("$@")
+  [[ ${#pkgs[@]} -eq 0 ]] && return
+
+  info "Removing ${#pkgs[@]} packages..."
+
+  if have apt-get; then
+    # Remove metapackages first to unlock dependencies
+    for meta in ubuntu-desktop ubuntu-desktop-minimal; do
+      is_installed "$meta" && run_root apt-get remove -y "$meta" 2>/dev/null || true
+    done
+    run_root apt-get remove -y "${pkgs[@]}" 2>/dev/null || true
+    run_root apt-get autoremove -y
+  elif have dnf; then
+    run_root dnf remove -y "${pkgs[@]}" 2>/dev/null || true
+    run_root dnf autoremove -y 2>/dev/null || true
+  elif have pacman; then
+    run_root pacman -Rns --noconfirm "${pkgs[@]}" 2>/dev/null || true
+  elif have zypper; then
+    # Remove patterns first
+    for pattern in patterns-gnome-gnome patterns-kde-kde; do
+      run_root zypper rm -y "$pattern" 2>/dev/null || true
+    done
+    run_root zypper rm -yu "${pkgs[@]}" 2>/dev/null || true
+  fi
+}
+
+# ─── Home directory cleanup ──────────────────────────────────────────────────
+
+collect_orphaned_configs() {
+  local -n dirs=$1
+  dirs=()
+
+  # Map: config directory → command that owns it
+  local -A config_owners=(
+    # DEs
+    ["$HOME/.config/gnome-session"]=gnome-session
+    ["$HOME/.config/gnome-control-center"]=gnome-control-center
+    ["$HOME/.local/share/gnome-shell"]=gnome-shell
+    ["$HOME/.local/share/nautilus"]=nautilus
+    ["$HOME/.config/kde"]=plasmashell
+    ["$HOME/.config/plasma-workspace"]=plasmashell
+    ["$HOME/.local/share/kwalletd"]=kwalletd5
+    # X11 tools we replaced
+    ["$HOME/.config/i3"]=i3
+    ["$HOME/.config/picom"]=picom
+    ["$HOME/.config/compton"]=compton
+    ["$HOME/.fehbg"]=feh
+    # Replaced tools
+    ["$HOME/.config/htop"]=htop
+    # oh-my-zsh (replaced by plain zsh + starship)
+    ["$HOME/.oh-my-zsh"]=omz
+    # nvm (replaced by fnm)
+    ["$HOME/apps/nvm"]=nvm
+    # Caches for removed software
+    ["$HOME/.cache/gnome-shell"]=gnome-shell
+    ["$HOME/.cache/gnome-software"]=gnome-software
+    ["$HOME/.cache/evolution"]=evolution
+    ["$HOME/.cache/tracker3"]=tracker3
+  )
+
+  for dir in "${!config_owners[@]}"; do
+    local cmd="${config_owners[$dir]}"
+    if [[ -e "$dir" ]] && ! have "$cmd"; then
+      dirs+=("$dir")
+    fi
+  done
+
+  # Also find large cache dirs for uninstalled software
+  if [[ -d "$HOME/.cache" ]]; then
+    for cache_dir in "$HOME"/.cache/*/; do
+      local name
+      name="$(basename "$cache_dir")"
+      # Skip caches for software we manage
+      case "$name" in
+        zsh|starship|fnm|uv|pip|npm|node|ghostty|sway|mako|fontconfig) continue ;;
+      esac
+      # If the program isn't installed, its cache is orphaned
+      if ! have "$name" && [[ -d "$cache_dir" ]]; then
+        local size
+        size="$(du -sh "$cache_dir" 2>/dev/null | cut -f1)"
+        # Only flag caches > 1MB
+        if [[ "$(du -sm "$cache_dir" 2>/dev/null | cut -f1)" -gt 1 ]]; then
+          dirs+=("$cache_dir")
+        fi
+      fi
+    done
+  fi
+}
+
+# ─── Main ────────────────────────────────────────────────────────────────────
+
+main() {
+  step "Dotfiles cleanup"
+  warn "Run this AFTER confirming sway and all tools work correctly."
+  echo ""
+
+  # Phase 1: packages
+  step "Scanning for removable packages"
+  local -a removable_pkgs=()
+  collect_removable_packages removable_pkgs
+
+  if [[ ${#removable_pkgs[@]} -gt 0 ]]; then
+    info "Found ${#removable_pkgs[@]} packages that can be removed:"
+    echo ""
+    for pkg in "${removable_pkgs[@]}"; do
+      echo "  - $pkg"
+    done
+    echo ""
+
+    # Estimate disk savings
+    if have dpkg; then
+      local total_kb=0
+      for pkg in "${removable_pkgs[@]}"; do
+        local kb
+        kb=$(dpkg-query -W -f='${Installed-Size}\n' "$pkg" 2>/dev/null || echo 0)
+        total_kb=$((total_kb + kb))
+      done
+      info "Estimated savings: ~$((total_kb / 1024))MB"
+    fi
+
+    read -rp "$(printf "${YELLOW}Remove these packages? (y/N): ${NC}")" confirm
+    if [[ "$confirm" == [yY] ]]; then
+      remove_packages "${removable_pkgs[@]}"
+      success "Packages removed"
+    else
+      info "Skipped package removal"
+    fi
+  else
+    success "No removable packages found"
+  fi
+
+  # Phase 2: home directory
+  step "Scanning for orphaned config directories"
+  local -a orphaned_dirs=()
+  collect_orphaned_configs orphaned_dirs
+
+  if [[ ${#orphaned_dirs[@]} -gt 0 ]]; then
+    info "Found ${#orphaned_dirs[@]} orphaned config/cache directories:"
+    echo ""
+    local total_size=0
+    for dir in "${orphaned_dirs[@]}"; do
+      local size
+      size="$(du -sh "$dir" 2>/dev/null | cut -f1)"
+      printf "  %-50s %s\n" "$dir" "$size"
+    done
+    echo ""
+
+    read -rp "$(printf "${YELLOW}Remove these directories? (y/N): ${NC}")" confirm
+    if [[ "$confirm" == [yY] ]]; then
+      for dir in "${orphaned_dirs[@]}"; do
+        rm -rf "$dir"
+        info "Removed $dir"
+      done
+      success "Orphaned directories cleaned"
+    else
+      info "Skipped directory cleanup"
+    fi
+  else
+    success "No orphaned config directories found"
+  fi
+
+  # Phase 3: package cache cleanup
+  step "Cleaning package manager caches"
+  if have apt-get; then
+    run_root apt-get clean
+    success "apt cache cleaned"
+  elif have dnf; then
+    run_root dnf clean all
+    success "dnf cache cleaned"
+  elif have pacman; then
+    run_root pacman -Sc --noconfirm
+    success "pacman cache cleaned"
+  elif have zypper; then
+    run_root zypper clean --all
+    success "zypper cache cleaned"
+  fi
+
+  echo ""
+  success "${BOLD}Cleanup complete.${NC}"
+}
+
+main "$@"
