@@ -437,6 +437,22 @@ Full audit resulted in: SSH config consolidated with `ForwardAgent no`, `Forward
 
 WireGuard tools added to common Linux packages (in default repos on all distros). Tailscale added via a dedicated Ansible role that adds the Tailscale repo on apt/dnf, then installs the package. Arch and openSUSE have Tailscale in their default repos.
 
+### 18. Set zsh as the Login Shell
+
+Installing zsh isn't enough — new terminals still open bash by default on every distro, so none of the zsh config would run. Added three idempotent Ansible tasks to the shell role: locate zsh via `command -v`, ensure the path is in `/etc/shells`, and set it as the user's login shell via `ansible.builtin.user`. Works across all four distros and macOS since the zsh path is discovered at runtime.
+
+### 19. Cleanup Script
+
+Added `scripts/cleanup` — an interactive script that, after confirming the new environment works, removes:
+
+- Default desktop environments (GNOME shell, KDE, etc.) that are no longer used
+- Display managers (GDM, SDDM, LightDM) replaced by TTY login + `exec sway`
+- X11 tools replaced by Wayland equivalents (i3, picom, feh, maim, xclip, xterm, xss-lock, htop, light)
+- Orphaned config/cache directories in `$HOME` for software that's no longer installed
+- Package manager caches
+
+Interactive by design — shows exactly what would be removed and asks before each phase. Never runs automatically. Complements the install-only policy from section 17 (we never auto-remove packages; this is an explicit user-invoked cleanup).
+
 ## Current State
 
 The system has been validated in Docker containers across Ubuntu, Fedora, Arch, and openSUSE. Both `scripts/apply` (fresh install) and `scripts/update` (upgrade path) pass on all four distros.
