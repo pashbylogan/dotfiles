@@ -1,6 +1,0 @@
----
-dotfiles_profile_linux_packages_common: []
-dotfiles_profile_brew_packages:
-  - ansible
-dotfiles_profile_brew_casks:
-  - ghostty

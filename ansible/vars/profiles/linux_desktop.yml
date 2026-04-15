@@ -31,6 +31,3 @@ dotfiles_profile_linux_packages_common:
   - dex
   - nm_applet
   - jetbrains_mono_fonts
-
-dotfiles_profile_brew_packages: []
-dotfiles_profile_brew_casks: []

@@ -14,14 +14,20 @@
           {{
             dotfiles_profile
             if dotfiles_profile != 'auto'
-            else ('macos_cli' if ansible_system == 'Darwin' else 'linux_desktop')
+            else 'linux_desktop'
           }}
 
     - name: Validate profile
       ansible.builtin.assert:
         that:
-          - dotfiles_resolved_profile in ['linux_desktop', 'macos_cli']
+          - dotfiles_resolved_profile == 'linux_desktop'
         fail_msg: "Invalid profile: {{ dotfiles_resolved_profile }}"
+
+    - name: Validate supported OS
+      ansible.builtin.assert:
+        that:
+          - ansible_system == 'Linux'
+        fail_msg: "Unsupported OS: {{ ansible_system }}. This repo supports Fedora Linux only."
 
     - name: Load profile variables
       ansible.builtin.include_vars:
@@ -33,11 +39,11 @@
           {{ 'dnf' if ansible_pkg_mgr in ['dnf', 'dnf5'] else ansible_pkg_mgr }}
       when: ansible_system == "Linux"
 
-    - name: Validate package manager
+    - name: Validate package manager (Fedora Linux only)
       ansible.builtin.assert:
         that:
-          - dotfiles_pkg_mgr in ['apt', 'dnf', 'pacman', 'zypper']
-        fail_msg: "Unsupported package manager: {{ dotfiles_pkg_mgr }}"
+          - dotfiles_pkg_mgr == 'dnf'
+        fail_msg: "Unsupported Linux package manager: {{ dotfiles_pkg_mgr }}. This repo supports Fedora Linux (dnf/dnf5) only."
       when: ansible_system == "Linux"
 
     - name: Load Linux package-manager map
@@ -77,7 +83,5 @@
     - role: shell
     - role: stow
     - role: tailscale
-    - role: macos_cli
-      when: dotfiles_resolved_profile == "macos_cli"
     - role: desktop_linux
       when: dotfiles_resolved_profile == "linux_desktop"

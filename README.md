@@ -1,6 +1,6 @@
 # Dotfiles
 
-Personal environment managed by [stow](https://www.gnu.org/software/stow/) + [Ansible](https://docs.ansible.com/). Bootstraps a near-blank machine to a fully configured Linux desktop or macOS CLI workstation.
+Personal environment managed by [stow](https://www.gnu.org/software/stow/) + [Ansible](https://docs.ansible.com/). Bootstraps a near-blank Fedora Linux machine to a fully configured desktop workstation.
 
 ## Quick Start
 
@@ -54,7 +54,6 @@ cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
 | Core CLI        | `git`, `zsh`, `tmux`, `neovim`, `fzf`, `ripgrep`, `fd`, `age`, `gh`, `delta`, `btop`, `jq`, `rsync`, `netcat`, `lsof`, `patch`, `stow` |
 | Desktop (Linux) | `sway`, `swaylock`, `swayidle`, `kanshi`, `waybar`, `rofi`, `grim`, `slurp`, `wl-clipboard`, `brightnessctl`, `mako`, `nautilus`, `pavucontrol`, `pipewire`, `wireplumber`, `bluez`, `blueman`, `power-profiles-daemon`, `plocate`, `upower`, `xdg-desktop-portal-gtk`  |
 | Networking      | `wireguard-tools`, `tailscale`                                                                                                         |
-| macOS           | same core CLI via Homebrew, plus Ghostty via cask                                                                                      |
 
 ### User-managed runtimes (in `~/apps`)
 
@@ -76,34 +75,26 @@ cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
 
 ## Profiles
 
-Auto-detected by OS. Override with:
+Only one profile is supported:
 
-```sh
-DOTFILES_PROFILE=macos_cli ./scripts/apply
-```
+| Profile         | Default on | Notes                              |
+| --------------- | ---------- | ---------------------------------- |
+| `linux_desktop` | Linux      | Sway (Wayland) desktop environment |
 
-| Profile         | Default on | Notes                                        |
-| --------------- | ---------- | -------------------------------------------- |
-| `linux_desktop` | Linux      | Sway (Wayland) desktop environment           |
-| `macos_cli`     | macOS      | CLI + terminal parity, no desktop management |
+## Linux Support
 
-## Distro Support
+Linux support is intentionally scoped to Fedora only:
 
-Tested on:
-
-| Distro              | Package manager | Status    |
-| ------------------- | --------------- | --------- |
-| Ubuntu / Debian     | apt             | full pass |
-| Fedora              | dnf / dnf5      | full pass |
-| Arch                | pacman          | full pass |
-| openSUSE Tumbleweed | zypper          | full pass |
+| Distro | Package manager | Status    |
+| ------ | --------------- | --------- |
+| Fedora | dnf / dnf5      | full pass |
 
 ## Repo Layout
 
 ```
 bootstrap.sh          # remote entrypoint — curl | sh
 scripts/              # apply, update, check
-ansible/              # playbook, roles, vars, distro package maps
+ansible/              # playbook, roles, vars, Fedora package map
 ssh/ zsh/ tmux/ …     # stow packages → symlinked into $HOME
 docs/                 # design history and rationale
 ```

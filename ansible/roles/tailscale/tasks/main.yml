@@ -1,4 +1,8 @@
 ---
+# Fedora-only support note:
+# We intentionally keep only the dnf repo bootstrap path here.
+# The previously removed apt block was part of now-removed multi-distro support.
+
 - name: Check if Tailscale is installed
   ansible.builtin.command: tailscale --version
   register: dotfiles_tailscale_check
@@ -8,27 +12,7 @@
     - dotfiles_tailscale_enabled
     - ansible_system == "Linux"
 
-- name: Add Tailscale apt repo
-  become: true
-  when:
-    - dotfiles_tailscale_enabled
-    - ansible_system == "Linux"
-    - ansible_pkg_mgr == "apt"
-    - dotfiles_tailscale_check.rc != 0
-  block:
-    - name: Add Tailscale GPG key
-      ansible.builtin.get_url:
-        url: "https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }}/{{ ansible_distribution_release }}.noarmor.gpg"
-        dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
-        mode: "0644"
-
-    - name: Add Tailscale apt repository
-      ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"
-        filename: tailscale
-        state: present
-
-- name: Add Tailscale dnf repo
+- name: Add Tailscale dnf repo (Fedora-only)
   become: true
   when:
     - dotfiles_tailscale_enabled

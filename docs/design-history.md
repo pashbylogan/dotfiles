@@ -2,6 +2,15 @@
 
 This document records what changed in this repo, why it changed, the design principles behind the current shape, and the implementation issues that showed up during the transition.
 
+> **Scope note (April 15, 2026):** This document is primarily historical. The repository now supports **Fedora Linux only** (`dnf`/`dnf5`). References below to multi-distro support or macOS describe earlier iterations.
+
+## Current Support Snapshot
+
+- Supported OS: **Fedora Linux only**
+- Supported package manager: **dnf / dnf5**
+- Supported profile: **linux_desktop**
+- Removed since earlier revisions: `macos_cli` profile, Homebrew package path, and non-Fedora Linux package maps (`apt`, `pacman`, `zypper`)
+
 ## Starting Point
 
 The repo started as a small `stow`-based dotfiles repo with:
@@ -58,7 +67,6 @@ New structure:
 - [ansible/site.yml](../ansible/site.yml)
 - [ansible/group_vars/all.yml](../ansible/group_vars/all.yml)
 - [ansible/vars/profiles/linux_desktop.yml](../ansible/vars/profiles/linux_desktop.yml)
-- [ansible/vars/profiles/macos_cli.yml](../ansible/vars/profiles/macos_cli.yml)
 - roles under `ansible/roles/`
 
 Why:
