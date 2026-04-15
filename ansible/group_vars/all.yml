@@ -52,21 +52,6 @@ dotfiles_common_linux_packages:
   - build_tools
   - python
 
-dotfiles_common_macos_packages:
-  - git
-  - curl
-  - stow
-  - zsh
-  - tmux
-  - neovim
-  - fzf
-  - ripgrep
-  - fd
-  - age
-  - gh
-  - git-delta
-  - btop
-
 dotfiles_starship_enabled: true
 dotfiles_tailscale_enabled: true
 # Use iwd as NetworkManager's WiFi backend (better battery, faster connects).

@@ -1,4 +1,0 @@
----
-- name: macOS CLI profile selected
-  ansible.builtin.debug:
-    msg: "macOS CLI profile active; package install and stow convergence complete."

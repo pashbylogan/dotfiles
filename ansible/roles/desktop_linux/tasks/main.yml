@@ -28,8 +28,7 @@
 
 # ─── Audio stack (PipeWire + WirePlumber) ───────────────────────────────────
 # Packages are installed by the `packages` role. Explicit user-service enable
-# is required on Arch; harmless idempotent no-op on distros that enable via
-# postinst (Ubuntu/Fedora/openSUSE).
+# is enabled explicitly for predictable behaviour on Fedora installs.
 
 - name: Enable PipeWire user services
   ansible.builtin.systemd_service:
