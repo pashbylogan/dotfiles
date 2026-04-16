@@ -47,7 +47,7 @@ dotfiles_linux_pkg_map:
   jetbrains_mono_fonts:
     - jetbrains-mono-fonts-all
   nerd_fonts:
-    - nerd-fonts
+    - cascadia-mono-nf-fonts
   noto_color_emoji_fonts:
     - google-noto-color-emoji-fonts
   noto_sans_cjk_fonts:

@@ -572,7 +572,7 @@ Target install is **Fedora Everything 43** (Workstation's defaults are not avail
 
 **Desktop integration.** `mate-polkit` (autostarted from sway, exec `/usr/libexec/polkit-mate-authentication-agent-1`) replaces `polkit-gnome`, removed in Fedora 41+. `gnome-keyring` provides the Secret Service backend via `authselect enable-feature with-pam-gnome-keyring` — without GDM to wire it, Sway-only sessions need the authselect opt-in. Nautilus depends on `gvfs-mtp`, `gvfs-smb`, `gvfs-nfs`, `ffmpegthumbnailer`, `webp-pixbuf-loader` for phone/SMB/NFS browsing and thumbnails.
 
-**Fonts and icons.** `google-noto-color-emoji-fonts`, `google-noto-sans-cjk-vf-fonts`, `nerd-fonts` (COPR `che/nerd-fonts`, symbols-only — kicks in via fontconfig fallback when waybar or tmux asks for Nerd glyphs), `adwaita-icon-theme` + dconf `icon-theme = 'Adwaita'`.
+**Fonts and icons.** `google-noto-color-emoji-fonts`, `google-noto-sans-cjk-vf-fonts`, `cascadia-mono-nf-fonts` (Microsoft Cascadia Mono with Nerd Font glyphs — main F43 repo, kicks in via fontconfig fallback when waybar/tmux requests Nerd glyphs), `adwaita-icon-theme` + dconf `icon-theme = 'Adwaita'`.
 
 **Visual feedback.** `swayosd-server` autostarts from sway; `swayosd-client` replaces raw wpctl/brightnessctl bindings with combined hardware-change + on-screen-indicator calls. `playerctl` covers `XF86AudioPlay/Pause/Next/Prev`. swayosd ships via COPR `erikreider/swayosd` — `wob` is the main-repo alternative but requires per-binding shell glue that costs more than the COPR.
 
@@ -590,10 +590,11 @@ Target install is **Fedora Everything 43** (Workstation's defaults are not avail
 
 **Default apps.** `mpv` + `imv` defaulted for 9 video + 9 image mimetypes via `~/.config/mimeapps.list` written by `community.general.ini_file`. mpv uses main-repo `ffmpeg-free`; enable RPM Fusion + `dnf swap ffmpeg-free ffmpeg` if HEVC/proprietary codecs come up.
 
-**Third-party repos.** Two COPRs, pinned in `group_vars/all.yml` under `dotfiles_copr_repos` and enabled idempotently from the `packages` role via `creates:`:
+**Third-party repos.** One COPR, pinned in `group_vars/all.yml` under `dotfiles_copr_repos` and enabled idempotently from the `packages` role via `creates:`:
 
-- `che/nerd-fonts` — `nerd-fonts` symbols package. Not in main repos. Alternative `fontawesome-fonts-all` loses Powerline glyphs.
 - `erikreider/swayosd` — `swayosd`. Main-repo `wob` requires per-binding shell glue.
+
+For Nerd Font glyphs we use `cascadia-mono-nf-fonts` from Fedora main — same glyph coverage as the popular `jetbrains-mono-nerd-fonts` COPR packages but no third-party repo needed.
 
 ## Current State
 
