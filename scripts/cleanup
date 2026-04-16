@@ -138,8 +138,6 @@ collect_orphaned_configs() {
     ["$HOME/.oh-my-zsh"]=omz
     # nvm (replaced by fnm)
     ["$HOME/apps/nvm"]=nvm
-    # Previous fnm location — now at ~/apps/fnm per the curl-installers-to-~/apps rule
-    ["$HOME/.local/share/fnm"]=fnm
     # Caches for removed software
     ["$HOME/.cache/gnome-shell"]=gnome-shell
     ["$HOME/.cache/gnome-software"]=gnome-software
@@ -152,6 +150,16 @@ collect_orphaned_configs() {
     if [[ -e "$dir" ]] && ! have "$cmd"; then
       dirs+=("$dir")
     fi
+  done
+
+  # Legacy install locations for tools we've since moved. The `have $cmd`
+  # check used above would never flag these — the command exists, just at
+  # a different path — so match the directory directly.
+  local legacy_dirs=(
+    "$HOME/.local/share/fnm"   # fnm is now at ~/apps/fnm
+  )
+  for dir in "${legacy_dirs[@]}"; do
+    [[ -e "$dir" ]] && dirs+=("$dir")
   done
 
   # Also find large cache dirs for uninstalled software
