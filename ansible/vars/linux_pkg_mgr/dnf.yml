@@ -68,3 +68,5 @@ dotfiles_linux_pkg_map:
     - webp-pixbuf-loader
   zram_generator_defaults:
     - zram-generator-defaults
+  dbus_daemon:
+    - dbus-daemon
