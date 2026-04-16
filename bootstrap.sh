@@ -2,7 +2,7 @@
 
 set -eu
 
-REPO_URL="${DOTFILES_REPO_URL:-https://github.com/pashbyl/dotfiles.git}"
+REPO_URL="${DOTFILES_REPO_URL:-https://github.com/pashbylogan/dotfiles.git}"
 REPO_REF="${DOTFILES_REPO_REF:-master}"
 REPO_DIR="${DOTFILES_REPO_DIR:-$HOME/projects/dotfiles}"
 PROFILE="${DOTFILES_PROFILE:-auto}"

@@ -7,9 +7,9 @@ Personal environment managed by [stow](https://www.gnu.org/software/stow/) + [An
 **Fresh machine** (needs only `curl` or `wget` and a package manager):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/pashbyl/dotfiles/master/bootstrap.sh | sh
+curl -fsSL https://raw.githubusercontent.com/pashbylogan/dotfiles/master/bootstrap.sh | sh
 # or
-wget -qO- https://raw.githubusercontent.com/pashbyl/dotfiles/master/bootstrap.sh | sh
+wget -qO- https://raw.githubusercontent.com/pashbylogan/dotfiles/master/bootstrap.sh | sh
 ```
 
 **Day-to-day** (inside the repo):
@@ -95,7 +95,7 @@ Linux support is intentionally scoped to Fedora only:
 
 ```
 bootstrap.sh          # remote entrypoint — curl | sh
-scripts/              # apply, update, check
+scripts/              # apply, update, check, cleanup + common.sh
 ansible/              # playbook, roles, vars, Fedora package map
 ssh/ zsh/ tmux/ …     # stow packages → symlinked into $HOME
 docs/                 # design history and rationale
@@ -123,9 +123,10 @@ for f in *.desktop; do
   [ -L "$f" ] && cp --remove-destination "$(readlink -f "$f")" "$f"
 done
 
-# 2. Unstow old packages
+# 2. Unstow old packages (run BEFORE pulling this branch — the source dirs
+# are deleted in the new state, so `stow -D` won't find them afterward)
 cd ~/projects/dotfiles
-stow -D i3 2>/dev/null; stow -D picom 2>/dev/null
+for pkg in i3 i3status picom desktops; do stow -D "$pkg" 2>/dev/null; done
 
 # 3. Move SSH hosts to config.local
 # Copy your Host entries from ~/.ssh/config into ~/.ssh/config.local
