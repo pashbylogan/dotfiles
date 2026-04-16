@@ -52,7 +52,9 @@ cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
 | Category        | Packages                                                                                                                               |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Core CLI        | `git`, `zsh`, `tmux`, `neovim`, `fzf`, `ripgrep`, `fd`, `age`, `gh`, `delta`, `btop`, `jq`, `rsync`, `netcat`, `lsof`, `patch`, `stow` |
-| Desktop (Linux) | `sway`, `swaylock`, `swayidle`, `kanshi`, `waybar`, `rofi`, `grim`, `slurp`, `wl-clipboard`, `brightnessctl`, `mako`, `nautilus`, `pavucontrol`, `pipewire`, `wireplumber`, `bluez`, `blueman`, `power-profiles-daemon`, `plocate`, `upower`, `xdg-desktop-portal-gtk`  |
+| Desktop (Wayland stack) | `sway`, `swaylock`, `swayidle`, `swaybg`, `kanshi`, `waybar`, `swayosd`, `rofi`, `grim`, `slurp`, `wl-clipboard`, `brightnessctl`, `mako`, `foot`, `playerctl`, `xdg-desktop-portal{,-wlr,-gtk}` |
+| Desktop (apps + services) | `nautilus`, `gvfs-{mtp,smb,nfs}`, `ffmpegthumbnailer`, `webp-pixbuf-loader`, `mpv`, `imv`, `mate-polkit`, `gnome-keyring`, `pavucontrol`, `pipewire`, `wireplumber`, `pipewire-{pulseaudio,alsa,jack-audio-connection-kit}`, `bluez`, `blueman`, `nm-applet`, `power-profiles-daemon`, `plocate`, `upower`, `dex-autostart`, `zram-generator-defaults` |
+| Fonts & icons   | `cascadia-mono-nf-fonts`, `google-noto-color-emoji-fonts`, `google-noto-sans-cjk-vf-fonts`, `adwaita-icon-theme` |
 | Networking      | `wireguard-tools`, `tailscale`                                                                                                         |
 
 ### User-managed runtimes (in `~/apps`)

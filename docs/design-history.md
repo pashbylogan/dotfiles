@@ -608,68 +608,83 @@ Everything below is installed and kept up to date by the playbook.
 
 **OS packages (all profiles):**
 
-| Abstract name     | What it is                           |
-| ----------------- | ------------------------------------ |
-| `git`             | version control                      |
-| `curl`            | HTTP client                          |
-| `ca-certificates` | root certificate bundle              |
-| `stow`            | symlink farm manager                 |
-| `zsh`             | shell                                |
-| `tmux`            | terminal multiplexer                 |
-| `neovim`          | editor                               |
-| `fzf`             | fuzzy finder                         |
-| `ripgrep`         | search (replaces grep)               |
-| `fd`              | file finder (replaces find)          |
-| `age`             | encryption                           |
-| `gh`              | GitHub CLI                           |
-| `delta`           | syntax-highlighted git diffs         |
-| `btop`            | process viewer (replaces top/htop)   |
-| `unzip`           | archive utility                      |
-| `wireguard_tools` | VPN tooling                          |
-| `build_tools`     | compiler toolchain (gcc, make, etc.) |
-| `python`          | Python 3 + pip                       |
+| Abstract name       | What it is                                |
+| ------------------- | ----------------------------------------- |
+| `git`               | version control                           |
+| `curl`              | HTTP client                               |
+| `ca-certificates`   | root certificate bundle                   |
+| `stow`              | symlink farm manager                      |
+| `zsh`               | shell                                     |
+| `tmux`              | terminal multiplexer                      |
+| `neovim`            | editor                                    |
+| `fzf`               | fuzzy finder                              |
+| `ripgrep`           | search (replaces grep)                    |
+| `fd`                | file finder (replaces find)               |
+| `age`               | encryption                                |
+| `gh`                | GitHub CLI                                |
+| `delta`             | syntax-highlighted git diffs              |
+| `btop`              | process viewer (replaces top/htop)        |
+| `unzip`             | archive utility                           |
+| `jq`                | JSON processor                            |
+| `rsync`             | file sync                                 |
+| `netcat`            | network swiss-army                        |
+| `lsof`              | open-file inspector                       |
+| `patch`             | apply unified diffs                       |
+| `openssh_client`    | ssh/scp/ssh-keygen/sftp                   |
+| `wireguard_tools`   | VPN tooling                               |
+| `build_tools`       | compiler toolchain (gcc, gcc-c++, make)   |
+| `python`            | Python 3 + pip                            |
 
 **OS packages (linux_desktop profile only):**
 
-| Abstract name            | What it is                                      |
-| ------------------------ | ----------------------------------------------- |
-| `sway`                   | Wayland tiling compositor                       |
-| `swaylock`               | screen locker                                   |
-| `swayidle`               | idle management (auto-lock, display off)        |
-| `swaybg`                 | wallpaper                                       |
-| `waybar`                 | status bar (replaces swaybar + i3status)        |
-| `grim`                   | screenshot capture                              |
-| `slurp`                  | region selection for screenshots                |
-| `wl_clipboard`           | Wayland clipboard (wl-copy/wl-paste)            |
-| `brightnessctl`          | backlight control                               |
-| `mako_notifier`          | notification daemon                             |
-| `xdg_desktop_portal`     | desktop integration                             |
-| `xdg_desktop_portal_wlr` | screen sharing for Zoom/Slack/Teams             |
-| `xdg_desktop_portal_gtk` | Settings portal (bridges dark mode to apps)     |
-| `foot`                   | lightweight Wayland terminal (ghostty fallback) |
-| `kanshi`                 | automatic display profile switching (Wayland)   |
-| `pavucontrol`            | PulseAudio volume control                       |
-| `pipewire`               | audio/video server (replaces PulseAudio)        |
-| `wireplumber`            | PipeWire session manager                        |
-| `pipewire_pulse`         | PulseAudio compatibility shim for PipeWire      |
-| `pipewire_alsa`          | ALSA compatibility shim for PipeWire            |
-| `pipewire_jack`          | JACK compatibility shim for PipeWire            |
-| `bluez`                  | Bluetooth protocol stack                        |
-| `blueman`                | GTK Bluetooth manager with tray applet          |
-| `power_profiles_daemon`  | battery/balanced/performance profile switcher   |
-| `plocate`                | fast file indexer (`locate`)                    |
-| `upower`                 | power / battery state D-Bus service             |
-| `nautilus`               | file manager (GTK4/libadwaita, dark-mode-aware) |
-| `rofi`                   | application launcher                            |
-| `dex`                    | XDG autostart                                   |
-| `nm_applet`              | NetworkManager tray applet                      |
-| `jetbrains_mono_fonts`   | terminal/editor font                            |
+| Abstract name             | What it is                                                   |
+| ------------------------- | ------------------------------------------------------------ |
+| `sway`                    | Wayland tiling compositor                                    |
+| `swaylock`                | screen locker                                                |
+| `swayidle`                | idle management (auto-lock, display off)                     |
+| `swaybg`                  | wallpaper                                                    |
+| `waybar`                  | status bar (replaces swaybar + i3status)                     |
+| `swayosd`                 | on-screen volume/brightness/mic/caps indicator (via COPR)    |
+| `grim`                    | screenshot capture                                           |
+| `slurp`                   | region selection for screenshots                             |
+| `wl_clipboard`            | Wayland clipboard (wl-copy/wl-paste)                         |
+| `brightnessctl`           | backlight control                                            |
+| `mako_notifier`           | notification daemon                                          |
+| `xdg_desktop_portal`      | desktop integration                                          |
+| `xdg_desktop_portal_wlr`  | screen sharing for Zoom/Slack/Teams                          |
+| `xdg_desktop_portal_gtk`  | Settings portal (bridges dark mode to apps)                  |
+| `foot`                    | lightweight Wayland terminal (ghostty fallback)              |
+| `kanshi`                  | automatic display profile switching (Wayland)                |
+| `pavucontrol`             | PipeWire/PulseAudio volume control                           |
+| `pipewire`                | audio/video server (replaces PulseAudio)                     |
+| `wireplumber`             | PipeWire session manager                                     |
+| `pipewire_pulse`          | PulseAudio compatibility shim for PipeWire                   |
+| `pipewire_alsa`           | ALSA compatibility shim for PipeWire                         |
+| `pipewire_jack`           | JACK compatibility shim for PipeWire                         |
+| `playerctl`               | MPRIS controller for media keys                              |
+| `bluez`                   | Bluetooth protocol stack                                     |
+| `blueman`                 | GTK Bluetooth manager with tray applet                       |
+| `power_profiles_daemon`   | battery/balanced/performance profile switcher                |
+| `zram_generator_defaults` | compressed in-RAM swap (50% RAM, zstd)                       |
+| `plocate`                 | fast file indexer (`locate`)                                 |
+| `upower`                  | power / battery state D-Bus service                          |
+| `nautilus`                | file manager (GTK4/libadwaita, dark-mode-aware)              |
+| `gvfs_mtp` / `_smb` / `_nfs` | Nautilus backends for phones / SMB / NFS                  |
+| `ffmpegthumbnailer`       | Nautilus video thumbnail generator                           |
+| `webp_pixbuf_loader`      | Nautilus webp thumbnail support                              |
+| `mpv`                     | video player (default for video/* via mimeapps.list)         |
+| `imv`                     | image viewer (default for image/* via mimeapps.list)         |
+| `mate_polkit`             | polkit authentication agent                                  |
+| `gnome_keyring`           | Secret Service backend (Chromium creds, git creds, SMB)      |
+| `rofi`                    | application launcher                                         |
+| `dex`                     | XDG autostart                                                |
+| `nm_applet`               | NetworkManager tray applet                                   |
+| `nerd_fonts`              | Cascadia Mono NF — programming font + Nerd glyphs            |
+| `noto_color_emoji_fonts`  | color emoji coverage                                         |
+| `noto_sans_cjk_fonts`     | CJK coverage                                                 |
+| `adwaita_icon_theme`      | libadwaita / Nautilus icon theme                             |
 
-**OS packages (macOS via Homebrew):**
-
-All core CLI packages above via `brew install`, plus `ansible`, `starship`. Ghostty via `brew install --cask ghostty`.
-
-**Tailscale** (via dedicated Ansible role — adds repo on apt/dnf, installs from default repos on Arch/openSUSE).
+**Tailscale** (via dedicated Ansible role — adds Tailscale's Fedora yum repo, installs from it).
 
 **User-managed runtimes (~/apps):**
 
