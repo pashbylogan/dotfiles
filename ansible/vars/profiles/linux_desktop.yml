@@ -37,6 +37,8 @@ dotfiles_profile_linux_packages_common:
   - swayosd
   - playerctl
   - zram_generator_defaults
+  - mpv
+  - imv
   - rofi
   - dex
   - nm_applet

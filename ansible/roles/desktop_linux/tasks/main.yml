@@ -20,6 +20,49 @@
     value: "'Adwaita'"
     state: present
 
+# ─── Default apps (xdg-mime) ────────────────────────────────────────────────
+# Write ~/.config/mimeapps.list directly. User overrides always win over
+# /usr/share/applications/mimeapps.list, so this works whether or not any
+# other default handler is installed.
+
+- name: Default mpv for common video mimetypes
+  community.general.ini_file:
+    path: "{{ ansible_env.HOME }}/.config/mimeapps.list"
+    section: Default Applications
+    option: "{{ item }}"
+    value: mpv.desktop
+    create: true
+    mode: "0644"
+  loop:
+    - video/mp4
+    - video/x-matroska
+    - video/webm
+    - video/quicktime
+    - video/mpeg
+    - video/x-msvideo
+    - video/x-flv
+    - video/ogg
+    - video/x-ms-wmv
+
+- name: Default imv for common image mimetypes
+  community.general.ini_file:
+    path: "{{ ansible_env.HOME }}/.config/mimeapps.list"
+    section: Default Applications
+    option: "{{ item }}"
+    value: imv.desktop
+    create: true
+    mode: "0644"
+  loop:
+    - image/png
+    - image/jpeg
+    - image/gif
+    - image/webp
+    - image/bmp
+    - image/tiff
+    - image/svg+xml
+    - image/heif
+    - image/avif
+
 - name: Empty Tracker recursive index list (stop Nautilus indexer from scanning $HOME)
   community.general.dconf:
     key: /org/freedesktop/Tracker3/Miner/Files/index-recursive-directories

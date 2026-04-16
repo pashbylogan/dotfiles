@@ -141,3 +141,7 @@ dotfiles_linux_pkg_map:
     - playerctl
   zram_generator_defaults:
     - zram-generator-defaults
+  mpv:
+    - mpv
+  imv:
+    - imv
