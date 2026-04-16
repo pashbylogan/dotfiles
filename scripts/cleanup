@@ -139,6 +139,8 @@ collect_orphaned_configs() {
     ["$HOME/.oh-my-zsh"]=omz
     # nvm (replaced by fnm)
     ["$HOME/apps/nvm"]=nvm
+    # Previous fnm location — now at ~/apps/fnm per the curl-installers-to-~/apps rule
+    ["$HOME/.local/share/fnm"]=fnm
     # Caches for removed software
     ["$HOME/.cache/gnome-shell"]=gnome-shell
     ["$HOME/.cache/gnome-software"]=gnome-software

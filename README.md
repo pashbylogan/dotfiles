@@ -60,7 +60,7 @@ cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
 | Tool                                            | Location              | What `update` does                      |
 | ----------------------------------------------- | --------------------- | --------------------------------------- |
 | [uv](https://github.com/astral-sh/uv)           | `~/apps/uv`           | re-runs installer                       |
-| [fnm](https://github.com/Schniz/fnm) + Node LTS | `~/.local/share/fnm`  | re-runs installer, checks for newer LTS |
+| [fnm](https://github.com/Schniz/fnm) + Node LTS | `~/apps/fnm`          | re-runs installer, checks for newer LTS |
 | [Starship](https://starship.rs)                 | `~/apps/bin/starship` | re-runs installer                       |
 
 ### Config (via stow symlinks)

@@ -67,5 +67,5 @@ dotfiles_uv_enabled: true
 dotfiles_uv_root: "{{ dotfiles_apps_root }}/uv"
 dotfiles_uv_bin_dir: "{{ dotfiles_uv_root }}/bin"
 dotfiles_fnm_enabled: true
-dotfiles_fnm_dir: "{{ dotfiles_share_root }}/fnm"
+dotfiles_fnm_dir: "{{ dotfiles_apps_root }}/fnm"
 dotfiles_node_lts_enabled: true

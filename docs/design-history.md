@@ -106,7 +106,7 @@ Current policy:
 Concrete decisions:
 
 - `uv` lives in `~/apps/uv`
-- `fnm` lives in `~/.local/share/fnm`
+- `fnm` lives in `~/apps/fnm`
 - `starship` lives in `~/apps/bin` (single-binary tools installed by curl go here)
 - Go state lives in `~/apps/go`
 - package-manager-installed software stays in package-manager defaults
@@ -409,7 +409,7 @@ Prompt replaced with Starship (Rust binary, ~2ms init). Installed to `~/apps/bin
 
 ### 12. Replaced nvm with fnm
 
-nvm added ~300ms to every shell open (even with lazy-loading, the first `node`/`npm` call paid the full penalty). fnm is a Rust binary with <1ms shell init, reads `.nvmrc` natively, and is a near-drop-in replacement. Installed to `~/.local/share/fnm` via curl installer.
+nvm added ~300ms to every shell open (even with lazy-loading, the first `node`/`npm` call paid the full penalty). fnm is a Rust binary with <1ms shell init, reads `.nvmrc` natively, and is a near-drop-in replacement. Installed to `~/apps/fnm` via curl installer.
 
 ### 13. Replaced pnpm with corepack
 
@@ -675,7 +675,7 @@ All core CLI packages above via `brew install`, plus `ansible`, `starship`. Ghos
 | ------------ | --------------------- | --------------------------- | ---------------- |
 | uv           | `~/apps/uv`           | astral.sh installer         | re-run installer |
 | starship     | `~/apps/bin/starship` | starship.rs installer       | re-run installer |
-| fnm          | `~/.local/share/fnm`  | fnm.vercel.app installer    | re-run installer |
+| fnm          | `~/apps/fnm`  | fnm.vercel.app installer    | re-run installer |
 | Node.js LTS  | via fnm               | `fnm install --lts`         | re-run install   |
 | npm (latest) | via fnm/node          | `npm install -g npm@latest` | re-run install   |
 | corepack     | via Node.js           | `corepack enable`           | ships with Node  |
