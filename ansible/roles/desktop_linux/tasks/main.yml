@@ -14,6 +14,12 @@
     value: "'prefer-dark'"
     state: present
 
+- name: Set GTK icon theme to Adwaita
+  community.general.dconf:
+    key: /org/gnome/desktop/interface/icon-theme
+    value: "'Adwaita'"
+    state: present
+
 - name: Empty Tracker recursive index list (stop Nautilus indexer from scanning $HOME)
   community.general.dconf:
     key: /org/freedesktop/Tracker3/Miner/Files/index-recursive-directories

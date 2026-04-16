@@ -113,6 +113,14 @@ dotfiles_linux_pkg_map:
     - network-manager-applet
   jetbrains_mono_fonts:
     - jetbrains-mono-fonts-all
+  jetbrains_mono_nerd_fonts:
+    - jetbrains-mono-nerd-fonts
+  noto_color_emoji_fonts:
+    - google-noto-color-emoji-fonts
+  noto_sans_cjk_fonts:
+    - google-noto-sans-cjk-vf-fonts
+  adwaita_icon_theme:
+    - adwaita-icon-theme
   mate_polkit:
     - mate-polkit
   gnome_keyring:

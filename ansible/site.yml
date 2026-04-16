@@ -78,6 +78,7 @@
 
   roles:
     - role: filesystem
+    - role: repos
     - role: packages
     - role: user_tools
     - role: shell
