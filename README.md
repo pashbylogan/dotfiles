@@ -52,7 +52,9 @@ cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
 | Category        | Packages                                                                                                                               |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Core CLI        | `git`, `zsh`, `tmux`, `neovim`, `fzf`, `ripgrep`, `fd`, `age`, `gh`, `delta`, `btop`, `jq`, `rsync`, `netcat`, `lsof`, `patch`, `stow` |
-| Desktop (Linux) | `sway`, `swaylock`, `swayidle`, `kanshi`, `waybar`, `rofi`, `grim`, `slurp`, `wl-clipboard`, `brightnessctl`, `mako`, `nautilus`, `pavucontrol`, `pipewire`, `wireplumber`, `bluez`, `blueman`, `power-profiles-daemon`, `plocate`, `upower`, `xdg-desktop-portal-gtk`  |
+| Desktop (Wayland stack) | `sway`, `swaylock`, `swayidle`, `swaybg`, `kanshi`, `waybar`, `swayosd`, `rofi`, `grim`, `slurp`, `wl-clipboard`, `brightnessctl`, `mako`, `foot`, `playerctl`, `xdg-desktop-portal{,-wlr,-gtk}` |
+| Desktop (apps + services) | `nautilus`, `gvfs-{mtp,smb,nfs}`, `ffmpegthumbnailer`, `webp-pixbuf-loader`, `mpv`, `imv`, `mate-polkit`, `gnome-keyring`, `pavucontrol`, `pipewire`, `wireplumber`, `pipewire-{pulseaudio,alsa,jack-audio-connection-kit}`, `bluez`, `blueman`, `nm-applet`, `power-profiles-daemon`, `plocate`, `upower`, `dex-autostart`, `zram-generator-defaults` |
+| Fonts & icons   | `cascadia-mono-nf-fonts`, `google-noto-color-emoji-fonts`, `google-noto-sans-cjk-vf-fonts`, `adwaita-icon-theme` |
 | Networking      | `wireguard-tools`, `tailscale`                                                                                                         |
 
 ### User-managed runtimes (in `~/apps`)
@@ -60,7 +62,7 @@ cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
 | Tool                                            | Location              | What `update` does                      |
 | ----------------------------------------------- | --------------------- | --------------------------------------- |
 | [uv](https://github.com/astral-sh/uv)           | `~/apps/uv`           | re-runs installer                       |
-| [fnm](https://github.com/Schniz/fnm) + Node LTS | `~/.local/share/fnm`  | re-runs installer, checks for newer LTS |
+| [fnm](https://github.com/Schniz/fnm) + Node LTS | `~/apps/fnm`          | re-runs installer, checks for newer LTS |
 | [Starship](https://starship.rs)                 | `~/apps/bin/starship` | re-runs installer                       |
 
 ### Config (via stow symlinks)
@@ -151,7 +153,7 @@ Cut from the first-pass managed set to keep the base small. Can be added back vi
 
 **Shell aliases/functions** — `claude`/`bigclaude`, `gemini`, `gssh`, `vpns`/`exitnode`, `android`, `dbmate`/`dbdump`, `cdwt`, gcloud sourcing, cloud-sql-proxy
 
-**Linux packages** — `blueman`, `lxappearance`
+**Linux packages** — `lxappearance` (we set GTK preferences via dconf instead)
 
 **Docker + Docker Compose** — follow the official per-OS install guide: https://docs.docker.com/engine/install/ (Compose ships as the `docker compose` plugin)
 

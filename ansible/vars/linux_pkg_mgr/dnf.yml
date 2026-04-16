@@ -44,8 +44,6 @@ dotfiles_linux_pkg_map:
     - dex-autostart
   nm_applet:
     - network-manager-applet
-  jetbrains_mono_fonts:
-    - jetbrains-mono-fonts-all
   nerd_fonts:
     - cascadia-mono-nf-fonts
   noto_color_emoji_fonts:

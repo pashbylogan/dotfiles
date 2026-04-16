@@ -43,10 +43,9 @@ collect_removable_packages() {
     totem eog loupe showtime evince gedit cheese baobab yelp
     gnome-software gnome-tour gnome-user-docs
     plasma-desktop plasma-workspace kwin-wayland dolphin konsole kate
-    sddm
   )
 
-  # Display managers (we use TTY login)
+  # Display managers (we use TTY login; sddm handles both KDE and standalone)
   local dm_packages=(gdm gdm3 sddm lightdm)
 
   # X11 tools we replaced with Wayland equivalents
@@ -73,6 +72,12 @@ collect_removable_packages() {
     pulseaudio pulseaudio-utils pulseaudio-bluetooth
     # Legacy updatedb — plocate replaces it.
     mlocate locate
+    # Previously-managed packages we've since dropped for having overlapping
+    # capabilities with another package we still install.
+    jetbrains-mono-fonts-all   # cascadia-mono-nf-fonts covers text + NF glyphs
+    # Older bootstrap pulled full ansible (~380MB). We now install only
+    # ansible-core + ansible-collection-community-general (~23MB).
+    ansible
   )
 
   for pkg in "${de_packages[@]}" "${dm_packages[@]}" "${replaced_packages[@]}"; do
@@ -145,6 +150,16 @@ collect_orphaned_configs() {
     if [[ -e "$dir" ]] && ! have "$cmd"; then
       dirs+=("$dir")
     fi
+  done
+
+  # Legacy install locations for tools we've since moved. The `have $cmd`
+  # check used above would never flag these — the command exists, just at
+  # a different path — so match the directory directly.
+  local legacy_dirs=(
+    "$HOME/.local/share/fnm"   # fnm is now at ~/apps/fnm
+  )
+  for dir in "${legacy_dirs[@]}"; do
+    [[ -e "$dir" ]] && dirs+=("$dir")
   done
 
   # Also find large cache dirs for uninstalled software

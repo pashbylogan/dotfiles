@@ -49,7 +49,8 @@ detect_os() {
 
 install_linux_prereqs() {
   if have dnf; then
-    run_root dnf install -y git curl stow age zsh python3 python3-pip ansible
+    run_root dnf install -y git curl stow age zsh python3 python3-pip \
+      ansible-core ansible-collection-community-general
     return
   fi
 

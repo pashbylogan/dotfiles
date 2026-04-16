@@ -61,7 +61,8 @@ run_root() {
 
 ensure_linux_prereqs() {
   if have dnf; then
-    run_root dnf install -y stow python3 python3-pip ansible
+    run_root dnf install -y stow python3 python3-pip \
+      ansible-core ansible-collection-community-general
     return
   fi
 
