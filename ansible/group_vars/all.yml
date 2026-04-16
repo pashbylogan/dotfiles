@@ -31,7 +31,6 @@ dotfiles_common_linux_packages:
   - curl
   - ca-certificates
   - stow
-  - dbus_daemon
   - zsh
   - tmux
   - neovim
