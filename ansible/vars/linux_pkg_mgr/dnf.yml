@@ -135,3 +135,7 @@ dotfiles_linux_pkg_map:
     - ffmpegthumbnailer
   webp_pixbuf_loader:
     - webp-pixbuf-loader
+  swayosd:
+    - swayosd
+  playerctl:
+    - playerctl

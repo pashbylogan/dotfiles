@@ -3,3 +3,15 @@ border-size=2
 border-color=#77dd77
 background-color=#333333
 text-color=#ffffff
+
+# Pin critical alerts until dismissed (battery-low, network down, etc.)
+[urgency=critical]
+default-timeout=0
+
+# `makoctl mode -t do-not-disturb` silences everything below critical.
+# Critical notifications still pop so you don't miss a dying battery.
+[mode=do-not-disturb]
+invisible=true
+
+[mode=do-not-disturb urgency=critical]
+invisible=false

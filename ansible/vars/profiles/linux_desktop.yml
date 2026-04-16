@@ -34,6 +34,8 @@ dotfiles_profile_linux_packages_common:
   - webp_pixbuf_loader
   - mate_polkit
   - gnome_keyring
+  - swayosd
+  - playerctl
   - rofi
   - dex
   - nm_applet
