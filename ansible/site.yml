@@ -52,15 +52,17 @@
       when: ansible_system == "Linux"
 
     - name: Resolve Linux package list
+      # Names in the map resolve to their mapped concrete package(s);
+      # names missing from the map resolve to themselves. Keep a map
+      # entry only when the abstract name differs from the installed
+      # name or expands to multiple packages.
+      vars:
+        _names: "{{ dotfiles_common_linux_packages + dotfiles_profile_linux_packages_common }}"
       ansible.builtin.set_fact:
         dotfiles_linux_packages_resolved: >-
           {{
-            (
-              dotfiles_common_linux_packages
-              + dotfiles_profile_linux_packages_common
-            )
-            | map('extract', dotfiles_linux_pkg_map)
-            | flatten
+            (_names | select('in', dotfiles_linux_pkg_map) | map('extract', dotfiles_linux_pkg_map) | flatten | list)
+            + (_names | reject('in', dotfiles_linux_pkg_map) | list)
           }}
       when: ansible_system == "Linux"
 
@@ -78,7 +80,6 @@
 
   roles:
     - role: filesystem
-    - role: repos
     - role: packages
     - role: user_tools
     - role: shell

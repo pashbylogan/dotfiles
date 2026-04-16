@@ -1,10 +1,9 @@
 #!/bin/bash
 # Toggle WiFi power save on every wireless interface.
 # Called by /etc/udev/rules.d/99-wifi-powersave.rules on AC plug/unplug.
-# No-op on systems without a battery (desktops, VMs).
 # Usage: wifi-powersave on|off
 
-compgen -G '/sys/class/power_supply/BAT*' >/dev/null || exit 0
+dotfiles-has-battery || exit 0
 
 for iface in /sys/class/net/*/wireless; do
   iface="$(basename "$(dirname "$iface")")"

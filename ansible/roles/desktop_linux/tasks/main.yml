@@ -194,12 +194,15 @@
 # system shutdown timeout to 5s, restrict plocate indexing to AC power,
 # unmount gvfsd-fuse mounts before suspend. Adapted from Omarchy defaults.
 
-- name: Install power-profile apply helper
+- name: Install power-related helper scripts
   ansible.builtin.copy:
-    src: dotfiles-ppd-apply
-    dest: /usr/local/bin/dotfiles-ppd-apply
+    src: "{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
     mode: "0755"
   become: true
+  loop:
+    - dotfiles-has-battery
+    - dotfiles-ppd-apply
 
 - name: Install power-profile switching udev rule
   ansible.builtin.copy:
@@ -232,7 +235,7 @@
   become: true
   notify: Reload udev
 
-- name: Install wifi-powersave helper script
+- name: Install wifi-powersave helper (depends on dotfiles-has-battery)
   ansible.builtin.copy:
     src: wifi-powersave
     dest: /usr/local/bin/wifi-powersave
