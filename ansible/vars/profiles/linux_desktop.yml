@@ -36,6 +36,7 @@ dotfiles_profile_linux_packages_common:
   - gnome_keyring
   - swayosd
   - playerctl
+  - zram_generator_defaults
   - rofi
   - dex
   - nm_applet

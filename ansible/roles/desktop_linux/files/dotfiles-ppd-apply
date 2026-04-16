@@ -1,0 +1,31 @@
+#!/bin/bash
+# Apply a power profile based on AC/battery state.
+# Usage: dotfiles-ppd-apply ac | battery | auto
+# No-op on systems without a battery (desktops, VMs).
+set -eu
+
+compgen -G '/sys/class/power_supply/BAT*' >/dev/null || exit 0
+
+state="${1:-auto}"
+
+if [[ $state == auto ]]; then
+  state=battery
+  for ac in /sys/class/power_supply/*/online; do
+    [[ -r $ac ]] || continue
+    [[ $(cat "$(dirname "$ac")/type" 2>/dev/null) == Mains ]] || continue
+    [[ $(cat "$ac") == 1 ]] && state=ac && break
+  done
+fi
+
+case "$state" in
+  ac)
+    powerprofilesctl set performance 2>/dev/null || powerprofilesctl set balanced
+    ;;
+  battery)
+    powerprofilesctl set balanced
+    ;;
+  *)
+    echo "usage: dotfiles-ppd-apply ac|battery|auto" >&2
+    exit 1
+    ;;
+esac

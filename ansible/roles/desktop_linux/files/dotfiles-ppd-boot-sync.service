@@ -1,0 +1,11 @@
+[Unit]
+Description=Sync power profile with AC/battery state on boot
+After=power-profiles-daemon.service
+Requires=power-profiles-daemon.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/dotfiles-ppd-apply auto
+
+[Install]
+WantedBy=multi-user.target

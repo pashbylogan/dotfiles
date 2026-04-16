@@ -145,6 +145,13 @@
 # system shutdown timeout to 5s, restrict plocate indexing to AC power,
 # unmount gvfsd-fuse mounts before suspend. Adapted from Omarchy defaults.
 
+- name: Install power-profile apply helper
+  ansible.builtin.copy:
+    src: dotfiles-ppd-apply
+    dest: /usr/local/bin/dotfiles-ppd-apply
+    mode: "0755"
+  become: true
+
 - name: Install power-profile switching udev rule
   ansible.builtin.copy:
     src: 99-power-profile.rules
@@ -152,6 +159,21 @@
     mode: "0644"
   become: true
   notify: Reload udev
+
+- name: Install power-profile boot-sync unit
+  ansible.builtin.copy:
+    src: dotfiles-ppd-boot-sync.service
+    dest: /etc/systemd/system/dotfiles-ppd-boot-sync.service
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+- name: Enable power-profile boot-sync
+  ansible.builtin.systemd_service:
+    name: dotfiles-ppd-boot-sync.service
+    enabled: true
+  become: true
+  failed_when: false
 
 - name: Install WiFi-powersave udev rule
   ansible.builtin.copy:
@@ -225,6 +247,25 @@
     enabled: true
     state: started
   failed_when: false
+
+# ─── Networking: systemd-resolved ───────────────────────────────────────────
+# Cached DNS with DoT support. NetworkManager integrates automatically when
+# resolved is running and /etc/resolv.conf points at its stub.
+
+- name: Enable systemd-resolved
+  ansible.builtin.systemd_service:
+    name: systemd-resolved.service
+    enabled: true
+    state: started
+  become: true
+
+- name: Route /etc/resolv.conf through systemd-resolved
+  ansible.builtin.file:
+    src: /run/systemd/resolve/stub-resolv.conf
+    dest: /etc/resolv.conf
+    state: link
+    force: true
+  become: true
 
 # ─── iwd as NetworkManager WiFi backend (opt-in) ────────────────────────────
 # Better battery and faster connects; keep NetworkManager for VPNs, enterprise

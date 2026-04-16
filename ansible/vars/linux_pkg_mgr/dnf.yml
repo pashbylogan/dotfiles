@@ -139,3 +139,5 @@ dotfiles_linux_pkg_map:
     - swayosd
   playerctl:
     - playerctl
+  zram_generator_defaults:
+    - zram-generator-defaults
