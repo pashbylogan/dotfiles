@@ -1,0 +1,22 @@
+#!/bin/bash
+# Apply a power profile based on AC/battery state.
+# Usage: dotfiles-ppd-apply ac | battery | auto
+set -eu
+
+dotfiles-has-battery || exit 0
+
+state="${1:-auto}"
+
+if [[ $state == auto ]]; then
+  state=battery
+  for ac in /sys/class/power_supply/*/online; do
+    [[ -r $ac ]] || continue
+    [[ $(< "$(dirname "$ac")/type") == Mains ]] || continue
+    [[ $(< "$ac") == 1 ]] && state=ac && break
+  done
+fi
+
+case "$state" in
+  ac) powerprofilesctl set performance 2>/dev/null || powerprofilesctl set balanced ;;
+  battery) powerprofilesctl set balanced ;;
+esac

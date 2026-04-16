@@ -8,3 +8,11 @@
   ansible.builtin.systemd_service:
     daemon_reload: true
   become: true
+
+- name: Apply authselect changes
+  ansible.builtin.command: authselect apply-changes
+  become: true
+
+- name: Reload sysctl
+  ansible.builtin.command: sysctl --system
+  become: true

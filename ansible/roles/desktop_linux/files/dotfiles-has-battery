@@ -1,0 +1,6 @@
+#!/bin/bash
+# Exit 0 if a battery is present, 1 otherwise.
+# Used by udev-invoked scripts that can't depend on upower being up
+# during early boot. battery-monitor uses upower directly because it
+# reads battery state, not just presence.
+compgen -G '/sys/class/power_supply/BAT*' >/dev/null

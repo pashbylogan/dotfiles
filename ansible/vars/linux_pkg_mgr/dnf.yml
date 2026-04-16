@@ -1,43 +1,14 @@
 ---
+# Abstract-name → concrete package list for Fedora.
+# Only list entries where the installed package name differs from the
+# abstract name or where one abstract name expands to several packages.
+# Abstract names not in this map resolve to themselves — see the
+# `Resolve Linux package list` task in ansible/site.yml.
 dotfiles_linux_pkg_map:
-  git:
-    - git
-  curl:
-    - curl
-  ca-certificates:
-    - ca-certificates
-  stow:
-    - stow
-  zsh:
-    - zsh
-  tmux:
-    - tmux
-  neovim:
-    - neovim
-  fzf:
-    - fzf
-  ripgrep:
-    - ripgrep
-  age:
-    - age
-  gh:
-    - gh
   delta:
     - git-delta
-  btop:
-    - btop
-  unzip:
-    - unzip
-  jq:
-    - jq
-  rsync:
-    - rsync
   netcat:
     - nmap-ncat
-  lsof:
-    - lsof
-  patch:
-    - patch
   openssh_client:
     - openssh-clients
   wireguard_tools:
@@ -51,26 +22,8 @@ dotfiles_linux_pkg_map:
   python:
     - python3
     - python3-pip
-  sway:
-    - sway
-  swaylock:
-    - swaylock
-  swayidle:
-    - swayidle
-  swaybg:
-    - swaybg
-  kanshi:
-    - kanshi
-  waybar:
-    - waybar
-  grim:
-    - grim
-  slurp:
-    - slurp
   wl_clipboard:
     - wl-clipboard
-  brightnessctl:
-    - brightnessctl
   mako_notifier:
     - mako
   xdg_desktop_portal:
@@ -79,37 +32,39 @@ dotfiles_linux_pkg_map:
     - xdg-desktop-portal-wlr
   xdg_desktop_portal_gtk:
     - xdg-desktop-portal-gtk
-  foot:
-    - foot
-  pipewire:
-    - pipewire
-  wireplumber:
-    - wireplumber
   pipewire_pulse:
     - pipewire-pulseaudio
   pipewire_alsa:
     - pipewire-alsa
   pipewire_jack:
     - pipewire-jack-audio-connection-kit
-  pavucontrol:
-    - pavucontrol
-  bluez:
-    - bluez
-  blueman:
-    - blueman
   power_profiles_daemon:
     - power-profiles-daemon
-  plocate:
-    - plocate
-  upower:
-    - upower
-  nautilus:
-    - nautilus
-  rofi:
-    - rofi
   dex:
     - dex-autostart
   nm_applet:
     - network-manager-applet
   jetbrains_mono_fonts:
     - jetbrains-mono-fonts-all
+  nerd_fonts:
+    - cascadia-mono-nf-fonts
+  noto_color_emoji_fonts:
+    - google-noto-color-emoji-fonts
+  noto_sans_cjk_fonts:
+    - google-noto-sans-cjk-vf-fonts
+  adwaita_icon_theme:
+    - adwaita-icon-theme
+  mate_polkit:
+    - mate-polkit
+  gnome_keyring:
+    - gnome-keyring
+  gvfs_mtp:
+    - gvfs-mtp
+  gvfs_smb:
+    - gvfs-smb
+  gvfs_nfs:
+    - gvfs-nfs
+  webp_pixbuf_loader:
+    - webp-pixbuf-loader
+  zram_generator_defaults:
+    - zram-generator-defaults

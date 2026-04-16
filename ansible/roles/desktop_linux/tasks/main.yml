@@ -1,30 +1,82 @@
 ---
-# Linux-desktop-only preferences. GTK3/GTK4 fallback dark-theme hints are
-# shipped via the `gtk` stow package (settings.ini). Here we set the
-# libadwaita / modern GTK keys via dconf, and neutralise Tracker so the
-# Nautilus indexer doesn't scan $HOME.
-#
-# Runs as the logged-in user against their own dconf / D-Bus session.
-# Requires the user's DBUS_SESSION_BUS_ADDRESS, which is available when
-# `scripts/apply` is run from inside a graphical session.
+# dconf tasks need an active D-Bus session. On a fresh TTY-only install
+# there is no session yet — they'll skip. Re-run `scripts/apply` from
+# inside sway (which provides DBUS_SESSION_BUS_ADDRESS) to apply them.
+# GTK3/GTK4 fallback dark-theme hints are handled by the `gtk` stow
+# package regardless, so the first-run case still gets dark mode.
 
-- name: Prefer dark colour scheme for libadwaita apps (Nautilus, GTK4)
-  community.general.dconf:
-    key: /org/gnome/desktop/interface/color-scheme
-    value: "'prefer-dark'"
-    state: present
+- name: Apply dconf preferences
+  when: ansible_env.DBUS_SESSION_BUS_ADDRESS is defined
+  block:
+    - name: Prefer dark colour scheme for libadwaita apps (Nautilus, GTK4)
+      community.general.dconf:
+        key: /org/gnome/desktop/interface/color-scheme
+        value: "'prefer-dark'"
+        state: present
 
-- name: Empty Tracker recursive index list (stop Nautilus indexer from scanning $HOME)
-  community.general.dconf:
-    key: /org/freedesktop/Tracker3/Miner/Files/index-recursive-directories
-    value: "@as []"
-    state: present
+    - name: Set GTK icon theme to Adwaita
+      community.general.dconf:
+        key: /org/gnome/desktop/interface/icon-theme
+        value: "'Adwaita'"
+        state: present
 
-- name: Empty Tracker single-directory index list
-  community.general.dconf:
-    key: /org/freedesktop/Tracker3/Miner/Files/index-single-directories
-    value: "@as []"
-    state: present
+# ─── Default apps (xdg-mime) ────────────────────────────────────────────────
+# Write ~/.config/mimeapps.list directly. User overrides always win over
+# /usr/share/applications/mimeapps.list, so this works whether or not any
+# other default handler is installed.
+
+- name: Default mpv for common video mimetypes
+  community.general.ini_file:
+    path: "{{ ansible_env.HOME }}/.config/mimeapps.list"
+    section: Default Applications
+    option: "{{ item }}"
+    value: mpv.desktop
+    create: true
+    mode: "0644"
+  loop:
+    - video/mp4
+    - video/x-matroska
+    - video/webm
+    - video/quicktime
+    - video/mpeg
+    - video/x-msvideo
+    - video/x-flv
+    - video/ogg
+    - video/x-ms-wmv
+
+- name: Default imv for common image mimetypes
+  community.general.ini_file:
+    path: "{{ ansible_env.HOME }}/.config/mimeapps.list"
+    section: Default Applications
+    option: "{{ item }}"
+    value: imv.desktop
+    create: true
+    mode: "0644"
+  loop:
+    - image/png
+    - image/jpeg
+    - image/gif
+    - image/webp
+    - image/bmp
+    - image/tiff
+    - image/svg+xml
+    - image/heif
+    - image/avif
+
+- name: Neutralise Tracker3 indexer
+  when: ansible_env.DBUS_SESSION_BUS_ADDRESS is defined
+  block:
+    - name: Empty Tracker recursive index list (stop Nautilus indexer from scanning $HOME)
+      community.general.dconf:
+        key: /org/freedesktop/Tracker3/Miner/Files/index-recursive-directories
+        value: "@as []"
+        state: present
+
+    - name: Empty Tracker single-directory index list
+      community.general.dconf:
+        key: /org/freedesktop/Tracker3/Miner/Files/index-single-directories
+        value: "@as []"
+        state: present
 
 # ─── Audio stack (PipeWire + WirePlumber) ───────────────────────────────────
 # Packages are installed by the `packages` role. Explicit user-service enable
@@ -52,10 +104,108 @@
   become: true
   failed_when: false
 
+# ─── Authentication (gnome-keyring PAM + faillock) ──────────────────────────
+# Fedora ships gdm with keyring PAM already wired, but on a Sway-only box
+# without a display manager we must opt in via authselect. Provides the
+# Secret Service backend for Chromium creds, git credential helpers, and
+# Nautilus remote mounts. We also enable faillock (account lockout after
+# repeated auth failures) and tune its thresholds to friendlier values.
+
+- name: Check current authselect features
+  ansible.builtin.command: authselect current --raw
+  register: authselect_raw
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Enable with-pam-gnome-keyring authselect feature
+  ansible.builtin.command: authselect enable-feature with-pam-gnome-keyring
+  when:
+    - authselect_raw.rc == 0
+    - '"with-pam-gnome-keyring" not in (authselect_raw.stdout | default(""))'
+  become: true
+  notify: Apply authselect changes
+
+- name: Enable with-faillock authselect feature
+  ansible.builtin.command: authselect enable-feature with-faillock
+  when:
+    - authselect_raw.rc == 0
+    - '"with-faillock" not in (authselect_raw.stdout | default(""))'
+  become: true
+  notify: Apply authselect changes
+
+- name: Tune faillock deny threshold (10 attempts instead of 3)
+  ansible.builtin.lineinfile:
+    path: /etc/security/faillock.conf
+    regexp: '^#?\s*deny\s*='
+    line: 'deny = 10'
+    state: present
+  become: true
+
+- name: Tune faillock unlock_time (2 minutes instead of 10)
+  ansible.builtin.lineinfile:
+    path: /etc/security/faillock.conf
+    regexp: '^#?\s*unlock_time\s*='
+    line: 'unlock_time = 120'
+    state: present
+  become: true
+
+- name: Raise sudo password tries from 3 to 10
+  ansible.builtin.copy:
+    src: 10-passwd-tries
+    dest: /etc/sudoers.d/10-passwd-tries
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "/usr/sbin/visudo -cf %s"
+  become: true
+
+# ─── System drop-in directories + kernel tunables ──────────────────────────
+# Fedora creates some of these on demand; we create all we need up front
+# so subsequent copy tasks don't depend on package install order.
+
+- name: Create drop-in directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  become: true
+  loop:
+    - /etc/systemd/logind.conf.d
+    - /etc/systemd/system.conf.d
+    - /etc/systemd/system/user@.service.d
+    - /etc/systemd/system/plocate-updatedb.service.d
+
+- name: Install sysctl drop-in (inotify watchers, TCP MTU probing)
+  ansible.builtin.copy:
+    src: 90-dotfiles-sysctl.conf
+    dest: /etc/sysctl.d/90-dotfiles.conf
+    mode: "0644"
+  become: true
+  notify: Reload sysctl
+
+- name: Install logind drop-in (ignore power key so Sway handles it)
+  # No handler: reloading systemd-logind drops the graphical session.
+  ansible.builtin.copy:
+    src: 10-handle-power-key.conf
+    dest: /etc/systemd/logind.conf.d/10-handle-power-key.conf
+    mode: "0644"
+  become: true
+
 # ─── Power management ──────────────────────────────────────────────────────
 # Auto-switch power profile and WiFi powersave on AC plug/unplug, drop
 # system shutdown timeout to 5s, restrict plocate indexing to AC power,
 # unmount gvfsd-fuse mounts before suspend. Adapted from Omarchy defaults.
+
+- name: Install power-related helper scripts
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    mode: "0755"
+  become: true
+  loop:
+    - dotfiles-has-battery
+    - dotfiles-ppd-apply
 
 - name: Install power-profile switching udev rule
   ansible.builtin.copy:
@@ -65,6 +215,21 @@
   become: true
   notify: Reload udev
 
+- name: Install power-profile boot-sync unit
+  ansible.builtin.copy:
+    src: dotfiles-ppd-boot-sync.service
+    dest: /etc/systemd/system/dotfiles-ppd-boot-sync.service
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+- name: Enable power-profile boot-sync
+  ansible.builtin.systemd_service:
+    name: dotfiles-ppd-boot-sync.service
+    enabled: true
+  become: true
+  failed_when: false
+
 - name: Install WiFi-powersave udev rule
   ansible.builtin.copy:
     src: 99-wifi-powersave.rules
@@ -73,7 +238,7 @@
   become: true
   notify: Reload udev
 
-- name: Install wifi-powersave helper script
+- name: Install wifi-powersave helper (depends on dotfiles-has-battery)
   ansible.builtin.copy:
     src: wifi-powersave
     dest: /usr/local/bin/wifi-powersave
@@ -86,17 +251,6 @@
     dest: /usr/lib/systemd/system-sleep/unmount-fuse
     mode: "0755"
   become: true
-
-- name: Create systemd drop-in directories
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: directory
-    mode: "0755"
-  become: true
-  loop:
-    - /etc/systemd/system.conf.d
-    - /etc/systemd/system/user@.service.d
-    - /etc/systemd/system/plocate-updatedb.service.d
 
 - name: Install 5s shutdown timeout (system)
   ansible.builtin.copy:
@@ -137,6 +291,25 @@
     enabled: true
     state: started
   failed_when: false
+
+# ─── Networking: systemd-resolved ───────────────────────────────────────────
+# Cached DNS with DoT support. NetworkManager integrates automatically when
+# resolved is running and /etc/resolv.conf points at its stub.
+
+- name: Enable systemd-resolved
+  ansible.builtin.systemd_service:
+    name: systemd-resolved.service
+    enabled: true
+    state: started
+  become: true
+
+- name: Route /etc/resolv.conf through systemd-resolved
+  ansible.builtin.file:
+    src: /run/systemd/resolve/stub-resolv.conf
+    dest: /etc/resolv.conf
+    state: link
+    force: true
+  become: true
 
 # ─── iwd as NetworkManager WiFi backend (opt-in) ────────────────────────────
 # Better battery and faster connects; keep NetworkManager for VPNs, enterprise

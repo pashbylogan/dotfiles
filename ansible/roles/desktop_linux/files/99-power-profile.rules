@@ -1,4 +1,5 @@
 # Auto-switch power-profiles-daemon profile on AC plug/unplug.
-# Adapted from Omarchy (https://github.com/basecamp/omarchy).
-SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="0", RUN+="/usr/bin/powerprofilesctl set balanced"
-SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="1", RUN+="/usr/bin/powerprofilesctl set performance"
+# systemd-run defers the call until power-profiles-daemon is up, avoiding
+# boot-order races. dotfiles-ppd-apply no-ops on systems without a battery.
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="0", RUN+="/usr/bin/systemd-run --no-block --collect --unit=dotfiles-ppd-battery --property=After=power-profiles-daemon.service /usr/local/bin/dotfiles-ppd-apply battery"
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="1", RUN+="/usr/bin/systemd-run --no-block --collect --unit=dotfiles-ppd-ac --property=After=power-profiles-daemon.service /usr/local/bin/dotfiles-ppd-apply ac"

@@ -1,4 +1,4 @@
 # Toggle WiFi power save on battery / off on AC.
-# Adapted from Omarchy.
-SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="0", RUN+="/usr/local/bin/wifi-powersave on"
-SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="1", RUN+="/usr/local/bin/wifi-powersave off"
+# systemd-run keeps udev from blocking on slow iw commands.
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="0", RUN+="/usr/bin/systemd-run --no-block --collect --unit=dotfiles-wifi-powersave-on /usr/local/bin/wifi-powersave on"
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="1", RUN+="/usr/bin/systemd-run --no-block --collect --unit=dotfiles-wifi-powersave-off /usr/local/bin/wifi-powersave off"

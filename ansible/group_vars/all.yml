@@ -54,6 +54,11 @@ dotfiles_common_linux_packages:
 
 dotfiles_starship_enabled: true
 dotfiles_tailscale_enabled: true
+# Third-party COPRs enabled by the packages role before package install.
+# See docs/design-history.md §28 for why each one is required.
+dotfiles_copr_repos:
+  - erikreider/swayosd   # volume/brightness/caps on-screen display
+
 # Use iwd as NetworkManager's WiFi backend (better battery, faster connects).
 # Off by default because it swaps wpa_supplicant for iwd on your machine —
 # flip to true after you've confirmed the trade-off is safe for you.

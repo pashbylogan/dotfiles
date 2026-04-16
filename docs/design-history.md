@@ -566,6 +566,36 @@ Migration is a clean replacement: swaybar (the compositor's fallback bar) goes a
 
 The config deliberately leans on upstream defaults. Only the module list is opinionated — heights, margins, module formats, and the stylesheet are all left at waybar's defaults so cosmetic drift is upstream's problem. No `style.css` is stowed; waybar falls back to `/etc/xdg/waybar/style.css` from the package.
 
+### 28. Desktop polish and safety pass (Fedora Everything)
+
+Target install is **Fedora Everything 43** (Workstation's defaults are not available). This pass fills every gap that Workstation would ordinarily cover.
+
+**Desktop integration.** `mate-polkit` (autostarted from sway, exec `/usr/libexec/polkit-mate-authentication-agent-1`) replaces `polkit-gnome`, removed in Fedora 41+. `gnome-keyring` provides the Secret Service backend via `authselect enable-feature with-pam-gnome-keyring` — without GDM to wire it, Sway-only sessions need the authselect opt-in. Nautilus depends on `gvfs-mtp`, `gvfs-smb`, `gvfs-nfs`, `ffmpegthumbnailer`, `webp-pixbuf-loader` for phone/SMB/NFS browsing and thumbnails.
+
+**Fonts and icons.** `google-noto-color-emoji-fonts`, `google-noto-sans-cjk-vf-fonts`, `cascadia-mono-nf-fonts` (Microsoft Cascadia Mono with Nerd Font glyphs — main F43 repo, kicks in via fontconfig fallback when waybar/tmux requests Nerd glyphs), `adwaita-icon-theme` + dconf `icon-theme = 'Adwaita'`.
+
+**Visual feedback.** `swayosd-server` autostarts from sway; `swayosd-client` replaces raw wpctl/brightnessctl bindings with combined hardware-change + on-screen-indicator calls. `playerctl` covers `XF86AudioPlay/Pause/Next/Prev`. swayosd ships via COPR `erikreider/swayosd` — `wob` is the main-repo alternative but requires per-binding shell glue that costs more than the COPR.
+
+**Mako DND.** `[urgency=critical] default-timeout=0` pins critical alerts; `[mode=do-not-disturb] invisible=true` silences everything else. Critical still pops in DND. Toggle via `makoctl mode -t do-not-disturb`.
+
+**Safety drop-ins.**
+
+- `/etc/sysctl.d/90-dotfiles.conf` — `fs.inotify.max_user_watches=524288` (default 8192 is easy to hit) and `net.ipv4.tcp_mtu_probing=1` (fixes SSH stalls over MTU-black-hole paths).
+- `/etc/systemd/logind.conf.d/10-handle-power-key.conf` — `HandlePowerKey=ignore`.
+- `authselect enable-feature with-faillock` + `/etc/security/faillock.conf` set `deny=10 unlock_time=120`. `/etc/sudoers.d/10-passwd-tries` sets `passwd_tries=10`. Default 3/600 is user-hostile.
+
+**Power hardening.** `/usr/local/bin/dotfiles-ppd-apply` (single helper, no-ops on systems without a battery, performance→balanced fallback) is invoked by the udev rules via `systemd-run --no-block --collect --after=power-profiles-daemon.service` to defer execution until PPD is running. `dotfiles-ppd-boot-sync.service` (system oneshot, After/Requires PPD) calls `dotfiles-ppd-apply auto` at boot to sync profile to current AC state — udev rules only fire on *changes*.
+
+**Compressed swap + resolved.** `zram-generator-defaults` ships the vendor config (50% RAM, zstd, 8 GiB cap). `systemd-resolved.service` enabled + `/etc/resolv.conf` force-symlinked to the stub; NetworkManager auto-integrates.
+
+**Default apps.** `mpv` + `imv` defaulted for 9 video + 9 image mimetypes via `~/.config/mimeapps.list` written by `community.general.ini_file`. mpv uses main-repo `ffmpeg-free`; enable RPM Fusion + `dnf swap ffmpeg-free ffmpeg` if HEVC/proprietary codecs come up.
+
+**Third-party repos.** One COPR, pinned in `group_vars/all.yml` under `dotfiles_copr_repos` and enabled idempotently from the `packages` role via `creates:`:
+
+- `erikreider/swayosd` — `swayosd`. Main-repo `wob` requires per-binding shell glue.
+
+For Nerd Font glyphs we use `cascadia-mono-nf-fonts` from Fedora main — same glyph coverage as the popular `jetbrains-mono-nerd-fonts` COPR packages but no third-party repo needed.
+
 ## Current State
 
 The system has been validated in Docker containers across Ubuntu, Fedora, Arch, and openSUSE. Both `scripts/apply` (fresh install) and `scripts/update` (upgrade path) pass on all four distros.
@@ -723,6 +753,8 @@ Potential additions that are well-maintained and widely adopted. None are blocki
 | ------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `ext-background-effect-v1`                        | Wayland protocol for compositor blur — merged May 2025, awaiting Sway implementation |
 | [SwayFX](https://github.com/WillPower3309/swayfx) | Drop-in Sway fork with blur/shadows/rounded corners (interim option)                 |
+| Keybinding cheatsheet (e.g. `Super+?`)            | Small script that greps `bindsym` from sway config and pipes to `swaynag` or `rofi -dmenu`. Discoverability for a keyboard-only desktop without adopting omarchy's full `omarchy-menu`. |
+| Unified theme primitive                           | See [theming-plan.md](theming-plan.md) — single palette file drives ghostty/sway/mako/btop/nvim through stable include paths. Level 0 is a single baked-in Tokyo Night palette, ~40 LoC across existing configs. |
 
 **Security/privacy**:
 

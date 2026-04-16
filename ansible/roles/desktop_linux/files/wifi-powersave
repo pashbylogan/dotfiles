@@ -2,6 +2,9 @@
 # Toggle WiFi power save on every wireless interface.
 # Called by /etc/udev/rules.d/99-wifi-powersave.rules on AC plug/unplug.
 # Usage: wifi-powersave on|off
+
+dotfiles-has-battery || exit 0
+
 for iface in /sys/class/net/*/wireless; do
   iface="$(basename "$(dirname "$iface")")"
   /usr/sbin/iw dev "$iface" set power_save "$1" 2>/dev/null || true
