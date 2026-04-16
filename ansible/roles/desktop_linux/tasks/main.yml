@@ -52,6 +52,27 @@
   become: true
   failed_when: false
 
+# ─── Authentication (gnome-keyring PAM) ─────────────────────────────────────
+# Fedora ships gdm with keyring PAM already wired, but on a Sway-only box
+# without a display manager we must opt in via authselect. Provides the
+# Secret Service backend for Chromium creds, git credential helpers, and
+# Nautilus remote mounts.
+
+- name: Check current authselect features
+  ansible.builtin.command: authselect current --raw
+  register: authselect_raw
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Enable with-pam-gnome-keyring authselect feature
+  ansible.builtin.command: authselect enable-feature with-pam-gnome-keyring
+  when:
+    - authselect_raw.rc == 0
+    - '"with-pam-gnome-keyring" not in (authselect_raw.stdout | default(""))'
+  become: true
+  notify: Apply authselect changes
+
 # ─── Power management ──────────────────────────────────────────────────────
 # Auto-switch power profile and WiFi powersave on AC plug/unplug, drop
 # system shutdown timeout to 5s, restrict plocate indexing to AC power,

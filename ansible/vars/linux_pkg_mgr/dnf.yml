@@ -113,3 +113,17 @@ dotfiles_linux_pkg_map:
     - network-manager-applet
   jetbrains_mono_fonts:
     - jetbrains-mono-fonts-all
+  mate_polkit:
+    - mate-polkit
+  gnome_keyring:
+    - gnome-keyring
+  gvfs_mtp:
+    - gvfs-mtp
+  gvfs_smb:
+    - gvfs-smb
+  gvfs_nfs:
+    - gvfs-nfs
+  ffmpegthumbnailer:
+    - ffmpegthumbnailer
+  webp_pixbuf_loader:
+    - webp-pixbuf-loader

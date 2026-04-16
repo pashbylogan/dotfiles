@@ -27,6 +27,13 @@ dotfiles_profile_linux_packages_common:
   - plocate
   - upower
   - nautilus
+  - gvfs_mtp
+  - gvfs_smb
+  - gvfs_nfs
+  - ffmpegthumbnailer
+  - webp_pixbuf_loader
+  - mate_polkit
+  - gnome_keyring
   - rofi
   - dex
   - nm_applet
