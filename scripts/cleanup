@@ -33,13 +33,14 @@ collect_removable_packages() {
 
   # Desktop environments (we use sway). Nautilus is intentionally NOT listed —
   # we install it as our file manager even without the rest of GNOME.
+  # totem/eog/loupe/showtime are all replaced by mpv + imv.
   local de_packages=(
     gnome-shell gnome-session mutter gnome-control-center
     gnome-terminal gnome-text-editor gnome-calculator gnome-calendar
     gnome-characters gnome-clocks gnome-contacts gnome-font-viewer
     gnome-logs gnome-maps gnome-music gnome-photos gnome-screenshot
     gnome-system-monitor gnome-weather gnome-disk-utility
-    totem eog evince gedit cheese baobab yelp
+    totem eog loupe showtime evince gedit cheese baobab yelp
     gnome-software gnome-tour gnome-user-docs
     plasma-desktop plasma-workspace kwin-wayland dolphin konsole kate
     sddm
@@ -57,12 +58,13 @@ collect_removable_packages() {
     xclip xsel
     xterm
     xdotool xdg-utils
-    rofi  # we install rofi ourselves, but distro may have an old one
     light  # replaced by brightnessctl
     htop  # replaced by btop
     thunar  # replaced by nautilus
+    # polkit-gnome was removed from Fedora 41+; we use mate-polkit now.
+    # This line catches leftovers from machines upgraded from older Fedora.
+    polkit-gnome
     # Battery daemons that fight power-profiles-daemon on the same knobs.
-    # If any of these were installed previously, remove them.
     tlp tlp-rdw
     auto-cpufreq
     tuned tuned-ppd
@@ -153,6 +155,10 @@ collect_orphaned_configs() {
       # Skip caches for software we manage
       case "$name" in
         zsh|starship|fnm|uv|pip|npm|node|ghostty|sway|mako|fontconfig) continue ;;
+        # Newer tools: skip by name since `have` may miss them — swayosd
+        # ships binaries named swayosd-server/swayosd-client, and mpv/imv
+        # caches can be large but are legitimate.
+        swayosd|mpv|imv|waybar) continue ;;
       esac
       # If the program isn't installed, its cache is orphaned
       if ! have "$name" && [[ -d "$cache_dir" ]]; then
