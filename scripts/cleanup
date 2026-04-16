@@ -43,10 +43,9 @@ collect_removable_packages() {
     totem eog loupe showtime evince gedit cheese baobab yelp
     gnome-software gnome-tour gnome-user-docs
     plasma-desktop plasma-workspace kwin-wayland dolphin konsole kate
-    sddm
   )
 
-  # Display managers (we use TTY login)
+  # Display managers (we use TTY login; sddm handles both KDE and standalone)
   local dm_packages=(gdm gdm3 sddm lightdm)
 
   # X11 tools we replaced with Wayland equivalents
