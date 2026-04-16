@@ -58,11 +58,12 @@
   become: true
   failed_when: false
 
-# ─── Authentication (gnome-keyring PAM) ─────────────────────────────────────
+# ─── Authentication (gnome-keyring PAM + faillock) ──────────────────────────
 # Fedora ships gdm with keyring PAM already wired, but on a Sway-only box
 # without a display manager we must opt in via authselect. Provides the
 # Secret Service backend for Chromium creds, git credential helpers, and
-# Nautilus remote mounts.
+# Nautilus remote mounts. We also enable faillock (account lockout after
+# repeated auth failures) and tune its thresholds to friendlier values.
 
 - name: Check current authselect features
   ansible.builtin.command: authselect current --raw
@@ -78,6 +79,66 @@
     - '"with-pam-gnome-keyring" not in (authselect_raw.stdout | default(""))'
   become: true
   notify: Apply authselect changes
+
+- name: Enable with-faillock authselect feature
+  ansible.builtin.command: authselect enable-feature with-faillock
+  when:
+    - authselect_raw.rc == 0
+    - '"with-faillock" not in (authselect_raw.stdout | default(""))'
+  become: true
+  notify: Apply authselect changes
+
+- name: Tune faillock deny threshold (10 attempts instead of 3)
+  ansible.builtin.lineinfile:
+    path: /etc/security/faillock.conf
+    regexp: '^#?\s*deny\s*='
+    line: 'deny = 10'
+    state: present
+  become: true
+
+- name: Tune faillock unlock_time (2 minutes instead of 10)
+  ansible.builtin.lineinfile:
+    path: /etc/security/faillock.conf
+    regexp: '^#?\s*unlock_time\s*='
+    line: 'unlock_time = 120'
+    state: present
+  become: true
+
+- name: Raise sudo password tries from 3 to 10
+  ansible.builtin.copy:
+    src: 10-passwd-tries
+    dest: /etc/sudoers.d/10-passwd-tries
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "/usr/sbin/visudo -cf %s"
+  become: true
+
+# ─── Kernel tunables ────────────────────────────────────────────────────────
+
+- name: Install sysctl drop-in (inotify watchers, TCP MTU probing)
+  ansible.builtin.copy:
+    src: 90-dotfiles-sysctl.conf
+    dest: /etc/sysctl.d/90-dotfiles.conf
+    mode: "0644"
+  become: true
+  notify: Reload sysctl
+
+- name: Install logind drop-in (ignore power key so Sway handles it)
+  ansible.builtin.copy:
+    src: 10-handle-power-key.conf
+    dest: /etc/systemd/logind.conf.d/10-handle-power-key.conf
+    mode: "0644"
+  become: true
+  # Reloading systemd-logind drops the graphical session, so defer to
+  # next boot instead of triggering a handler here.
+
+- name: Ensure logind drop-in dir exists
+  ansible.builtin.file:
+    path: /etc/systemd/logind.conf.d
+    state: directory
+    mode: "0755"
+  become: true
 
 # ─── Power management ──────────────────────────────────────────────────────
 # Auto-switch power profile and WiFi powersave on AC plug/unplug, drop

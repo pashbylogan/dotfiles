@@ -12,3 +12,7 @@
 - name: Apply authselect changes
   ansible.builtin.command: authselect apply-changes
   become: true
+
+- name: Reload sysctl
+  ansible.builtin.command: sysctl --system
+  become: true
