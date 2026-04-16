@@ -42,7 +42,6 @@ dotfiles_profile_linux_packages_common:
   - rofi
   - dex
   - nm_applet
-  - jetbrains_mono_fonts
   - nerd_fonts
   - noto_color_emoji_fonts
   - noto_sans_cjk_fonts

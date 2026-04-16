@@ -73,6 +73,12 @@ collect_removable_packages() {
     pulseaudio pulseaudio-utils pulseaudio-bluetooth
     # Legacy updatedb — plocate replaces it.
     mlocate locate
+    # Previously-managed packages we've since dropped for having overlapping
+    # capabilities with another package we still install.
+    jetbrains-mono-fonts-all   # cascadia-mono-nf-fonts covers text + NF glyphs
+    # Older bootstrap pulled full ansible (~380MB). We now install only
+    # ansible-core + ansible-collection-community-general (~23MB).
+    ansible
   )
 
   for pkg in "${de_packages[@]}" "${dm_packages[@]}" "${replaced_packages[@]}"; do
