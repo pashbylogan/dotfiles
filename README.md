@@ -153,7 +153,7 @@ Cut from the first-pass managed set to keep the base small. Can be added back vi
 
 **Shell aliases/functions** — `claude`/`bigclaude`, `gemini`, `gssh`, `vpns`/`exitnode`, `android`, `dbmate`/`dbdump`, `cdwt`, gcloud sourcing, cloud-sql-proxy
 
-**Linux packages** — `blueman`, `lxappearance`
+**Linux packages** — `lxappearance` (we set GTK preferences via dconf instead)
 
 **Docker + Docker Compose** — follow the official per-OS install guide: https://docs.docker.com/engine/install/ (Compose ships as the `docker compose` plugin)
 
