@@ -596,6 +596,8 @@ Target install is **Fedora Everything 43** (Workstation's defaults are not avail
 
 For Nerd Font glyphs we use `cascadia-mono-nf-fonts` from Fedora main — same glyph coverage as the popular `jetbrains-mono-nerd-fonts` COPR packages but no third-party repo needed.
 
+**Wayland-native fallback apps.** Four GTK3 apps run under XWayland: `mate-polkit` (auth dialog), `blueman` (Bluetooth tray), `nm-applet` (NetworkManager tray), `pavucontrol` (audio). The modern Wayland-native alternatives (`overskride`, `networkmanager-dmenu`, `iwgtk`, `pwvucontrol`, `bluetuith`) are not yet in Fedora main for F43 — sourcing them via COPR or curl would violate the first-party rule for no gain. `lxqt-policykit` *is* in main but pulls ~130 MB of Qt5 on our GTK-based stack, so `mate-polkit` (riding GTK we already have for Nautilus) stays lighter. These four are brief-use (dialogs, tray icons) and the compositor/terminal/file-manager/notifications/OSD are all Wayland-native. Re-evaluate when the modern alternatives land in Fedora main.
+
 ## Current State
 
 The system has been validated in Docker containers across Ubuntu, Fedora, Arch, and openSUSE. Both `scripts/apply` (fresh install) and `scripts/update` (upgrade path) pass on all four distros.
