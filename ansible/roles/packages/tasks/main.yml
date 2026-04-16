@@ -1,4 +1,27 @@
 ---
+# Third-party repos (COPRs, etc.) are enabled here so `dnf install`
+# below sees them in the same role.
+
+- name: Ensure dnf-plugins-core is present (provides `dnf copr`)
+  become: true
+  ansible.builtin.package:
+    name: dnf-plugins-core
+    state: present
+  when:
+    - ansible_system == "Linux"
+    - dotfiles_pkg_mgr == "dnf"
+
+- name: Enable required COPRs
+  become: true
+  ansible.builtin.command:
+    cmd: "dnf -y copr enable {{ item }}"
+    creates: "/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:{{ item | replace('/', ':') }}.repo"
+  loop: "{{ dotfiles_copr_repos | default([]) }}"
+  when:
+    - ansible_system == "Linux"
+    - dotfiles_pkg_mgr == "dnf"
+    - dotfiles_resolved_profile == "linux_desktop"
+
 - name: Install Linux packages
   become: true
   when: ansible_system == "Linux"

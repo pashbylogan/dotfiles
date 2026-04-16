@@ -157,7 +157,21 @@
     validate: "/usr/sbin/visudo -cf %s"
   become: true
 
-# ─── Kernel tunables ────────────────────────────────────────────────────────
+# ─── System drop-in directories + kernel tunables ──────────────────────────
+# Fedora creates some of these on demand; we create all we need up front
+# so subsequent copy tasks don't depend on package install order.
+
+- name: Create drop-in directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  become: true
+  loop:
+    - /etc/systemd/logind.conf.d
+    - /etc/systemd/system.conf.d
+    - /etc/systemd/system/user@.service.d
+    - /etc/systemd/system/plocate-updatedb.service.d
 
 - name: Install sysctl drop-in (inotify watchers, TCP MTU probing)
   ansible.builtin.copy:
@@ -168,19 +182,11 @@
   notify: Reload sysctl
 
 - name: Install logind drop-in (ignore power key so Sway handles it)
+  # No handler: reloading systemd-logind drops the graphical session.
   ansible.builtin.copy:
     src: 10-handle-power-key.conf
     dest: /etc/systemd/logind.conf.d/10-handle-power-key.conf
     mode: "0644"
-  become: true
-  # Reloading systemd-logind drops the graphical session, so defer to
-  # next boot instead of triggering a handler here.
-
-- name: Ensure logind drop-in dir exists
-  ansible.builtin.file:
-    path: /etc/systemd/logind.conf.d
-    state: directory
-    mode: "0755"
   become: true
 
 # ─── Power management ──────────────────────────────────────────────────────
@@ -239,17 +245,6 @@
     dest: /usr/lib/systemd/system-sleep/unmount-fuse
     mode: "0755"
   become: true
-
-- name: Create systemd drop-in directories
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: directory
-    mode: "0755"
-  become: true
-  loop:
-    - /etc/systemd/system.conf.d
-    - /etc/systemd/system/user@.service.d
-    - /etc/systemd/system/plocate-updatedb.service.d
 
 - name: Install 5s shutdown timeout (system)
   ansible.builtin.copy:

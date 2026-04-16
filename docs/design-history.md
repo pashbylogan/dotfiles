@@ -566,40 +566,34 @@ Migration is a clean replacement: swaybar (the compositor's fallback bar) goes a
 
 The config deliberately leans on upstream defaults. Only the module list is opinionated — heights, margins, module formats, and the stylesheet are all left at waybar's defaults so cosmetic drift is upstream's problem. No `style.css` is stowed; waybar falls back to `/etc/xdg/waybar/style.css` from the package.
 
-### 28. Desktop polish and safety pass (omarchy augmentation round 2)
+### 28. Desktop polish and safety pass (Fedora Everything)
 
-A follow-up to sections 22–27 targeting a **Fedora Everything 43** minimal install specifically. Everything Fedora Workstation takes for granted (Totem, keyring PAM, systemd-resolved symlinks, zram, a polkit agent) has to be declared explicitly on an Everything install. This section is what "declared explicitly" looks like, end-to-end.
+Target install is **Fedora Everything 43** (Workstation's defaults are not available). This pass fills every gap that Workstation would ordinarily cover.
 
-**Desktop integration.** `mate-polkit` replaces the removed `polkit-gnome` (gone from Fedora 41+) with exec `/usr/libexec/polkit-mate-authentication-agent-1`, autostarted from sway. `gnome-keyring` gets wired into PAM via `authselect enable-feature with-pam-gnome-keyring` so Chromium credentials, git credential helpers, and Nautilus remote mounts have a Secret Service backend — Fedora Workstation gets this for free via GDM; Sway-only needs the authselect opt-in. Nautilus gets `gvfs-mtp`, `gvfs-smb`, `gvfs-nfs`, `ffmpegthumbnailer`, `webp-pixbuf-loader` to avoid the "plug in a phone and nothing happens" experience.
+**Desktop integration.** `mate-polkit` (autostarted from sway, exec `/usr/libexec/polkit-mate-authentication-agent-1`) replaces `polkit-gnome`, removed in Fedora 41+. `gnome-keyring` provides the Secret Service backend via `authselect enable-feature with-pam-gnome-keyring` — without GDM to wire it, Sway-only sessions need the authselect opt-in. Nautilus depends on `gvfs-mtp`, `gvfs-smb`, `gvfs-nfs`, `ffmpegthumbnailer`, `webp-pixbuf-loader` for phone/SMB/NFS browsing and thumbnails.
 
-**Fonts and icons.** `google-noto-color-emoji-fonts` and `google-noto-sans-cjk-vf-fonts` fix emoji and CJK tofu. `jetbrains-mono-nerd-fonts` (via COPR `che/nerd-fonts`) provides Nerd Font glyphs for waybar and terminal status bars, coexisting with the existing `jetbrains-mono-fonts-all` under a distinct family name. `adwaita-icon-theme` is pulled in explicitly and set via dconf so Nautilus doesn't fall back to hicolor. The Nerd Font COPR is one of two third-party repos accepted in this pass (see "Third-party repos" below).
+**Fonts and icons.** `google-noto-color-emoji-fonts`, `google-noto-sans-cjk-vf-fonts`, `jetbrains-mono-nerd-fonts` (COPR `che/nerd-fonts`), `adwaita-icon-theme` + dconf `icon-theme = 'Adwaita'`. Nerd Font coexists with plain JetBrains Mono as a distinct family.
 
-**Visual feedback — SwayOSD.** Volume/brightness/mic/caps key presses were previously silent (the old wpctl/brightnessctl bindings changed state with no visible indicator). SwayOSD's `swayosd-server` runs from sway config; `swayosd-client` replaces the raw wpctl/brightnessctl calls, handling both the hardware change and the on-screen indicator in one call. `playerctl` covers XF86AudioPlay/Pause/Next/Prev bindings. SwayOSD comes from COPR `erikreider/swayosd` — no first-party equivalent exists (wob is main-repo but requires ~40 lines of shell glue per binding, which cost more maintenance than the COPR does).
+**Visual feedback.** `swayosd-server` autostarts from sway; `swayosd-client` replaces raw wpctl/brightnessctl bindings with combined hardware-change + on-screen-indicator calls. `playerctl` covers `XF86AudioPlay/Pause/Next/Prev`. swayosd ships via COPR `erikreider/swayosd` — `wob` is the main-repo alternative but requires per-binding shell glue that costs more than the COPR.
 
-**Mako DND mode.** `[urgency=critical] default-timeout=0` pins critical alerts until dismissed; `[mode=do-not-disturb] invisible=true` silences everything else when toggled via `makoctl mode -t do-not-disturb`. Critical alerts stay visible in DND so you don't miss a dying battery.
+**Mako DND.** `[urgency=critical] default-timeout=0` pins critical alerts; `[mode=do-not-disturb] invisible=true` silences everything else. Critical still pops in DND. Toggle via `makoctl mode -t do-not-disturb`.
 
-**Kernel / PAM safety drop-ins.** Three small files filling defaults that Fedora Everything leaves unset:
+**Safety drop-ins.**
 
-- `/etc/sysctl.d/90-dotfiles.conf` — `fs.inotify.max_user_watches=524288` (VS Code / webpack silently hit the 8192 default) and `net.ipv4.tcp_mtu_probing=1` (fixes intermittent SSH stalls over paths that black-hole ICMP).
-- `/etc/systemd/logind.conf.d/10-handle-power-key.conf` — `HandlePowerKey=ignore` so an accidental tap doesn't instantly shut down. (Sway can rebind it later.)
-- `authselect enable-feature with-faillock` + `/etc/security/faillock.conf` tuning (`deny = 10`, `unlock_time = 120`) — the default 3-tries/10-min lockout is user-hostile. `/etc/sudoers.d/10-passwd-tries` sets `Defaults passwd_tries=10` for the same reason.
+- `/etc/sysctl.d/90-dotfiles.conf` — `fs.inotify.max_user_watches=524288` (default 8192 is easy to hit) and `net.ipv4.tcp_mtu_probing=1` (fixes SSH stalls over MTU-black-hole paths).
+- `/etc/systemd/logind.conf.d/10-handle-power-key.conf` — `HandlePowerKey=ignore`.
+- `authselect enable-feature with-faillock` + `/etc/security/faillock.conf` set `deny=10 unlock_time=120`. `/etc/sudoers.d/10-passwd-tries` sets `passwd_tries=10`. Default 3/600 is user-hostile.
 
-**Power hardening.** The existing PPD + WiFi-powersave udev rules (section 22) got three improvements:
+**Power hardening.** `/usr/local/bin/dotfiles-ppd-apply` (single helper, no-ops on systems without a battery, performance→balanced fallback) is invoked by the udev rules via `systemd-run --no-block --collect --after=power-profiles-daemon.service` to defer execution until PPD is running. `dotfiles-ppd-boot-sync.service` (system oneshot, After/Requires PPD) calls `dotfiles-ppd-apply auto` at boot to sync profile to current AC state — udev rules only fire on *changes*.
 
-1. A single helper `/usr/local/bin/dotfiles-ppd-apply` replaces inline `powerprofilesctl set` calls in the udev rules. It handles the `performance → balanced` fallback for machines without a performance profile, and no-ops on systems without a battery (so desktops and VMs install the rules harmlessly).
-2. Udev `RUN+=` now wraps each call via `systemd-run --no-block --collect --unit=… --property=After=power-profiles-daemon.service`. This avoids the race where the rule fires before PPD is up on early boot, and keeps slow `iw` calls in the wifi-powersave path from blocking udev.
-3. `dotfiles-ppd-boot-sync.service` (system oneshot, After/Requires power-profiles-daemon.service) calls `dotfiles-ppd-apply auto` at boot. Udev rules only fire on AC *changes*, so a machine that boots already plugged in would otherwise sit on `balanced` indefinitely.
+**Compressed swap + resolved.** `zram-generator-defaults` ships the vendor config (50% RAM, zstd, 8 GiB cap). `systemd-resolved.service` enabled + `/etc/resolv.conf` force-symlinked to the stub; NetworkManager auto-integrates.
 
-**Compressed swap + resolved.** `zram-generator-defaults` pulls in the vendor `/usr/lib/systemd/zram-generator.conf` (50% RAM, zstd, 8 GiB cap) — zero custom config; the defaults are sensible. `systemd-resolved.service` is enabled and `/etc/resolv.conf` is force-symlinked to the stub. NetworkManager auto-integrates with resolved once the stub is in place. Fedora Workstation sets both of these up at install time; Everything does not.
+**Default apps.** `mpv` + `imv` defaulted for 9 video + 9 image mimetypes via `~/.config/mimeapps.list` written by `community.general.ini_file`. mpv uses main-repo `ffmpeg-free`; enable RPM Fusion + `dnf swap ffmpeg-free ffmpeg` if HEVC/proprietary codecs come up.
 
-**Default apps (mpv, imv).** Added to the package list, and `~/.config/mimeapps.list` is written directly via `community.general.ini_file` to set `mpv.desktop` as the default for 9 common video mimetypes and `imv.desktop` as the default for 9 image mimetypes. User-level mimeapps.list always wins, so we don't fight any system defaults — and Fedora Everything has no system defaults here anyway. mpv uses main-repo `ffmpeg-free`, which covers common formats (h.264/AAC/mp3) since patent expirations. If HEVC or other codecs come up later, enable RPM Fusion and `dnf swap ffmpeg-free ffmpeg`.
+**Third-party repos.** Two COPRs, pinned in `group_vars/all.yml` under `dotfiles_copr_repos` and enabled idempotently from the `packages` role via `creates:`:
 
-**Third-party repos.** Two COPRs are enabled by a new `repos` role run before `packages`:
-
-- `che/nerd-fonts` — for `jetbrains-mono-nerd-fonts`. Nerd-patched fonts aren't in Fedora main. Alternative (`fontawesome-fonts-all`) works for waybar icons but misses Powerline glyphs used in terminal/tmux status lines.
-- `erikreider/swayosd` — for `swayosd`. No main-repo OSD is both sufficient and simple. `wob` exists in main but requires per-binding shell glue that fails the "simple configs" test harder than one extra COPR does.
-
-This violates the "main repos only" preference from section 4, but with a narrow scope (exactly these two packages). Each COPR is pinned in `group_vars/all.yml` under `dotfiles_copr_repos` and enabled idempotently by `ansible/roles/repos/tasks/main.yml` using a `creates:` check on the generated .repo file.
+- `che/nerd-fonts` — `jetbrains-mono-nerd-fonts`. Not in main repos. Alternative `fontawesome-fonts-all` loses Powerline glyphs.
+- `erikreider/swayosd` — `swayosd`. Main-repo `wob` requires per-binding shell glue.
 
 ## Current State
 

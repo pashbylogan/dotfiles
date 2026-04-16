@@ -12,20 +12,12 @@ if [[ $state == auto ]]; then
   state=battery
   for ac in /sys/class/power_supply/*/online; do
     [[ -r $ac ]] || continue
-    [[ $(cat "$(dirname "$ac")/type" 2>/dev/null) == Mains ]] || continue
-    [[ $(cat "$ac") == 1 ]] && state=ac && break
+    [[ $(< "$(dirname "$ac")/type") == Mains ]] || continue
+    [[ $(< "$ac") == 1 ]] && state=ac && break
   done
 fi
 
 case "$state" in
-  ac)
-    powerprofilesctl set performance 2>/dev/null || powerprofilesctl set balanced
-    ;;
-  battery)
-    powerprofilesctl set balanced
-    ;;
-  *)
-    echo "usage: dotfiles-ppd-apply ac|battery|auto" >&2
-    exit 1
-    ;;
+  ac) powerprofilesctl set performance 2>/dev/null || powerprofilesctl set balanced ;;
+  battery) powerprofilesctl set balanced ;;
 esac
