@@ -1,3 +1,10 @@
+# Load profile-provided PATH before interactive setup. Ghostty starts zsh as an
+# interactive non-login shell, so prompt/tools installed under ~/apps are not
+# visible until ~/.zsh_profile has been sourced.
+if [[ -f ~/.zsh_profile ]]; then
+  source ~/.zsh_profile
+fi
+
 # Deduplicate PATH entries on re-source
 typeset -U path
 
@@ -84,12 +91,6 @@ if command -v fzf >/dev/null 2>&1; then
       [[ -f "$f" ]] && source "$f"
     done
   fi
-fi
-
-# ─── Profile ─────────────────────────────────────────────────────────────────
-
-if [[ -f ~/.zsh_profile ]]; then
-  source ~/.zsh_profile
 fi
 
 # ─── fnm ─────────────────────────────────────────────────────────────────────

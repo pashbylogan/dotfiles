@@ -200,13 +200,13 @@ Level 0 is reachable today with ~40 lines of edits across these files:
 | `ansible/group_vars/all.yml` | Add `theme` to `dotfiles_stow_packages_linux_desktop` |
 | `sway/.config/sway/config` | Replace `client.focused` line with `include ~/.config/dotfiles-theme/sway.conf` |
 | `mako/.config/mako/config` | Move `border-color` / `background-color` / `text-color` to a separate theme file, `include` it |
-| `ghostty/.config/ghostty/config` | Replace `theme = tokyonight` with `config-file = ~/.config/dotfiles-theme/ghostty.conf` |
+| `ghostty/.config/ghostty/config` | Replace `theme = TokyoNight` with `config-file = ~/.config/dotfiles-theme/ghostty.conf` |
 | `nvim/.config/nvim/lua/plugins/` | New `colorscheme.lua` that reads `~/.config/dotfiles-theme/nvim-colorscheme` and passes it to LazyVim's `opts.colorscheme` |
 | `btop` (new stow package or ansible role write) | Symlink `~/.config/btop/themes/dotfiles-theme.theme` → `~/.config/dotfiles-theme/btop.theme`, set `color_theme = "dotfiles-theme"` in `btop.conf` |
 | `docs/design-history.md` | New section (28?): "Unified theme primitive, not a full theme engine" |
 
 Baseline palette suggestion: Tokyo Night, to preserve visual continuity with
-the current ghostty `theme = tokyonight` default.
+the current ghostty `theme = TokyoNight` default.
 
 ## Decision record — what to explicitly not copy
 
@@ -218,8 +218,8 @@ To keep `docs/design-history.md` §22–27 principles intact:
   SPACE` — wait until we have more than one theme.
 - VS Code / Obsidian / Chromium runtime theme sync — out of scope for this
   repo per existing "desktop apps aren't managed here" rule.
-- Plymouth / SDDM branding — we chose TTY + `exec sway`; don't un-choose it
-  for visual polish.
+- Plymouth / SDDM branding — greetd + tuigreet now provide the login flow;
+  don't copy Omarchy's heavier SDDM branding path just for visual polish.
 
 ## References
 
