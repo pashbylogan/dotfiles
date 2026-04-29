@@ -30,6 +30,9 @@ git config --global user.email "you@example.com"
 
 # SSH key (if not migrated from another machine)
 ssh-keygen -t ed25519
+cat ~/.ssh/id_ed25519.pub
+# Add that public key to GitHub, then verify push auth:
+ssh -T git@github.com
 
 # Tailscale
 sudo tailscale up
