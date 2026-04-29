@@ -60,7 +60,7 @@ luks-tpm2-unlock enable
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Core CLI        | `git`, `zsh`, `tmux`, `neovim`, `fzf`, `ripgrep`, `fd`, `age`, `gh`, `delta`, `btop`, `jq`, `rsync`, `netcat`, `lsof`, `patch`, `stow` |
 | Desktop (Wayland stack) | `sway`, `greetd`, `tuigreet`, `swaylock`, `swayidle`, `swaybg`, `kanshi`, `waybar`, `swayosd`, `rofi`, `grim`, `slurp`, `wl-clipboard`, `brightnessctl`, `mako`, `foot`, `ghostty`, `playerctl`, `xdg-desktop-portal{,-wlr,-gtk}` |
-| Desktop (apps + services) | `nautilus`, `gvfs-{mtp,smb,nfs}`, `ffmpegthumbnailer`, `glycin-thumbnailer`, `mpv`, `imv`, `mate-polkit`, `gnome-keyring`, `pavucontrol`, `pipewire`, `wireplumber`, `pipewire-{pulseaudio,alsa,jack-audio-connection-kit}`, `alsa-ucm`, `bluez`, `blueman`, `nm-applet`, `power-profiles-daemon`, `plocate`, `upower`, `dconf`, `python3-psutil`, `zram-generator-defaults` |
+| Desktop (apps + services) | `nautilus`, `gvfs-{mtp,smb,nfs}`, `ffmpegthumbnailer`, `glycin-thumbnailer`, `mpv`, `imv`, `mate-polkit`, `gnome-keyring`, `pavucontrol`, `pipewire`, `wireplumber`, `pipewire-{pulseaudio,alsa,jack-audio-connection-kit}`, `alsa-ucm`, `bluez`, `blueman`, `NetworkManager-wifi`, `nm-applet`, `power-profiles-daemon`, `plocate`, `upower`, `dconf`, `python3-psutil`, `zram-generator-defaults` |
 | Fonts & icons   | `cascadia-mono-nf-fonts`, `google-noto-color-emoji-fonts`, `google-noto-sans-cjk-vf-fonts`, `adwaita-icon-theme` |
 | Networking      | `wireguard-tools`, `tailscale`                                                                                                         |
 

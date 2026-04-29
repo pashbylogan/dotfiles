@@ -44,6 +44,8 @@ dotfiles_linux_pkg_map:
     - power-profiles-daemon
   tpm2_tools:
     - tpm2-tools
+  networkmanager_wifi:
+    - NetworkManager-wifi
   nm_applet:
     - network-manager-applet
   nerd_fonts:

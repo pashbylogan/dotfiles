@@ -51,6 +51,9 @@ dotfiles_profile_linux_packages_common:
   - mpv
   - imv
   - rofi
+  # Fedora minimal can install NetworkManager without the Wi-Fi device plugin;
+  # without it wireless adapters show as unmanaged generic devices.
+  - networkmanager_wifi
   - nm_applet
   - nerd_fonts
   - noto_color_emoji_fonts

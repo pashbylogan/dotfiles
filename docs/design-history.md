@@ -692,6 +692,7 @@ Everything below is installed and kept up to date by the playbook.
 | `playerctl`               | MPRIS controller for media keys                              |
 | `bluez`                   | Bluetooth protocol stack                                     |
 | `blueman`                 | GTK Bluetooth manager with tray applet                       |
+| `networkmanager_wifi`     | NetworkManager Wi-Fi device plugin                           |
 | `power_profiles_daemon`   | battery/balanced/performance profile switcher                |
 | `tpm2_tools`              | TPM utilities for optional LUKS auto-unlock helper           |
 | `zram_generator_defaults` | compressed in-RAM swap (50% RAM, zstd)                       |
