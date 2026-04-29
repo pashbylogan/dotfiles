@@ -454,7 +454,7 @@ Installing zsh isn't enough — new terminals still open bash by default on ever
 Added `scripts/cleanup` — an interactive script that, after confirming the new environment works, removes:
 
 - Default desktop environments (GNOME shell, KDE, etc.) that are no longer used
-- Display managers (GDM, SDDM, LightDM) replaced by TTY login + `exec sway`
+- Heavy display managers (GDM, SDDM, LightDM) replaced by lightweight `greetd` + `tuigreet` for Sway login
 - X11 tools replaced by Wayland equivalents (i3, picom, feh, maim, xclip, xterm, xss-lock, htop, light)
 - Orphaned config/cache directories in `$HOME` for software that's no longer installed (including `~/.screenlayout/` from arandr/autorandr, replaced by kanshi)
 - Package manager caches
@@ -570,11 +570,11 @@ The config deliberately leans on upstream defaults. Only the module list is opin
 
 Target install is **Fedora Everything 43** (Workstation's defaults are not available). This pass fills every gap that Workstation would ordinarily cover.
 
-**Desktop integration.** `mate-polkit` (autostarted from sway, exec `/usr/libexec/polkit-mate-authentication-agent-1`) replaces `polkit-gnome`, removed in Fedora 41+. `gnome-keyring` provides the Secret Service backend via `authselect enable-feature with-pam-gnome-keyring` — without GDM to wire it, Sway-only sessions need the authselect opt-in. Nautilus depends on `gvfs-mtp`, `gvfs-smb`, `gvfs-nfs`, `ffmpegthumbnailer`, `webp-pixbuf-loader` for phone/SMB/NFS browsing and thumbnails.
+**Desktop integration.** `mate-polkit` (autostarted from sway, exec `/usr/libexec/polkit-mate-authentication-agent-1`) replaces `polkit-gnome`, removed in Fedora 41+. `gnome-keyring` provides the Secret Service backend via `authselect enable-feature with-pam-gnome-keyring` — without GDM to wire it, Sway-only sessions need the authselect opt-in. Nautilus depends on `gvfs-mtp`, `gvfs-smb`, `gvfs-nfs`, `ffmpegthumbnailer` for phone/SMB/NFS browsing and video thumbnails. (F43 also pulled `webp-pixbuf-loader` for image/webp thumbnails; F44+ replaces it with Glycin — see §29.)
 
 **Fonts and icons.** `google-noto-color-emoji-fonts`, `google-noto-sans-cjk-vf-fonts`, `cascadia-mono-nf-fonts` (Microsoft Cascadia Mono with Nerd Font glyphs — main F43 repo, kicks in via fontconfig fallback when waybar/tmux requests Nerd glyphs), `adwaita-icon-theme` + dconf `icon-theme = 'Adwaita'`.
 
-**Visual feedback.** `swayosd-server` autostarts from sway; `swayosd-client` replaces raw wpctl/brightnessctl bindings with combined hardware-change + on-screen-indicator calls. `playerctl` covers `XF86AudioPlay/Pause/Next/Prev`. swayosd ships via COPR `erikreider/swayosd` — `wob` is the main-repo alternative but requires per-binding shell glue that costs more than the COPR.
+**Visual feedback.** `swayosd-server` autostarts from sway; `swayosd-client` replaces raw wpctl/brightnessctl bindings with combined hardware-change + on-screen-indicator calls. `playerctl` covers `XF86AudioPlay/Pause/Next/Prev`. swayosd ships via the upstream maintainer's COPR — originally `erikreider/swayosd`, switched to `erikreider/packages` (`swayosd-git`) on Fedora 44 (see §29). `wob` is the main-repo alternative but requires per-binding shell glue that costs more than the COPR.
 
 **Mako DND.** `[urgency=critical] default-timeout=0` pins critical alerts; `[mode=do-not-disturb] invisible=true` silences everything else. Critical still pops in DND. Toggle via `makoctl mode -t do-not-disturb`.
 
@@ -590,13 +590,36 @@ Target install is **Fedora Everything 43** (Workstation's defaults are not avail
 
 **Default apps.** `mpv` + `imv` defaulted for 9 video + 9 image mimetypes via `~/.config/mimeapps.list` written by `community.general.ini_file`. mpv uses main-repo `ffmpeg-free`; enable RPM Fusion + `dnf swap ffmpeg-free ffmpeg` if HEVC/proprietary codecs come up.
 
-**Third-party repos.** One COPR, pinned in `group_vars/all.yml` under `dotfiles_copr_repos` and enabled idempotently from the `packages` role via `creates:`:
+**Third-party repos.** Pinned in `group_vars/all.yml` under `dotfiles_copr_repos` and enabled idempotently from the `packages` role via `creates:`:
 
-- `erikreider/swayosd` — `swayosd`. Main-repo `wob` requires per-binding shell glue.
+- `erikreider/packages` — `swayosd-git` (upstream maintainer's git-snapshot COPR; was `erikreider/swayosd` on F43, see §29). Main-repo `wob` requires per-binding shell glue.
+- `scottames/ghostty` — `ghostty`. Closest thing to an upstream-blessed Fedora path: ghostty.org's install page links to it first, but the project explicitly does *not* officially endorse any Linux packager. See §29 for the alternatives we ruled out.
 
 For Nerd Font glyphs we use `cascadia-mono-nf-fonts` from Fedora main — same glyph coverage as the popular `jetbrains-mono-nerd-fonts` COPR packages but no third-party repo needed.
 
 **Wayland-native fallback apps.** Four GTK3 apps run under XWayland: `mate-polkit` (auth dialog), `blueman` (Bluetooth tray), `nm-applet` (NetworkManager tray), `pavucontrol` (audio). The modern Wayland-native alternatives (`overskride`, `networkmanager-dmenu`, `iwgtk`, `pwvucontrol`, `bluetuith`) are not yet in Fedora main for F43 — sourcing them via COPR or curl would violate the first-party rule for no gain. `lxqt-policykit` *is* in main but pulls ~130 MB of Qt5 on our GTK-based stack, so `mate-polkit` (riding GTK we already have for Nautilus) stays lighter. These four are brief-use (dialogs, tray icons) and the compositor/terminal/file-manager/notifications/OSD are all Wayland-native. Re-evaluate when the modern alternatives land in Fedora main.
+
+### 29. Fedora 44 convergence pass (round 3)
+
+First end-to-end run on Fedora 44 surfaced seven issues that were either F44-specific or only visible from a fresh Everything install. Round 2 (§28) was developed against F43; this section captures the F44 follow-on fixes plus a small Ansible best-practices sweep done in the same pass.
+
+**swayosd COPR moved to `erikreider/packages`.** The original COPR `erikreider/swayosd` only ships F42 and F43 chroots; on F44 `dnf -y copr enable erikreider/swayosd` aborts with "Chroot not found in given copr project" and stops the whole play. The same upstream maintainer's other COPR — `erikreider/packages` — does build for F44 and includes swayosd as the `swayosd-git` package (a regularly-rebuilt git snapshot of the same project). Switching keeps us on first-party builds. The dnf map carries the abstract → concrete rename (`swayosd` → `swayosd-git`) so the rest of the repo and config files keep saying `swayosd`. When `erikreider/swayosd` adds an F44 chroot we can flip back; the only knob is the dnf pkg-map entry.
+
+**Managed runtime deps for `community.general.dconf`.** The dconf module imports `psutil` and shells out to the `dconf` binary; both are runtime, not import-time, requirements. Fedora Everything's minimal install ships neither, so the dark-mode + Tracker-mute tasks failed on first run even though they're guarded by `DBUS_SESSION_BUS_ADDRESS`. Fix: add `dconf` and `python_psutil` (mapped to `python3-psutil`) to the desktop profile package list. Both pull tiny dep closures and only the desktop role uses them.
+
+**`tar` for the starship installer.** `starship.rs/install.sh` extracts a tarball; on a minimal Fedora Everything install `tar` is missing. Added to common Linux packages so any profile gets it — tar is generally useful and the disk cost is negligible.
+
+**Dropped dex / XDG autostart entirely.** The shim task itself was fine — its earlier failure was just a knock-on of the COPR error aborting the play before `dex-autostart` got installed. But once we sat down to look at what `dex --autostart --environment sway` was actually doing on this box, the answer was: nothing useful. Every entry under `/etc/xdg/autostart/` either has `OnlyShowIn=GNOME;Unity;MATE;` (all three `gnome-keyring-*` components, `polkit-mate-*`, `at-spi-dbus-bus`, `localsearch-3` — dex skips them under sway), or duplicates something we already `exec` explicitly in sway config (`nm-applet`, but without the `--indicator` flag we want), or is unwanted (`geoclue-demo-agent`). Net effect: dex was launching a duplicate nm-applet plus a geoclue agent we didn't ask for, and silently dropping `blueman-applet` (which has no DE filter and *would* have run) onto the same pile. Replaced with one explicit `exec blueman-applet` line in sway config; removed `dex` from the package list, the dnf map, and the shim task; added `dex-autostart` to `scripts/cleanup`'s removable list and the bin shim symlink to its stale-symlinks list. Secret Service is unaffected — `gnome-keyring-daemon --components=secrets` is started by the PAM login hook (§28), not autostart, and the ssh/pkcs11 components weren't running before either (the `OnlyShowIn` filter blocked them). If they're ever wanted, add explicit `exec` lines for them — same pattern as everything else in sway config.
+
+**Graphical login via `greetd` + `tuigreet`.** Earlier docs said "TTY login + `exec sway`", but the intended end state is a normal desktop boot: after bootstrap, future boots should land at a login prompt that launches Sway, not at a bare TTY. Sway itself is the compositor and does not provide a boot login manager; `swaylock` only locks an already-running Wayland session. Fedora 44 ships `greetd` and `tuigreet` in the main repos, and Sway-adjacent docs describe this pair as the straightforward lightweight greeter path. The desktop role now installs both, writes `/etc/greetd/config.toml`, creates `/var/cache/tuigreet` so `--remember` can prefill the username after the first successful login, passes Sway/XDG session identity through `tuigreet --session-wrapper '/usr/bin/env ...'`, enables `greetd.service`, and points `default.target` at `graphical.target`. We deliberately do not start/restart greetd during `scripts/apply`, because doing so from inside a live Sway session can disrupt the session; the change takes effect on the next boot. Plain TTY login remains the first-bootstrap and recovery path.
+
+**TPM2 LUKS auto-unlock is opt-in, not convergence.** The normal desktop boot path has two authentication points on encrypted installs: initramfs unlocks root LUKS, then `tuigreet` authenticates the user. Reusing the greeter password for root LUKS is not viable because root unlock happens before the real root filesystem, PAM, or `greetd` exist. The practical one-password boot is TPM2 auto-unlock for root LUKS plus the normal `tuigreet` password. Fedora's documented systemd path is `systemd-cryptenroll` on a LUKS2 volume, `tpm2-tss` in dracut, a `tpm2-device=auto` crypt option, and an initramfs rebuild. This repo ships `luks-tpm2-unlock` as a user-run helper that detects the current root LUKS UUID from `/proc/cmdline`, enrolls TPM2 with `--wipe-slot=tpm2 --tpm2-device=auto --tpm2-pcrs=7`, adds `rd.luks.options=<uuid>=tpm2-device=auto` with `grubby`, writes `/etc/dracut.conf.d/90-dotfiles-tpm2-unlock.conf`, and regenerates initramfs. It preserves the passphrase slot as the recovery path and has a `disable` command that wipes TPM2 slots and removes the boot option.
+
+**Ansible `INJECT_FACTS_AS_VARS` deprecation cleanup.** The default flips to False in a future release. Rather than just silencing the banner, the playbook was migrated end-to-end to `ansible_facts.*`: every `ansible_system`, `ansible_pkg_mgr`, `ansible_user_id`, `ansible_env.*` reference now reads from `ansible_facts.*`, and `ansible.cfg` pins `inject_facts_as_vars = False` to keep us forward-compatible. Behavior is unchanged; the playbook just no longer relies on the legacy injected aliases.
+
+**`webp-pixbuf-loader` replaced by Glycin in F44.** F42 and F43 shipped `webp-pixbuf-loader`; F44 retired it because GNOME 50 (which F44 ships) switched Nautilus from GdkPixbuf to **Glycin**, a Rust-based sandboxed image-loading framework. Glycin's `image-rs` thumbnailer registers `image/webp` (plus jpeg, png, apng, gif, tiff, exr, qoi, bmp, ico, dds, tga, and the portable bitmap family) in `/usr/share/thumbnailers/glycin-image-rs.thumbnailer`, so webp thumbnails work out of the box on F44. Nautilus pulls `libglycin-2.so.0` as a hard requires (so `glycin-libs` and `glycin-loaders` are guaranteed) but only *recommends* `glycin-thumbnailer`. Recommends are honored by default Fedora dnf config, but a minimal install or one with `install_weak_deps=False` would miss it. To make webp thumbnails deterministic regardless of dnf config, we declare `glycin_thumbnailer` explicitly in the desktop profile. The old `webp_pixbuf_loader` entry is removed from both the profile and the dnf map.
+
+**Ghostty was never actually installed.** The `ghostty` stow package symlinks `~/.config/ghostty/` and the sway binding (`bindsym $mod+Return`) prefers ghostty over foot, but no Ansible task ever installed the binary. The fallback to foot quietly hid the gap — the user noticed only because rofi's drun list didn't include ghostty either (no `.desktop` file). Fedora has no main-repo package and no official-Fedora-maintained ghostty package exists yet (see [ghostty-org/ghostty#7438](https://github.com/ghostty-org/ghostty/discussions/7438) tracking that work). Upstream is explicit that Linux packaging is community-maintained and not endorsed by the project itself, but the [ghostty.org install page](https://ghostty.org/docs/install/binary) does list `scottames/ghostty` first under the Fedora section, so that's what we use. Considered alternatives: Terra (also linked by ghostty.org, but pulls a much larger meta-repo for one app), build-from-source (Zig toolchain + multi-minute compile per machine — too heavy for a converge step), and Flatpak (sandboxing complicates font/shell integration and changes the sway exec syntax to `flatpak run com.mitchellh.ghostty`). The COPR is the lightest first-party-ish path; if an official Fedora package or flathub-quality flatpak ships, swap to that.
 
 ## Current State
 
@@ -630,6 +653,7 @@ Everything below is installed and kept up to date by the playbook.
 | `netcat`            | network swiss-army                        |
 | `lsof`              | open-file inspector                       |
 | `patch`             | apply unified diffs                       |
+| `tar`               | archive tool (starship installer needs it)|
 | `openssh_client`    | ssh/scp/ssh-keygen/sftp                   |
 | `wireguard_tools`   | VPN tooling                               |
 | `build_tools`       | compiler toolchain (gcc, gcc-c++, make)   |
@@ -640,6 +664,8 @@ Everything below is installed and kept up to date by the playbook.
 | Abstract name             | What it is                                                   |
 | ------------------------- | ------------------------------------------------------------ |
 | `sway`                    | Wayland tiling compositor                                    |
+| `greetd`                  | lightweight login manager                                    |
+| `tuigreet`                | terminal UI greeter for greetd                               |
 | `swaylock`                | screen locker                                                |
 | `swayidle`                | idle management (auto-lock, display off)                     |
 | `swaybg`                  | wallpaper                                                    |
@@ -654,6 +680,7 @@ Everything below is installed and kept up to date by the playbook.
 | `xdg_desktop_portal_wlr`  | screen sharing for Zoom/Slack/Teams                          |
 | `xdg_desktop_portal_gtk`  | Settings portal (bridges dark mode to apps)                  |
 | `foot`                    | lightweight Wayland terminal (ghostty fallback)              |
+| `ghostty`                 | primary terminal (via `scottames/ghostty` COPR — see §29)    |
 | `kanshi`                  | automatic display profile switching (Wayland)                |
 | `pavucontrol`             | PipeWire/PulseAudio volume control                           |
 | `pipewire`                | audio/video server (replaces PulseAudio)                     |
@@ -661,28 +688,31 @@ Everything below is installed and kept up to date by the playbook.
 | `pipewire_pulse`          | PulseAudio compatibility shim for PipeWire                   |
 | `pipewire_alsa`           | ALSA compatibility shim for PipeWire                         |
 | `pipewire_jack`           | JACK compatibility shim for PipeWire                         |
+| `alsa_ucm`                | ALSA UCM profiles for correct laptop audio routing           |
 | `playerctl`               | MPRIS controller for media keys                              |
 | `bluez`                   | Bluetooth protocol stack                                     |
 | `blueman`                 | GTK Bluetooth manager with tray applet                       |
 | `power_profiles_daemon`   | battery/balanced/performance profile switcher                |
+| `tpm2_tools`              | TPM utilities for optional LUKS auto-unlock helper           |
 | `zram_generator_defaults` | compressed in-RAM swap (50% RAM, zstd)                       |
 | `plocate`                 | fast file indexer (`locate`)                                 |
 | `upower`                  | power / battery state D-Bus service                          |
 | `nautilus`                | file manager (GTK4/libadwaita, dark-mode-aware)              |
 | `gvfs_mtp` / `_smb` / `_nfs` | Nautilus backends for phones / SMB / NFS                  |
 | `ffmpegthumbnailer`       | Nautilus video thumbnail generator                           |
-| `webp_pixbuf_loader`      | Nautilus webp thumbnail support                              |
+| `glycin_thumbnailer`      | Nautilus image thumbnails (webp/jpeg/png/etc. via Glycin)    |
 | `mpv`                     | video player (default for video/* via mimeapps.list)         |
 | `imv`                     | image viewer (default for image/* via mimeapps.list)         |
 | `mate_polkit`             | polkit authentication agent                                  |
 | `gnome_keyring`           | Secret Service backend (Chromium creds, git creds, SMB)      |
 | `rofi`                    | application launcher                                         |
-| `dex`                     | XDG autostart                                                |
 | `nm_applet`               | NetworkManager tray applet                                   |
 | `nerd_fonts`              | Cascadia Mono NF — programming font + Nerd glyphs            |
 | `noto_color_emoji_fonts`  | color emoji coverage                                         |
 | `noto_sans_cjk_fonts`     | CJK coverage                                                 |
 | `adwaita_icon_theme`      | libadwaita / Nautilus icon theme                             |
+| `dconf`                   | dconf CLI (runtime dep of `community.general.dconf`)         |
+| `python_psutil`           | Python psutil (runtime dep of `community.general.dconf`)     |
 
 **Tailscale** (via dedicated Ansible role — adds Tailscale's Fedora yum repo, installs from it).
 

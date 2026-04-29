@@ -10,12 +10,15 @@ PROFILE="${DOTFILES_PROFILE:-auto}"
 # ─── Colors & helpers ────────────────────────────────────────────────────────
 # Self-contained — cannot source common.sh because the repo may not exist yet.
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m'
+# Store the actual ESC byte so colors work when embedded in `%s` arguments,
+# not just in printf format strings. Use POSIX sh syntax because this file is
+# the remote `curl | sh` entrypoint.
+RED="$(printf '\033[0;31m')"
+GREEN="$(printf '\033[0;32m')"
+YELLOW="$(printf '\033[1;33m')"
+CYAN="$(printf '\033[0;36m')"
+BOLD="$(printf '\033[1m')"
+NC="$(printf '\033[0m')"
 
 info()    { printf "${CYAN}ℹ ${NC}%s\n" "$*"; }
 success() { printf "${GREEN}✔ ${NC}%s\n" "$*"; }

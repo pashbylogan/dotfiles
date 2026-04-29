@@ -1,6 +1,8 @@
 ---
 dotfiles_profile_linux_packages_common:
   - sway
+  - greetd
+  - tuigreet
   - swaylock
   - swayidle
   - swaybg
@@ -15,15 +17,20 @@ dotfiles_profile_linux_packages_common:
   - xdg_desktop_portal_wlr
   - xdg_desktop_portal_gtk
   - foot
+  - ghostty
   - pipewire
   - wireplumber
   - pipewire_pulse
   - pipewire_alsa
   - pipewire_jack
+  # UCM profiles are required for correct routing on modern laptop audio
+  # devices, including SoundWire speaker/headphone paths.
+  - alsa_ucm
   - pavucontrol
   - bluez
   - blueman
   - power_profiles_daemon
+  - tpm2_tools
   - plocate
   - upower
   - nautilus
@@ -31,16 +38,19 @@ dotfiles_profile_linux_packages_common:
   - gvfs_smb
   - gvfs_nfs
   - ffmpegthumbnailer
-  - webp_pixbuf_loader
+  - glycin_thumbnailer
   - mate_polkit
   - gnome_keyring
   - swayosd
   - playerctl
   - zram_generator_defaults
+  # dconf binary + Python psutil are runtime deps for community.general.dconf
+  # used by the desktop_linux role.
+  - dconf
+  - python_psutil
   - mpv
   - imv
   - rofi
-  - dex
   - nm_applet
   - nerd_fonts
   - noto_color_emoji_fonts

@@ -6,9 +6,9 @@
   become: true
   ansible.builtin.package:
     name: dnf-plugins-core
-    state: present
+    state: "{{ 'latest' if dotfiles_mode == 'update' else 'present' }}"
   when:
-    - ansible_system == "Linux"
+    - ansible_facts.system == "Linux"
     - dotfiles_pkg_mgr == "dnf"
 
 - name: Enable required COPRs
@@ -18,25 +18,15 @@
     creates: "/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:{{ item | replace('/', ':') }}.repo"
   loop: "{{ dotfiles_copr_repos | default([]) }}"
   when:
-    - ansible_system == "Linux"
+    - ansible_facts.system == "Linux"
     - dotfiles_pkg_mgr == "dnf"
     - dotfiles_resolved_profile == "linux_desktop"
 
 - name: Install Linux packages
   become: true
-  when: ansible_system == "Linux"
+  when: ansible_facts.system == "Linux"
   block:
     - name: Install declared Linux packages
       ansible.builtin.package:
         name: "{{ dotfiles_linux_packages_resolved }}"
         state: "{{ 'latest' if dotfiles_mode == 'update' else 'present' }}"
-
-- name: Provide dex compatibility shim when distro installs dex-autostart
-  ansible.builtin.file:
-    src: /usr/bin/dex-autostart
-    dest: "{{ dotfiles_local_bin_dir }}/dex"
-    state: link
-  when:
-    - ansible_system == "Linux"
-    - dotfiles_pkg_mgr | default(ansible_pkg_mgr) == "dnf"
-    - dotfiles_resolved_profile == "linux_desktop"

@@ -9,13 +9,13 @@ font pango:monospace 8
 
 exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
 exec /usr/libexec/polkit-mate-authentication-agent-1
-exec dex --autostart --environment sway
 exec swayidle -w \
     timeout 300 'swaylock -f -c 000000' \
     timeout 600 'swaymsg "output * power off"' \
     resume 'swaymsg "output * power on"' \
     before-sleep 'swaylock -f -c 000000'
 exec nm-applet --indicator
+exec blueman-applet
 exec mako
 exec kanshi
 exec waybar
@@ -164,9 +164,8 @@ bindsym XF86AudioPause exec playerctl play-pause
 bindsym XF86AudioNext exec playerctl next
 bindsym XF86AudioPrev exec playerctl previous
 
-# Screenshots
-bindsym Print exec sh -c 'f="$HOME/Downloads/Screenshot_$(date +%Y-%m-%d-%I.%M.%S_%p).png" && grim "$f" && wl-copy < "$f"'
-bindsym Shift+Print exec sh -c 'f="$HOME/Downloads/Screenshot_$(date +%Y-%m-%d-%I.%M.%S_%p).png" && grim -g "$(slurp)" "$f" && wl-copy < "$f"'
+# Screenshot
+bindsym Print exec sh -c 'f="/tmp/Screenshot_$(date +%Y-%m-%d-%I.%M.%S_%p).png" && grim -g "$(slurp)" "$f" && wl-copy < "$f"'
 
 # ─── Machine-local overrides ────────────────────────────────────────────────
 include ~/.config/sway/config.local

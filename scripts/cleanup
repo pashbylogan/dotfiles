@@ -1,29 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
-
-# ─── Colors ──────────────────────────────────────────────────────────────────
-
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m'
-
-info()    { printf "${CYAN}ℹ ${NC}%s\n" "$*"; }
-success() { printf "${GREEN}✔ ${NC}%s\n" "$*"; }
-warn()    { printf "${YELLOW}⚠ ${NC}%s\n" "$*"; }
-error()   { printf "${RED}✖ ${NC}%s\n" "$*" >&2; }
-step()    { printf "\n${BOLD}── %s ──${NC}\n" "$*"; }
-
-have() { command -v "$1" >/dev/null 2>&1; }
-
-need_sudo() { [[ "$(id -u)" -ne 0 ]]; }
-
-run_root() {
-  if need_sudo; then sudo "$@"; else "$@"; fi
-}
+source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 # ─── Package removal ────────────────────────────────────────────────────────
 
@@ -45,7 +22,7 @@ collect_removable_packages() {
     plasma-desktop plasma-workspace kwin-wayland dolphin konsole kate
   )
 
-  # Display managers (we use TTY login; sddm handles both KDE and standalone)
+  # Heavy display managers replaced by greetd + tuigreet.
   local dm_packages=(gdm gdm3 sddm lightdm)
 
   # X11 tools we replaced with Wayland equivalents
@@ -78,6 +55,9 @@ collect_removable_packages() {
     # Older bootstrap pulled full ansible (~380MB). We now install only
     # ansible-core + ansible-collection-community-general (~23MB).
     ansible
+    # XDG autostart runner. Sway config now exec's tray apps explicitly
+    # (see design-history §29) so we don't need the dispatcher anymore.
+    dex-autostart
   )
 
   for pkg in "${de_packages[@]}" "${dm_packages[@]}" "${replaced_packages[@]}"; do
@@ -160,6 +140,15 @@ collect_orphaned_configs() {
   )
   for dir in "${legacy_dirs[@]}"; do
     [[ -e "$dir" ]] && dirs+=("$dir")
+  done
+
+  # Stale symlinks left behind by removed shim tasks. `-L` catches broken
+  # symlinks too (which `-e` misses once the target package is uninstalled).
+  local legacy_symlinks=(
+    "$HOME/.local/bin/dex"     # dex-autostart shim, removed per §29
+  )
+  for link in "${legacy_symlinks[@]}"; do
+    [[ -L "$link" ]] && dirs+=("$link")
   done
 
   # Also find large cache dirs for uninstalled software

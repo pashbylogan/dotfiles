@@ -38,10 +38,12 @@ dotfiles_linux_pkg_map:
     - pipewire-alsa
   pipewire_jack:
     - pipewire-jack-audio-connection-kit
+  alsa_ucm:
+    - alsa-ucm
   power_profiles_daemon:
     - power-profiles-daemon
-  dex:
-    - dex-autostart
+  tpm2_tools:
+    - tpm2-tools
   nm_applet:
     - network-manager-applet
   nerd_fonts:
@@ -62,7 +64,15 @@ dotfiles_linux_pkg_map:
     - gvfs-smb
   gvfs_nfs:
     - gvfs-nfs
-  webp_pixbuf_loader:
-    - webp-pixbuf-loader
   zram_generator_defaults:
     - zram-generator-defaults
+  glycin_thumbnailer:
+    - glycin-thumbnailer
+  # F44+ — erikreider/swayosd has no F44 chroot; the same maintainer's
+  # erikreider/packages COPR builds the same project as `swayosd-git`.
+  # See docs/design-history.md §29.
+  swayosd:
+    - swayosd-git
+  # community.general.dconf imports psutil at runtime.
+  python_psutil:
+    - python3-psutil

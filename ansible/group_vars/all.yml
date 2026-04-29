@@ -2,11 +2,11 @@
 dotfiles_mode: apply
 dotfiles_profile: auto
 dotfiles_repo_root: "{{ playbook_dir | dirname }}"
-dotfiles_stow_target: "{{ ansible_env.HOME }}"
-dotfiles_apps_root: "{{ ansible_env.HOME }}/apps"
-dotfiles_local_bin_dir: "{{ ansible_env.HOME }}/.local/bin"
-dotfiles_local_scripts_dir: "{{ ansible_env.HOME }}/.local/scripts"
-dotfiles_share_root: "{{ ansible_env.HOME }}/.local/share"
+dotfiles_stow_target: "{{ ansible_facts.env.HOME }}"
+dotfiles_apps_root: "{{ ansible_facts.env.HOME }}/apps"
+dotfiles_local_bin_dir: "{{ ansible_facts.env.HOME }}/.local/bin"
+dotfiles_local_scripts_dir: "{{ ansible_facts.env.HOME }}/.local/scripts"
+dotfiles_share_root: "{{ ansible_facts.env.HOME }}/.local/share"
 dotfiles_stow_packages_common:
   - ssh
   - nvim
@@ -47,6 +47,7 @@ dotfiles_common_linux_packages:
   - netcat
   - lsof
   - patch
+  - tar
   - openssh_client
   - wireguard_tools
   - build_tools
@@ -55,9 +56,11 @@ dotfiles_common_linux_packages:
 dotfiles_starship_enabled: true
 dotfiles_tailscale_enabled: true
 # Third-party COPRs enabled by the packages role before package install.
-# See docs/design-history.md §28 for why each one is required.
+# See docs/design-history.md §28 (rationale) and §29 (Fedora 44 switch) for
+# why each one is required.
 dotfiles_copr_repos:
-  - erikreider/swayosd   # volume/brightness/caps on-screen display
+  - erikreider/packages   # swayosd (volume/brightness/caps OSD) — see §29
+  - scottames/ghostty     # ghostty terminal — listed on ghostty.org Fedora install page, see §29
 
 # Use iwd as NetworkManager's WiFi backend (better battery, faster connects).
 # Off by default because it swaps wpa_supplicant for iwd on your machine —

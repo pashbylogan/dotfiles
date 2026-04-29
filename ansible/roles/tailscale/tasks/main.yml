@@ -10,13 +10,13 @@
   failed_when: false
   when:
     - dotfiles_tailscale_enabled
-    - ansible_system == "Linux"
+    - ansible_facts.system == "Linux"
 
 - name: Add Tailscale dnf repo (Fedora-only)
   become: true
   when:
     - dotfiles_tailscale_enabled
-    - ansible_system == "Linux"
+    - ansible_facts.system == "Linux"
     - dotfiles_pkg_mgr == "dnf"
     - dotfiles_tailscale_check.rc != 0
   block:
@@ -33,4 +33,4 @@
     state: "{{ 'latest' if dotfiles_mode == 'update' else 'present' }}"
   when:
     - dotfiles_tailscale_enabled
-    - ansible_system == "Linux"
+    - ansible_facts.system == "Linux"

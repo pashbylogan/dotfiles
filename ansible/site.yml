@@ -26,8 +26,8 @@
     - name: Validate supported OS
       ansible.builtin.assert:
         that:
-          - ansible_system == 'Linux'
-        fail_msg: "Unsupported OS: {{ ansible_system }}. This repo supports Fedora Linux only."
+          - ansible_facts.system == 'Linux'
+        fail_msg: "Unsupported OS: {{ ansible_facts.system }}. This repo supports Fedora Linux only."
 
     - name: Load profile variables
       ansible.builtin.include_vars:
@@ -36,20 +36,20 @@
     - name: Normalize package manager name
       ansible.builtin.set_fact:
         dotfiles_pkg_mgr: >-
-          {{ 'dnf' if ansible_pkg_mgr in ['dnf', 'dnf5'] else ansible_pkg_mgr }}
-      when: ansible_system == "Linux"
+          {{ 'dnf' if ansible_facts.pkg_mgr in ['dnf', 'dnf5'] else ansible_facts.pkg_mgr }}
+      when: ansible_facts.system == "Linux"
 
     - name: Validate package manager (Fedora Linux only)
       ansible.builtin.assert:
         that:
           - dotfiles_pkg_mgr == 'dnf'
         fail_msg: "Unsupported Linux package manager: {{ dotfiles_pkg_mgr }}. This repo supports Fedora Linux (dnf/dnf5) only."
-      when: ansible_system == "Linux"
+      when: ansible_facts.system == "Linux"
 
     - name: Load Linux package-manager map
       ansible.builtin.include_vars:
         file: "{{ playbook_dir }}/vars/linux_pkg_mgr/{{ dotfiles_pkg_mgr }}.yml"
-      when: ansible_system == "Linux"
+      when: ansible_facts.system == "Linux"
 
     - name: Resolve Linux package list
       # Names in the map resolve to their mapped concrete package(s);
@@ -64,7 +64,7 @@
             (_names | select('in', dotfiles_linux_pkg_map) | map('extract', dotfiles_linux_pkg_map) | flatten | list)
             + (_names | reject('in', dotfiles_linux_pkg_map) | list)
           }}
-      when: ansible_system == "Linux"
+      when: ansible_facts.system == "Linux"
 
     - name: Resolve stow package list
       ansible.builtin.set_fact:

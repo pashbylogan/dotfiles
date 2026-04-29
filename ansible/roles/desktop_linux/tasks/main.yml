@@ -6,7 +6,7 @@
 # package regardless, so the first-run case still gets dark mode.
 
 - name: Apply dconf preferences
-  when: ansible_env.DBUS_SESSION_BUS_ADDRESS is defined
+  when: ansible_facts.env.DBUS_SESSION_BUS_ADDRESS is defined
   block:
     - name: Prefer dark colour scheme for libadwaita apps (Nautilus, GTK4)
       community.general.dconf:
@@ -27,7 +27,7 @@
 
 - name: Default mpv for common video mimetypes
   community.general.ini_file:
-    path: "{{ ansible_env.HOME }}/.config/mimeapps.list"
+    path: "{{ ansible_facts.env.HOME }}/.config/mimeapps.list"
     section: Default Applications
     option: "{{ item }}"
     value: mpv.desktop
@@ -46,7 +46,7 @@
 
 - name: Default imv for common image mimetypes
   community.general.ini_file:
-    path: "{{ ansible_env.HOME }}/.config/mimeapps.list"
+    path: "{{ ansible_facts.env.HOME }}/.config/mimeapps.list"
     section: Default Applications
     option: "{{ item }}"
     value: imv.desktop
@@ -64,7 +64,7 @@
     - image/avif
 
 - name: Neutralise Tracker3 indexer
-  when: ansible_env.DBUS_SESSION_BUS_ADDRESS is defined
+  when: ansible_facts.env.DBUS_SESSION_BUS_ADDRESS is defined
   block:
     - name: Empty Tracker recursive index list (stop Nautilus indexer from scanning $HOME)
       community.general.dconf:
@@ -158,6 +158,42 @@
     group: root
     mode: "0440"
     validate: "/usr/sbin/visudo -cf %s"
+  become: true
+
+# ─── Graphical login (greetd + tuigreet) ───────────────────────────────────
+# Fresh minimal installs start from a TTY, but after bootstrap the machine
+# should boot to a password prompt that launches Sway directly.
+
+- name: Configure greetd to launch Sway from tuigreet
+  ansible.builtin.copy:
+    src: greetd-config.toml
+    dest: /etc/greetd/config.toml
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: Create tuigreet cache for remembered username
+  ansible.builtin.file:
+    path: /var/cache/tuigreet
+    state: directory
+    owner: greetd
+    group: greetd
+    mode: "0755"
+  become: true
+
+- name: Enable greetd graphical login
+  ansible.builtin.systemd_service:
+    name: greetd.service
+    enabled: true
+  become: true
+
+- name: Boot to graphical target after bootstrap
+  ansible.builtin.file:
+    src: /usr/lib/systemd/system/graphical.target
+    dest: /etc/systemd/system/default.target
+    state: link
+    force: true
   become: true
 
 # ─── System drop-in directories + kernel tunables ──────────────────────────

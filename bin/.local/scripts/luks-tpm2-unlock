@@ -1,0 +1,200 @@
+#!/usr/bin/env bash
+# Manage TPM2 auto-unlock for the root LUKS volume.
+#
+# This is intentionally opt-in. It mutates LUKS metadata, boot arguments, and
+# initramfs contents, so keep a working LUKS passphrase before enabling it.
+
+set -euo pipefail
+
+LUKS_UUID="${LUKS_UUID:-}"
+LUKS_DEVICE="${LUKS_DEVICE:-}"
+PCRS="${TPM2_PCRS:-7}"
+DRACUT_CONF="/etc/dracut.conf.d/90-dotfiles-tpm2-unlock.conf"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  luks-tpm2-unlock status
+  luks-tpm2-unlock enable
+  luks-tpm2-unlock disable
+
+Environment overrides:
+  LUKS_DEVICE=/dev/nvme0n1p7   target device
+  LUKS_UUID=<uuid>             LUKS UUID, without optional luks- prefix
+  TPM2_PCRS=7                  PCR list for enrollment (default: 7)
+
+enable preserves your existing passphrase slot and adds a TPM2 token/keyslot.
+disable removes the boot-time TPM2 option and wipes systemd TPM2 token slots.
+EOF
+}
+
+need_root() {
+  if [[ "$(id -u)" -ne 0 ]]; then
+    exec sudo --preserve-env=LUKS_UUID,LUKS_DEVICE,TPM2_PCRS "$0" "$@"
+  fi
+}
+
+have() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+detect_luks_uuid() {
+  if [[ -n "$LUKS_UUID" ]]; then
+    printf '%s\n' "${LUKS_UUID#luks-}"
+    return
+  fi
+
+  local arg
+  arg="$(tr ' ' '\n' </proc/cmdline | awk -F= '$1 == "rd.luks.uuid" { print $2; exit }')"
+  [[ -n "$arg" ]] || {
+    echo "Could not detect rd.luks.uuid from /proc/cmdline; set LUKS_UUID." >&2
+    exit 1
+  }
+  printf '%s\n' "${arg#luks-}"
+}
+
+detect_luks_device() {
+  if [[ -n "$LUKS_DEVICE" ]]; then
+    printf '%s\n' "$LUKS_DEVICE"
+    return
+  fi
+
+  local uuid="$1"
+  local dev="/dev/disk/by-uuid/$uuid"
+  [[ -e "$dev" ]] || {
+    echo "Could not find $dev; set LUKS_DEVICE." >&2
+    exit 1
+  }
+  readlink -f "$dev"
+}
+
+require_tools() {
+  local missing=()
+  for tool in systemd-cryptenroll cryptsetup dracut grubby; do
+    have "$tool" || missing+=("$tool")
+  done
+  if (( ${#missing[@]} )); then
+    echo "Missing required tools: ${missing[*]}" >&2
+    exit 1
+  fi
+}
+
+require_luks2() {
+  local device="$1"
+  if ! cryptsetup luksDump "$device" | awk '$1 == "Version:" && $2 == "2" { found = 1 } END { exit !found }'; then
+    echo "$device is not a LUKS2 volume; systemd-cryptenroll TPM2 tokens require LUKS2." >&2
+    exit 1
+  fi
+}
+
+show_status() {
+  local uuid device
+  uuid="$(detect_luks_uuid)"
+  device="$(detect_luks_device "$uuid")"
+
+  echo "LUKS UUID:   $uuid"
+  echo "LUKS device: $device"
+  echo "TPM device:  $(systemd-cryptenroll --tpm2-device=list 2>/dev/null | paste -sd ' ' -)"
+  echo "Kernel arg:  rd.luks.options=${uuid}=tpm2-device=auto"
+  echo
+  cryptsetup luksDump "$device" | sed -n '/^Keyslots:/,/^Tokens:/p;/^Tokens:/,$p'
+}
+
+enable_tpm2_unlock() {
+  require_tools
+
+  [[ -e /dev/tpmrm0 || -e /dev/tpm0 ]] || {
+    echo "No TPM device found under /dev." >&2
+    exit 1
+  }
+
+  local uuid device luks_arg
+  uuid="$(detect_luks_uuid)"
+  device="$(detect_luks_device "$uuid")"
+  luks_arg="rd.luks.options=${uuid}=tpm2-device=auto"
+  require_luks2 "$device"
+
+  echo "Enrolling TPM2 auto-unlock for:"
+  echo "  $device"
+  echo
+  echo "You will be prompted for the existing LUKS passphrase."
+  echo "Keep that passphrase; it remains the recovery path if TPM unlock fails."
+  echo
+
+  systemd-cryptenroll \
+    --wipe-slot=tpm2 \
+    --tpm2-device=auto \
+    --tpm2-pcrs="$PCRS" \
+    "$device"
+
+  install -d -m 0755 /etc/dracut.conf.d
+  local token_plugin=""
+  if [[ -e /usr/lib64/cryptsetup/libcryptsetup-token-systemd-tpm2.so ]]; then
+    token_plugin="/usr/lib64/cryptsetup/libcryptsetup-token-systemd-tpm2.so"
+  elif [[ -e /usr/lib/cryptsetup/libcryptsetup-token-systemd-tpm2.so ]]; then
+    token_plugin="/usr/lib/cryptsetup/libcryptsetup-token-systemd-tpm2.so"
+  fi
+
+  cat >"$DRACUT_CONF" <<'EOF'
+# Include TPM2 unlock support for systemd-cryptenroll LUKS tokens.
+add_dracutmodules+=" tpm2-tss "
+EOF
+  if [[ -n "$token_plugin" ]]; then
+    printf 'install_items+=" %s "\n' "$token_plugin" >>"$DRACUT_CONF"
+  fi
+
+  grubby --update-kernel=ALL --args="$luks_arg"
+  dracut --regenerate-all --force
+
+  echo
+  echo "TPM2 auto-unlock enabled. Reboot to test."
+  echo "If it fails, enter your normal LUKS passphrase at the boot prompt."
+}
+
+disable_tpm2_unlock() {
+  require_tools
+
+  local uuid device luks_arg
+  uuid="$(detect_luks_uuid)"
+  device="$(detect_luks_device "$uuid")"
+  luks_arg="rd.luks.options=${uuid}=tpm2-device=auto"
+
+  echo "Disabling TPM2 auto-unlock for:"
+  echo "  $device"
+  echo
+  echo "This wipes systemd TPM2 token keyslots but leaves password slots intact."
+  echo
+
+  systemd-cryptenroll --wipe-slot=tpm2 "$device" || true
+  grubby --update-kernel=ALL --remove-args="$luks_arg rd.luks.options=luks-${uuid}=tpm2-device=auto rd.luks.options=tpm2-device=auto"
+  rm -f "$DRACUT_CONF"
+  dracut --regenerate-all --force
+
+  echo
+  echo "TPM2 auto-unlock disabled. Future boots will require the LUKS passphrase."
+}
+
+case "${1:-}" in
+  status)
+    need_root "$@"
+    require_tools
+    show_status
+    ;;
+  enable)
+    need_root "$@"
+    shift
+    enable_tpm2_unlock "$@"
+    ;;
+  disable)
+    need_root "$@"
+    shift
+    disable_tpm2_unlock "$@"
+    ;;
+  -h|--help|help|"")
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac

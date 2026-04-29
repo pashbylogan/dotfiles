@@ -43,6 +43,10 @@ gh auth login
 # Optional: copy local overrides from examples
 cp ~/projects/dotfiles/sway/.config/sway/config.local.example ~/.config/sway/config.local
 cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
+
+# Optional: TPM2 auto-unlock for root LUKS, keeping your passphrase as fallback
+luks-tpm2-unlock status
+luks-tpm2-unlock enable
 ```
 
 ## What Gets Installed
@@ -52,8 +56,8 @@ cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
 | Category        | Packages                                                                                                                               |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Core CLI        | `git`, `zsh`, `tmux`, `neovim`, `fzf`, `ripgrep`, `fd`, `age`, `gh`, `delta`, `btop`, `jq`, `rsync`, `netcat`, `lsof`, `patch`, `stow` |
-| Desktop (Wayland stack) | `sway`, `swaylock`, `swayidle`, `swaybg`, `kanshi`, `waybar`, `swayosd`, `rofi`, `grim`, `slurp`, `wl-clipboard`, `brightnessctl`, `mako`, `foot`, `playerctl`, `xdg-desktop-portal{,-wlr,-gtk}` |
-| Desktop (apps + services) | `nautilus`, `gvfs-{mtp,smb,nfs}`, `ffmpegthumbnailer`, `webp-pixbuf-loader`, `mpv`, `imv`, `mate-polkit`, `gnome-keyring`, `pavucontrol`, `pipewire`, `wireplumber`, `pipewire-{pulseaudio,alsa,jack-audio-connection-kit}`, `bluez`, `blueman`, `nm-applet`, `power-profiles-daemon`, `plocate`, `upower`, `dex-autostart`, `zram-generator-defaults` |
+| Desktop (Wayland stack) | `sway`, `greetd`, `tuigreet`, `swaylock`, `swayidle`, `swaybg`, `kanshi`, `waybar`, `swayosd`, `rofi`, `grim`, `slurp`, `wl-clipboard`, `brightnessctl`, `mako`, `foot`, `ghostty`, `playerctl`, `xdg-desktop-portal{,-wlr,-gtk}` |
+| Desktop (apps + services) | `nautilus`, `gvfs-{mtp,smb,nfs}`, `ffmpegthumbnailer`, `glycin-thumbnailer`, `mpv`, `imv`, `mate-polkit`, `gnome-keyring`, `pavucontrol`, `pipewire`, `wireplumber`, `pipewire-{pulseaudio,alsa,jack-audio-connection-kit}`, `alsa-ucm`, `bluez`, `blueman`, `nm-applet`, `power-profiles-daemon`, `plocate`, `upower`, `dconf`, `python3-psutil`, `zram-generator-defaults` |
 | Fonts & icons   | `cascadia-mono-nf-fonts`, `google-noto-color-emoji-fonts`, `google-noto-sans-cjk-vf-fonts`, `adwaita-icon-theme` |
 | Networking      | `wireguard-tools`, `tailscale`                                                                                                         |
 

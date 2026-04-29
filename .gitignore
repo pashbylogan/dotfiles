@@ -4,6 +4,12 @@ ssh/.ssh/config.local
 zsh/.zsh_extras
 sway/.config/sway/config.local
 kanshi/.config/kanshi/config
+systemd/.config/systemd/user/*.target.wants/
+
+# Local run artifacts
+.codex
+latest_apply_output
+latest_update_output
 
 # Keys and secrets
 *.pem

@@ -4,12 +4,16 @@ set -euo pipefail
 
 # ─── Colors & helpers ────────────────────────────────────────────────────────
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m'
+# Use ANSI-C quoting so the variables contain the actual ESC byte (0x1B)
+# rather than the four-character string `\033`. Without this, embedding
+# `${BOLD}` inside a `%s` argument prints the escape literally because
+# `printf` only interprets `\033` in the format string.
+RED=$'\033[0;31m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[1;33m'
+CYAN=$'\033[0;36m'
+BOLD=$'\033[1m'
+NC=$'\033[0m'
 
 info()    { printf "${CYAN}ℹ ${NC}%s\n" "$*"; }
 success() { printf "${GREEN}✔ ${NC}%s\n" "$*"; }
