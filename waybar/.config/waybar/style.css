@@ -70,8 +70,13 @@ tooltip {
 #tray,
 #clock {
   color: #c6d2cf;
+  border-left: 1px solid #333333;
   margin: 0;
   padding: 0 8px;
+}
+
+#custom-idle {
+  border-left: none;
 }
 
 #custom-idle.idle {

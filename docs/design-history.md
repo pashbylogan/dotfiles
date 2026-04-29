@@ -484,7 +484,7 @@ Nautilus's GNOME footprint is kept minimal:
 **Dark mode** is set system-wide via a new `desktop_linux` Ansible role using `community.general.dconf`:
 
 - `/org/gnome/desktop/interface/color-scheme` → `'prefer-dark'` — the canonical switch for libadwaita / modern GTK4. Nautilus picks this up directly from dconf even without `xdg-desktop-portal-gtk` providing the Settings portal.
-- New `gtk` stow package writes `gtk-application-prefer-dark-theme=1` to `~/.config/gtk-3.0/settings.ini` and `~/.config/gtk-4.0/settings.ini` as a fallback for legacy GTK3 apps and plain (non-libadwaita) GTK4 apps.
+- New `gtk` stow package writes `gtk-application-prefer-dark-theme=1` to `~/.config/gtk-3.0/settings.ini` and `~/.config/gtk-4.0/settings.ini` as a fallback for legacy GTK3 apps and plain (non-libadwaita) GTK4 apps. It also ships small `gtk.css` files that keep GTK focus/accent colors aligned with the i3-style focused blue used by Sway and Waybar.
 
 Libadwaita and the `settings.ini` mechanism target different codepaths and don't conflict. `gtk-theme` is deliberately NOT forced to `Adwaita-dark` so users who install a different GTK theme still see it.
 
@@ -576,7 +576,7 @@ Target install is **Fedora Everything 43** (Workstation's defaults are not avail
 
 **Visual feedback.** `swayosd-server` autostarts from sway; `swayosd-client` replaces raw wpctl/brightnessctl bindings with combined hardware-change + on-screen-indicator calls. `playerctl` covers `XF86AudioPlay/Pause/Next/Prev`. swayosd ships via the upstream maintainer's COPR — originally `erikreider/swayosd`, switched to `erikreider/packages` (`swayosd-git`) on Fedora 44 (see §29). `wob` is the main-repo alternative but requires per-binding shell glue that costs more than the COPR.
 
-**Mako DND.** `[urgency=critical] default-timeout=0` pins critical alerts; `[mode=do-not-disturb] invisible=true` silences everything else. Critical still pops in DND. Toggle via `makoctl mode -t do-not-disturb`.
+**Mako notifications.** Mako is kept as the Wayland notification daemon because Sway does not provide one. The config leaves Mako's default colors and font intact, but makes the popup shape more polished: 360px width, 12px margin/padding, 1px border, 8px radius, smaller icons, and app-name grouping. `[urgency=critical] default-timeout=0` pins critical alerts; `[mode=do-not-disturb] invisible=true` silences everything else. Critical still pops in DND. Toggle via `makoctl mode -t do-not-disturb`.
 
 **Safety drop-ins.**
 
@@ -742,7 +742,7 @@ Everything below is installed and kept up to date by the playbook.
 | `waybar`   | `~/.config/waybar/config.jsonc` (linux_desktop only)                 |
 | `mako`     | `~/.config/mako/config` (linux_desktop only)                         |
 | `kanshi`   | `~/.config/kanshi/config.example` (linux_desktop only)               |
-| `gtk`      | `~/.config/gtk-3.0/settings.ini`, `gtk-4.0/settings.ini` (linux_desktop only) |
+| `gtk`      | `~/.config/gtk-3.0/settings.ini`, `gtk-3.0/gtk.css`, `gtk-4.0/settings.ini`, `gtk-4.0/gtk.css` (linux_desktop only) |
 | `wireplumber` | `~/.config/wireplumber/wireplumber.conf.d/` (linux_desktop only) |
 | `systemd`  | `~/.config/systemd/user/` — user timers like battery-monitor (linux_desktop only) |
 | `fontconfig` | `~/.config/fontconfig/fonts.conf` — web system-font fallbacks (linux_desktop only) |

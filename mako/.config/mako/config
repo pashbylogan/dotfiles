@@ -1,8 +1,11 @@
+width=360
+margin=12
+padding=12
+border-size=1
+border-radius=8
+max-icon-size=48
+group-by=app-name
 default-timeout=5000
-border-size=2
-border-color=#77dd77
-background-color=#333333
-text-color=#ffffff
 
 [urgency=critical]
 default-timeout=0
