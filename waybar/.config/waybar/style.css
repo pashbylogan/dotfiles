@@ -1,0 +1,105 @@
+* {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  font-family: "CaskaydiaMono Nerd Font", "Cascadia Mono", "Noto Sans Mono", monospace;
+  font-size: 12px;
+  font-weight: 500;
+  min-height: 0;
+}
+
+window#waybar {
+  background: #000000;
+  border-bottom: 1px solid #333333;
+  color: #ffffff;
+}
+
+tooltip {
+  background: #000000;
+  border: 1px solid #666666;
+  color: #ffffff;
+}
+
+#workspaces {
+  padding-left: 4px;
+}
+
+#workspaces button {
+  background: transparent;
+  color: #888888;
+  margin: 3px 1px;
+  padding: 0 8px;
+}
+
+#workspaces button:hover {
+  background: #333333;
+  color: #ffffff;
+}
+
+#workspaces button.focused,
+#workspaces button.active {
+  background: #285577;
+  color: #ffffff;
+}
+
+#workspaces button.urgent {
+  background: #900000;
+  color: #ffffff;
+}
+
+#window {
+  color: #ffffff;
+  padding: 0 16px;
+}
+
+#mode {
+  background: #900000;
+  color: #ffffff;
+  margin: 3px 6px;
+  padding: 0 8px;
+}
+
+#custom-idle,
+#power-profiles-daemon,
+#pulseaudio,
+#bluetooth,
+#network,
+#cpu,
+#memory,
+#battery,
+#tray,
+#clock {
+  color: #c6d2cf;
+  margin: 0;
+  padding: 0 8px;
+}
+
+#custom-idle.idle {
+  color: #ffffff;
+}
+
+#custom-idle.awake {
+  color: #f3c969;
+}
+
+#power-profiles-daemon.performance,
+#battery.warning:not(.charging) {
+  color: #f0b66d;
+}
+
+#battery.critical:not(.charging),
+#network.disconnected,
+#pulseaudio.muted {
+  color: #ef8f8f;
+}
+
+#battery.charging,
+#battery.plugged {
+  color: #8fd7a1;
+}
+
+#clock {
+  background: #000000;
+  color: #ffffff;
+  margin-left: 4px;
+}

@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+set -eu
+
+if swaymsg -t get_tree | jq -e '
+  recurse(.nodes[]?, .floating_nodes[]?)
+  | select(.visible == true)
+  | select(
+      .fullscreen_mode == 1
+      or .inhibit_idle == true
+      or .idle_inhibitors.application != "none"
+    )
+' >/dev/null; then
+  printf '{"text":"awake","class":"awake"}\n'
+else
+  printf '{"text":"idle","class":"idle"}\n'
+fi

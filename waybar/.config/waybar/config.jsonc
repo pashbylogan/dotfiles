@@ -1,17 +1,12 @@
-// Waybar configuration.
-//
-// Intentionally minimal — we inherit defaults for everything we don't
-// explicitly override. No style.css is stowed; waybar falls back to
-// /etc/xdg/waybar/style.css shipped with the package.
-//
-// The module list below is the only real opinion: which modules appear
-// in each section. Module formats, colours, icons, polling intervals —
-// all at upstream defaults.
 {
+  "layer": "top",
+  "position": "top",
+  "height": 28,
+  "spacing": 0,
   "modules-left": ["sway/workspaces", "sway/mode"],
   "modules-center": ["sway/window"],
   "modules-right": [
-    "idle_inhibitor",
+    "custom/idle",
     "power-profiles-daemon",
     "pulseaudio",
     "bluetooth",
@@ -21,5 +16,56 @@
     "battery",
     "tray",
     "clock"
-  ]
+  ],
+  "sway/workspaces": {
+    "disable-scroll": true,
+    "format": "{name}"
+  },
+  "sway/window": {
+    "max-length": 90,
+    "separate-outputs": true
+  },
+  "custom/idle": {
+    "exec": "$HOME/.local/scripts/sway-idle-status",
+    "interval": 2,
+    "return-type": "json"
+  },
+  "power-profiles-daemon": {
+    "format": "{icon}",
+    "format-icons": {
+      "performance": "perf",
+      "balanced": "bal",
+      "power-saver": "save"
+    }
+  },
+  "pulseaudio": {
+    "format": "vol {volume}%",
+    "format-muted": "muted"
+  },
+  "bluetooth": {
+    "format": "bt off",
+    "format-disabled": "bt off",
+    "format-connected": "bt {num_connections}",
+    "tooltip-format-connected": "{device_alias}"
+  },
+  "network": {
+    "format-wifi": "{essid}",
+    "format-ethernet": "{ifname}",
+    "format-disconnected": "offline"
+  },
+  "cpu": {
+    "format": "cpu {usage}%"
+  },
+  "memory": {
+    "format": "mem {}%"
+  },
+  "battery": {
+    "format": "bat {capacity}%",
+    "format-charging": "bat {capacity}%+",
+    "format-plugged": "bat {capacity}%+"
+  },
+  "clock": {
+    "format": "{:%H:%M}",
+    "tooltip-format": "{:%A, %B %d, %Y}"
+  }
 }
