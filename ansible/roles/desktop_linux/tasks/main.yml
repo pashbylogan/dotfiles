@@ -112,6 +112,17 @@
   become: true
   failed_when: false
 
+# obex.service is dbus-activated for OBEX file transfer (Bluetooth file send/
+# receive). Bluetooth audio uses a different daemon path, so masking obex
+# leaves headphones/headsets untouched.
+- name: Mask obex.service (user — Bluetooth OBEX file transfer, unused)
+  ansible.builtin.systemd_service:
+    name: obex.service
+    scope: user
+    masked: true
+    state: stopped
+  failed_when: false
+
 # ─── Authentication (gnome-keyring PAM + faillock) ──────────────────────────
 # Fedora ships gdm with keyring PAM already wired, but on a Sway-only box
 # without a display manager we must opt in via authselect. Provides the

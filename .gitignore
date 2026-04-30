@@ -5,6 +5,8 @@ zsh/.zsh_extras
 sway/.config/sway/config.local
 kanshi/.config/kanshi/config
 systemd/.config/systemd/user/*.target.wants/
+# Mask symlinks created by `systemctl --user mask` — re-applied by Ansible.
+systemd/.config/systemd/user/obex.service
 
 # Local run artifacts
 .codex

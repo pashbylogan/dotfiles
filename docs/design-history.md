@@ -661,6 +661,10 @@ Fix is the lightest-weight option Fedora already ships: enable `ssh-agent.socket
 
 Does *not* affect `gnome-keyring`: that package is enabled (§28, via authselect's `with-pam-gnome-keyring` feature) for Secret Service — Chromium credential storage, libsecret-using app passwords, Nautilus-mounted SMB/SFTP creds. The SSH-agent component of gnome-keyring is deprecated upstream and was never started here (`/etc/xdg/autostart/gnome-keyring-ssh.desktop` carries an `OnlyShowIn=GNOME;` filter, and §29 dropped dex so XDG autostart isn't dispatched anyway). Secret Service and the OpenSSH agent are separate concerns; both are managed, neither overlaps.
 
+### 32. Mask `obex.service` (Bluetooth file transfer)
+
+`bluez` ships `obex.service` as a user-scope dbus-activated daemon that handles OBEX file send/receive over Bluetooth. The bluetooth-audio path runs through a different daemon (`bluetoothd` system-scope), so masking obex leaves headsets and BLE peripherals untouched. Mask via Ansible (`systemd_service` with `masked: true`); the mask symlink lands in `~/.config/systemd/user/obex.service → /dev/null` which is gitignored under the same pattern as the auto-generated `*.target.wants/` entries.
+
 ## Current State
 
 The system targets Fedora only (see "Linux Support" in the README). Earlier rounds were validated in Docker containers across Ubuntu, Fedora, Arch, and openSUSE; the multi-distro support was dropped during the §28/§29 cleanup passes when the package map collapsed to dnf-only. Current convergence (`dot-apply` fresh install, `dot-update` upgrade path) is validated on Fedora.
