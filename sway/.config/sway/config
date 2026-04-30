@@ -12,9 +12,14 @@ exec systemctl --user start sway-session.target
 exec /usr/libexec/polkit-mate-authentication-agent-1
 exec swayidle -w \
     timeout 300 'swaylock -f -c 000000' \
-    timeout 600 'swaymsg "output * power off"' \
-    resume 'swaymsg "output * power on"' \
-    before-sleep 'swaylock -f -c 000000'
+    timeout 360 'swaymsg "output * power off"' \
+         resume 'swaymsg "output * power on"' \
+    timeout  60 'pgrep -xu "$USER" swaylock >/dev/null && swaymsg "output * power off"' \
+         resume 'pgrep -xu "$USER" swaylock >/dev/null && swaymsg "output * power on"' \
+    timeout 900 'systemctl suspend' \
+    before-sleep 'swaylock -f -c 000000' \
+    lock   'swaylock -f -c 000000' \
+    unlock 'pkill -xu "$USER" -SIGUSR1 swaylock'
 exec nm-applet --indicator
 exec blueman-applet
 exec mako

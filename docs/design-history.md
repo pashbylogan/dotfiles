@@ -677,6 +677,20 @@ Three architectural shifts that move runtime helpers from polling to event-drive
 
 **Side touches in the same pass.** `ansible.cfg` gained `pipelining = True`, `gathering = smart`, and a 2 h `fact_caching = jsonfile` so repeated `dot-apply` runs skip re-gathering when nothing material has changed. `.zshrc` dropped the `fzf < 0.48` fallback path — Fedora 43+ ships current fzf and the version probe was just a wasted fork.
 
+### 34. Replaced greetd + tuigreet with TTY autologin
+
+§29 chose `greetd` + `tuigreet` as the lightweight greeter for Sway boot. Two things changed since: §29's last paragraph documented TPM2 LUKS auto-unlock as opt-in, which most installs now use, and using the desktop surfaced a swayidle/swaylock gap (the cursor stayed visible after lock; there was no real suspend transition). With TPM2-unlocked LUKS as the disk gate and `swaylock` as the idle gate, a separate tty-level login manager wasn't pulling its weight — the password it asked for at boot was the same password `swaylock` would ask for again on the first idle lock or `loginctl lock-session`. One auth gate is enough.
+
+The new path is plain getty autologin: a drop-in at `/etc/systemd/system/getty@tty1.service.d/autologin.conf` overrides `ExecStart` to call `agetty --autologin <user> ...` (the username comes from `ansible_facts.user_id` so the file stays generic across machines), the user's `~/.zprofile` execs `sway` when on tty1 with no Wayland session yet, and `default.target` points at `multi-user.target` (no DM). The desktop role drops the greetd/tuigreet install + config tasks entirely; per the repo's "Packages are never auto-removed" principle (§19, §29), the packages move to `dot-cleanup`'s `dm_packages` list so existing machines get cleaned up on next run while ansible stays declarative-of-desired-state-only.
+
+The greetd removal also exposed a gap in `dot-cleanup` itself: rpm leaves `*.rpmsave` files when modified configs are uninstalled, and ansible-created state directories (here, `/var/cache/tuigreet`) were never owned by an rpm in the first place, so `dnf remove` doesn't sweep them. A new "orphaned system paths" phase mirrors the existing home-directory orphan-config sweep: it carries an associative-array map of system path → owning rpm, and offers each path for removal when the rpm is no longer installed. The greetd uninstall left three such paths (`/etc/greetd`, `/var/lib/greetd`, `/var/cache/tuigreet`); the same map absorbs future entries as packages get retired.
+
+The swayidle block in sway config was replaced at the same time. It mirrors the [Fedora Sway Spin pattern](https://gitlab.com/fedora/sigs/sway/sway-config-fedora/-/blob/fedora/sway/config.d/90-swayidle.conf) — a conditional fast-blank-after-lock timeout that fixes the cursor-visible-after-lock symptom by powering DPMS off 60 s after lock (the visible-cursor itself is a known sway 1.11 bug, [sway#8342](https://github.com/swaywm/sway/issues/8342); fix PR still open) — and adds a `timeout 900 'systemctl suspend'` step for real sleep after 15 min idle. `lock` / `unlock` hooks integrate with `loginctl lock-session` (lid switch, dbus); `before-sleep` retains the lock-on-resume guarantee. `pkill -SIGUSR1 swaylock` on the `unlock` event requires swaylock ≥ 1.8 (Fedora 44 ships 1.8.5).
+
+`HandlePowerKey` flips from `ignore` to `suspend` so the power button does what every laptop user expects without any sway-side binding. Lid-switch defaults already cover suspend on battery/AC and ignore when docked, so no further logind drop-ins.
+
+Recovery path is unchanged in spirit (and slightly better in practice): any boot with `systemd.unit=rescue.target` or single-user mode skips autologin and lands at a root shell; reverting autologin per-machine is `systemctl edit getty@tty1` away.
+
 ## Current State
 
 The system targets Fedora only (see "Linux Support" in the README). Earlier rounds were validated in Docker containers across Ubuntu, Fedora, Arch, and openSUSE; the multi-distro support was dropped during the §28/§29 cleanup passes when the package map collapsed to dnf-only. Current convergence (`dot-apply` fresh install, `dot-update` upgrade path) is validated on Fedora.
@@ -723,8 +737,6 @@ The shell profile exports `GOPATH`, `GOBIN`, `GOMODCACHE`, `GOCACHE`, and `GOENV
 | Abstract name             | What it is                                                   |
 | ------------------------- | ------------------------------------------------------------ |
 | `sway`                    | Wayland tiling compositor                                    |
-| `greetd`                  | lightweight login manager                                    |
-| `tuigreet`                | terminal UI greeter for greetd                               |
 | `swaylock`                | screen locker                                                |
 | `swayidle`                | idle management (auto-lock, display off)                     |
 | `swaybg`                  | wallpaper                                                    |

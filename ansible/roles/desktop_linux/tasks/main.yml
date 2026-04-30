@@ -179,43 +179,7 @@
     validate: "/usr/sbin/visudo -cf %s"
   become: true
 
-# ─── Graphical login (greetd + tuigreet) ───────────────────────────────────
-# Fresh minimal installs start from a TTY, but after bootstrap the machine
-# should boot to a password prompt that launches Sway directly.
-
-- name: Configure greetd to launch Sway from tuigreet
-  ansible.builtin.copy:
-    src: greetd-config.toml
-    dest: /etc/greetd/config.toml
-    owner: root
-    group: root
-    mode: "0644"
-  become: true
-
-- name: Create tuigreet cache for remembered username
-  ansible.builtin.file:
-    path: /var/cache/tuigreet
-    state: directory
-    owner: greetd
-    group: greetd
-    mode: "0755"
-  become: true
-
-- name: Enable greetd graphical login
-  ansible.builtin.systemd_service:
-    name: greetd.service
-    enabled: true
-  become: true
-
-- name: Boot to graphical target after bootstrap
-  ansible.builtin.file:
-    src: /usr/lib/systemd/system/graphical.target
-    dest: /etc/systemd/system/default.target
-    state: link
-    force: true
-  become: true
-
-# ─── System drop-in directories + kernel tunables ──────────────────────────
+# ─── System drop-in directories ────────────────────────────────────────────
 # Fedora creates some of these on demand; we create all we need up front
 # so subsequent copy tasks don't depend on package install order.
 
@@ -229,7 +193,30 @@
     - /etc/systemd/logind.conf.d
     - /etc/systemd/system.conf.d
     - /etc/systemd/system/user@.service.d
+    - /etc/systemd/system/getty@tty1.service.d
     - /etc/systemd/system/plocate-updatedb.service.d
+
+# ─── Graphical login (TTY autologin → .zprofile execs sway) ────────────────
+# LUKS+TPM is the disk auth gate; swaylock is the idle gate. No DM needed.
+
+- name: Install getty@tty1 autologin drop-in
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/getty@tty1.service.d/autologin.conf
+    mode: "0644"
+    content: |
+      [Service]
+      ExecStart=
+      ExecStart=-/usr/sbin/agetty --noreset --noclear --autologin {{ ansible_facts.user_id }} %I $TERM
+  become: true
+  notify: Reload systemd
+
+- name: Boot to multi-user target (no DM)
+  ansible.builtin.file:
+    src: /usr/lib/systemd/system/multi-user.target
+    dest: /etc/systemd/system/default.target
+    state: link
+    force: true
+  become: true
 
 - name: Install sysctl drop-in (inotify watchers, TCP MTU probing)
   ansible.builtin.copy:
@@ -239,7 +226,7 @@
   become: true
   notify: Reload sysctl
 
-- name: Install logind drop-in (ignore power key so Sway handles it)
+- name: Install logind drop-in (suspend on power key)
   # No handler: reloading systemd-logind drops the graphical session.
   ansible.builtin.copy:
     src: 10-handle-power-key.conf

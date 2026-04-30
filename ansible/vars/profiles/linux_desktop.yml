@@ -1,8 +1,6 @@
 ---
 dotfiles_profile_linux_packages_common:
   - sway
-  - greetd
-  - tuigreet
   - swaylock
   - swayidle
   - swaybg

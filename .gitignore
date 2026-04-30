@@ -11,6 +11,7 @@ systemd/.config/systemd/user/obex.service
 # Local run artifacts
 .codex
 latest_apply_output
+latest_check_output
 latest_update_output
 
 # Keys and secrets

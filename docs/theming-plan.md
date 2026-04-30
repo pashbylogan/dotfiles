@@ -218,8 +218,9 @@ To keep `docs/design-history.md` §22–27 principles intact:
   SPACE` — wait until we have more than one theme.
 - VS Code / Obsidian / Chromium runtime theme sync — out of scope for this
   repo per existing "desktop apps aren't managed here" rule.
-- Plymouth / SDDM branding — greetd + tuigreet now provide the login flow;
-  don't copy Omarchy's heavier SDDM branding path just for visual polish.
+- Plymouth / login-screen branding — boot path is TTY autologin (§34),
+  so there's nothing to theme between LUKS prompt and Sway. Skip the
+  Omarchy SDDM branding equivalent.
 
 ## References
 

@@ -22,8 +22,8 @@ collect_removable_packages() {
     plasma-desktop plasma-workspace kwin-wayland dolphin konsole kate
   )
 
-  # Heavy display managers replaced by greetd + tuigreet.
-  local dm_packages=(gdm gdm3 sddm lightdm)
+  # Display managers; now using TTY autologin (see design-history §34).
+  local dm_packages=(gdm gdm3 sddm lightdm greetd tuigreet)
 
   # X11 tools we replaced with Wayland equivalents
   local replaced_packages=(
@@ -85,6 +85,28 @@ remove_packages() {
     run_root dnf remove -y "${pkgs[@]}" 2>/dev/null || true
     run_root dnf autoremove -y 2>/dev/null || true
   fi
+}
+
+# ─── System path cleanup ────────────────────────────────────────────────────
+# rpm leaves *.rpmsave for modified configs and never owns ansible-created
+# state dirs, so `dnf remove` alone leaves residue.
+
+collect_orphaned_system_paths() {
+  local -n paths=$1
+  paths=()
+
+  local -A path_owners=(
+    ["/etc/greetd"]=greetd
+    ["/var/lib/greetd"]=greetd
+    ["/var/cache/tuigreet"]=tuigreet
+  )
+
+  for path in "${!path_owners[@]}"; do
+    local pkg="${path_owners[$path]}"
+    if [[ -e "$path" ]] && ! is_installed "$pkg"; then
+      paths+=("$path")
+    fi
+  done
 }
 
 # ─── Home directory cleanup ──────────────────────────────────────────────────
@@ -180,7 +202,7 @@ main() {
   warn "Run this AFTER confirming sway and all tools work correctly."
   echo ""
 
-  # Phase 1: packages
+  # Phase 1: packages from rpm db
   step "Scanning for removable packages"
   local -a removable_pkgs=()
   collect_removable_packages removable_pkgs
@@ -213,7 +235,31 @@ main() {
     success "No removable packages found"
   fi
 
-  # Phase 2: home directory
+  # Phase 2: system paths the rpm uninstall didn't sweep
+  step "Scanning for orphaned system paths"
+  local -a orphaned_system_paths=()
+  collect_orphaned_system_paths orphaned_system_paths
+
+  if [[ ${#orphaned_system_paths[@]} -gt 0 ]]; then
+    info "Found ${#orphaned_system_paths[@]} orphaned system paths:"
+    echo ""
+    for p in "${orphaned_system_paths[@]}"; do
+      printf "  %s\n" "$p"
+    done
+    echo ""
+
+    read -rp "$(printf "${YELLOW}Remove these system paths? (y/N): ${NC}")" confirm
+    if [[ "$confirm" == [yY] ]]; then
+      run_root rm -rf "${orphaned_system_paths[@]}"
+      success "Orphaned system paths cleaned"
+    else
+      info "Skipped system path cleanup"
+    fi
+  else
+    success "No orphaned system paths found"
+  fi
+
+  # Phase 3: home directory
   step "Scanning for orphaned config directories"
   local -a orphaned_dirs=()
   collect_orphaned_configs orphaned_dirs
@@ -243,7 +289,7 @@ main() {
     success "No orphaned config directories found"
   fi
 
-  # Phase 3: package cache cleanup
+  # Phase 4: package cache cleanup
   step "Cleaning package manager caches"
   if have dnf; then
     run_root dnf clean all
