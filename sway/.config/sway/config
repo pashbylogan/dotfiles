@@ -26,8 +26,6 @@ exec mako
 exec kanshi
 exec waybar
 exec swayosd-server
-# Pre-warm Nautilus as a resident D-Bus service so first Ctrl+E open is instant.
-exec nautilus --gapplication-service
 
 # ─── Input ───────────────────────────────────────────────────────────────────
 

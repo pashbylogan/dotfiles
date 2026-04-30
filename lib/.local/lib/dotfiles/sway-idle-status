@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Event-driven listener for waybar's custom/idle module — emits JSON on each
 # sway window event, de-duped to suppress no-op state changes.
-set -u
+set -euo pipefail
 
 last=""
 

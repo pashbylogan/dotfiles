@@ -92,8 +92,11 @@ fi
 # ─── UV ──────────────────────────────────────────────────────────────────────
 
 uv_dir="${DOTFILES_APPS_ROOT:-$HOME/apps}/uv"
-export UV_UNMANAGED_INSTALL=$uv_dir
-export UV_INSTALL_DIR=$uv_dir
+# UV_INSTALL_DIR / UV_UNMANAGED_INSTALL must point at the directory the uv
+# binary actually lives in (matches the Ansible installer in roles/user_tools)
+# so a later `uv self update` rewrites $uv_dir/bin/uv rather than $uv_dir/uv.
+export UV_UNMANAGED_INSTALL="$uv_dir/bin"
+export UV_INSTALL_DIR="$uv_dir/bin"
 export UV_TOOL_DIR="$uv_dir/tools"
 export UV_PYTHON_INSTALL_DIR="$uv_dir/python"
 export UV_TOOL_BIN_DIR="$uv_dir/bin"
