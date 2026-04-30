@@ -78,19 +78,7 @@ fi
 # ─── fzf ─────────────────────────────────────────────────────────────────────
 
 if command -v fzf >/dev/null 2>&1; then
-  if fzf --zsh >/dev/null 2>&1; then
-    eval "$(fzf --zsh)"
-  else
-    # Fallback for fzf < 0.48
-    for f in \
-      /usr/share/fzf/key-bindings.zsh \
-      /usr/share/fzf/completion.zsh \
-      /usr/share/doc/fzf/examples/key-bindings.zsh \
-      /usr/share/doc/fzf/examples/completion.zsh
-    do
-      [[ -f "$f" ]] && source "$f"
-    done
-  fi
+  eval "$(fzf --zsh)"
 fi
 
 # ─── fnm ─────────────────────────────────────────────────────────────────────

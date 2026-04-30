@@ -339,9 +339,17 @@
   become: true
   failed_when: false
 
-- name: Enable battery-monitor user timer
+- name: Disable obsolete battery-monitor user timer
   ansible.builtin.systemd_service:
     name: battery-monitor.timer
+    scope: user
+    enabled: false
+    state: stopped
+  failed_when: false
+
+- name: Enable battery-monitor user service
+  ansible.builtin.systemd_service:
+    name: battery-monitor.service
     scope: user
     enabled: true
     state: started

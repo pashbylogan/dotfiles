@@ -506,7 +506,7 @@ Borrowed selectively from [Omarchy](https://github.com/basecamp/omarchy) (DHH's 
 - `/etc/systemd/system.conf.d/10-faster-shutdown.conf` — `DefaultTimeoutStopSec=5s` (kills the 90-second shutdown hang).
 - `/etc/systemd/system/user@.service.d/10-faster-shutdown.conf` — same for user services.
 - `/etc/systemd/system/plocate-updatedb.service.d/ac-only.conf` — `ConditionACPower=true` so disk indexing doesn't run on battery.
-- `~/.config/systemd/user/battery-monitor.{service,timer}` + `~/.local/scripts/battery-monitor` — systemd user timer fires every 30s, sends a critical `notify-send` at ≤10% battery, flag file prevents repeat notifications until charging resumes.
+- `~/.config/systemd/user/battery-monitor.service` + `~/.local/lib/dotfiles/battery-monitor` — long-running user service subscribes to UPower D-Bus signals via `gdbus monitor` and sends a critical `notify-send` at ≤10% battery while discharging. A flag file prevents repeat notifications until charging resumes. (Migrated from a polling timer in §33.)
 
 **Skipped:** `thermald` (Intel-only; user is moving to AMD), `intel-lpmd` (Arch-only). These can be added later if needed.
 
@@ -664,6 +664,18 @@ Does *not* affect `gnome-keyring`: that package is enabled (§28, via authselect
 ### 32. Mask `obex.service` (Bluetooth file transfer)
 
 `bluez` ships `obex.service` as a user-scope dbus-activated daemon that handles OBEX file send/receive over Bluetooth. The bluetooth-audio path runs through a different daemon (`bluetoothd` system-scope), so masking obex leaves headsets and BLE peripherals untouched. Mask via Ansible (`systemd_service` with `masked: true`); the mask symlink lands in `~/.config/systemd/user/obex.service → /dev/null` which is gitignored under the same pattern as the auto-generated `*.target.wants/` entries.
+
+### 33. Event-driven runtime services and Nautilus pre-warm
+
+Three architectural shifts that move runtime helpers from polling to event-driven and from cold-start to D-Bus-resident.
+
+**`battery-monitor`: timer → UPower D-Bus listener.** Previously a `.timer` fired every 30 s and the `.service` re-parsed `upower -i` even when nothing had changed. The unit is now `Type=simple` and long-running; it subscribes to `org.freedesktop.UPower` via `gdbus monitor --system` and runs the discharge check only on `*/devices/battery_*` *and* `*/devices/line_power_*` `PropertiesChanged` events — both paths matched so AC unplug fires immediately instead of waiting for the next battery percentage update. The device path is resolved once at startup and reused. `Restart=on-failure` plus `StartLimitIntervalSec=60` / `StartLimitBurst=3` cap restart bursts on real failures while letting the script exit 0 cleanly on a no-battery host. Ansible disables the obsolete `.timer` on re-applies so the migration is idempotent. Net effect: ~120 fewer wakeups/hour and the platform can reach deeper idle states. `lib/.local/lib/dotfiles/battery-monitor` is the script; the timer file is gone.
+
+**`sway-idle-status`: 2 s poll → `swaymsg subscribe`.** The waybar `custom/idle` module was polled every 2 s, forking `swaymsg -t get_tree | jq` 30×/min for a state that changes rarely. Replaced with a continuous-output module: the script subscribes to `'["window"]'` events via `swaymsg -m -t subscribe`, recomputes idle/awake state on each event, and emits JSON only when the state actually changes (so a burst of focus or title-change events produces zero output if the awake/idle classification didn't flip). The `while read` loop uses process substitution (`< <(...)`) instead of a pipe so the de-dupe `last` variable persists across events in the main shell. `restart-interval: 1` in the waybar config respawns the listener if it ever exits — waybar does not auto-respawn continuous custom modules by default.
+
+**Nautilus pre-warm via D-Bus activation.** Cold launch on a Sway-only session is ~600 ms–1.5 s; there's no GDM / gnome-session keeping Nautilus resident the way a full GNOME desktop does. Adding `exec nautilus --gapplication-service` to sway config registers the GApplication on the session bus at login, and subsequent `nautilus` invocations hand off to the resident D-Bus service (window opens in <50 ms instead). Costs ~30 MB resident even when the user never opens the file manager — intentional UX/RAM tradeoff for the most common file-browsing path.
+
+**Side touches in the same pass.** `ansible.cfg` gained `pipelining = True`, `gathering = smart`, and a 2 h `fact_caching = jsonfile` so repeated `dot-apply` runs skip re-gathering when nothing material has changed. `.zshrc` dropped the `fzf < 0.48` fallback path — Fedora 43+ ships current fzf and the version probe was just a wasted fork.
 
 ## Current State
 

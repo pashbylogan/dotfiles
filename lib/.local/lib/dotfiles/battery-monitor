@@ -1,8 +1,7 @@
 #!/bin/bash
-# Called every 30s by ~/.config/systemd/user/battery-monitor.timer.
+# UPower D-Bus listener — notify on low battery while discharging.
 # Adapted from Omarchy (https://github.com/basecamp/omarchy).
-
-set -euo pipefail
+set -uo pipefail
 
 THRESHOLD=10
 FLAG="/run/user/$UID/battery-low-notified"
@@ -10,15 +9,29 @@ FLAG="/run/user/$UID/battery-low-notified"
 battery="$(upower -e | grep -m1 BAT || true)"
 [[ -z $battery ]] && exit 0
 
-state="$(upower -i "$battery")"
-status="$(awk '/state:/ {print $2}' <<<"$state")"
-level="$(awk '/percentage:/ {print $2}' <<<"$state" | tr -d '%' | cut -d. -f1)"
+check() {
+  local state status level
+  state="$(upower -i "$battery")"
+  status="$(awk '/state:/ {print $2}' <<<"$state")"
+  level="$(awk '/percentage:/ {print $2}' <<<"$state" | tr -d '%' | cut -d. -f1)"
 
-if [[ $status == "discharging" && $level -le $THRESHOLD ]]; then
-  if [[ ! -f $FLAG ]]; then
-    notify-send -u critical "Battery low" "Battery is at ${level}% — plug in soon."
-    touch "$FLAG"
+  if [[ $status == "discharging" && $level -le $THRESHOLD ]]; then
+    if [[ ! -f $FLAG ]]; then
+      notify-send -u critical "Battery low" "Battery is at ${level}% — plug in soon."
+      touch "$FLAG"
+    fi
+  elif [[ $status != "discharging" ]]; then
+    rm -f "$FLAG"
   fi
-elif [[ $status != "discharging" ]]; then
-  rm -f "$FLAG"
-fi
+}
+
+check
+
+# Match both battery and AC adapter paths so unplug events fire immediately,
+# not just on the next battery property change.
+gdbus monitor --system --dest org.freedesktop.UPower 2>/dev/null \
+  | while read -r line; do
+      case "$line" in
+        */devices/battery_*PropertiesChanged*|*/devices/line_power_*PropertiesChanged*) check ;;
+      esac
+    done

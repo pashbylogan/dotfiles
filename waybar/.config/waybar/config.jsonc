@@ -27,8 +27,8 @@
   },
   "custom/idle": {
     "exec": "$HOME/.local/lib/dotfiles/sway-idle-status",
-    "interval": 2,
-    "return-type": "json"
+    "return-type": "json",
+    "restart-interval": 1
   },
   "power-profiles-daemon": {
     "format": "{icon}",

@@ -1,6 +1,14 @@
 [Unit]
-Description=Check battery level and notify if low
+Description=Notify on low battery (UPower D-Bus listener)
+After=dbus.socket
+StartLimitIntervalSec=60
+StartLimitBurst=3
 
 [Service]
-Type=oneshot
+Type=simple
 ExecStart=%h/.local/lib/dotfiles/battery-monitor
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

@@ -1,18 +1,34 @@
-#!/usr/bin/env sh
-# Polled every 2s by waybar's custom/idle module.
+#!/usr/bin/env bash
+# Event-driven listener for waybar's custom/idle module — emits JSON on each
+# sway window event, de-duped to suppress no-op state changes.
+set -u
 
-set -eu
+last=""
 
-if swaymsg -t get_tree | jq -e '
-  recurse(.nodes[]?, .floating_nodes[]?)
-  | select(.visible == true)
-  | select(
-      .fullscreen_mode == 1
-      or .inhibit_idle == true
-      or .idle_inhibitors.application != "none"
-    )
-' >/dev/null; then
-  printf '{"text":"awake","class":"awake"}\n'
-else
-  printf '{"text":"idle","class":"idle"}\n'
-fi
+emit() {
+  local state
+  if swaymsg -t get_tree | jq -e '
+    recurse(.nodes[]?, .floating_nodes[]?)
+    | select(.visible == true)
+    | select(
+        .fullscreen_mode == 1
+        or .inhibit_idle == true
+        or .idle_inhibitors.application != "none"
+      )
+  ' >/dev/null; then
+    state=awake
+  else
+    state=idle
+  fi
+  [[ $state == "$last" ]] && return
+  last=$state
+  printf '{"text":"%s","class":"%s"}\n' "$state" "$state"
+}
+
+emit
+
+# Process substitution (not a pipe) so emit() runs in this shell and the
+# de-dupe `last` variable persists across events.
+while read -r _; do
+  emit
+done < <(swaymsg -m -t subscribe '["window"]')
