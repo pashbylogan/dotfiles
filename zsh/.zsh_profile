@@ -72,6 +72,11 @@ function ve() {
 export DOTFILES_APPS_ROOT="${DOTFILES_APPS_ROOT:-$HOME/apps}"
 export DOTFILES_LOCAL_BIN="${DOTFILES_LOCAL_BIN:-$HOME/.local/bin}"
 export DOTFILES_LOCAL_SCRIPTS="${DOTFILES_LOCAL_SCRIPTS:-$HOME/.local/scripts}"
+export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$UID}/ssh-agent.socket"
+# Force passphrase prompt to the controlling TTY. Without this, OpenSSH
+# launches a graphical askpass when DISPLAY is set (XWayland sets DISPLAY=:0
+# under Sway), and no askpass is installed on this profile.
+export SSH_ASKPASS_REQUIRE=never
 export GOPATH="${GOPATH:-$DOTFILES_APPS_ROOT/go}"
 export GOBIN="${GOBIN:-$GOPATH/bin}"
 export GOMODCACHE="${GOMODCACHE:-$GOPATH/pkg/mod}"

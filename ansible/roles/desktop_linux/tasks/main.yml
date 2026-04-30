@@ -94,6 +94,14 @@
     - wireplumber.service
   failed_when: false
 
+- name: Enable ssh-agent socket (user)
+  ansible.builtin.systemd_service:
+    name: ssh-agent.socket
+    scope: user
+    enabled: true
+    state: started
+  failed_when: false
+
 # ─── Bluetooth ──────────────────────────────────────────────────────────────
 
 - name: Enable bluetooth.service (system)

@@ -651,6 +651,16 @@ The fix is a clean two-way split that mirrors the Linux **Filesystem Hierarchy S
 - [Omarchy migrations + bin-prefix pattern (DeepWiki)](https://deepwiki.com/basecamp/omarchy/10-configuration-management-and-migrations) — single PATH dir, brand prefix on every command, everything else absolute-path-addressed via `$OMARCHY_PATH`.
 - [chezmoi: `run_once_*` and `run_onchange_*` scripts](https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/) — the convergence-via-marker pattern that the deferred `dot-cleanup` → migrations rework would adopt.
 
+### 31. SSH agent: Fedora's stock socket-activated unit
+
+`git push` over SSH failed on a fresh Sway session because no agent was running. GNOME desktops auto-start an agent (gnome-keyring's deprecated SSH component, or gcr-ssh-agent on newer GNOME); a bare Sway session has nothing equivalent. The previous workaround was unmanaged: spawn `ssh-agent` manually per terminal.
+
+Fix is the lightest-weight option Fedora already ships: enable `ssh-agent.socket` (user scope) and export `SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"`. The unit file (`/usr/lib/systemd/user/ssh-agent.service`) is socket-activated, so the agent process only spawns on first SSH operation rather than at every login. Combined with the existing `AddKeysToAgent yes` in `ssh/.ssh/config`, the first auth of the session prompts for the passphrase and the agent holds it for the rest of the user session — no manual `ssh-add` ever.
+
+`SSH_ASKPASS_REQUIRE=never` is also exported because OpenSSH launches a graphical askpass when `DISPLAY` is set, and `DISPLAY=:0` *is* set under Sway because XWayland is active. No askpass program is installed on this profile (gnome-keyring's was deprecated, gcr-ssh-agent isn't shipped), so the `exec ... ssh-askpass` call fails and the auth attempt dies before it ever asks the user. Forcing TTY sidesteps the whole problem and matches what a terminal-driven git workflow wants anyway.
+
+Does *not* affect `gnome-keyring`: that package is enabled (§28, via authselect's `with-pam-gnome-keyring` feature) for Secret Service — Chromium credential storage, libsecret-using app passwords, Nautilus-mounted SMB/SFTP creds. The SSH-agent component of gnome-keyring is deprecated upstream and was never started here (`/etc/xdg/autostart/gnome-keyring-ssh.desktop` carries an `OnlyShowIn=GNOME;` filter, and §29 dropped dex so XDG autostart isn't dispatched anyway). Secret Service and the OpenSSH agent are separate concerns; both are managed, neither overlaps.
+
 ## Current State
 
 The system targets Fedora only (see "Linux Support" in the README). Earlier rounds were validated in Docker containers across Ubuntu, Fedora, Arch, and openSUSE; the multi-distro support was dropped during the §28/§29 cleanup passes when the package map collapsed to dnf-only. Current convergence (`dot-apply` fresh install, `dot-update` upgrade path) is validated on Fedora.
