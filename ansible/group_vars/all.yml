@@ -13,6 +13,7 @@ dotfiles_stow_packages_common:
   - tmux
   - zsh
   - bin
+  - lib
   - ghostty
 
 dotfiles_stow_packages_linux_desktop:

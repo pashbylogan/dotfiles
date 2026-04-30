@@ -12,13 +12,13 @@ curl -fsSL https://raw.githubusercontent.com/pashbylogan/dotfiles/master/bootstr
 wget -qO- https://raw.githubusercontent.com/pashbylogan/dotfiles/master/bootstrap.sh | sh
 ```
 
-**Day-to-day** (inside the repo):
+**Day-to-day** (from anywhere — `~/.local/scripts` is on PATH after first apply):
 
 ```sh
-./scripts/apply     # converge to repo state
-./scripts/update    # apply + upgrade everything to latest
-./scripts/check     # dry-run — show what would change
-./scripts/cleanup   # remove replaced software + orphaned configs (optional, interactive)
+dot-apply     # converge to repo state
+dot-update    # apply + upgrade everything to latest
+dot-check     # dry-run — show what would change
+dot-cleanup   # remove replaced software + orphaned configs (optional, interactive)
 ```
 
 **After first install** — one-time manual steps:
@@ -74,7 +74,7 @@ luks-tpm2-unlock enable
 
 ### Config (via stow symlinks)
 
-`zsh`, `tmux`, `nvim`, `ssh`, `ghostty`, `sway`, `waybar`, `mako`, `kanshi`, `gtk`, `wireplumber`, `systemd` (user timers), `fontconfig`, `xdg-portals`, plus user scripts in `bin`.
+`zsh`, `tmux`, `nvim`, `ssh`, `ghostty`, `sway`, `waybar`, `mako`, `kanshi`, `gtk`, `wireplumber`, `systemd` (user timers), `fontconfig`, `xdg-portals`, plus user-callable scripts in `bin/` (→ `~/.local/scripts/`, on PATH) and unit-internal helpers in `lib/` (→ `~/.local/lib/dotfiles/`, off PATH — addressed by absolute path from systemd units, sway, waybar).
 
 ### Also
 
@@ -102,11 +102,17 @@ Linux support is intentionally scoped to Fedora only:
 
 ```
 bootstrap.sh          # remote entrypoint — curl | sh
-scripts/              # apply, update, check, cleanup + common.sh
+bin/                  # stow package → ~/.local/scripts (on PATH)
+                      #   dot-apply, dot-update, dot-check, dot-cleanup
+                      #   personal user commands (dev, myip, tmux-sessionizer, …)
+lib/                  # stow package → ~/.local/lib/dotfiles (off PATH)
+                      #   helpers called by systemd/sway/waybar by absolute path
 ansible/              # playbook, roles, vars, Fedora package map
 ssh/ zsh/ tmux/ …     # stow packages → symlinked into $HOME
 docs/                 # design history and rationale
 ```
+
+The `bin/` vs `lib/` split mirrors the Linux FHS distinction between `/usr/bin` (user-callable, on PATH) and `/usr/libexec` (internal helpers, off PATH). Anything you'd type at the shell goes in `bin/`; anything invoked only by another program (a systemd unit, a Waybar exec, a sway exec, an OS udev rule) goes in `lib/`. Keeps PATH clean and tab-completion meaningful.
 
 ## Machine-Local Overrides
 
@@ -121,7 +127,7 @@ Shared config stays generic in the repo. Machine-specific values go in local fil
 
 ## Migrating From the Old Setup
 
-If you previously used the old `install` script with i3, run these steps before `./scripts/apply`:
+If you previously used the old `install` script with i3, run these steps before `dot-apply`:
 
 ```sh
 # 1. Preserve desktop launchers (old stow symlinks → real files)

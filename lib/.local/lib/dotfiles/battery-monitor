@@ -1,7 +1,5 @@
 #!/bin/bash
-# Poll UPower and fire a critical notification when battery is low.
-# Called every 30 seconds by ~/.config/systemd/user/battery-monitor.timer.
-#
+# Called every 30s by ~/.config/systemd/user/battery-monitor.timer.
 # Adapted from Omarchy (https://github.com/basecamp/omarchy).
 
 set -euo pipefail

@@ -4,4 +4,4 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-exec "$ROOT_DIR/scripts/apply" "$@"
+exec "$ROOT_DIR/bin/.local/scripts/dot-apply" "$@"

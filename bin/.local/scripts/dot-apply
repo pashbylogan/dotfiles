@@ -2,6 +2,6 @@
 
 set -euo pipefail
 
-source "$(dirname "$0")/common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/_dot-common.sh"
 
 run_playbook apply "$@"

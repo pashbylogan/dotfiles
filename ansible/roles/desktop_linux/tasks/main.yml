@@ -1,6 +1,6 @@
 ---
 # dconf tasks need an active D-Bus session. On a fresh TTY-only install
-# there is no session yet — they'll skip. Re-run `scripts/apply` from
+# there is no session yet — they'll skip. Re-run `dot-apply` from
 # inside sway (which provides DBUS_SESSION_BUS_ADDRESS) to apply them.
 # GTK3/GTK4 fallback dark-theme hints are handled by the `gtk` stow
 # package regardless, so the first-run case still gets dark mode.
@@ -326,6 +326,7 @@
     scope: user
     enabled: true
     state: started
+    daemon_reload: true
   failed_when: false
 
 # ─── Networking: systemd-resolved ───────────────────────────────────────────

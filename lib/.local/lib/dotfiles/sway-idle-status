@@ -1,4 +1,6 @@
 #!/usr/bin/env sh
+# Polled every 2s by waybar's custom/idle module.
+
 set -eu
 
 if swaymsg -t get_tree | jq -e '

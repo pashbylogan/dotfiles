@@ -26,7 +26,7 @@ die() { error "$@"; exit 1; }
 # ─── Core utilities ──────────────────────────────────────────────────────────
 
 repo_root() {
-  cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd
+  git -C "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" rev-parse --show-toplevel
 }
 
 _DOTFILES_OS="$(uname -s)"

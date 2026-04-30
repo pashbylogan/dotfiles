@@ -26,7 +26,7 @@
     "separate-outputs": true
   },
   "custom/idle": {
-    "exec": "$HOME/.local/scripts/sway-idle-status",
+    "exec": "$HOME/.local/lib/dotfiles/sway-idle-status",
     "interval": 2,
     "return-type": "json"
   },

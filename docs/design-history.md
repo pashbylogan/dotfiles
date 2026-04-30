@@ -621,9 +621,39 @@ First end-to-end run on Fedora 44 surfaced seven issues that were either F44-spe
 
 **Ghostty was never actually installed.** The `ghostty` stow package symlinks `~/.config/ghostty/` and the sway binding (`bindsym $mod+Return`) prefers ghostty over foot, but no Ansible task ever installed the binary. The fallback to foot quietly hid the gap — the user noticed only because rofi's drun list didn't include ghostty either (no `.desktop` file). Fedora has no main-repo package and no official-Fedora-maintained ghostty package exists yet (see [ghostty-org/ghostty#7438](https://github.com/ghostty-org/ghostty/discussions/7438) tracking that work). Upstream is explicit that Linux packaging is community-maintained and not endorsed by the project itself, but the [ghostty.org install page](https://ghostty.org/docs/install/binary) does list `scottames/ghostty` first under the Fedora section, so that's what we use. Considered alternatives: Terra (also linked by ghostty.org, but pulls a much larger meta-repo for one app), build-from-source (Zig toolchain + multi-minute compile per machine — too heavy for a converge step), and Flatpak (sandboxing complicates font/shell integration and changes the sway exec syntax to `flatpak run com.mitchellh.ghostty`). The COPR is the lightest first-party-ish path; if an official Fedora package or flathub-quality flatpak ships, swap to that.
 
+### 30. Script layout: PATH vs not-PATH (FHS / Omarchy pattern)
+
+The repo had grown three loosely-defined script buckets — `scripts/` (orchestrators, off PATH because you had to `cd` into the repo to run them), `bin/.local/scripts/` (everything else, all on PATH via stow), and `ansible/roles/desktop_linux/files/` (system-level helpers installed to `/usr/local/bin/`). The middle bucket was actually a mixed bag: real personal commands (`dev`, `myip`, `tmux-sessionizer`) sat next to scripts that nothing typed by hand ever invoked (`battery-monitor` is called by a systemd timer; `sway-idle-status` is polled every 2s by Waybar). Both classes were on PATH and tab-completable, which is noise — the unit-internal callees are never typed at the shell.
+
+The fix is a clean two-way split that mirrors the Linux **Filesystem Hierarchy Standard** distinction between `/usr/bin` (user-callable, on PATH) and `/usr/libexec` ("internal binaries not intended to be executed directly by users or shell scripts", off PATH). It's also the pattern Omarchy uses (`~/.local/share/omarchy/bin/` is on PATH and uses a brand prefix; `install/`, `migrations/`, `default/` are addressed by absolute path and never pollute the user's command space).
+
+**Concrete changes:**
+
+- **New `lib/` stow package** → `~/.local/lib/dotfiles/`. Holds unit-internal callees: `battery-monitor` and `sway-idle-status` moved here from `bin/.local/scripts/`. Their callers (`systemd/.../battery-monitor.service`, `waybar/.../config.jsonc`) updated to reference the new absolute path. The dir is *not* on PATH; everything that calls these scripts knows where they are.
+- **`scripts/` directory removed**, contents moved into `bin/.local/scripts/` with a `dot-` brand prefix:
+  - `scripts/apply` → `bin/.local/scripts/dot-apply`
+  - `scripts/check` → `bin/.local/scripts/dot-check`
+  - `scripts/update` → `bin/.local/scripts/dot-update`
+  - `scripts/cleanup` → `bin/.local/scripts/dot-cleanup`
+  - `scripts/common.sh` → `bin/.local/scripts/_dot-common.sh` (leading underscore + `.sh` suffix flag it as a sourced library, not a command)
+  - `repo_root()` rewritten to `readlink -f` the script's own location and walk up three dirs — works whether you invoke via the stow symlink or the in-repo path.
+- **You can now run `dot-apply`/`dot-check`/`dot-update` from any cwd**, no `cd ~/projects/dotfiles` required. `dot-<TAB>` lists the orchestrators; the personal commands (terse, no prefix) are unaffected.
+- **`brew-update` deleted** — leftover from when the repo was cross-platform; this is a Fedora-only repo and Homebrew isn't part of it.
+- **Stow's `-R` handles the orphan symlinks.** `stow -nv -R bin` confirmed: relocated/deleted entries (`battery-monitor`, `sway-idle-status`, `brew-update`) get UNLINK'd during the unstow phase before the re-stow, so no manual sweep is needed. (Earlier dex-autostart removal in §29 added entries to a `legacy_symlinks` array in `dot-cleanup`; that turned out to be belt-and-suspenders — verified the same `-R` behavior covers it. Left the dex entry in place for now since it's harmless.)
+- **`battery-monitor` systemd task gained `daemon_reload: true`.** The unit-file `ExecStart` path changed; without daemon-reload, systemd keeps invoking the old (now broken) path until the next manual `systemctl --user daemon-reload`.
+
+**What we deliberately did *not* do here**: collapse `scripts/cleanup`'s ~40 hand-rolled `is_installed`/`have` checks into per-replacement migration files (Omarchy- and chezmoi-style: dated one-shot scripts with marker files in `~/.local/state/`). That's a real next step — every `dot-cleanup` run today re-evaluates the same dozens of checks, where a migration would mark itself applied and self-eliminate after the first successful run on each machine. Tracked separately; this section's scope is just the PATH/not-PATH split.
+
+**References:**
+
+- [FHS 3.0 §4.7: `/usr/libexec`](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch04s07.html) — "internal binaries that are not intended to be executed directly by users or shell scripts."
+- [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir/latest/) — only standardizes `~/.local/bin` for user-PATH executables; `~/.local/lib/<app>/` is community practice for the libexec analogue.
+- [Omarchy migrations + bin-prefix pattern (DeepWiki)](https://deepwiki.com/basecamp/omarchy/10-configuration-management-and-migrations) — single PATH dir, brand prefix on every command, everything else absolute-path-addressed via `$OMARCHY_PATH`.
+- [chezmoi: `run_once_*` and `run_onchange_*` scripts](https://www.chezmoi.io/user-guide/use-scripts-to-perform-actions/) — the convergence-via-marker pattern that the deferred `dot-cleanup` → migrations rework would adopt.
+
 ## Current State
 
-The system has been validated in Docker containers across Ubuntu, Fedora, Arch, and openSUSE. Both `scripts/apply` (fresh install) and `scripts/update` (upgrade path) pass on all four distros.
+The system targets Fedora only (see "Linux Support" in the README). Earlier rounds were validated in Docker containers across Ubuntu, Fedora, Arch, and openSUSE; the multi-distro support was dropped during the §28/§29 cleanup passes when the package map collapsed to dnf-only. Current convergence (`dot-apply` fresh install, `dot-update` upgrade path) is validated on Fedora.
 
 ### Full Managed Software List
 
@@ -736,7 +766,8 @@ Everything below is installed and kept up to date by the playbook.
 | `nvim`     | `~/.config/nvim/` (includes lazy.nvim)                               |
 | `tmux`     | `~/.tmux.conf`                                                       |
 | `zsh`      | `~/.zshrc`, `~/.zsh_profile`, `~/.zsh_extras.example`                |
-| `bin`      | `~/.local/scripts/*` (user utility scripts)                          |
+| `bin`      | `~/.local/scripts/*` — user-callable scripts on PATH (`dot-*` orchestrators + personal commands) |
+| `lib`      | `~/.local/lib/dotfiles/*` — unit-internal helpers off PATH (called by systemd/sway/waybar by absolute path) |
 | `ghostty`  | `~/.config/ghostty/`                                                 |
 | `sway`     | `~/.config/sway/config`, `config.local.example` (linux_desktop only) |
 | `waybar`   | `~/.config/waybar/config.jsonc` (linux_desktop only)                 |

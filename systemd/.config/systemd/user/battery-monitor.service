@@ -3,4 +3,4 @@ Description=Check battery level and notify if low
 
 [Service]
 Type=oneshot
-ExecStart=%h/.local/scripts/battery-monitor
+ExecStart=%h/.local/lib/dotfiles/battery-monitor

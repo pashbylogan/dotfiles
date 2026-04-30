@@ -101,7 +101,7 @@ main() {
   success "Repo ready at ${REPO_DIR}"
 
   step "Handing off to apply"
-  DOTFILES_PROFILE="$PROFILE" "$REPO_DIR/scripts/apply"
+  DOTFILES_PROFILE="$PROFILE" "$REPO_DIR/bin/.local/scripts/dot-apply"
 }
 
 main "$@"
