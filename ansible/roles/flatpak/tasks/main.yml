@@ -1,0 +1,16 @@
+---
+- name: Ensure flathub remote is configured
+  become: true
+  community.general.flatpak_remote:
+    name: flathub
+    state: present
+    flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+    method: system
+
+- name: Update all flatpak apps and runtimes
+  become: true
+  ansible.builtin.command:
+    cmd: flatpak update --noninteractive --assumeyes
+  register: dotfiles_flatpak_update
+  changed_when: '"Nothing to do." not in dotfiles_flatpak_update.stdout'
+  when: dotfiles_mode == 'update'

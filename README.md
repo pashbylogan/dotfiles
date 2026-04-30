@@ -64,6 +64,10 @@ luks-tpm2-unlock enable
 | Fonts & icons   | `cascadia-mono-nf-fonts`, `google-noto-color-emoji-fonts`, `google-noto-sans-cjk-vf-fonts`, `adwaita-icon-theme` |
 | Networking      | `wireguard-tools`, `tailscale`                                                                                                         |
 
+### Sandboxed apps (via Flatpak)
+
+The `flathub` remote is configured system-wide so `flatpak install flathub <app>` works out of the box. Installed flatpak apps are not declaratively tracked, but `dot-update` runs `flatpak update` so they upgrade alongside dnf packages.
+
 ### User-managed runtimes (in `~/apps`)
 
 | Tool                                            | Location              | What `update` does                      |

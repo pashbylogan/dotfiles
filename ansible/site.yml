@@ -81,6 +81,8 @@
   roles:
     - role: filesystem
     - role: packages
+    - role: flatpak
+      when: dotfiles_resolved_profile == "linux_desktop"
     - role: user_tools
     - role: shell
     - role: stow
