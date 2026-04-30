@@ -698,6 +698,9 @@ Everything below is installed and kept up to date by the playbook.
 | `wireguard_tools`   | VPN tooling                               |
 | `build_tools`       | compiler toolchain (gcc, gcc-c++, make)   |
 | `python`            | Python 3 + pip                            |
+| `go`                | Go toolchain from Fedora (`golang`; pulls `golang-bin` for `/usr/bin/go`) |
+
+The shell profile exports `GOPATH`, `GOBIN`, `GOMODCACHE`, `GOCACHE`, and `GOENV` under `~/apps/go`, so the Fedora-provided `go` binary keeps tool installs, module cache, build cache, and Go's per-user env file inside this repo-managed app state layout.
 
 **OS packages (linux_desktop profile only):**
 

@@ -53,6 +53,7 @@ dotfiles_common_linux_packages:
   - wireguard_tools
   - build_tools
   - python
+  - go
 
 dotfiles_starship_enabled: true
 dotfiles_tailscale_enabled: true

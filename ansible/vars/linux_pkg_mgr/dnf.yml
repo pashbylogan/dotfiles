@@ -22,6 +22,8 @@ dotfiles_linux_pkg_map:
   python:
     - python3
     - python3-pip
+  go:
+    - golang
   wl_clipboard:
     - wl-clipboard
   mako_notifier:
