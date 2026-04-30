@@ -374,6 +374,7 @@
       ansible.builtin.package:
         name: iwd
         state: present
+      notify: Restart NetworkManager
 
     - name: Configure NetworkManager to use iwd as WiFi backend
       ansible.builtin.copy:
@@ -382,21 +383,19 @@
         content: |
           [device]
           wifi.backend=iwd
+      notify: Restart NetworkManager
 
-    - name: Disable wpa_supplicant (conflicts with iwd)
+    - name: Mask wpa_supplicant (conflicts with iwd)
       ansible.builtin.systemd_service:
         name: wpa_supplicant.service
         enabled: false
+        masked: true
         state: stopped
-      failed_when: false
+      notify: Restart NetworkManager
 
     - name: Enable iwd
       ansible.builtin.systemd_service:
         name: iwd.service
         enabled: true
         state: started
-
-    - name: Restart NetworkManager to pick up new backend
-      ansible.builtin.systemd_service:
-        name: NetworkManager.service
-        state: restarted
+      notify: Restart NetworkManager

@@ -47,6 +47,9 @@ collect_removable_packages() {
     powertop
     # Legacy PulseAudio — replaced by pipewire + pipewire-pulse compat.
     pulseaudio pulseaudio-utils pulseaudio-bluetooth
+    # Replaced by iwd as NM's WiFi backend. Safe on Fedora because
+    # NetworkManager-wifi only Recommends wpa_supplicant.
+    wpa_supplicant
     # Legacy updatedb — plocate replaces it.
     mlocate locate
     # Previously-managed packages we've since dropped for having overlapping

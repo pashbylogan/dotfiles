@@ -516,7 +516,9 @@ Omarchy uses pure `iwd` + `impala` (no NetworkManager). Full swap is too invasiv
 
 Gated behind `dotfiles_iwd_backend_enabled: false` in `group_vars/all.yml` because the swap disables `wpa_supplicant` and restarts NetworkManager, which briefly drops active WiFi connections. Opt-in by flipping the default to `true`.
 
-When enabled, the role writes `/etc/NetworkManager/conf.d/wifi-backend.conf`, disables `wpa_supplicant.service`, enables `iwd.service`, and restarts NetworkManager in the correct order.
+When enabled, the role writes `/etc/NetworkManager/conf.d/wifi-backend.conf`, masks `wpa_supplicant.service`, enables `iwd.service`, and restarts NetworkManager (via handler) only if any of those changed. Mask rather than disable so dbus activation can't resurrect wpa_supplicant. The package itself stays installed — removing it is opt-in via `dot-cleanup` since NetworkManager-wifi only weak-depends on it.
+
+**2026 follow-up.** Re-evaluation found the original "battery and connect-speed" framing unsourced (NM WiFi powersave is kernel/driver-driven; no published connect-speed benchmark) and the NM+iwd downsides concrete (enterprise 802.1X via NM GUI broken, no Geoclue backend, suspend/resume reconnect regressions, still flagged experimental upstream). Default stays `false`; toggle remains available for users who want the modern WPA3 stack.
 
 ### 24. Modernised git defaults
 
