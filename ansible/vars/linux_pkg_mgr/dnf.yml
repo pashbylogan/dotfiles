@@ -62,6 +62,9 @@ dotfiles_linux_pkg_map:
     - mate-polkit
   gnome_keyring:
     - gnome-keyring
+    # PAM module split out of gnome-keyring on Fedora 40+; required by
+    # authselect's with-pam-gnome-keyring feature.
+    - gnome-keyring-pam
   gvfs_mtp:
     - gvfs-mtp
   gvfs_smb:

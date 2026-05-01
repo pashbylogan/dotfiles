@@ -77,7 +77,9 @@ fi
 
 # ─── fzf ─────────────────────────────────────────────────────────────────────
 
-if command -v fzf >/dev/null 2>&1; then
+# fzf --zsh's option-restore eval toggles `zle`, which only works when stdout
+# is a tty; gate it so non-tty interactive shells don't emit `zle` warnings.
+if [[ -t 1 ]] && command -v fzf >/dev/null 2>&1; then
   eval "$(fzf --zsh)"
 fi
 

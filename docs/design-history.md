@@ -484,7 +484,7 @@ Nautilus's GNOME footprint is kept minimal:
 **Dark mode** is set system-wide via a new `desktop_linux` Ansible role using `community.general.dconf`:
 
 - `/org/gnome/desktop/interface/color-scheme` → `'prefer-dark'` — the canonical switch for libadwaita / modern GTK4. Nautilus picks this up directly from dconf even without `xdg-desktop-portal-gtk` providing the Settings portal.
-- New `gtk` stow package writes `gtk-application-prefer-dark-theme=1` to `~/.config/gtk-3.0/settings.ini` and `~/.config/gtk-4.0/settings.ini` as a fallback for legacy GTK3 apps and plain (non-libadwaita) GTK4 apps. It also ships small `gtk.css` files that keep GTK focus/accent colors aligned with the i3-style focused blue used by Sway and Waybar.
+- New `gtk` stow package writes `gtk-application-prefer-dark-theme=1` to `~/.config/gtk-3.0/settings.ini` as a fallback for legacy GTK3 apps. It also ships small `gtk.css` files that keep GTK focus/accent colors aligned with the i3-style focused blue used by Sway and Waybar. (No equivalent `gtk-4.0/settings.ini`: libadwaita reads it and emits an `Adwaita-WARNING` per launch saying the property is unsupported and to use `AdwStyleManager:color-scheme` — already covered by the dconf `color-scheme` key above.)
 
 Libadwaita and the `settings.ini` mechanism target different codepaths and don't conflict. `gtk-theme` is deliberately NOT forced to `Adwaita-dark` so users who install a different GTK theme still see it.
 
