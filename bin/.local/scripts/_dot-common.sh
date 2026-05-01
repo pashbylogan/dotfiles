@@ -112,15 +112,15 @@ run_playbook() {
 
   step "Running Ansible playbook"
 
+  local rc=0
   ANSIBLE_CONFIG="$root/ansible/ansible.cfg" ansible-playbook \
     -i "$root/ansible/inventory/hosts.yml" \
     "$root/ansible/site.yml" \
     -e "dotfiles_repo_root=$root" \
     -e "dotfiles_mode=$mode" \
     -e "dotfiles_profile=$profile" \
-    "$@"
+    "$@" || rc=$?
 
-  local rc=$?
   echo ""
   if [[ $rc -eq 0 ]]; then
     success "${BOLD}${mode^} complete.${NC}"

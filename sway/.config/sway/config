@@ -40,10 +40,6 @@ input type:pointer {
     pointer_accel 0.8
 }
 
-# ─── Output ──────────────────────────────────────────────────────────────────
-
-output * bg ~/.local/share/backgrounds/2024-01-17-18-06-42-spiral.png fill #000000
-
 # ─── Core ────────────────────────────────────────────────────────────────────
 
 floating_modifier $mod normal

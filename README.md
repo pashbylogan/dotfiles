@@ -7,9 +7,9 @@ Personal environment managed by [stow](https://www.gnu.org/software/stow/) + [An
 **Fresh machine** (needs only `curl` or `wget` and a package manager):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/pashbylogan/dotfiles/master/bootstrap.sh | sh
+curl -fsSL https://raw.githubusercontent.com/pashbylogan/dotfiles/ansible-bootstrap-and-convergence/bootstrap.sh | sh
 # or
-wget -qO- https://raw.githubusercontent.com/pashbylogan/dotfiles/master/bootstrap.sh | sh
+wget -qO- https://raw.githubusercontent.com/pashbylogan/dotfiles/ansible-bootstrap-and-convergence/bootstrap.sh | sh
 ```
 
 **Day-to-day** (from anywhere — `~/.local/scripts` is on PATH after first apply):
