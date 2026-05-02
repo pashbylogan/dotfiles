@@ -1,7 +1,7 @@
 cursor-style = block
 shell-integration-features = no-cursor
 gtk-titlebar = false
-background-opacity = 0.8
+background-opacity = 0.9
 theme = TokyoNight
 working-directory = home
 window-inherit-working-directory = false

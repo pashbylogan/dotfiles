@@ -132,7 +132,7 @@ bindsym $mod+r mode "resize"
 # ─── Appearance ──────────────────────────────────────────────────────────────
 
 default_border pixel 2
-client.focused #77dd77 #285577 #ffffff #2e9ef4 #285577
+client.focused #285577 #285577 #ffffff #2e9ef4 #285577
 
 # ─── Workspace assignments ───────────────────────────────────────────────────
 

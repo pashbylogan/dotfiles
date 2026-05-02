@@ -1,7 +1,9 @@
 # Optional aliases and functions that were removed from the managed shell config.
-# Copy what you need into ~/.zsh_extras and it will be loaded automatically.
+# Copy what you need into zsh/.zsh_extras and it will be stowed to
+# ~/.zsh_extras automatically on the next dot-apply.
 #
-# cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
+# cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/projects/dotfiles/zsh/.zsh_extras
+# dot-apply
 
 # ─── ~/apps PATH entries (uncomment if installed locally, not via pkg mgr) ───
 

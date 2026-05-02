@@ -45,7 +45,8 @@ gh auth login
 
 # Optional: copy local overrides from examples
 cp ~/projects/dotfiles/sway/.config/sway/config.local.example ~/.config/sway/config.local
-cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
+cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/projects/dotfiles/zsh/.zsh_extras
+dot-apply
 
 # Optional: TPM2 auto-unlock for root LUKS, keeping your passphrase as fallback
 luks-tpm2-unlock status
@@ -125,7 +126,7 @@ Shared config stays generic in the repo. Machine-specific values go in local fil
 | What                              | Local file                              | Example                                                          |
 | --------------------------------- | --------------------------------------- | ---------------------------------------------------------------- |
 | SSH hosts                         | `~/.ssh/config.local`                   | [`config.local.example`](ssh/.ssh/config.local.example)          |
-| Shell aliases/functions           | `~/.zsh_extras`                         | [`zsh_extras.example`](zsh/.zsh_extras.example)                  |
+| Shell aliases/functions           | `~/.zsh_extras` via gitignored `zsh/.zsh_extras` | [`zsh_extras.example`](zsh/.zsh_extras.example)                  |
 | Sway workspace/input/output rules | `~/.config/sway/config.local`           | [`config.local.example`](sway/.config/sway/config.local.example) |
 | Desktop launchers                 | `~/.local/share/applications/*.desktop` | manage via Flatpak or directly                                   |
 
@@ -148,8 +149,8 @@ for pkg in i3 i3status picom desktops; do stow -D "$pkg" 2>/dev/null; done
 # 3. Move SSH hosts to config.local
 # Copy your Host entries from ~/.ssh/config into ~/.ssh/config.local
 
-# 4. Move personal aliases to ~/.zsh_extras
-cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/.zsh_extras
+# 4. Move personal aliases to zsh/.zsh_extras; dot-apply stows it to ~/.zsh_extras
+cp ~/projects/dotfiles/zsh/.zsh_extras.example ~/projects/dotfiles/zsh/.zsh_extras
 # Edit and uncomment what you need
 
 # 5. Move workspace rules to sway config.local
