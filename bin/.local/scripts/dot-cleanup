@@ -8,15 +8,15 @@ collect_removable_packages() {
   local -n pkgs=$1
   pkgs=()
 
-  # Desktop environments (we use sway). Nautilus is intentionally NOT listed —
-  # we install it as our file manager even without the rest of GNOME.
+  # Desktop environments (we use sway). Nautilus and GNOME System Monitor are
+  # intentionally NOT listed — we install both without the rest of GNOME.
   # totem/eog/loupe/showtime are all replaced by mpv + imv.
   local de_packages=(
     gnome-shell gnome-session mutter gnome-control-center
     gnome-terminal gnome-text-editor gnome-calculator gnome-calendar
     gnome-characters gnome-clocks gnome-contacts gnome-font-viewer
     gnome-logs gnome-maps gnome-music gnome-photos gnome-screenshot
-    gnome-system-monitor gnome-weather gnome-disk-utility
+    gnome-weather gnome-disk-utility
     totem eog loupe showtime evince gedit cheese baobab yelp
     gnome-software gnome-tour gnome-user-docs
     plasma-desktop plasma-workspace kwin-wayland dolphin konsole kate
@@ -35,7 +35,7 @@ collect_removable_packages() {
     xterm
     xdotool xdg-utils
     light  # replaced by brightnessctl
-    htop  # replaced by btop
+    htop btop  # replaced by gnome-system-monitor
     thunar  # replaced by nautilus
     # polkit-gnome was removed from Fedora 41+; we use mate-polkit now.
     # This line catches leftovers from machines upgraded from older Fedora.
@@ -47,9 +47,6 @@ collect_removable_packages() {
     powertop
     # Legacy PulseAudio — replaced by pipewire + pipewire-pulse compat.
     pulseaudio pulseaudio-utils pulseaudio-bluetooth
-    # Replaced by iwd as NM's WiFi backend. Safe on Fedora because
-    # NetworkManager-wifi only Recommends wpa_supplicant.
-    wpa_supplicant
     # Legacy updatedb — plocate replaces it.
     mlocate locate
     # Previously-managed packages we've since dropped for having overlapping
@@ -64,10 +61,33 @@ collect_removable_packages() {
   )
 
   for pkg in "${de_packages[@]}" "${dm_packages[@]}" "${replaced_packages[@]}"; do
-    if is_installed "$pkg"; then
+    if is_installed "$pkg" && ! is_protected_package "$pkg"; then
       pkgs+=("$pkg")
     fi
   done
+}
+
+is_protected_package() {
+  local pkg="$1"
+
+  # Do not let cleanup touch the live network stack. Some of these are weak
+  # deps/recommends on Fedora, so `dnf autoremove` can break Wi-Fi even when
+  # the package is still part of our desired desktop profile.
+  local protected_packages=(
+    NetworkManager
+    NetworkManager-wifi
+    network-manager-applet
+    wpa_supplicant
+    iwd
+    which
+  )
+
+  local protected
+  for protected in "${protected_packages[@]}"; do
+    [[ "$pkg" == "$protected" ]] && return 0
+  done
+
+  return 1
 }
 
 is_installed() {
@@ -86,7 +106,6 @@ remove_packages() {
 
   if have dnf; then
     run_root dnf remove -y "${pkgs[@]}" 2>/dev/null || true
-    run_root dnf autoremove -y 2>/dev/null || true
   fi
 }
 
@@ -137,6 +156,7 @@ collect_orphaned_configs() {
     ["$HOME/.screenlayout"]=arandr
     # Replaced tools
     ["$HOME/.config/htop"]=htop
+    ["$HOME/.config/btop"]=btop
     ["$HOME/.config/Thunar"]=thunar
     ["$HOME/.config/xfce4"]=thunar
     # oh-my-zsh (replaced by plain zsh + starship)

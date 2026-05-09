@@ -431,11 +431,11 @@ Added: sway, swaylock, swayidle, swaybg, grim, slurp, wl-clipboard, brightnessct
 
 **Blur**: Sway does not support compositor-level blur (dual_kawase). Ghostty's own `background-opacity = 0.8` still works natively. A new `ext-background-effect-v1` Wayland protocol was merged into wayland-protocols in May 2025, which will let any client request blur from any supporting compositor. No compositor has shipped a stable implementation yet. When Sway adds support, blur will return without needing SwayFX or Hyprland. This is the planned path.
 
-### 15. Added delta and btop
+### 15. Added delta and a process viewer
 
 delta: syntax-highlighted git diffs with line numbers, configured via `git config` in the Ansible shell role. Replaces raw `diff` output.
 
-btop: modern process viewer replacing `top`/`htop`. Both are in default repos on all four distros.
+btop was originally used as a modern terminal process viewer replacing `top`/`htop`. It was later replaced with GNOME System Monitor for the desktop profile: still Fedora-mainline and Wayland-native through GTK, but much easier to scan than another dense terminal dashboard. Non-desktop profiles do not install a graphical process viewer.
 
 ### 16. Security Hardening
 
@@ -541,7 +541,7 @@ Three follow-on tweaks to actually exercise the new backends rather than leave t
 
 **`xdg-desktop-portal-gtk` for Firefox / Electron dark mode.** `xdg-desktop-portal-wlr` handles screen sharing but doesn't implement the `org.freedesktop.portal.Settings` interface. Without a Settings-capable portal, Firefox can't find our `color-scheme` dconf key and its chrome stays light. `xdg-desktop-portal-gtk` fills that gap — it reads GSettings and exposes `color-scheme` over D-Bus. Works fine on non-GNOME systems. New `xdg-portals` stow package writes `~/.config/xdg-desktop-portal/sway-portals.conf` to route Settings to `gtk` while keeping Screenshot/ScreenCast on `wlr`.
 
-**Cleanup script extensions.** `scripts/cleanup` now also offers to remove packages that conflict with the new stack if they were previously installed: `tlp`, `tlp-rdw`, `auto-cpufreq`, `tuned`, `tuned-ppd`, `powertop` (fight power-profiles-daemon for the same kernel knobs), `pulseaudio`/`pulseaudio-utils`/`pulseaudio-bluetooth` (replaced by pipewire + pipewire-pulse compat), and `mlocate`/`locate` (replaced by plocate).
+**Cleanup script extensions.** `scripts/cleanup` now also offers to remove packages that conflict with the new stack if they were previously installed: `tlp`, `tlp-rdw`, `auto-cpufreq`, `tuned`, `tuned-ppd`, `powertop` (fight power-profiles-daemon for the same kernel knobs), `pulseaudio`/`pulseaudio-utils`/`pulseaudio-bluetooth` (replaced by pipewire + pipewire-pulse compat), and `mlocate`/`locate` (replaced by plocate). Cleanup deliberately does not remove Wi-Fi stack packages or run `dnf autoremove`; Fedora weak deps/recommends can otherwise remove still-managed packages such as `NetworkManager-wifi`.
 
 ### 26. Idle inhibit for fullscreen video
 
@@ -720,7 +720,7 @@ Everything below is installed and kept up to date by the playbook.
 | `age`               | encryption                                |
 | `gh`                | GitHub CLI                                |
 | `delta`             | syntax-highlighted git diffs              |
-| `btop`              | process viewer (replaces top/htop)        |
+| `which`             | command lookup utility                    |
 | `unzip`             | archive utility                           |
 | `jq`                | JSON processor                            |
 | `rsync`             | file sync                                 |
@@ -774,6 +774,7 @@ The shell profile exports `GOPATH`, `GOBIN`, `GOMODCACHE`, `GOCACHE`, and `GOENV
 | `plocate`                 | fast file indexer (`locate`)                                 |
 | `upower`                  | power / battery state D-Bus service                          |
 | `nautilus`                | file manager (GTK4/libadwaita, dark-mode-aware)              |
+| `gnome_system_monitor`    | readable GTK process/resource monitor                        |
 | `gvfs_mtp` / `_smb` / `_nfs` | Nautilus backends for phones / SMB / NFS                  |
 | `ffmpegthumbnailer`       | Nautilus video thumbnail generator                           |
 | `glycin_thumbnailer`      | Nautilus image thumbnails (webp/jpeg/png/etc. via Glycin)    |
@@ -878,7 +879,7 @@ Potential additions that are well-maintained and widely adopted. None are blocki
 | `ext-background-effect-v1`                        | Wayland protocol for compositor blur — merged May 2025, awaiting Sway implementation |
 | [SwayFX](https://github.com/WillPower3309/swayfx) | Drop-in Sway fork with blur/shadows/rounded corners (interim option)                 |
 | Keybinding cheatsheet (e.g. `Super+?`)            | Small script that greps `bindsym` from sway config and pipes to `swaynag` or `rofi -dmenu`. Discoverability for a keyboard-only desktop without adopting omarchy's full `omarchy-menu`. |
-| Unified theme primitive                           | See [theming-plan.md](theming-plan.md) — single palette file drives ghostty/sway/mako/btop/nvim through stable include paths. Level 0 is a single baked-in Tokyo Night palette, ~40 LoC across existing configs. |
+| Unified theme primitive                           | See [theming-plan.md](theming-plan.md) — single palette file drives ghostty/sway/mako/nvim through stable include paths. Level 0 is a single baked-in Tokyo Night palette, ~40 LoC across existing configs. |
 
 **Security/privacy**:
 

@@ -60,6 +60,8 @@ dotfiles_linux_pkg_map:
     - adwaita-icon-theme
   mate_polkit:
     - mate-polkit
+  gnome_system_monitor:
+    - gnome-system-monitor
   gnome_keyring:
     - gnome-keyring
     # PAM module split out of gnome-keyring on Fedora 40+; required by

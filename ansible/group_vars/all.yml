@@ -41,7 +41,7 @@ dotfiles_common_linux_packages:
   - age
   - gh
   - delta
-  - btop
+  - which
   - unzip
   - jq
   - rsync

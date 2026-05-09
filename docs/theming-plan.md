@@ -33,7 +33,6 @@ colors.toml        # ~20 k=v hex pairs: background, foreground, accent,
                    # cursor, selection_*, color0..color15
 backgrounds/       # wallpapers
 preview.png
-btop.theme         # pre-baked (not templated) app configs
 icons.theme
 keyboard.rgb
 neovim.lua         # LazyVim plugin spec: colorscheme = "tokyonight-night"
@@ -47,7 +46,7 @@ etc. `omarchy-theme-set-templates` builds a sed script from `colors.toml` and
 emits three variants per key: `{{ key }}` (raw hex), `{{ key_strip }}` (no
 `#`), `{{ key_rgb }}` (decimal `r,g,b`). No jinja, no yq — just sed.
 
-Template coverage: alacritty, ghostty, kitty, btop, mako, hyprland, hyprlock,
+Template coverage: alacritty, ghostty, kitty, mako, hyprland, hyprlock,
 walker CSS, waybar CSS, swayosd CSS, chromium theme color, obsidian CSS.
 
 Rule: if the app reads a plain-text config, use a `.tpl`. If the app has a
@@ -61,7 +60,6 @@ Every app's config points at a stable path:
 ```
 ~/.config/omarchy/current/theme  -> symlink, rotated on each swap
 ~/.config/mako/config            -> ../omarchy/current/theme/mako.ini
-~/.config/btop/themes/current.theme -> ../omarchy/current/theme/btop.theme
 ```
 
 `omarchy-theme-set <name>` stages everything into
@@ -105,7 +103,6 @@ theme/.config/dotfiles-theme/
   sway.conf        # client.focused / unfocused, border colors
   mako.ini         # theme-adjacent keys only (text/border/background color)
   ghostty.conf     # palette = 0=#… lines
-  btop.theme
   waybar.css       # optional — only if/when waybar gets a stylesheet
   nvim-colorscheme # plain text: "tokyonight-night"
 ```
@@ -122,7 +119,6 @@ include ~/.config/dotfiles-theme/mako.ini
 # ghostty
 config-file = ~/.config/dotfiles-theme/ghostty.conf
 
-# btop: symlink theme file, set color_theme = "dotfiles-theme"
 # nvim: one plugin file that reads nvim-colorscheme and passes it to LazyVim
 ```
 
@@ -135,7 +131,7 @@ Only once we actually want a second palette.
 
 ```
 theme/.config/dotfiles-theme/themes/
-  tokyo-night/{sway.conf, mako.ini, ghostty.conf, btop.theme, nvim-colorscheme, …}
+  tokyo-night/{sway.conf, mako.ini, ghostty.conf, nvim-colorscheme, …}
   gruvbox/{same files}
   nord/{same files}
 
@@ -202,7 +198,6 @@ Level 0 is reachable today with ~40 lines of edits across these files:
 | `mako/.config/mako/config` | Move `border-color` / `background-color` / `text-color` to a separate theme file, `include` it |
 | `ghostty/.config/ghostty/config` | Replace `theme = TokyoNight` with `config-file = ~/.config/dotfiles-theme/ghostty.conf` |
 | `nvim/.config/nvim/lua/plugins/` | New `colorscheme.lua` that reads `~/.config/dotfiles-theme/nvim-colorscheme` and passes it to LazyVim's `opts.colorscheme` |
-| `btop` (new stow package or ansible role write) | Symlink `~/.config/btop/themes/dotfiles-theme.theme` → `~/.config/dotfiles-theme/btop.theme`, set `color_theme = "dotfiles-theme"` in `btop.conf` |
 | `docs/design-history.md` | New section (28?): "Unified theme primitive, not a full theme engine" |
 
 Baseline palette suggestion: Tokyo Night, to preserve visual continuity with

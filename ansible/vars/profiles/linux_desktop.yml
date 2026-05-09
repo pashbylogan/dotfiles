@@ -32,6 +32,7 @@ dotfiles_profile_linux_packages_common:
   - plocate
   - upower
   - nautilus
+  - gnome_system_monitor
   - gvfs_mtp
   - gvfs_smb
   - gvfs_nfs
