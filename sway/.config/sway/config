@@ -46,7 +46,7 @@ floating_modifier $mod normal
 
 bindsym $mod+Return exec sh -c 'if command -v ghostty >/dev/null 2>&1; then exec ghostty; else exec foot; fi'
 bindsym $mod+Shift+q kill
-bindsym $mod+d exec rofi -show drun -show-icons
+bindsym $mod+d exec env XDG_CURRENT_DESKTOP=sway XDG_SESSION_DESKTOP=sway DESKTOP_SESSION=sway rofi -show drun -show-icons -drun-reload-desktop-cache -drun-categories 'Network,WebBrowser,Utility,FileManager,TextEditor,AudioVideo,Audio,Video,Player,Graphics,Settings,Monitor,TerminalEmulator'
 bindsym $mod+Shift+c reload
 bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit sway?' -B 'Yes, exit sway' 'swaymsg exit'
 

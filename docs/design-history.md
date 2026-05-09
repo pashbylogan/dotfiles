@@ -578,6 +578,8 @@ Target install is **Fedora Everything 43** (Workstation's defaults are not avail
 
 **Visual feedback.** `swayosd-server` autostarts from sway; `swayosd-client` replaces raw wpctl/brightnessctl bindings with combined hardware-change + on-screen-indicator calls. `playerctl` covers `XF86AudioPlay/Pause/Next/Prev`. swayosd ships via the upstream maintainer's COPR — originally `erikreider/swayosd`, switched to `erikreider/packages` (`swayosd-git`) on Fedora 44 (see §29). `wob` is the main-repo alternative but requires per-binding shell glue that costs more than the COPR.
 
+**Rofi application list.** The drun binding passes `XDG_CURRENT_DESKTOP=sway` explicitly so desktop files with `OnlyShowIn` / `NotShowIn` are filtered correctly even in a TTY-started Sway session. It also whitelists user-facing application categories rather than maintaining per-app `.desktop` overrides; this keeps uncategorized helper entries like `rofi` and `rofi-theme-selector` out of the launcher without owning an applications folder.
+
 **Mako notifications.** Mako is kept as the Wayland notification daemon because Sway does not provide one. The config leaves Mako's default colors and font intact, but makes the popup shape more polished: 360px width, 12px margin/padding, 1px border, 8px radius, smaller icons, and app-name grouping. `[urgency=critical] default-timeout=0` pins critical alerts; `[mode=do-not-disturb] invisible=true` silences everything else. Critical still pops in DND. Toggle via `makoctl mode -t do-not-disturb`.
 
 **Safety drop-ins.**
