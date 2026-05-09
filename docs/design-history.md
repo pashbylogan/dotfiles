@@ -592,6 +592,8 @@ Target install is **Fedora Everything 43** (Workstation's defaults are not avail
 
 **Default apps.** `mpv` + `imv` defaulted for 9 video + 9 image mimetypes via `~/.config/mimeapps.list` written by `community.general.ini_file`. mpv uses main-repo `ffmpeg-free`; enable RPM Fusion + `dnf swap ffmpeg-free ffmpeg` if HEVC/proprietary codecs come up.
 
+**Screenshots.** The `Print` binding captures a selected region with `grim` + `slurp`, saves a PNG under `/tmp`, and pipes the same file to `wl-copy --type image/png`. The explicit MIME type matters for apps that request an image format from the Wayland clipboard instead of guessing from bytes.
+
 **Third-party repos.** Pinned in `group_vars/all.yml` under `dotfiles_copr_repos` and enabled idempotently from the `packages` role via `creates:`:
 
 - `erikreider/packages` — `swayosd-git` (upstream maintainer's git-snapshot COPR; was `erikreider/swayosd` on F43, see §29). Main-repo `wob` requires per-binding shell glue.

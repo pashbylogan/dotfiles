@@ -167,7 +167,7 @@ bindsym XF86AudioNext exec playerctl next
 bindsym XF86AudioPrev exec playerctl previous
 
 # Screenshot
-bindsym Print exec sh -c 'f="/tmp/Screenshot_$(date +%Y-%m-%d-%I.%M.%S_%p).png" && grim -g "$(slurp)" "$f" && wl-copy < "$f"'
+bindsym Print exec sh -c 'f="/tmp/Screenshot_$(date +%Y-%m-%d-%I.%M.%S_%p).png" && grim -g "$(slurp)" "$f" && wl-copy --type image/png < "$f"'
 
 # ─── Machine-local overrides ────────────────────────────────────────────────
 include ~/.config/sway/config.local
