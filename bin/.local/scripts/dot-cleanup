@@ -61,33 +61,10 @@ collect_removable_packages() {
   )
 
   for pkg in "${de_packages[@]}" "${dm_packages[@]}" "${replaced_packages[@]}"; do
-    if is_installed "$pkg" && ! is_protected_package "$pkg"; then
+    if is_installed "$pkg"; then
       pkgs+=("$pkg")
     fi
   done
-}
-
-is_protected_package() {
-  local pkg="$1"
-
-  # Do not let cleanup touch the live network stack. Some of these are weak
-  # deps/recommends on Fedora, so `dnf autoremove` can break Wi-Fi even when
-  # the package is still part of our desired desktop profile.
-  local protected_packages=(
-    NetworkManager
-    NetworkManager-wifi
-    network-manager-applet
-    wpa_supplicant
-    iwd
-    which
-  )
-
-  local protected
-  for protected in "${protected_packages[@]}"; do
-    [[ "$pkg" == "$protected" ]] && return 0
-  done
-
-  return 1
 }
 
 is_installed() {
