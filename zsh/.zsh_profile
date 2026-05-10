@@ -35,6 +35,10 @@ alias ssh='TERM=xterm-256color ssh'
 alias vim='nvim'
 alias vimrc='nvim $HOME/.config/nvim/'
 
+function nautilus() {
+    GDK_BACKEND=x11 GSK_RENDERER="${GSK_RENDERER:-gl}" command nautilus "$@"
+}
+
 # git
 alias gs='git status'
 alias gap='git add -p'
