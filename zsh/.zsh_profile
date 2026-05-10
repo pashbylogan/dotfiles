@@ -36,7 +36,7 @@ alias vim='nvim'
 alias vimrc='nvim $HOME/.config/nvim/'
 
 function nautilus() {
-    GDK_BACKEND=x11 GSK_RENDERER="${GSK_RENDERER:-gl}" command nautilus "$@"
+    GSK_RENDERER=gl command nautilus "$@" >/dev/null 2>&1 &!
 }
 
 # git
