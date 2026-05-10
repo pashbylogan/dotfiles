@@ -64,10 +64,6 @@ dotfiles_copr_repos:
   - erikreider/packages   # swayosd (volume/brightness/caps OSD) — see §29
   - scottames/ghostty     # ghostty terminal — listed on ghostty.org Fedora install page, see §29
 
-# Use iwd as NetworkManager's WiFi backend (better battery, faster connects).
-# Off by default because it swaps wpa_supplicant for iwd on your machine —
-# flip to true after you've confirmed the trade-off is safe for you.
-dotfiles_iwd_backend_enabled: false
 dotfiles_uv_enabled: true
 dotfiles_uv_root: "{{ dotfiles_apps_root }}/uv"
 dotfiles_uv_bin_dir: "{{ dotfiles_uv_root }}/bin"

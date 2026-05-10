@@ -510,15 +510,13 @@ Borrowed selectively from [Omarchy](https://github.com/basecamp/omarchy) (DHH's 
 
 **Skipped:** `thermald` (Intel-only; user is moving to AMD), `intel-lpmd` (Arch-only). These can be added later if needed.
 
-### 23. iwd as NetworkManager's WiFi backend (opt-in)
+### 23. iwd as NetworkManager's WiFi backend (removed)
 
-Omarchy uses pure `iwd` + `impala` (no NetworkManager). Full swap is too invasive for a portable dotfiles repo — NetworkManager is the default on all four distros and handles VPN plugins, enterprise WiFi, cellular, and the tray applet. But the Arch wiki-recommended middle ground — NetworkManager with `wifi.backend=iwd` — gives us iwd's battery and connect-speed benefits while keeping NM's ergonomics.
+Omarchy uses pure `iwd` + `impala` (no NetworkManager). Full swap is too invasive for a portable dotfiles repo because NetworkManager is the default on all four distros and handles VPN plugins, enterprise WiFi, cellular, and the tray applet.
 
-Gated behind `dotfiles_iwd_backend_enabled: false` in `group_vars/all.yml` because the swap disables `wpa_supplicant` and restarts NetworkManager, which briefly drops active WiFi connections. Opt-in by flipping the default to `true`.
+The repo briefly carried an opt-in NetworkManager backend switch. Re-evaluation found the original "battery and connect-speed" framing unsourced: NM WiFi powersave is kernel/driver-driven, and no published connect-speed benchmark justified a second code path. The downsides were concrete: enterprise 802.1X via NM GUI broken, no Geoclue backend, suspend/resume reconnect regressions, and upstream still flags the backend experimental.
 
-When enabled, the role writes `/etc/NetworkManager/conf.d/wifi-backend.conf`, masks `wpa_supplicant.service`, enables `iwd.service`, and restarts NetworkManager (via handler) only if any of those changed. Mask rather than disable so dbus activation can't resurrect wpa_supplicant. The package itself stays installed — removing it is opt-in via `dot-cleanup` since NetworkManager-wifi only weak-depends on it.
-
-**2026 follow-up.** Re-evaluation found the original "battery and connect-speed" framing unsourced (NM WiFi powersave is kernel/driver-driven; no published connect-speed benchmark) and the NM+iwd downsides concrete (enterprise 802.1X via NM GUI broken, no Geoclue backend, suspend/resume reconnect regressions, still flagged experimental upstream). Default stays `false`; toggle remains available for users who want the modern WPA3 stack.
+The option was removed in 2026. This repo stays on the distro-default NetworkManager + `wpa_supplicant` path instead of maintaining an explicit `iwd` migration flag.
 
 ### 24. Modernised git defaults
 

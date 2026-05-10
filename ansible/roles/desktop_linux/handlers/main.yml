@@ -16,9 +16,3 @@
 - name: Reload sysctl
   ansible.builtin.command: sysctl --system
   become: true
-
-- name: Restart NetworkManager
-  ansible.builtin.systemd_service:
-    name: NetworkManager.service
-    state: restarted
-  become: true
