@@ -62,7 +62,7 @@ luks-tpm2-unlock enable
 | Core CLI        | `git`, `zsh`, `tmux`, `neovim`, `fzf`, `ripgrep`, `fd`, `age`, `gh`, `delta`, `which`, `jq`, `rsync`, `netcat`, `lsof`, `patch`, `stow`, `golang` |
 | Desktop (Wayland stack) | `sway`, `swaylock`, `swayidle`, `swaybg`, `kanshi`, `waybar`, `swayosd`, `rofi`, `grim`, `slurp`, `wl-clipboard`, `brightnessctl`, `mako`, `foot`, `ghostty`, `playerctl`, `xdg-desktop-portal{,-wlr,-gtk}` |
 | Desktop (apps + services) | `nautilus`, `gnome-system-monitor`, `gvfs-{mtp,smb,nfs}`, `ffmpegthumbnailer`, `glycin-thumbnailer`, `mpv`, `imv`, `mate-polkit`, `gnome-keyring`, `pavucontrol`, `pipewire`, `wireplumber`, `pipewire-{pulseaudio,alsa,jack-audio-connection-kit}`, `alsa-ucm`, `bluez`, `blueman`, `NetworkManager-wifi`, `nm-applet`, `power-profiles-daemon`, `plocate`, `upower`, `dconf`, `python3-psutil`, `zram-generator-defaults` |
-| Fonts & icons   | `cascadia-mono-nf-fonts`, `google-noto-color-emoji-fonts`, `google-noto-sans-cjk-vf-fonts`, `adwaita-icon-theme` |
+| Fonts & icons   | `cascadia-mono-nf-fonts`, `google-noto-color-emoji-fonts`, `google-noto-sans-cjk-vf-fonts`, `yaru-icon-theme` |
 | Networking      | `wireguard-tools`, `tailscale`                                                                                                         |
 
 ### Sandboxed apps (via Flatpak)

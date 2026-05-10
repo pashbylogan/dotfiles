@@ -574,7 +574,7 @@ Target install is **Fedora Everything 43** (Workstation's defaults are not avail
 
 **Desktop integration.** `mate-polkit` (autostarted from sway, exec `/usr/libexec/polkit-mate-authentication-agent-1`) replaces `polkit-gnome`, removed in Fedora 41+. `gnome-keyring` provides the Secret Service backend via `authselect enable-feature with-pam-gnome-keyring` — without GDM to wire it, Sway-only sessions need the authselect opt-in. Nautilus depends on `gvfs-mtp`, `gvfs-smb`, `gvfs-nfs`, `ffmpegthumbnailer` for phone/SMB/NFS browsing and video thumbnails. (F43 also pulled `webp-pixbuf-loader` for image/webp thumbnails; F44+ replaces it with Glycin — see §29.)
 
-**Fonts and icons.** `google-noto-color-emoji-fonts`, `google-noto-sans-cjk-vf-fonts`, `cascadia-mono-nf-fonts` (Microsoft Cascadia Mono with Nerd Font glyphs — main F43 repo, kicks in via fontconfig fallback when waybar/tmux requests Nerd glyphs), `adwaita-icon-theme` + dconf `icon-theme = 'Adwaita'`.
+**Fonts and icons.** `google-noto-color-emoji-fonts`, `google-noto-sans-cjk-vf-fonts`, `cascadia-mono-nf-fonts` (Microsoft Cascadia Mono with Nerd Font glyphs — main F43 repo, kicks in via fontconfig fallback when waybar/tmux requests Nerd glyphs), and `yaru-icon-theme` + dconf `icon-theme = 'Yaru'` for the active GTK icon theme. Yaru stays in Fedora's main repos and improves Nautilus folder icons without taking over GTK widget styling. GTK4 still pulls `adwaita-icon-theme` transitively, so Adwaita remains available as the libadwaita fallback set without being declared here.
 
 **Visual feedback.** `swayosd-server` autostarts from sway; `swayosd-client` replaces raw wpctl/brightnessctl bindings with combined hardware-change + on-screen-indicator calls. `playerctl` covers `XF86AudioPlay/Pause/Next/Prev`. swayosd ships via the upstream maintainer's COPR — originally `erikreider/swayosd`, switched to `erikreider/packages` (`swayosd-git`) on Fedora 44 (see §29). `wob` is the main-repo alternative but requires per-binding shell glue that costs more than the COPR.
 
@@ -791,7 +791,7 @@ The shell profile exports `GOPATH`, `GOBIN`, `GOMODCACHE`, `GOCACHE`, and `GOENV
 | `nerd_fonts`              | Cascadia Mono NF — programming font + Nerd glyphs            |
 | `noto_color_emoji_fonts`  | color emoji coverage                                         |
 | `noto_sans_cjk_fonts`     | CJK coverage                                                 |
-| `adwaita_icon_theme`      | libadwaita / Nautilus icon theme                             |
+| `yaru_icon_theme`         | active GTK icon theme for Nautilus and app icons             |
 | `dconf`                   | dconf CLI (runtime dep of `community.general.dconf`)         |
 | `python_psutil`           | Python psutil (runtime dep of `community.general.dconf`)     |
 

@@ -14,10 +14,10 @@
         value: "'prefer-dark'"
         state: present
 
-    - name: Set GTK icon theme to Adwaita
+    - name: Set GTK icon theme to Yaru
       community.general.dconf:
         key: /org/gnome/desktop/interface/icon-theme
-        value: "'Adwaita'"
+        value: "'Yaru'"
         state: present
 
 # ─── Default apps (xdg-mime) ────────────────────────────────────────────────

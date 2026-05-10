@@ -56,8 +56,8 @@ dotfiles_linux_pkg_map:
     - google-noto-color-emoji-fonts
   noto_sans_cjk_fonts:
     - google-noto-sans-cjk-vf-fonts
-  adwaita_icon_theme:
-    - adwaita-icon-theme
+  yaru_icon_theme:
+    - yaru-icon-theme
   mate_polkit:
     - mate-polkit
   gnome_system_monitor:
