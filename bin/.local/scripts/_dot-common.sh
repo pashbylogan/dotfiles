@@ -112,6 +112,11 @@ run_playbook() {
 
   step "Running Ansible playbook"
 
+  local -a hostname_args=()
+  if [[ -n "${DOTFILES_HOSTNAME:-}" ]]; then
+    hostname_args=(-e "dotfiles_hostname=${DOTFILES_HOSTNAME}")
+  fi
+
   local rc=0
   ANSIBLE_CONFIG="$root/ansible/ansible.cfg" ansible-playbook \
     -i "$root/ansible/inventory/hosts.yml" \
@@ -119,6 +124,7 @@ run_playbook() {
     -e "dotfiles_repo_root=$root" \
     -e "dotfiles_mode=$mode" \
     -e "dotfiles_profile=$profile" \
+    "${hostname_args[@]}" \
     "$@" || rc=$?
 
   echo ""

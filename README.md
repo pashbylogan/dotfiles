@@ -12,6 +12,8 @@ curl -fsSL https://raw.githubusercontent.com/pashbylogan/dotfiles/ansible-bootst
 wget -qO- https://raw.githubusercontent.com/pashbylogan/dotfiles/ansible-bootstrap-and-convergence/bootstrap.sh | sh
 ```
 
+Bootstrap prompts for the device hostname and configures it during initial convergence.
+
 **Day-to-day** (from anywhere — `~/.local/scripts` is on PATH after first apply):
 
 ```sh

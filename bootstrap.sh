@@ -6,6 +6,7 @@ REPO_URL="${DOTFILES_REPO_URL:-https://github.com/pashbylogan/dotfiles.git}"
 REPO_REF="${DOTFILES_REPO_REF:-ansible-bootstrap-and-convergence}"
 REPO_DIR="${DOTFILES_REPO_DIR:-$HOME/projects/dotfiles}"
 PROFILE="${DOTFILES_PROFILE:-auto}"
+DEVICE_HOSTNAME=""
 
 # ─── Colors & helpers ────────────────────────────────────────────────────────
 # Self-contained — cannot source common.sh because the repo may not exist yet.
@@ -48,6 +49,30 @@ detect_os() {
   uname -s
 }
 
+# ─── Machine identity ───────────────────────────────────────────────────────
+
+prompt_hostname() {
+  [ -r /dev/tty ] || die "Bootstrap requires an interactive terminal to set the device hostname."
+
+  while :; do
+    printf "Device hostname: " > /dev/tty
+    IFS= read -r DEVICE_HOSTNAME < /dev/tty ||
+      die "Could not read the device hostname."
+
+    case "$DEVICE_HOSTNAME" in
+      ""|*[!A-Za-z0-9-]*|-*|*-)
+        warn "Use 1-63 letters, numbers, or hyphens; do not start or end with a hyphen."
+        ;;
+      *)
+        if [ "${#DEVICE_HOSTNAME}" -le 63 ]; then
+          return
+        fi
+        warn "Use 1-63 letters, numbers, or hyphens; do not start or end with a hyphen."
+        ;;
+    esac
+  done
+}
+
 # ─── Prerequisite installation ───────────────────────────────────────────────
 
 install_linux_prereqs() {
@@ -85,6 +110,10 @@ main() {
 
   os="$(detect_os)"
 
+  step "Machine identity"
+  prompt_hostname
+  info "Hostname: ${DEVICE_HOSTNAME}"
+
   step "Installing prerequisites"
   case "$os" in
     Linux)
@@ -101,7 +130,8 @@ main() {
   success "Repo ready at ${REPO_DIR}"
 
   step "Handing off to apply"
-  DOTFILES_PROFILE="$PROFILE" "$REPO_DIR/bin/.local/scripts/dot-apply"
+  DOTFILES_PROFILE="$PROFILE" DOTFILES_HOSTNAME="$DEVICE_HOSTNAME" \
+    "$REPO_DIR/bin/.local/scripts/dot-apply"
 }
 
 main "$@"

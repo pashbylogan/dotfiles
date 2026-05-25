@@ -5,6 +5,14 @@
 # GTK3/GTK4 fallback dark-theme hints are handled by the `gtk` stow
 # package regardless, so the first-run case still gets dark mode.
 
+# ─── Machine identity ──────────────────────────────────────────────────────
+
+- name: Set system hostname
+  ansible.builtin.hostname:
+    name: "{{ dotfiles_hostname }}"
+  become: true
+  when: (dotfiles_hostname | default('') | length) > 0
+
 - name: Apply dconf preferences
   when: ansible_facts.env.DBUS_SESSION_BUS_ADDRESS is defined
   block:
