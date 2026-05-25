@@ -590,6 +590,8 @@ Target install is **Fedora Everything 43** (Workstation's defaults are not avail
 
 **Compressed swap + resolved.** `zram-generator-defaults` ships the vendor config (50% RAM, zstd, 8 GiB cap). `systemd-resolved.service` enabled + `/etc/resolv.conf` force-symlinked to the stub; NetworkManager auto-integrates.
 
+**Hardware support baseline.** Fedora Everything/minimal-derived installs do not necessarily include the `hardware-support` package group that provides the broad firmware baseline expected on a normal Fedora desktop. This gap was exposed on a Dell XPS 14 DA14260: without the group, its Intel BE211 Wi-Fi, Panther Lake SOF/Cirrus SoundWire audio, and IPU7 camera lacked the split firmware required for initialization. Declaring Fedora's `@hardware-support` group rather than model-specific firmware packages keeps this desktop profile general across machines and delegates firmware membership to Fedora. On Fedora 44 the group includes `alsa-sof-firmware`, `cirrus-audio-firmware`, and `intel-vsc-firmware`; its `iwlwifi-mvm-firmware` member pulls in the `iwlwifi-mld-firmware` required by the BE211.
+
 **Default apps.** `mpv` + `imv` defaulted for 9 video + 9 image mimetypes via `~/.config/mimeapps.list` written by `community.general.ini_file`. mpv uses main-repo `ffmpeg-free`; enable RPM Fusion + `dnf swap ffmpeg-free ffmpeg` if HEVC/proprietary codecs come up.
 
 **Screenshots.** The `Print` binding captures a selected region with `grim` + `slurp`, saves a PNG under `/tmp`, and pipes the same file to `wl-copy --type image/png`. The explicit MIME type matters for apps that request an image format from the Wayland clipboard instead of guessing from bytes.
@@ -766,6 +768,7 @@ The shell profile exports `GOPATH`, `GOBIN`, `GOMODCACHE`, `GOCACHE`, and `GOENV
 | `pipewire_alsa`           | ALSA compatibility shim for PipeWire                         |
 | `pipewire_jack`           | JACK compatibility shim for PipeWire                         |
 | `alsa_ucm`                | ALSA UCM profiles for correct laptop audio routing           |
+| `@hardware-support`       | Fedora desktop hardware firmware and utility package group   |
 | `playerctl`               | MPRIS controller for media keys                              |
 | `bluez`                   | Bluetooth protocol stack                                     |
 | `blueman`                 | GTK Bluetooth manager with tray applet                       |

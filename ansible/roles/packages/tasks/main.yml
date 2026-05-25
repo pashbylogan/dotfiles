@@ -22,6 +22,16 @@
     - dotfiles_pkg_mgr == "dnf"
     - dotfiles_resolved_profile == "linux_desktop"
 
+- name: Install Fedora desktop hardware support baseline
+  become: true
+  ansible.builtin.dnf:
+    name: "@hardware-support"
+    state: "{{ 'latest' if dotfiles_mode == 'update' else 'present' }}"
+  when:
+    - ansible_facts.system == "Linux"
+    - dotfiles_pkg_mgr == "dnf"
+    - dotfiles_resolved_profile == "linux_desktop"
+
 - name: Install Linux packages
   become: true
   when: ansible_facts.system == "Linux"
