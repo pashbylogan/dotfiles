@@ -72,7 +72,7 @@
     <thead><tr><th>Item</th><th>Status</th><th>Why</th></tr></thead>
     <tbody>
       <tr><td>ssh config</td><td><span class="badge badge-done">carry</span></td><td>Real config; Host entries → gitignored <code>config.local</code>.</td></tr>
-      <tr><td>bin/ commands</td><td><span class="badge badge-done">carry</span></td><td>Personal tools → <code>~/.local/bin</code> (on PATH). <code>brew-update</code> kept but vestigial on Arch.</td></tr>
+      <tr><td>bin/ commands</td><td><span class="badge badge-done">carry</span></td><td>Personal tools → <code>~/.local/bin</code> (on PATH).</td></tr>
       <tr><td>shell aliases/functions</td><td><span class="badge badge-done">carry</span></td><td>Ported to bash, deduped vs. Omarchy.</td></tr>
       <tr id="D-TMUX-KEEP"><td><code class="meta">D-TMUX-KEEP</code> tmux config</td><td><span class="badge badge-done">carry</span></td><td>Genuinely customized (C-a prefix, vi copy-mode, sessionizer bind; clipboard <code>xclip</code>→<code>wl-copy</code>). Omarchy ships <code>~/.config/tmux/tmux.conf</code>, which tmux <strong>prefers over <code>~/.tmux.conf</code></strong> (so the old stow target was silently shadowed). Now stowed to <code>~/.config/tmux/local.conf</code> and <code>source-file</code>'d last from omarchy's tmux.conf so our settings win.</td></tr>
       <tr><td>Hyprland deltas</td><td><span class="badge badge-done">carry</span></td><td>Owned fragment: caps→ctrl + workspace rules.</td></tr>

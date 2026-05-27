@@ -48,9 +48,11 @@ upsert_block() {
   # Refuse to edit unless markers are balanced: a begin without an end (or a
   # duplicated begin) would make the awk pass eat file content. Refuse rather
   # than corrupt. [D-IDEMPOTENT]
-  if grep -qF -- "$begin" "$file"; then
-    grep -qF -- "$end" "$file" || die "begin marker without end marker in $file — refusing to edit"
-    local _nb; _nb=$(grep -cF -- "$begin" "$file")
+  # Match markers as WHOLE LINES (-x / $0==), never as substrings, so a stray
+  # line that merely contains the marker text can't trigger block deletion.
+  if grep -qxF -- "$begin" "$file"; then
+    grep -qxF -- "$end" "$file" || die "begin marker without end marker in $file — refusing to edit"
+    local _nb; _nb=$(grep -cxF -- "$begin" "$file")
     [ "$_nb" -gt 1 ] && die "duplicate begin marker ($_nb) in $file — refusing to edit"
   fi
   # Drop any existing managed block AND trailing blank lines, then append a
@@ -59,9 +61,9 @@ upsert_block() {
   # set -e would not fire (awk is non-final in the && list) and we'd duplicate
   # the block. [D-IDEMPOTENT]
   if ! awk -v b="$begin" -v e="$end" '
-    index($0,b){s=1}
+    $0==b{s=1}
     !s{ buf[++n]=$0 }
-    s&&index($0,e){s=0}
+    s&&$0==e{s=0}
     END{ while (n>0 && buf[n] ~ /^[[:space:]]*$/) n--; for(i=1;i<=n;i++) print buf[i] }
   ' "$file" > "$file.dotfiles.tmp"; then
     rm -f "$file.dotfiles.tmp"
@@ -103,7 +105,9 @@ fi
 
 # Optional extra packages, one per line in packages.txt (# comments ignored).
 if [ -f packages.txt ]; then
-  mapfile -t PKGS < <(grep -vE '^[[:space:]]*(#|$)' packages.txt || true)
+  # Strip inline '#' comments and surrounding whitespace, drop blank lines, so an
+  # annotated line like "  ripgrep   # fast" yields just "ripgrep".
+  mapfile -t PKGS < <(sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' packages.txt | grep -v '^$' || true)
   if [ "${#PKGS[@]}" -gt 0 ]; then
     info "installing extras: ${PKGS[*]}"
     omarchy pkg add "${PKGS[@]}"
@@ -120,7 +124,9 @@ prestow_backup "$HOME/.ssh/config"
 # (sourced from Omarchy's tmux.conf below). Drop the stale ~/.tmux.conf if it's ours.
 if [ -L "$HOME/.tmux.conf" ]; then
   _t="$(readlink -f "$HOME/.tmux.conf" 2>/dev/null || true)"
-  case "$_t" in "$REPO"/*|"") rm -f "$HOME/.tmux.conf" ;; esac
+  # Only remove if it canonicalizes INTO this repo — never delete a foreign or
+  # unresolvable (empty) broken link.
+  case "$_t" in "$REPO"/*) rm -f "$HOME/.tmux.conf" ;; esac
   unset _t
 fi
 STOW_PKGS=(bash ssh bin hypr tmux)
@@ -128,7 +134,7 @@ stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
 success "stowed: ${STOW_PKGS[*]}"
 
 # ssh wants tight perms
-[ -d "$HOME/.ssh" ] && chmod 700 "$HOME/.ssh"
+[ -d "$HOME/.ssh" ] && chmod 700 "$HOME/.ssh" 2>/dev/null || true
 [ -e "$HOME/.ssh/config" ] && chmod 600 "$HOME/.ssh/config" 2>/dev/null || true
 
 # ── 3. integration blocks into Omarchy-owned files ──────────────────────────

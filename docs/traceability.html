@@ -47,8 +47,8 @@
       <tr><td><code>D-SHELL-BASH</code></td><td>Bash login shell; no chsh</td><td><a href="decisions.html#D-SHELL-BASH">decisions</a></td><td><code>bash/.config/dotfiles/shell.sh</code></td></tr>
       <tr><td><code>D-SHELL-SEAM</code></td><td>Aliases via <code>~/.bashrc</code> managed block at EOF</td><td><a href="decisions.html#D-SHELL-SEAM">decisions</a></td><td><code>install</code>, <code>bash/.config/dotfiles/shell.sh</code></td></tr>
       <tr><td><code>D-SECRETS-LOCAL</code></td><td>Secrets/host-specific in gitignored <code>*.local</code></td><td><a href="decisions.html#D-SECRETS-LOCAL">decisions</a></td><td><code>*.local.*.example</code>, <code>.gitignore</code></td></tr>
-      <tr><td><code>D-CARRY-SET</code></td><td>What we carry vs. drop</td><td><a href="decisions.html#D-CARRY-SET">decisions</a></td><td><code>shell.sh</code>, <code>ssh/config</code>, <code>bin/.local/bin</code>, <code>tmux/.tmux.conf</code></td></tr>
-      <tr><td><code>D-TMUX-KEEP</code></td><td>Keep tmux; clipboard → <code>wl-copy</code></td><td><a href="decisions.html#D-TMUX-KEEP">decisions</a></td><td><code>tmux/.tmux.conf</code></td></tr>
+      <tr><td><code>D-CARRY-SET</code></td><td>What we carry vs. drop</td><td><a href="decisions.html#D-CARRY-SET">decisions</a></td><td><code>shell.sh</code>, <code>ssh/config</code>, <code>bin/.local/bin</code>, <code>tmux/.config/tmux/local.conf</code></td></tr>
+      <tr><td><code>D-TMUX-KEEP</code></td><td>Keep tmux; clipboard → <code>wl-copy</code></td><td><a href="decisions.html#D-TMUX-KEEP">decisions</a></td><td><code>tmux/.config/tmux/local.conf</code>, <code>install</code></td></tr>
       <tr><td><code>D-NVIM-KEYMAPS</code></td><td>nvim maps via managed block; don't stow nvim tree</td><td><a href="decisions.html#D-NVIM-KEYMAPS">decisions</a></td><td><code>install</code></td></tr>
       <tr><td><code>D-CAPS-CTRL</code></td><td>caps→ctrl in owned fragment</td><td><a href="decisions.html#D-CAPS-CTRL">decisions</a></td><td><code>hypr.conf</code>, <code>install</code></td></tr>
       <tr><td><code>D-WORKSPACE-RULES</code></td><td>Workspace app-assignments in fragment</td><td><a href="decisions.html#D-WORKSPACE-RULES">decisions</a></td><td><code>hypr.conf</code></td></tr>
@@ -70,6 +70,7 @@
       <tr><td><code>F-BASELINE</code></td><td>Remove Preinstalled explains trimmed bindings.conf</td><td><a href="findings.html#F-BASELINE">findings</a></td><td><code>D-BASELINE</code></td></tr>
       <tr><td><code>F-CLI</code></td><td>Omarchy CLI surface</td><td><a href="findings.html#F-CLI">findings</a></td><td><code>D-ENGINE</code></td></tr>
       <tr><td><code>F-SHELL-RESEARCH</code></td><td>zsh vs bash → stay on bash</td><td><a href="findings.html#F-SHELL-RESEARCH">findings</a></td><td><code>D-SHELL-BASH</code></td></tr>
+      <tr><td><code>F-TMUX-XDG</code></td><td>tmux prefers omarchy's XDG tmux.conf, shadowing ~/.tmux.conf</td><td><a href="findings.html#F-TMUX-XDG">findings</a></td><td><code>D-TMUX-KEEP</code></td></tr>
     </tbody>
   </table>
 
