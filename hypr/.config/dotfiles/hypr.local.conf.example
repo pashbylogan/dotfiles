@@ -1,0 +1,12 @@
+# hypr.local.conf — device-specific Hyprland overlay, NOT committed.
+# [D-MOUSE-ACCEL][D-SECRETS-LOCAL]
+# Copy to ~/.config/dotfiles/hypr.local.conf, then re-run ./install so the
+# installer adds a `source = ` line for it to ~/.config/hypr/hyprland.conf.
+#
+# Example: speed up an external mouse (e.g. Logitech MX Master). Find the exact
+# device name with `hyprctl devices`, then set per-device input:
+#
+# device {
+#   name = <name-from-hyprctl-devices>
+#   sensitivity = 0.6
+# }

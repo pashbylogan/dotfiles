@@ -1,0 +1,15 @@
+# packages.txt — OPTIONAL extra packages beyond Omarchy's base. [D-SCRIPTS-MINIMAL][F-CLI]
+# One package per line; '#' comments and blank lines are ignored.
+# `install` passes the active lines to `omarchy pkg add` (idempotent, --needed).
+#
+# Most CLI tools the bin/ scripts use (fzf, ripgrep, jq, git, github-cli, tmux,
+# wl-clipboard) are already in Omarchy's base — list only genuine extras here.
+# Prefer installing tools the official way; these are the methods for the
+# integrations kept in shell.sh. Uncomment what you actually want per machine:
+#
+# wireguard-tools    # vpns() / exitnode() — wg-quick (tailscale is already in omarchy base)
+# uv                 # python tooling (alternatively manage via mise)
+# scrcpy             # android screen mirroring (see shell.local.sh)
+#
+# AUR-only — install manually with `omarchy pkg aur add <pkg>`:
+#   google-cloud-cli # gcloud / gssh / GCP (puts gcloud + completions on PATH)

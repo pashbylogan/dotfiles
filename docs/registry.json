@@ -1,0 +1,206 @@
+{
+  "version": 1,
+  "purpose": "Authoritative cross-reference index for this repo's design decisions and research findings. Each entry has a stable, grep-able ID. The ID appears (1) as an HTML anchor in its canonical doc page, (2) as a [ID] token in code comments at every governed path, and (3) here. To find every place affected by a change: grep the ID across the repo, OR read this entry's `code_paths` + `appears_in`.",
+  "conventions": {
+    "decision_id": "D-<SLUG> — a design/architecture choice",
+    "finding_id": "F-<SLUG> — a verified fact about how Omarchy behaves",
+    "code_token": "Comments in code reference IDs as [D-SLUG] / [F-SLUG] so grep finds both docs and code.",
+    "on_change": "When a decision changes: update its canonical doc section, every doc in `appears_in`, every file in `code_paths`, and this registry entry (incl. `related`)."
+  },
+  "decisions": [
+    {
+      "id": "D-ENGINE",
+      "title": "Lightweight shell + Omarchy CLI + stow; no Ansible, no convergence engine",
+      "canonical": "decisions.html#D-ENGINE",
+      "appears_in": ["index.html", "architecture.html", "augmentation-approach.html"],
+      "code_paths": ["install"],
+      "related": ["D-SCRIPTS-MINIMAL", "D-DELTA-STORAGE"]
+    },
+    {
+      "id": "D-SCRIPTS-MINIMAL",
+      "title": "One script (install) only; updates/cleanup are manual",
+      "canonical": "decisions.html#D-SCRIPTS-MINIMAL",
+      "appears_in": ["augmentation-approach.html", "README.md", "todos.html"],
+      "code_paths": ["install", "README.md"],
+      "related": ["D-ENGINE", "F-CLI"]
+    },
+    {
+      "id": "D-DELTA-STORAGE",
+      "title": "Own thin fragments + single managed integration block; never symlink Omarchy-owned files",
+      "canonical": "architecture.html#D-DELTA-STORAGE",
+      "appears_in": ["decisions.html", "index.html", "augmentation-approach.html"],
+      "code_paths": ["install", "hypr/.config/dotfiles/hypr.conf"],
+      "related": ["F-REFRESH-WRITETHROUGH", "F-LUA", "F-HYPR-SEAM", "D-IDEMPOTENT"]
+    },
+    {
+      "id": "D-IDEMPOTENT",
+      "title": "install must be idempotent (upsert_block + stow -R + pkg --needed)",
+      "canonical": "architecture.html#D-IDEMPOTENT",
+      "appears_in": ["decisions.html", "todos.html"],
+      "code_paths": ["install"],
+      "related": ["D-DELTA-STORAGE", "D-SHELL-SEAM", "D-NVIM-KEYMAPS"]
+    },
+    {
+      "id": "D-SHELL-BASH",
+      "title": "Bash login shell (Omarchy default); no chsh to zsh",
+      "canonical": "decisions.html#D-SHELL-BASH",
+      "appears_in": ["findings.html"],
+      "code_paths": ["bash/.config/dotfiles/shell.sh"],
+      "related": ["D-SHELL-SEAM", "F-BASH-CHAIN", "F-SHELL-RESEARCH"]
+    },
+    {
+      "id": "D-SHELL-SEAM",
+      "title": "Aliases ported into shell.sh, sourced via ~/.bashrc managed block at EOF (ours win)",
+      "canonical": "decisions.html#D-SHELL-SEAM",
+      "appears_in": ["architecture.html", "findings.html"],
+      "code_paths": ["install", "bash/.config/dotfiles/shell.sh"],
+      "related": ["D-SHELL-BASH", "D-SECRETS-LOCAL", "F-BASH-CHAIN"]
+    },
+    {
+      "id": "D-SECRETS-LOCAL",
+      "title": "Secrets/host-specific values in gitignored *.local files",
+      "canonical": "decisions.html#D-SECRETS-LOCAL",
+      "appears_in": [],
+      "code_paths": ["bash/.config/dotfiles/shell.local.sh.example", "ssh/.ssh/config.local.example", "hypr/.config/dotfiles/hypr.local.conf.example", ".gitignore"],
+      "related": ["D-SHELL-SEAM", "D-MOUSE-ACCEL"]
+    },
+    {
+      "id": "D-CARRY-SET",
+      "title": "Carry ssh/bin/aliases/tmux/hypr-fragment/nvim-keymaps; drop i3/i3status/picom/ghostty/desktops/nvim-tree",
+      "canonical": "decisions.html#D-CARRY-SET",
+      "appears_in": ["index.html"],
+      "code_paths": ["bash/.config/dotfiles/shell.sh", "ssh/.ssh/config", "bin/.local/bin", "tmux/.tmux.conf"],
+      "related": ["D-TMUX-KEEP", "D-NVIM-KEYMAPS"]
+    },
+    {
+      "id": "D-TMUX-KEEP",
+      "title": "Keep tmux (real customization); port clipboard xclip -> wl-copy for Wayland",
+      "canonical": "decisions.html#D-TMUX-KEEP",
+      "appears_in": [],
+      "code_paths": ["tmux/.config/tmux/local.conf", "install"],
+      "related": ["D-CARRY-SET", "F-TMUX-XDG"]
+    },
+    {
+      "id": "D-NVIM-KEYMAPS",
+      "title": "nvim <leader>y maps via managed block in Omarchy's keymaps.lua; do NOT stow the nvim tree",
+      "canonical": "decisions.html#D-NVIM-KEYMAPS",
+      "appears_in": ["architecture.html"],
+      "code_paths": ["install"],
+      "related": ["F-NVIM-OWNED", "D-DELTA-STORAGE"]
+    },
+    {
+      "id": "D-CAPS-CTRL",
+      "title": "caps->ctrl remap lives in the owned hypr fragment (sourced last), not Omarchy's input.conf",
+      "canonical": "decisions.html#D-CAPS-CTRL",
+      "appears_in": ["architecture.html"],
+      "code_paths": ["hypr/.config/dotfiles/hypr.conf", "install"],
+      "related": ["D-DELTA-STORAGE", "F-HYPR-SEAM"]
+    },
+    {
+      "id": "D-WORKSPACE-RULES",
+      "title": "Workspace app-assignments as windowrules in the hypr fragment",
+      "canonical": "decisions.html#D-WORKSPACE-RULES",
+      "appears_in": ["todos.html"],
+      "code_paths": ["hypr/.config/dotfiles/hypr.conf"],
+      "related": ["D-CAPS-CTRL"]
+    },
+    {
+      "id": "D-MOUSE-ACCEL",
+      "title": "External MX Master mouse accel in gitignored hypr.local.conf (device-specific)",
+      "canonical": "decisions.html#D-MOUSE-ACCEL",
+      "appears_in": [],
+      "code_paths": ["hypr/.config/dotfiles/hypr.local.conf.example"],
+      "related": ["D-SECRETS-LOCAL", "D-WORKSPACE-RULES"]
+    },
+    {
+      "id": "D-HJKL-DECLINED",
+      "title": "Declined vim hjkl window focus (keep Omarchy SUPER+arrows; preserve SUPER+J/L)",
+      "canonical": "decisions.html#D-HJKL-DECLINED",
+      "appears_in": [],
+      "code_paths": [],
+      "related": ["D-WORKSPACE-RULES"]
+    },
+    {
+      "id": "D-BASELINE",
+      "title": "Reference baseline = Omarchy after 'Remove Preinstalled'; bindings.conf left untracked",
+      "canonical": "decisions.html#D-BASELINE",
+      "appears_in": ["index.html", "findings.html", "README.md"],
+      "code_paths": ["README.md"],
+      "related": ["F-BASELINE"]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-HYPR-SEAM",
+      "title": "hyprland.conf sources defaults -> user override files -> theme -> toggles; later wins",
+      "canonical": "findings.html#F-HYPR-SEAM",
+      "appears_in": ["architecture.html"],
+      "code_paths": ["hypr/.config/dotfiles/hypr.conf", "install"],
+      "related": ["D-DELTA-STORAGE", "D-CAPS-CTRL"]
+    },
+    {
+      "id": "F-REFRESH-WRITETHROUGH",
+      "title": "omarchy refresh backs up but cp -f writes THROUGH symlinks, mutating tracked files",
+      "canonical": "findings.html#F-REFRESH-WRITETHROUGH",
+      "appears_in": ["architecture.html", "augmentation-approach.html"],
+      "code_paths": [],
+      "related": ["D-DELTA-STORAGE"]
+    },
+    {
+      "id": "F-LUA",
+      "title": "Omarchy dev branch already migrated Hyprland config to Lua",
+      "canonical": "findings.html#F-LUA",
+      "appears_in": ["architecture.html", "todos.html", "augmentation-approach.html"],
+      "code_paths": [],
+      "related": ["D-DELTA-STORAGE"]
+    },
+    {
+      "id": "F-BASH-CHAIN",
+      "title": "bash chain; ~/.bashrc sources Omarchy default then user section at EOF; known omarchy aliases",
+      "canonical": "findings.html#F-BASH-CHAIN",
+      "appears_in": ["decisions.html"],
+      "code_paths": ["bash/.config/dotfiles/shell.sh", "install"],
+      "related": ["D-SHELL-SEAM", "D-SHELL-BASH"]
+    },
+    {
+      "id": "F-NVIM-OWNED",
+      "title": "omarchy-nvim-setup cp -r replaces ~/.config/nvim; keymaps.lua is the user-extension file",
+      "canonical": "findings.html#F-NVIM-OWNED",
+      "appears_in": ["architecture.html", "decisions.html"],
+      "code_paths": ["install"],
+      "related": ["D-NVIM-KEYMAPS"]
+    },
+    {
+      "id": "F-BASELINE",
+      "title": "Remove Preinstalled explains the trimmed bindings.conf (intentional, not drift)",
+      "canonical": "findings.html#F-BASELINE",
+      "appears_in": ["decisions.html", "index.html"],
+      "code_paths": ["README.md"],
+      "related": ["D-BASELINE"]
+    },
+    {
+      "id": "F-CLI",
+      "title": "Omarchy CLI surface (pkg add/aur/drop, refresh config, theme/font, update -y)",
+      "canonical": "findings.html#F-CLI",
+      "appears_in": [],
+      "code_paths": ["install"],
+      "related": ["D-ENGINE", "D-SCRIPTS-MINIMAL"]
+    },
+    {
+      "id": "F-SHELL-RESEARCH",
+      "title": "zsh vs bash on Omarchy: stay on bash (chsh->zsh breaks session; bash already has starship/zoxide/fzf/mise)",
+      "canonical": "findings.html#F-SHELL-RESEARCH",
+      "appears_in": ["decisions.html"],
+      "code_paths": [],
+      "related": ["D-SHELL-BASH"]
+    },
+    {
+      "id": "F-TMUX-XDG",
+      "title": "tmux prefers omarchy's ~/.config/tmux/tmux.conf (XDG) over ~/.tmux.conf, shadowing it; we overlay via source-file and inherit omarchy's good tmux defaults",
+      "canonical": "findings.html#F-TMUX-XDG",
+      "appears_in": ["architecture.html", "decisions.html", "todos.html"],
+      "code_paths": ["tmux/.config/tmux/local.conf", "install"],
+      "related": ["D-TMUX-KEEP"]
+    }
+  ]
+}

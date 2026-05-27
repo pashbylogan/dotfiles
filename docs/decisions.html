@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decisions — Omarchy Dotfiles</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="topnav">
+  <a class="brand" href="index.html"><span class="dot"></span> Omarchy Dotfiles</a>
+  <a class="nav" href="index.html">Home</a>
+  <a class="nav" href="architecture.html">Architecture</a>
+  <a class="nav" href="decisions.html" aria-current="page">Decisions</a>
+  <a class="nav" href="findings.html">Findings</a>
+  <a class="nav" href="todos.html">To-Dos</a>
+  <a class="nav" href="traceability.html">Trace</a>
+  <a class="nav" href="augmentation-approach.html">Design Note</a>
+</nav>
+
+<div class="container">
+  <p class="eyebrow">Decision Log</p>
+  <h1>Decisions &amp; rationale</h1>
+  <p class="lead">Every load-bearing choice, with the reason it was made. Each has a stable ID (see
+  <a href="traceability.html">Trace</a>); the <code class="meta">D-ID</code> tags below are grep targets.</p>
+
+  <h2>Core architecture</h2>
+  <table>
+    <thead><tr><th>Decision</th><th>Choice</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr id="D-ENGINE"><td><code class="meta">D-ENGINE</code> Convergence engine</td>
+        <td><strong>Lightweight shell + Omarchy CLI + stow.</strong> No Ansible, no
+        <code>dot-apply/check/update/cleanup</code> engine.</td>
+        <td>Omarchy already does install/seed/migrate/update. A convergence framework would re-implement that and
+        accrue code that must survive upstream churn.</td></tr>
+      <tr id="D-SCRIPTS-MINIMAL"><td><code class="meta">D-SCRIPTS-MINIMAL</code> Scripts</td>
+        <td><strong>One script: <code>install</code>.</strong> No update/cleanup scripts.</td>
+        <td>Owner chose pure-minimal. Updates run via <code>omarchy update -y</code>; one-time i3/zsh cleanup is a
+        documented manual step.</td></tr>
+      <tr id="D-DELTA-STORAGE"><td><code class="meta">D-DELTA-STORAGE</code> Delta storage</td>
+        <td><strong>Own thin fragments + single managed integration block.</strong> Never symlink Omarchy-owned
+        files. (Full detail: <a href="architecture.html#D-DELTA-STORAGE">Architecture</a>.)</td>
+        <td>Omarchy <code>cp</code>-resets write through symlinks (<a href="findings.html#F-REFRESH-WRITETHROUGH">F-REFRESH-WRITETHROUGH</a>);
+        owning whole files freezes them and breaks on the coming Lua move (<a href="findings.html#F-LUA">F-LUA</a>).</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Shell</h2>
+  <table>
+    <thead><tr><th>Decision</th><th>Choice</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr id="D-SHELL-BASH"><td><code class="meta">D-SHELL-BASH</code> Login shell</td>
+        <td><strong>bash</strong> (Omarchy default). No <code>chsh</code> to zsh.</td>
+        <td>Omarchy's boot/session/helpers assume bash; <code>chsh</code>→zsh is a documented footgun
+        (<a href="findings.html#F-SHELL-RESEARCH">F-SHELL-RESEARCH</a>). Omarchy's bash already wires
+        starship/zoxide/fzf/mise, so zsh's marginal gain is small.</td></tr>
+      <tr id="D-SHELL-SEAM"><td><code class="meta">D-SHELL-SEAM</code> Aliases/functions</td>
+        <td>Ported into <code>~/.config/dotfiles/shell.sh</code>, sourced via the <code>~/.bashrc</code> managed
+        block (at EOF, so ours win).</td>
+        <td><code>~/.bashrc</code> is owner-owned and "not overwritten on updates"
+        (<a href="findings.html#F-BASH-CHAIN">F-BASH-CHAIN</a>). Aliases Omarchy already defines (<code>t</code>,
+        <code>g</code>, <code>gcm</code>, <code>gcam</code>, <code>n</code>, <code>cd</code>/zoxide,
+        <code>ls</code>/eza) are dropped in favor of Omarchy's.</td></tr>
+      <tr id="D-SECRETS-LOCAL"><td><code class="meta">D-SECRETS-LOCAL</code> Secrets/host-specific</td>
+        <td>Gitignored <code>shell.local.sh</code> (Vertex project IDs, device serials).</td>
+        <td>Keep the shared repo generic and secret-free.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="D-CARRY-SET">What we carry vs. drop <code class="meta">D-CARRY-SET</code></h2>
+  <table>
+    <thead><tr><th>Item</th><th>Status</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>ssh config</td><td><span class="badge badge-done">carry</span></td><td>Real config; Host entries → gitignored <code>config.local</code>.</td></tr>
+      <tr><td>bin/ commands</td><td><span class="badge badge-done">carry</span></td><td>Personal tools → <code>~/.local/bin</code> (on PATH). <code>brew-update</code> kept but vestigial on Arch.</td></tr>
+      <tr><td>shell aliases/functions</td><td><span class="badge badge-done">carry</span></td><td>Ported to bash, deduped vs. Omarchy.</td></tr>
+      <tr id="D-TMUX-KEEP"><td><code class="meta">D-TMUX-KEEP</code> tmux config</td><td><span class="badge badge-done">carry</span></td><td>Genuinely customized (C-a prefix, vi copy-mode, sessionizer bind; clipboard <code>xclip</code>→<code>wl-copy</code>). Omarchy ships <code>~/.config/tmux/tmux.conf</code>, which tmux <strong>prefers over <code>~/.tmux.conf</code></strong> (so the old stow target was silently shadowed). Now stowed to <code>~/.config/tmux/local.conf</code> and <code>source-file</code>'d last from omarchy's tmux.conf so our settings win.</td></tr>
+      <tr><td>Hyprland deltas</td><td><span class="badge badge-done">carry</span></td><td>Owned fragment: caps→ctrl + workspace rules.</td></tr>
+      <tr id="D-NVIM-KEYMAPS"><td><code class="meta">D-NVIM-KEYMAPS</code> nvim keymaps</td><td><span class="badge badge-done">carry (narrow)</span></td><td>Only <code>&lt;leader&gt;y</code> clipboard maps, via a managed block in Omarchy's <code>keymaps.lua</code> — not the nvim tree (<a href="findings.html#F-NVIM-OWNED">F-NVIM-OWNED</a>).</td></tr>
+      <tr><td>i3 / i3status / picom</td><td><span class="badge badge-drop">drop</span></td><td>X11; replaced by Omarchy's Hyprland stack.</td></tr>
+      <tr><td>ghostty</td><td><span class="badge badge-drop">drop</span></td><td>Terminal is Omarchy's concern; revisit if a real delta appears.</td></tr>
+      <tr><td>desktop entries</td><td><span class="badge badge-drop">drop</span></td><td>"Use omarchy for anything in the desktop" (owner).</td></tr>
+      <tr><td>nvim config tree</td><td><span class="badge badge-drop">drop</span></td><td>Omarchy owns/overwrites it via <code>omarchy-nvim-setup</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Hyprland deltas (i3 "spirit", confirmed item-by-item)</h2>
+  <p>Most i3 customizations were already done or native on Omarchy (key-repeat, touchpad scroll, thin borders,
+  move-ws-to-monitor, volume/brightness/screenshot/lock keys, launcher, wallpaper). Only three were genuine:</p>
+  <table>
+    <thead><tr><th>Delta</th><th>Status</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr id="D-CAPS-CTRL"><td><code class="meta">D-CAPS-CTRL</code> caps lock → control</td><td><span class="badge badge-done">in (fragment)</span></td>
+        <td>Moved off Omarchy's seeded <code>input.conf</code> into the owned fragment, sourced last.</td></tr>
+      <tr id="D-WORKSPACE-RULES"><td><code class="meta">D-WORKSPACE-RULES</code> Workspace app-assignments</td><td><span class="badge badge-done">in</span></td>
+        <td><code>windowrule = workspace N</code> (terminal→1, Firefox→2, Slack+Obsidian→3, IntelliJ→5, Spotify→10). Verify classes via <code>hyprctl clients</code>.</td></tr>
+      <tr id="D-MOUSE-ACCEL"><td><code class="meta">D-MOUSE-ACCEL</code> External MX Master mouse accel</td><td><span class="badge badge-done">in (local)</span></td>
+        <td>Device-specific → gitignored <code>hypr.local.conf</code>.</td></tr>
+      <tr id="D-HJKL-DECLINED"><td><code class="meta">D-HJKL-DECLINED</code> vim <code>hjkl</code> window focus</td><td><span class="badge badge-drop">declined</span></td>
+        <td>Would require unbinding Omarchy's <code>SUPER+J</code>/<code>SUPER+L</code>. Keep Omarchy's <code>SUPER+arrows</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="D-BASELINE">Baseline &amp; bindings.conf <code class="meta">D-BASELINE</code></h2>
+  <div class="callout note">
+    <span class="label">Reference baseline = "Omarchy after Remove Preinstalled"</span>
+    The owner's first step was running <strong>Remove Preinstalled</strong>, which stripped bundled apps and their
+    launcher bindings (<a href="findings.html#F-BASELINE">F-BASELINE</a>). So the trimmed
+    <code>~/.config/hypr/bindings.conf</code> is <em>intentional, not drift</em>. We leave it Omarchy-owned and
+    untracked; we do not restore it to vanilla stock. Reproduction recipe: install → Remove Preinstalled →
+    <code>./install</code>.
+  </div>
+</div>
+
+<footer>Omarchy dotfiles knowledge base · <a href="index.html">Home</a></footer>
+</body>
+</html>

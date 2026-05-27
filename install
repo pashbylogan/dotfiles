@@ -1,18 +1,192 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
+# Omarchy dotfiles — minimal personal overlay installer.
+#
+# This is the ONLY script in the repo [D-SCRIPTS-MINIMAL]. It is idempotent
+# [D-IDEMPOTENT]: run it any number of times and the machine converges to the
+# same state. It does three things:
+#   1. ensure prerequisites (stow + any packages.txt extras) via Omarchy's CLI
+#   2. stow repo-owned static files into $HOME (never Omarchy-owned files)
+#   3. upsert single managed blocks into Omarchy-owned files so our overlays
+#      load LAST and win [D-DELTA-STORAGE]
+#
+# Design + rationale: see docs/index.html (start at architecture.html).
+# Updates and one-time i3/zsh cleanup are manual — see README.md.
 
-if [[ -z $STOW_FOLDERS ]]; then
-    STOW_FOLDERS="ssh,nvim,tmux,zsh,bin,desktops,i3,i3status,ghostty,picom"
+set -euo pipefail
+
+# ── repo root ────────────────────────────────────────────────────────────────
+REPO="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+cd "$REPO"
+
+# ── pretty output ────────────────────────────────────────────────────────────
+if [ -t 1 ]; then
+  BOLD=$'\033[1m'; CYAN=$'\033[0;36m'; GREEN=$'\033[0;32m'
+  YELLOW=$'\033[1;33m'; RED=$'\033[0;31m'; NC=$'\033[0m'
+else
+  BOLD=; CYAN=; GREEN=; YELLOW=; RED=; NC=
+fi
+step()    { printf '\n%s── %s ──%s\n' "$BOLD" "$*" "$NC"; }
+info()    { printf '%sℹ%s %s\n' "$CYAN" "$NC" "$*"; }
+success() { printf '%s✔%s %s\n' "$GREEN" "$NC" "$*"; }
+warn()    { printf '%s⚠%s %s\n' "$YELLOW" "$NC" "$*"; }
+die()     { printf '%s✖%s %s\n' "$RED" "$NC" "$*" >&2; exit 1; }
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# ── upsert_block: idempotent, ordering-safe managed block ────────────────────
+# Removes any existing block delimited by $2/$3 (begin/end markers), then
+# appends a fresh copy at END OF FILE so it is sourced last. Body on stdin.
+# A presence-only "append if missing" guard is intentionally NOT used: in both
+# bash and Hyprland, load order decides who wins. [D-DELTA-STORAGE][D-IDEMPOTENT]
+upsert_block() {
+  local file="$1" begin="$2" end="$3" body
+  body="$(cat)"
+  if [ ! -f "$file" ]; then
+    warn "skip managed block — missing $file"
+    return 0
+  fi
+  # Refuse to edit unless markers are balanced: a begin without an end (or a
+  # duplicated begin) would make the awk pass eat file content. Refuse rather
+  # than corrupt. [D-IDEMPOTENT]
+  if grep -qF -- "$begin" "$file"; then
+    grep -qF -- "$end" "$file" || die "begin marker without end marker in $file — refusing to edit"
+    local _nb; _nb=$(grep -cF -- "$begin" "$file")
+    [ "$_nb" -gt 1 ] && die "duplicate begin marker ($_nb) in $file — refusing to edit"
+  fi
+  # Drop any existing managed block AND trailing blank lines, then append a
+  # fresh block. Trimming trailing blanks keeps re-runs byte-stable (no
+  # accumulating blank lines). If awk fails, abort WITHOUT appending — otherwise
+  # set -e would not fire (awk is non-final in the && list) and we'd duplicate
+  # the block. [D-IDEMPOTENT]
+  if ! awk -v b="$begin" -v e="$end" '
+    index($0,b){s=1}
+    !s{ buf[++n]=$0 }
+    s&&index($0,e){s=0}
+    END{ while (n>0 && buf[n] ~ /^[[:space:]]*$/) n--; for(i=1;i<=n;i++) print buf[i] }
+  ' "$file" > "$file.dotfiles.tmp"; then
+    rm -f "$file.dotfiles.tmp"
+    die "failed to rewrite $file (awk error) — left it untouched"
+  fi
+  mv "$file.dotfiles.tmp" "$file"
+  printf '\n%s\n%s\n%s\n' "$begin" "$body" "$end" >> "$file"
+  info "managed block updated in ${file/#$HOME/\~}"
+}
+
+# ── pre-stow backup: keep stow conflict-free + idempotent ────────────────────
+# For single-file targets that may already exist as a REAL file (or a stale
+# symlink not pointing into this repo), back it up once so stow can link.
+# Targets already symlinked into the repo are left alone (stow -R is a no-op).
+prestow_backup() {
+  local t dest bak
+  for t in "$@"; do
+    [ -e "$t" ] || [ -L "$t" ] || continue
+    if [ -L "$t" ]; then
+      dest="$(readlink -f "$t" 2>/dev/null || true)"
+      case "$dest" in "$REPO"/*) continue ;; esac
+    fi
+    bak="$t.pre-stow.$(date +%Y%m%d%H%M%S)"
+    warn "backing up existing ${t/#$HOME/\~} -> ${bak/#$HOME/\~}"
+    mv "$t" "$bak"
+  done
+}
+
+# ── 1. prerequisites ─────────────────────────────────────────────────────────
+# Omarchy CLI is preferred over re-implementing package logic [F-CLI][D-ENGINE].
+step "Prerequisites"
+if have stow; then
+  success "stow present"
+else
+  have omarchy || die "Omarchy CLI not found — this repo targets Omarchy. Install stow manually: sudo pacman -S stow"
+  info "installing stow via omarchy"
+  omarchy pkg add stow
 fi
 
-if [[ -z $DOTFILES ]]; then
-    DOTFILES=$HOME/projects/dotfiles
+# Optional extra packages, one per line in packages.txt (# comments ignored).
+if [ -f packages.txt ]; then
+  mapfile -t PKGS < <(grep -vE '^[[:space:]]*(#|$)' packages.txt || true)
+  if [ "${#PKGS[@]}" -gt 0 ]; then
+    info "installing extras: ${PKGS[*]}"
+    omarchy pkg add "${PKGS[@]}"
+  fi
 fi
 
-pushd $DOTFILES
-for folder in $(echo $STOW_FOLDERS | sed "s/,/ /g")
-do
-    echo "stow $folder"
-    stow -t $HOME -D $folder
-    stow -t $HOME $folder
-done
-popd
+# ── 2. stow repo-owned files ─────────────────────────────────────────────────
+# Targets live in our OWN namespaces (~/.config/dotfiles, ~/.ssh, ~/.local/bin,
+# ~/.config/tmux/local.conf) — never Omarchy-managed files [D-DELTA-STORAGE].
+step "Stow"
+prestow_backup "$HOME/.ssh/config"
+# tmux: old layout stowed ~/.tmux.conf, but tmux prefers ~/.config/tmux/tmux.conf
+# (Omarchy's), so it was shadowed. We now load via ~/.config/tmux/local.conf
+# (sourced from Omarchy's tmux.conf below). Drop the stale ~/.tmux.conf if it's ours.
+if [ -L "$HOME/.tmux.conf" ]; then
+  _t="$(readlink -f "$HOME/.tmux.conf" 2>/dev/null || true)"
+  case "$_t" in "$REPO"/*|"") rm -f "$HOME/.tmux.conf" ;; esac
+  unset _t
+fi
+STOW_PKGS=(bash ssh bin hypr tmux)
+stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
+success "stowed: ${STOW_PKGS[*]}"
+
+# ssh wants tight perms
+[ -d "$HOME/.ssh" ] && chmod 700 "$HOME/.ssh"
+[ -e "$HOME/.ssh/config" ] && chmod 600 "$HOME/.ssh/config" 2>/dev/null || true
+
+# ── 3. integration blocks into Omarchy-owned files ──────────────────────────
+step "Integration"
+
+# 3a. bash: source our shell additions, last so our aliases win [D-SHELL-SEAM][F-BASH-CHAIN]
+upsert_block "$HOME/.bashrc" \
+  "# >>> dotfiles managed (shell) >>>" \
+  "# <<< dotfiles managed (shell) <<<" <<'EOF'
+# [D-SHELL-SEAM] personal shell additions — see docs/decisions.html#D-SHELL-SEAM
+[ -f ~/.config/dotfiles/shell.sh ] && . ~/.config/dotfiles/shell.sh
+[ -f ~/.config/dotfiles/shell.local.sh ] && . ~/.config/dotfiles/shell.local.sh
+EOF
+
+# 3b. hyprland: source our override fragment last so it wins [D-CAPS-CTRL][F-HYPR-SEAM]
+HYPR_CONF="$HOME/.config/hypr/hyprland.conf"
+hypr_body="# [D-DELTA-STORAGE] personal Hyprland overlay, sourced last — docs/architecture.html#D-DELTA-STORAGE
+source = ~/.config/dotfiles/hypr.conf"
+# Only source the device-local fragment if it exists (Hyprland errors on a missing source).
+if [ -f "$HOME/.config/dotfiles/hypr.local.conf" ]; then
+  hypr_body+=$'\n'"source = ~/.config/dotfiles/hypr.local.conf"
+fi
+printf '%s\n' "$hypr_body" | upsert_block "$HYPR_CONF" \
+  "# >>> dotfiles managed (hypr) >>>" \
+  "# <<< dotfiles managed (hypr) <<<"
+
+# 3c. nvim: add a few keymaps to Omarchy's user-extension file — do NOT stow the
+# nvim tree (Omarchy owns/overwrites it) [D-NVIM-KEYMAPS][F-NVIM-OWNED]
+upsert_block "$HOME/.config/nvim/lua/config/keymaps.lua" \
+  "-- >>> dotfiles managed (keymaps) >>>" \
+  "-- <<< dotfiles managed (keymaps) <<<" <<'EOF'
+-- [D-NVIM-KEYMAPS] yank to system clipboard — see docs/decisions.html#D-NVIM-KEYMAPS
+vim.keymap.set({ "n", "v" }, "<leader>y", '"+y', { desc = "Yank to system clipboard" })
+vim.keymap.set("n", "<leader>Y", '"+Y', { desc = "Yank line to system clipboard" })
+EOF
+
+# 3d. tmux: source our overlay LAST from Omarchy's tmux.conf — the XDG path tmux
+# prefers over ~/.tmux.conf — so our binds/settings win. [D-TMUX-KEEP]
+upsert_block "$HOME/.config/tmux/tmux.conf" \
+  "# >>> dotfiles managed (tmux) >>>" \
+  "# <<< dotfiles managed (tmux) <<<" <<'EOF'
+# [D-TMUX-KEEP] personal tmux overlay — see docs/decisions.html#D-TMUX-KEEP
+source-file ~/.config/tmux/local.conf
+EOF
+
+# ── 4. validate Hyprland ─────────────────────────────────────────────────────
+if have hyprctl && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+  step "Validate Hyprland"
+  if hyprctl reload >/dev/null 2>&1; then success "hyprctl reload ok"; else warn "hyprctl reload failed"; fi
+  errs="$(hyprctl configerrors 2>/dev/null || true)"
+  # Clean when output is empty/whitespace or contains "no error". Don't rely on
+  # `grep -v` exit status over empty input (varies across grep implementations).
+  if [ -z "${errs//[[:space:]]/}" ] || printf '%s' "$errs" | grep -qiF 'no error'; then
+    success "no Hyprland config errors"
+  else
+    warn "hyprctl reported config issues:"; printf '%s\n' "$errs"
+  fi
+fi
+
+step "Done"
+success "Overlay installed. Open a new shell (or 'exec bash') to load shell changes."

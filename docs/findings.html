@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Findings — Omarchy Dotfiles</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="topnav">
+  <a class="brand" href="index.html"><span class="dot"></span> Omarchy Dotfiles</a>
+  <a class="nav" href="index.html">Home</a>
+  <a class="nav" href="architecture.html">Architecture</a>
+  <a class="nav" href="decisions.html">Decisions</a>
+  <a class="nav" href="findings.html" aria-current="page">Findings</a>
+  <a class="nav" href="todos.html">To-Dos</a>
+  <a class="nav" href="traceability.html">Trace</a>
+  <a class="nav" href="augmentation-approach.html">Design Note</a>
+</nav>
+
+<div class="container">
+  <p class="eyebrow">Research Findings</p>
+  <h1>How Omarchy actually behaves</h1>
+  <p class="lead">Verified by reading the live system (<code>omarchy 3.8.2</code>) and Omarchy's source/manual.
+  These facts justify the <a href="architecture.html">architecture</a>. Each finding has a stable ID
+  (see <a href="traceability.html">Trace</a>).</p>
+
+  <h2 id="F-HYPR-SEAM">Hyprland config is a sourcing seam <code class="meta">F-HYPR-SEAM</code></h2>
+  <p><code>~/.config/hypr/hyprland.conf</code> is a seeded, owner-owned file that <code>source</code>s, in order:</p>
+  <ol>
+    <li>Omarchy defaults in <code>~/.local/share/omarchy/default/hypr/*</code> — <em>never edit these</em>;</li>
+    <li>the user override files: <code>monitors.conf</code>, <code>input.conf</code>, <code>bindings.conf</code>,
+      <code>looknfeel.conf</code>, <code>autostart.conf</code>;</li>
+    <li><code>~/.config/omarchy/current/theme/hyprland.conf</code>;</li>
+    <li><code>~/.local/state/omarchy/toggles/hypr/*.conf</code>.</li>
+  </ol>
+  <p>Later sources win. Our fragment is added <em>after</em> all of these (managed block at EOF of
+  <code>hyprland.conf</code>), so it overrides cleanly.</p>
+
+  <h2 id="F-REFRESH-WRITETHROUGH">Refresh / reset writes can mutate tracked files <code class="meta">F-REFRESH-WRITETHROUGH</code></h2>
+  <ul class="clean">
+    <li><code>omarchy-refresh-config</code> <strong>does</strong> create timestamped backups before overwriting.</li>
+    <li>But it copies defaults with <code>cp&nbsp;-f</code> — if the destination is a symlink into git, the copy
+    writes <em>through</em> the symlink and mutates the tracked source. This is the real reason we never symlink
+    Omarchy-owned files.</li>
+    <li><code>omarchy refresh hyprland</code> resets the whole set of hypr user files at once — so a single added
+    <code>source =</code> line is the smallest, most recoverable integration surface.</li>
+  </ul>
+
+  <h2 id="F-LUA">Hyprland is migrating to Lua (already on <code>dev</code>) <code class="meta">F-LUA</code></h2>
+  <div class="callout warn">
+    <span class="label">Forward risk</span>
+    Omarchy's <code>dev</code>-branch <code>omarchy-refresh-hyprland</code> refreshes <code>hyprland.lua</code>,
+    <code>bindings.lua</code>, <code>input.lua</code>, <code>looknfeel.lua</code>, <code>monitors.lua</code>,
+    <code>autostart.lua</code>, <code>.luarc.json</code>. The installed system is still <code>.conf</code>, but the
+    transition is real and close. A large <code>.conf</code>-capturing layer would have a looming expiry — which is
+    why this repo owns only a small fragment + one integration line.
+  </div>
+
+  <h2 id="F-BASH-CHAIN">The bash chain <code class="meta">F-BASH-CHAIN</code></h2>
+  <p>Login flow: <code>/etc/profile</code> → <code>~/.bash_profile</code> → <code>~/.bashrc</code> →
+  <code>~/.local/share/omarchy/default/bash/rc</code>. The default bash already wires <strong>starship</strong>,
+  <strong>zoxide</strong>, <strong>fzf</strong>, <strong>mise</strong>, <code>eza</code>/<code>bat</code> aliases,
+  completions, and a functions library. The owner-owned <code>~/.bashrc</code> sources the Omarchy default and
+  leaves a user section at <strong>EOF</strong> — so our managed block lands there and wins conflicts.</p>
+  <p>Aliases/functions Omarchy already defines (so we defer to them, or override only intentionally):
+  <code>ls</code>/<code>lt</code> (eza), <code>cd</code>/<code>zd</code> (zoxide), <code>t</code> (tmux),
+  <code>g</code>/<code>gcm</code>/<code>gcam</code>/<code>gcad</code>, <code>n()</code> (nvim),
+  <code>ga</code>/<code>gd</code> (worktrees), <code>tdl</code>/<code>tdlm</code>/<code>tsl</code> (tmux layouts),
+  <code>fip</code>/<code>dip</code>/<code>lip</code> (ssh forwarding), transcoding helpers.</p>
+  <p>The manual confirms: <code>~/.bashrc</code> "will not be overwritten on updates" — the safe seam for shell
+  customization.</p>
+
+  <h2 id="F-NVIM-OWNED">Neovim is fully Omarchy-owned <code class="meta">F-NVIM-OWNED</code></h2>
+  <p><code>omarchy-nvim-setup</code> does <code>cp&nbsp;-r .../config ~/.config/nvim</code> — it <strong>replaces
+  the entire nvim tree</strong> (backing up first via <code>mv</code>, behind a <code>gum confirm</code>). The file
+  <code>~/.config/nvim/lua/config/keymaps.lua</code> already exists as the LazyVim user-extension point
+  ("Add any additional keymaps here"). Therefore we do not stow into <code>~/.config/nvim</code>; instead
+  <code>install</code> upserts a managed block into that <code>keymaps.lua</code>. It survives routine
+  <code>omarchy update</code> (only the deliberate, confirm-gated setup re-copies nvim); re-run <code>./install</code>
+  after such a reset.</p>
+
+  <h2 id="F-BASELINE">Baseline: "Omarchy after Remove Preinstalled" <code class="meta">F-BASELINE</code></h2>
+  <p>The owner's first post-install step was <strong>Remove Preinstalled</strong> (omarchy menu), which removed
+  bundled apps (Spotify, Obsidian, Signal, Typora, 1Password, lazydocker, the webapps, …). That is why the live
+  <code>~/.config/hypr/bindings.conf</code> lacks their launcher bindings, whereas vanilla Omarchy ships ~20 of
+  them. This divergence is <strong>intentional</strong>. The repo's reference baseline is the post-Remove-Preinstalled
+  state, and <code>bindings.conf</code> is left Omarchy-owned and untracked.</p>
+
+  <h2 id="F-CLI">Omarchy CLI surface (idempotent, preferred over re-implementing) <code class="meta">F-CLI</code></h2>
+  <table>
+    <thead><tr><th>Command</th><th>Does</th></tr></thead>
+    <tbody>
+      <tr><td><code>omarchy pkg add &lt;pkgs&gt;</code></td><td><code>pacman -S --needed</code>; no-op if present. <code>omarchy pkg aur add</code> for AUR (yay).</td></tr>
+      <tr><td><code>omarchy pkg drop &lt;pkgs&gt;</code></td><td><code>pacman -Rns</code>, installed-only.</td></tr>
+      <tr><td><code>omarchy refresh config &lt;path&gt;</code></td><td>reset one <code>~/.config</code> file to default (backs up).</td></tr>
+      <tr><td><code>omarchy theme/font &lt;...&gt;</code></td><td>theme/font management (set only if different).</td></tr>
+      <tr><td><code>omarchy update -y</code></td><td>full update: pulls Omarchy, <code>pacman -Syu</code>, migrations, AUR. Skips the initial confirm/menu — but <em>may still prompt</em> (gum) for required restart/reboot handling.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="F-SHELL-RESEARCH">Shell research (zsh vs. bash) <code class="meta">F-SHELL-RESEARCH</code></h2>
+  <p>Keeping zsh would buy mainly inline autosuggestions + syntax highlighting + zsh completion/globbing — narrow,
+  since Omarchy's bash already provides starship/zoxide/fzf/mise. Against that, <code>chsh</code>→zsh breaks
+  Omarchy's bash-dependent boot/session/helpers (env not loaded in the Hyprland session; reported black-screen
+  cases). Conclusion: stay on bash; layer aliases via the <code>~/.bashrc</code> seam.</p>
+
+  <h2 id="F-TMUX-XDG">tmux prefers <code>~/.config/tmux/tmux.conf</code> over <code>~/.tmux.conf</code> <code class="meta">F-TMUX-XDG</code></h2>
+  <p>Omarchy ships a full <code>~/.config/tmux/tmux.conf</code> (themed status bar, <code>tmux-256color</code> +
+  <code>*:RGB</code> truecolor, <code>mouse on</code>, 50k history, <code>set-clipboard</code>, <code>extended-keys</code>,
+  <code>M-&lt;n&gt;</code>/<code>M-arrow</code> window nav, <code>C-M-arrow</code> pane nav). tmux loads the XDG path
+  in preference to <code>~/.tmux.conf</code>, so a stowed <code>~/.tmux.conf</code> is silently <strong>shadowed
+  and never read</strong>. We therefore stow our config to <code>~/.config/tmux/local.conf</code> and
+  <code>source-file</code> it LAST from omarchy's tmux.conf (managed block) — overriding only our intentional
+  deltas (C-a prefix, vi-copy→wl-copy, hjkl nav, sessionizer) while inheriting omarchy's good defaults. Related:
+  omarchy fixes ssh flakiness via MTU probing (<code>install/config/ssh-flakiness.sh</code>), not TERM, so a
+  global <code>TERM=xterm-256color</code> ssh alias is unnecessary and was removed.</p>
+
+  <h2>Sources</h2>
+  <ul class="clean">
+    <li><a href="https://learn.omacom.io/2/the-omarchy-manual/65/dotfiles">Omarchy manual — Dotfiles</a></li>
+    <li><a href="https://raw.githubusercontent.com/basecamp/omarchy/dev/bin/omarchy-refresh-hyprland">omarchy-refresh-hyprland (dev, Lua)</a></li>
+    <li><a href="https://raw.githubusercontent.com/basecamp/omarchy/dev/config/hypr/hyprland.lua">hyprland.lua (dev)</a></li>
+    <li><a href="https://quinn.io/blog/2025/12-18-zsh-on-omarchy-without-breaking-anything">Zsh on Omarchy without breaking anything</a></li>
+    <li><a href="https://github.com/basecamp/omarchy/discussions/2495">Changing shell to zsh/fish (discussion #2495)</a></li>
+    <li><a href="https://www.reddit.com/r/omarchy/comments/1qixx2x/are_omarchy_updates_still_overwriting_user_configs/">r/omarchy — updates overwriting user configs</a></li>
+    <li><a href="https://www.reddit.com/r/omarchy/comments/1p7n88v/managing_dot_files_with_updates/">r/omarchy — managing dotfiles with updates</a></li>
+    <li><a href="https://greg.molnar.io/blog/customizing-omarchy/">Greg Molnar — Customizing Omarchy</a></li>
+  </ul>
+</div>
+
+<footer>Omarchy dotfiles knowledge base · <a href="index.html">Home</a></footer>
+</body>
+</html>

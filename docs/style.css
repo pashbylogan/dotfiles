@@ -1,0 +1,123 @@
+/* Omarchy dotfiles docs — shared styling.
+   Tokyo Night-inspired palette (matches the active omarchy theme). */
+
+:root {
+  --bg:        #1a1b26;
+  --bg-soft:   #1f2335;
+  --surface:   #24283b;
+  --surface-2: #2a2f45;
+  --border:    #343b58;
+  --text:      #c0caf5;
+  --text-soft: #a9b1d6;
+  --muted:     #6b7394;
+  --blue:      #7aa2f7;
+  --cyan:      #7dcfff;
+  --purple:    #bb9af7;
+  --green:     #9ece6a;
+  --orange:    #e0af68;
+  --red:       #f7768e;
+  --radius:    12px;
+  --maxw:      900px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.65;
+  font-size: 16px;
+}
+
+/* ---- top nav ---- */
+.topnav {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.25rem;
+  padding: .75rem 1.25rem;
+  background: rgba(26, 27, 38, .85);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+.topnav .brand {
+  font-weight: 700; letter-spacing: .2px; margin-right: auto;
+  color: var(--text); text-decoration: none; display: flex; align-items: center; gap: .5rem;
+}
+.topnav .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--purple); box-shadow: 0 0 12px var(--purple); }
+.topnav a.nav { color: var(--text-soft); text-decoration: none; padding: .2rem .1rem; border-bottom: 2px solid transparent; font-size: .95rem; }
+.topnav a.nav:hover { color: var(--cyan); border-bottom-color: var(--cyan); }
+.topnav a.nav[aria-current="page"] { color: var(--purple); border-bottom-color: var(--purple); }
+
+/* ---- layout ---- */
+.container { max-width: var(--maxw); margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+h1, h2, h3 { line-height: 1.25; color: #fff; }
+h1 { font-size: 2rem; margin: .2rem 0 .4rem; }
+h2 { font-size: 1.35rem; margin: 2.4rem 0 .8rem; padding-bottom: .35rem; border-bottom: 1px solid var(--border); }
+h3 { font-size: 1.08rem; margin: 1.6rem 0 .5rem; color: var(--cyan); }
+p, li { color: var(--text-soft); }
+a { color: var(--blue); }
+a:hover { color: var(--cyan); }
+.lead { font-size: 1.1rem; color: var(--text); }
+.eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: .72rem; color: var(--muted); font-weight: 600; }
+.meta { color: var(--muted); font-size: .85rem; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+/* ---- hero (index) ---- */
+.hero { padding: 1rem 0 .5rem; }
+.hero h1 { font-size: 2.4rem; }
+
+/* ---- cards grid ---- */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.card {
+  display: block; text-decoration: none; color: inherit;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.1rem 1.2rem; transition: transform .12s ease, border-color .12s ease, background .12s ease;
+}
+.card:hover { transform: translateY(-2px); border-color: var(--purple); background: var(--surface-2); }
+.card h3 { margin: 0 0 .35rem; color: var(--text); }
+.card p { margin: 0; font-size: .9rem; color: var(--muted); }
+.card .arrow { color: var(--purple); }
+
+/* ---- badges ---- */
+.badge { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .04em;
+  padding: .12rem .5rem; border-radius: 999px; border: 1px solid transparent; vertical-align: middle; }
+.badge-done   { color: var(--green);  background: rgba(158,206,106,.12); border-color: rgba(158,206,106,.35); }
+.badge-active { color: var(--orange); background: rgba(224,175,104,.12); border-color: rgba(224,175,104,.35); }
+.badge-todo   { color: var(--cyan);   background: rgba(125,207,255,.12); border-color: rgba(125,207,255,.35); }
+.badge-future { color: var(--purple); background: rgba(187,154,247,.12); border-color: rgba(187,154,247,.35); }
+.badge-drop   { color: var(--red);    background: rgba(247,118,142,.12); border-color: rgba(247,118,142,.35); }
+
+/* ---- code ---- */
+code { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .88em; background: var(--bg-soft); color: var(--cyan); padding: .12em .4em; border-radius: 6px; border: 1px solid var(--border); }
+pre { background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1rem 1.1rem; overflow-x: auto; line-height: 1.5; }
+pre code { background: none; border: none; padding: 0; color: var(--text-soft); font-size: .85rem; }
+
+/* ---- tables ---- */
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .92rem; }
+th, td { text-align: left; padding: .6rem .7rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--cyan); font-weight: 600; background: var(--surface); }
+tr:hover td { background: var(--bg-soft); }
+
+/* ---- callouts ---- */
+.callout { border-left: 3px solid var(--blue); background: var(--surface); border-radius: 0 var(--radius) var(--radius) 0;
+  padding: .8rem 1rem; margin: 1.2rem 0; }
+.callout.note { border-left-color: var(--cyan); }
+.callout.warn { border-left-color: var(--orange); }
+.callout.key  { border-left-color: var(--purple); }
+.callout .label { font-weight: 700; font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); display: block; margin-bottom: .2rem; }
+
+ul.clean { list-style: none; padding-left: 0; }
+ul.clean li { padding-left: 1.4rem; position: relative; margin: .35rem 0; }
+ul.clean li::before { content: "▸"; color: var(--purple); position: absolute; left: 0; }
+
+footer { border-top: 1px solid var(--border); margin-top: 3rem; padding: 1.5rem 1.25rem; text-align: center; color: var(--muted); font-size: .85rem; }
+footer a { color: var(--muted); }
+
+.kbd { font-family: ui-monospace, monospace; font-size: .82em; background: var(--surface-2); border: 1px solid var(--border);
+  border-bottom-width: 2px; border-radius: 6px; padding: .08em .45em; color: var(--text); }

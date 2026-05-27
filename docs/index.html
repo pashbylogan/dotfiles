@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Omarchy Dotfiles — Docs</title>
+<meta name="description" content="Knowledge base for a minimal personal overlay on top of Omarchy Linux: architecture, decisions, research findings, and to-dos.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="topnav">
+  <a class="brand" href="index.html"><span class="dot"></span> Omarchy Dotfiles</a>
+  <a class="nav" href="index.html" aria-current="page">Home</a>
+  <a class="nav" href="architecture.html">Architecture</a>
+  <a class="nav" href="decisions.html">Decisions</a>
+  <a class="nav" href="findings.html">Findings</a>
+  <a class="nav" href="todos.html">To-Dos</a>
+  <a class="nav" href="traceability.html">Trace</a>
+  <a class="nav" href="augmentation-approach.html">Design Note</a>
+</nav>
+
+<div class="container">
+  <header class="hero">
+    <p class="eyebrow">Knowledge Base</p>
+    <h1>A minimal personal overlay on Omarchy</h1>
+    <p class="lead">This repo does <strong>not</strong> rebuild a desktop. Omarchy installs and seeds everything;
+    this repo layers only the owner's intentional customizations on top, using official Omarchy paths and a single
+    idempotent <code>install</code> script.</p>
+  </header>
+
+  <div class="callout key">
+    <span class="label">Start here (future agents)</span>
+    Read <a href="architecture.html">Architecture</a> for the ownership model and the one rule that governs
+    everything: <em>never symlink an Omarchy-owned mutable file into git — own a thin fragment and integrate it
+    with a single managed block.</em> Then skim <a href="decisions.html">Decisions</a> for the "why", and
+    <a href="todos.html">To-Dos</a> for what's done and what's next.
+  </div>
+
+  <h2>Map of these docs</h2>
+  <div class="cards">
+    <a class="card" href="architecture.html">
+      <h3>Architecture <span class="arrow">→</span></h3>
+      <p>Ownership model, the minimal-overlay rationale, the integration-block mechanism, and repo layout.</p>
+    </a>
+    <a class="card" href="decisions.html">
+      <h3>Decisions <span class="arrow">→</span></h3>
+      <p>The decision log: engine, shell, what we carry vs. drop, delta storage, with rationale for each.</p>
+    </a>
+    <a class="card" href="findings.html">
+      <h3>Findings <span class="arrow">→</span></h3>
+      <p>Verified research about how Omarchy behaves — Hyprland sourcing, refresh/migrations, the Lua move,
+      the bash chain, nvim setup, and the "Remove Preinstalled" baseline.</p>
+    </a>
+    <a class="card" href="todos.html">
+      <h3>To-Dos <span class="arrow">→</span></h3>
+      <p>Implementation progress, deferred decisions, and future work (incl. the eventual Hyprland → Lua port).</p>
+    </a>
+    <a class="card" href="augmentation-approach.html">
+      <h3>Design Note <span class="arrow">→</span></h3>
+      <p>The original review that pivoted this repo away from a convergence framework toward a thin overlay.</p>
+    </a>
+  </div>
+
+  <h2>The repo at a glance</h2>
+  <pre><code>dotfiles/
+├── install                      # the ONLY script — stow + managed integration blocks (idempotent)
+├── packages.txt                 # optional extra packages → omarchy pkg add
+├── bash/.config/dotfiles/       # shell.sh (ported aliases) + shell.local.sh.example
+├── ssh/.ssh/                    # config (+ Include config.local) + config.local.example
+├── bin/.local/bin/              # personal commands → ~/.local/bin (on PATH)
+├── tmux/.tmux.conf              # kept (real customization; clipboard ported to wl-copy)
+├── hypr/.config/dotfiles/       # hypr.conf override fragment + hypr.local.conf.example
+└── docs/                        # this knowledge base</code></pre>
+
+  <div class="callout note">
+    <span class="label">Reproduction recipe</span>
+    Install Omarchy → run <strong>Remove Preinstalled</strong> (omarchy menu) → <code>./install</code>.
+    The "after Remove Preinstalled" state is this repo's reference baseline — see
+    <a href="findings.html#F-BASELINE">Findings → Baseline</a>.
+  </div>
+</div>
+
+<footer>
+  Omarchy dotfiles knowledge base · maintained alongside the code on the <code>omarchy-dotfiles</code> branch.
+</footer>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design Note: Augmentation Approach — Omarchy Dotfiles</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="topnav">
+  <a class="brand" href="index.html"><span class="dot"></span> Omarchy Dotfiles</a>
+  <a class="nav" href="index.html">Home</a>
+  <a class="nav" href="architecture.html">Architecture</a>
+  <a class="nav" href="decisions.html">Decisions</a>
+  <a class="nav" href="findings.html">Findings</a>
+  <a class="nav" href="todos.html">To-Dos</a>
+  <a class="nav" href="traceability.html">Trace</a>
+  <a class="nav" href="augmentation-approach.html" aria-current="page">Design Note</a>
+</nav>
+
+<div class="container">
+  <p class="eyebrow">Design Note (origin)</p>
+  <h1>Omarchy augmentation approach</h1>
+  <p class="lead">The review that pivoted this repo away from a <code>bootstrap</code> +
+  <code>dot-apply/check/update/cleanup/capture</code> convergence framework toward a thin overlay. Its conclusions
+  are now codified in <a href="architecture.html">Architecture</a> (<code>D-ENGINE</code>,
+  <code>D-DELTA-STORAGE</code>) and <a href="findings.html">Findings</a>.</p>
+
+  <h2>Recommendation</h2>
+  <p>A full <code>bootstrap</code> plus <code>dot-apply</code>, <code>dot-check</code>, <code>dot-update</code>,
+  <code>dot-cleanup</code>, and <code>dot-capture</code> framework is not the right starting point. It recreates
+  configuration-management responsibilities that Omarchy already owns and increases the amount of code that must
+  survive upstream changes. The durable model is narrower:</p>
+  <ul class="clean">
+    <li>Omarchy owns installation, seeded application configuration, migrations, and system updates.</li>
+    <li>This repository owns intentional personal overlays, shell additions, SSH configuration, personal commands,
+    and any explicitly custom hooks or branding.</li>
+    <li>Stow places repository-owned static files, but does not symlink Omarchy-managed mutable files back into git.</li>
+  </ul>
+
+  <h2>Official guidance &amp; current direction</h2>
+  <p>The Omarchy manual recommends keeping personal customization in <code>~/.config</code>, avoiding edits to
+  <code>~/.local/share/omarchy</code>, using stow for substantial dotfile customization, adding shell behavior
+  through <code>~/.bashrc</code>, and preferring Omarchy commands for supported operations.</p>
+  <p>That does not mean every file under <code>~/.config</code> is immutable across updates. Migrations edit
+  <code>~/.config/hypr/*</code>, and <code>omarchy refresh hyprland</code> overwrites Hyprland user files — see
+  <a href="findings.html#F-REFRESH-WRITETHROUGH">F-REFRESH-WRITETHROUGH</a>. Upstream is also moving Hyprland config
+  to Lua (<a href="findings.html#F-LUA">F-LUA</a>), so a large <code>.conf</code>-specific convergence layer would
+  encode assumptions that may soon need rework.</p>
+
+  <h2>Community pattern</h2>
+  <ol>
+    <li>Store personal files in git using stow (or chezmoi).</li>
+    <li>Keep personal Hyprland behavior in one separate override file.</li>
+    <li>Source that file from Omarchy's main Hyprland configuration.</li>
+    <li>If an upstream migration disrupts the integration, restore the one source/import line rather than taking
+    ownership of entire Omarchy-seeded files.</li>
+  </ol>
+
+  <h2>Recommended repository shape</h2>
+  <pre><code>dotfiles/
+|-- install
+|-- packages.txt                       # optional extras only
+|-- bin/.local/bin/                    # personal commands
+|-- bash/.config/dotfiles/shell.sh
+|-- ssh/.ssh/config
+|-- ssh/.ssh/config.local.example
+|-- hypr/.config/dotfiles/hypr.conf    # current stable override fragment
+`-- omarchy/.config/omarchy/hooks/     # actual custom hooks only</code></pre>
+  <p><code>install</code> does only a small amount of orchestration:</p>
+  <pre><code>omarchy pkg add stow
+stow bash ssh bin hypr
+
+# Ensure ~/.bashrc sources ~/.config/dotfiles/shell.sh
+# Ensure ~/.config/hypr/hyprland.conf sources ~/.config/dotfiles/hypr.conf</code></pre>
+  <p>When Lua-based Hyprland config reaches stable, the Hyprland piece becomes a small module imported from the
+  upstream entrypoint, e.g. <code>require("dotfiles.hypr")</code> — one module + one line, not a rewrite.</p>
+
+  <h2>Script decisions</h2>
+  <table>
+    <thead><tr><th>Proposed file</th><th>Recommendation</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td><code>bootstrap.sh</code></td><td>Drop / keep tiny</td><td>Omarchy is already installed; remote provisioning isn't a demonstrated requirement.</td></tr>
+      <tr><td><code>install</code></td><td>Keep</td><td>One-shot entrypoint for stowing + minimal integration lines.</td></tr>
+      <tr><td><code>dot-apply</code></td><td>Fold into <code>install</code></td><td>The managed state doesn't justify a separate convergence command.</td></tr>
+      <tr><td><code>dot-check</code></td><td>Drop</td><td><code>stow -n</code>, <code>git diff</code>, and inspecting small overlay files suffice.</td></tr>
+      <tr><td><code>dot-update</code></td><td>Drop</td><td><code>omarchy update -y</code> already owns updates; post-update hooks cover narrow extensions.</td></tr>
+      <tr><td><code>dot-cleanup</code></td><td>Drop / postpone</td><td>Automated removal has more risk than value during initial migration.</td></tr>
+      <tr><td><code>dot-capture</code></td><td>Drop</td><td>Capturing complete live Omarchy files establishes the wrong ownership model.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Track &amp; avoid</h2>
+  <p><strong>Track:</strong> shell additions; SSH common config with a local untracked include; personal commands;
+  a small Hyprland overlay (keyboard mapping + later workspace rules); custom Omarchy hooks or branding; optional
+  package extras.</p>
+  <p><strong>Avoid:</strong> generated <code>~/.config/omarchy/current/</code> state; complete Omarchy-seeded
+  Hyprland files; Omarchy's Neovim config directory; Omarchy-managed tmux until there's an explicit customization
+  worth maintaining; full Waybar or theme state unless intentionally accepting ongoing ownership.</p>
+  <div class="callout note">
+    <span class="label">As implemented</span>
+    This repo follows the note, with two owner-driven refinements: a single <code>install</code> (no update/cleanup
+    scripts — <code>D-SCRIPTS-MINIMAL</code>), and <code>tmux</code> <em>is</em> tracked because it carries a real
+    customization (<code>D-TMUX-KEEP</code>).
+  </div>
+
+  <h2>Sources</h2>
+  <ul class="clean">
+    <li><a href="https://learn.omacom.io/2/the-omarchy-manual/65/dotfiles">Omarchy manual — Dotfiles</a></li>
+    <li><a href="https://raw.githubusercontent.com/basecamp/omarchy/dev/config/hypr/hyprland.lua">Omarchy dev — hyprland.lua</a></li>
+    <li><a href="https://raw.githubusercontent.com/basecamp/omarchy/dev/bin/omarchy-refresh-hyprland">Omarchy dev — omarchy-refresh-hyprland</a></li>
+    <li><a href="https://github.com/basecamp/omarchy/releases">Omarchy releases</a></li>
+    <li><a href="https://www.reddit.com/r/omarchy/comments/1qixx2x/are_omarchy_updates_still_overwriting_user_configs/">r/omarchy — updates overwriting user configs</a></li>
+    <li><a href="https://www.reddit.com/r/omarchy/comments/1op9xu4/non_persistent_dotfiles_after_updates/">r/omarchy — non-persistent dotfiles after updates</a></li>
+    <li><a href="https://www.reddit.com/r/omarchy/comments/1p7n88v/managing_dot_files_with_updates/">r/omarchy — managing dotfiles with updates</a></li>
+    <li><a href="https://www.penkin.me/development/tools/productivity/configuration/2025/10/20/my-dotfiles-setup-with-gnu-stow.html">Christopher Penkin — dotfiles with GNU Stow</a></li>
+    <li><a href="https://greg.molnar.io/blog/customizing-omarchy/">Greg Molnar — Customizing Omarchy</a></li>
+  </ul>
+</div>
+
+<footer>Omarchy dotfiles knowledge base · <a href="index.html">Home</a></footer>
+</body>
+</html>

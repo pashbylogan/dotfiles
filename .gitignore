@@ -1,1 +1,9 @@
-nvim/.config/nvim/plugin/packer_compiled.lua
+# Machine-local overrides — never commit. [D-SECRETS-LOCAL]
+bash/.config/dotfiles/shell.local.sh
+hypr/.config/dotfiles/hypr.local.conf
+ssh/.ssh/config.local
+
+# Editor / OS cruft
+*.swp
+*~
+.DS_Store
