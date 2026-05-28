@@ -181,7 +181,11 @@
           </tr>
           <tr>
             <td><code>omarchy pkg drop &lt;pkgs&gt;</code></td>
-            <td><code>pacman -Rns</code>, installed-only.</td>
+            <td>
+              <code>pacman -Rns</code>, installed-only. Drives
+              <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a>'s
+              declarative <code>packages.remove.txt</code> surface.
+            </td>
           </tr>
           <tr>
             <td><code>omarchy refresh config &lt;path&gt;</code></td>

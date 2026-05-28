@@ -22,7 +22,7 @@
       "canonical": "decisions.html#D-SCRIPTS-MINIMAL",
       "appears_in": ["README.md", "augmentation-approach.html"],
       "code_paths": ["install", "README.md"],
-      "related": ["D-ENGINE", "F-CLI", "D-CI"]
+      "related": ["D-ENGINE", "F-CLI", "D-CI", "D-PKG-REMOVE"]
     },
     {
       "id": "D-DELTA-STORAGE",
@@ -47,13 +47,14 @@
       "id": "D-IDEMPOTENT",
       "title": "install must be idempotent (upsert_block + stow -R + pkg --needed)",
       "canonical": "architecture.html#D-IDEMPOTENT",
-      "appears_in": ["README.md"],
+      "appears_in": ["README.md", "decisions.html"],
       "code_paths": ["install"],
       "related": [
         "D-DELTA-STORAGE",
         "D-SHELL-SEAM",
         "D-NVIM-KEYMAPS",
-        "D-WAYBAR-DELTAS"
+        "D-WAYBAR-DELTAS",
+        "D-PKG-REMOVE"
       ]
     },
     {
@@ -198,6 +199,19 @@
       "appears_in": ["README.md"],
       "code_paths": ["README.md"],
       "related": ["F-BASELINE"]
+    },
+    {
+      "id": "D-PKG-REMOVE",
+      "title": "Subtractive package overlay via packages.remove.txt",
+      "canonical": "decisions.html#D-PKG-REMOVE",
+      "appears_in": [
+        "README.md",
+        "architecture.html",
+        "findings.html",
+        "todos.html"
+      ],
+      "code_paths": ["install", "packages.remove.txt", "README.md"],
+      "related": ["D-IDEMPOTENT", "D-SCRIPTS-MINIMAL", "F-CLI"]
     }
   ],
   "findings": [
@@ -259,7 +273,7 @@
       "canonical": "findings.html#F-CLI",
       "appears_in": ["README.md"],
       "code_paths": ["install"],
-      "related": ["D-ENGINE", "D-SCRIPTS-MINIMAL"]
+      "related": ["D-ENGINE", "D-SCRIPTS-MINIMAL", "D-PKG-REMOVE"]
     },
     {
       "id": "F-SHELL-RESEARCH",

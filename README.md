@@ -27,7 +27,7 @@ update, etc.) and the machine reconverges. [D-IDEMPOTENT]
 
 ## What `install` does
 
-1. Ensures `stow`, then installs any [`packages.txt`](packages.txt) extras via `omarchy pkg add` and any [`packages.aur.txt`](packages.aur.txt) extras via `omarchy pkg aur add`.
+1. Ensures `stow`, then installs any [`packages.txt`](packages.txt) extras via `omarchy pkg add` and any [`packages.aur.txt`](packages.aur.txt) extras via `omarchy pkg aur add`. After both add steps, drops anything in [`packages.remove.txt`](packages.remove.txt) via `omarchy pkg drop` (idempotent — already-absent names are a no-op). [D-PKG-REMOVE]
 2. Reconciles dev-env tools (`uv`, `go`): drops any pacman copy and ensures the tool is on PATH via `omarchy install dev-env python` / `omarchy install dev-env go`. omarchy lands these wherever the underlying tool defaults (today Astral's `~/.local/bin/uv` and mise's `~/.local/share/mise/shims/go`); we don't hardcode that, so the reconciliation survives upstream path changes. Idempotent on a correct machine. **Caveat:** dev-env pulls "latest" at the time it runs (mise `python@latest` / `go@latest`, Astral's uv installer), so a fresh bootstrap on a different day may yield different Python/uv/go versions. Use `make update` to bump them deliberately later.
 3. Encodes XDG user-dir deltas vs Omarchy's defaults: collapses `DOCUMENTS`/`MUSIC` to `$HOME` and adds the non-standard `XDG_PROJECTS_DIR=$HOME/Projects` (read by personal scripts). Templates/Public/Desktop are already collapsed by Omarchy.
 4. Stows repo-owned static files into `$HOME` — only into our own namespaces, never
@@ -51,6 +51,7 @@ install                      # the only runtime script (stow + managed integrati
 Makefile                     # `make` menu; `make ci` mirrors CI; `make fmt` auto-fixes
 packages.txt                 # optional extra packages → omarchy pkg add
 packages.aur.txt             # optional AUR packages → omarchy pkg aur add (Slack, JetBrains Toolbox, …)
+packages.remove.txt          # subtractive: omarchy builtins to drop → omarchy pkg drop
 bash/.config/dotfiles/       # shell.sh (ported aliases) + shell.local.sh.example
 ssh/.ssh/                    # config (+ Include config.local) + config.local.example
 bin/.local/bin/              # personal commands → ~/.local/bin (on PATH)

@@ -405,6 +405,23 @@
             </td>
             <td><span class="badge badge-done">done</span></td>
           </tr>
+          <tr>
+            <td>pkg-remove</td>
+            <td>
+              Subtractive-overlay scaffolding for package cleanup. New
+              <code>packages.remove.txt</code> mirrors
+              <code>packages.txt</code> / <code>packages.aur.txt</code>;
+              <code>./install</code> parses it via the existing
+              <code>parse_pkg_file</code> helper and passes the result to
+              <code>omarchy pkg drop</code> (which filters to installed-only
+              before <code>pacman -Rns</code>, so already-absent names are a
+              no-op). Removes run after both add steps so a name in both files
+              resolves to "removed". New decision token
+              <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a>; the list
+              ships empty — curation lands in follow-up commits.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
         </tbody>
       </table>
 
@@ -523,11 +540,18 @@
             </td>
             <td>When you want a leaner base</td>
             <td>
-              A cleanup script to remove more unneeded omarchy builtins (e.g.
-              btop). <strong>Caveat:</strong> some "builtins" are wired into
-              omarchy's shell — <code>zoxide</code> backs the
-              <code>cd</code> alias, <code>fzf</code> the key-bindings — so
-              audit before removing or you'll break omarchy defaults.
+              Curate the actual removal list. Scaffolding shipped (<a
+                href="decisions.html#D-PKG-REMOVE"
+                >D-PKG-REMOVE</a
+              >
+              — tracked <code>packages.remove.txt</code> + install processing);
+              the list is intentionally empty until candidates are picked.
+              <strong>Caveat:</strong> some "builtins" are wired into omarchy's
+              shell — <code>zoxide</code> backs the <code>cd</code> alias,
+              <code>fzf</code> the key-bindings, <code>btop</code> is
+              <code>SUPER+T</code> — so grep
+              <code>~/.local/share/omarchy/</code> before adding a name or
+              you'll break omarchy defaults.
             </td>
           </tr>
           <tr>

@@ -184,6 +184,15 @@
           >).
         </li>
         <li>
+          <code>omarchy pkg drop</code> via
+          <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a> → filters to
+          installed-only before <code>pacman -Rns</code>, so listing an
+          already-absent name is a no-op. The package surface is now additive +
+          subtractive (<code>packages.txt</code> /
+          <code>packages.aur.txt</code> / <code>packages.remove.txt</code>);
+          other overlay surfaces remain additive-only.
+        </li>
+        <li>
           <code>stow -R</code> → restow; already-correct links are no-ops; one
           first-run edge case is a pre-existing real
           <code>~/.ssh/config</code> (backed up once, then linked).

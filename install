@@ -161,6 +161,17 @@ if [ -f packages.aur.txt ]; then
   fi
 fi
 
+if [ -f packages.remove.txt ]; then
+  mapfile -t REMOVE_PKGS < <(parse_pkg_file packages.remove.txt)
+  if [ "${#REMOVE_PKGS[@]}" -gt 0 ]; then
+    info "removing omarchy builtins: ${REMOVE_PKGS[*]}"
+    # pacman -Rns refuses reverse-dep conflicts; warn instead of abort. [D-PKG-REMOVE]
+    if ! omarchy pkg drop "${REMOVE_PKGS[@]}"; then
+      warn "  one or more removes refused (reverse-dep conflict?); continuing"
+    fi
+  fi
+fi
+
 # Prefer Omarchy's dev-env channel for uv/go so PATH ownership stays consistent.
 # [D-DEV-ENV][F-CLI][D-IDEMPOTENT]
 ensure_dev_env_tool() {
