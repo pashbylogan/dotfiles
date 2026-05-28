@@ -36,7 +36,8 @@ have() { command -v "$1" >/dev/null 2>&1; }
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 # Re-anchor managed blocks at EOF because bash/Hyprland/tmux precedence depends
-# on load order, not just presence. [D-DELTA-STORAGE][D-IDEMPOTENT]
+# on load order, not just presence. Body on stdin (callers pipe a heredoc).
+# [D-DELTA-STORAGE][D-IDEMPOTENT]
 upsert_block() {
   local file="$1" begin="$2" end="$3" body
   body="$(cat)"
@@ -69,6 +70,7 @@ upsert_block() {
 }
 
 # Back up foreign files/symlinks once so stow can manage the path safely.
+# Targets already symlinked into the repo are left alone (stow -R is a no-op).
 prestow_backup() {
   local t dest bak
   for t in "$@"; do

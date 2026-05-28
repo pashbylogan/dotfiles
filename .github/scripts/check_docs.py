@@ -1,5 +1,26 @@
 #!/usr/bin/env python3
-"""Docs-integrity checker for the omarchy-dotfiles knowledge base. [D-CI]"""
+"""Docs-integrity checker for the omarchy-dotfiles knowledge base. [D-CI]
+
+Verifies that docs/ stays internally consistent and that registry.json (the
+machine-readable cross-reference index) agrees with the HTML anchors, the cited
+code paths, and the prose. Pure stdlib, no external deps. Run from anywhere:
+
+    python3 .github/scripts/check_docs.py
+
+Exit 0 = all checks pass. Exit 1 = one or more problems (each printed).
+
+Checks (the spec lives in docs/todos.html "CI" + docs/traceability.html):
+  1.  registry.json is valid JSON
+  2.  each entry's canonical `file#anchor` resolves (file exists, id= present)
+  3.  registry D-/F- ids  <->  HTML id= anchors are bijective (both directions)
+  4.  each entry's code_paths exist on disk; file paths must contain [ID] token
+  5.  each entry's related ids are known ids
+  6.  every id appears (as text) in traceability.html
+  7.  internal links in docs/*.html resolve (target exists; #anchor exists)
+  8.  index.html links every page, and every page carries the full shared topnav
+  9.  appears_in is accurate: recomputing it from the prose yields the stored value
+  10. no stale tokens (removed paths/scripts) outside their changelog home
+"""
 
 import json
 import os
