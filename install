@@ -1,24 +1,13 @@
 #!/usr/bin/env bash
-# Omarchy dotfiles — minimal personal overlay installer.
-#
-# This is the ONLY script in the repo [D-SCRIPTS-MINIMAL]. It is idempotent
-# [D-IDEMPOTENT]: run it any number of times and the machine converges to the
-# same state. It does three things:
-#   1. ensure prerequisites (stow + any packages.txt extras) via Omarchy's CLI
-#   2. stow repo-owned static files into $HOME (never Omarchy-owned files)
-#   3. upsert single managed blocks into Omarchy-owned files so our overlays
-#      load LAST and win [D-DELTA-STORAGE]
-#
-# Design + rationale: see docs/index.html (start at architecture.html).
-# Updates and one-time i3/zsh cleanup are manual — see README.md.
+# Minimal Omarchy overlay installer; docs/index.html carries the design context. [D-SCRIPTS-MINIMAL]
+# Keep runtime behavior idempotent and limited to repo-owned seams. [D-IDEMPOTENT]
 
 set -euo pipefail
 
-# ── repo root ────────────────────────────────────────────────────────────────
+# ── bootstrap ────────────────────────────────────────────────────────────────
 REPO="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 cd "$REPO"
 
-# ── pretty output ────────────────────────────────────────────────────────────
 if [ -t 1 ]; then
   BOLD=$'\033[1m'
   CYAN=$'\033[0;36m'
@@ -45,11 +34,9 @@ die() {
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
-# ── upsert_block: idempotent, ordering-safe managed block ────────────────────
-# Removes any existing block delimited by $2/$3 (begin/end markers), then
-# appends a fresh copy at END OF FILE so it is sourced last. Body on stdin.
-# A presence-only "append if missing" guard is intentionally NOT used: in both
-# bash and Hyprland, load order decides who wins. [D-DELTA-STORAGE][D-IDEMPOTENT]
+# ── helpers ──────────────────────────────────────────────────────────────────
+# Re-anchor managed blocks at EOF because bash/Hyprland/tmux precedence depends
+# on load order, not just presence. [D-DELTA-STORAGE][D-IDEMPOTENT]
 upsert_block() {
   local file="$1" begin="$2" end="$3" body
   body="$(cat)"
@@ -57,22 +44,16 @@ upsert_block() {
     warn "skip managed block — missing $file"
     return 0
   fi
-  # Refuse to edit unless markers are balanced: a begin without an end (or a
-  # duplicated begin) would make the awk pass eat file content. Refuse rather
-  # than corrupt. [D-IDEMPOTENT]
-  # Match markers as WHOLE LINES (-x / $0==), never as substrings, so a stray
-  # line that merely contains the marker text can't trigger block deletion.
+  # Unbalanced markers could make awk eat user content, so refuse to edit.
+  # Whole-line marker matching prevents accidental substring-triggered deletion.
   if grep -qxF -- "$begin" "$file"; then
     grep -qxF -- "$end" "$file" || die "begin marker without end marker in $file — refusing to edit"
     local _nb
     _nb=$(grep -cxF -- "$begin" "$file")
     [ "$_nb" -gt 1 ] && die "duplicate begin marker ($_nb) in $file — refusing to edit"
   fi
-  # Drop any existing managed block AND trailing blank lines, then append a
-  # fresh block. Trimming trailing blanks keeps re-runs byte-stable (no
-  # accumulating blank lines). If awk fails, abort WITHOUT appending — otherwise
-  # set -e would not fire (awk is non-final in the && list) and we'd duplicate
-  # the block. [D-IDEMPOTENT]
+  # Trim trailing blanks for byte-stable re-runs; abort before appending if awk
+  # fails because it is non-final in the redirection pipeline. [D-IDEMPOTENT]
   if ! awk -v b="$begin" -v e="$end" '
     $0==b{s=1}
     !s{ buf[++n]=$0 }
@@ -87,10 +68,7 @@ upsert_block() {
   info "managed block updated in ${file/#$HOME/\~}"
 }
 
-# ── pre-stow backup: keep stow conflict-free + idempotent ────────────────────
-# For single-file targets that may already exist as a REAL file (or a stale
-# symlink not pointing into this repo), back it up once so stow can link.
-# Targets already symlinked into the repo are left alone (stow -R is a no-op).
+# Back up foreign files/symlinks once so stow can manage the path safely.
 prestow_backup() {
   local t dest bak
   for t in "$@"; do
@@ -105,7 +83,7 @@ prestow_backup() {
   done
 }
 
-# ── 1. prerequisites ─────────────────────────────────────────────────────────
+# ── prerequisites ────────────────────────────────────────────────────────────
 # Omarchy CLI is preferred over re-implementing package logic [F-CLI][D-ENGINE].
 step "Prerequisites"
 if have stow; then
@@ -116,8 +94,6 @@ else
   omarchy pkg add stow
 fi
 
-# Optional extra packages, one per line in packages.txt (# comments ignored).
-# AUR-only entries live in packages.aur.txt (parallel format, `omarchy pkg aur add`).
 # `tr -d '\r'` strips CRLF endings introduced by a Windows editor — without it,
 # sed/grep would emit package names with a trailing CR that breaks pacman/yay.
 parse_pkg_file() {
@@ -140,23 +116,14 @@ if [ -f packages.aur.txt ]; then
   fi
 fi
 
-# Dev-env tools — this repo declares omarchy's `install dev-env` as the canonical
-# install path for uv and go. The helper drops any pacman copy and ensures the
-# tool is on PATH via dev-env (whichever location omarchy currently installs to:
-# today Astral's ~/.local/bin/uv and mise's ~/.local/share/mise/shims/go, but we
-# don't hardcode that — `command -v` finds it wherever omarchy lands it).
-# Idempotent on a correct machine; corrective on a drifted one. NOTE: dev-env
-# pulls *latest* at the time it runs (mise use --global python@latest, Astral's
-# uv installer, etc.), so a fresh bootstrap on a different day may yield
-# different versions; `make update` exists to bump them deliberately.
+# Prefer Omarchy's dev-env channel for uv/go so PATH ownership stays consistent.
 # [D-DEV-ENV][F-CLI][D-IDEMPOTENT]
 ensure_dev_env_tool() {
   local tool="$1" kind="$2"
   if pacman -Qq "$tool" >/dev/null 2>&1; then
     info "dropping pacman copy of $tool (omarchy dev-env is canonical for this tool)"
-    # `omarchy pkg drop` wraps `pacman -Rns --noconfirm`, which refuses when
-    # another installed package depends on this one. Warn and continue rather
-    # than aborting the whole installer; the reconcile is best-effort.
+    # Package removal can fail on reverse dependencies; keep reconciliation
+    # best-effort rather than aborting unrelated installer work.
     if ! omarchy pkg drop "$tool"; then
       warn "  could not drop pacman $tool (likely a reverse dependency); leaving it in place"
     fi
@@ -170,17 +137,10 @@ ensure_dev_env_tool() {
 ensure_dev_env_tool uv python
 ensure_dev_env_tool go go
 
-# XDG user dirs — encode the deltas vs Omarchy's defaults.
-# Omarchy's install/config/user-dirs.sh already collapses Templates/Public/Desktop
-# to $HOME. We additionally collapse Documents/Music (unused) and add a
-# non-standard XDG_PROJECTS_DIR for personal scripts that read user-dirs.dirs.
-# `xdg-user-dirs-update` is idempotent and the canonical edit path for the
-# 8 spec keys; XDG_PROJECTS_DIR is hand-managed since the tool doesn't know it.
-# [F-CLI]
+# ── XDG user dirs ────────────────────────────────────────────────────────────
+# Collapse unused Documents/Music and add XDG_PROJECTS_DIR for local scripts. [F-CLI]
 step "XDG user dirs"
-# Guard the tool itself the same way we guard `stow` — bootstrap via omarchy if
-# missing. Without this, a stripped variant without xdg-user-dirs preinstalled
-# would kill the script here under `set -e` before stow and managed blocks run.
+# Bootstrap missing xdg-user-dirs so stripped installs still reach stow/blocks.
 if ! have xdg-user-dirs-update; then
   info "installing xdg-user-dirs via omarchy"
   omarchy pkg add xdg-user-dirs
@@ -189,8 +149,7 @@ mkdir -p "$HOME/Projects"
 xdg-user-dirs-update --set DOCUMENTS "$HOME"
 xdg-user-dirs-update --set MUSIC "$HOME"
 xdg_dirs="$HOME/.config/user-dirs.dirs"
-# $HOME stays LITERAL in user-dirs.dirs (matches the format
-# xdg-user-dirs-update writes for the spec keys).
+# user-dirs.dirs stores literal $HOME values, matching xdg-user-dirs-update.
 # shellcheck disable=SC2016
 projects_line='XDG_PROJECTS_DIR="$HOME/Projects"'
 if [ -f "$xdg_dirs" ]; then
@@ -200,25 +159,20 @@ if [ -f "$xdg_dirs" ]; then
   fi
   success "XDG dirs reconciled (Documents/Music -> \$HOME; Projects=\~/Projects)"
 else
-  # xdg-user-dirs-update silently no-ops if /etc/xdg/user-dirs.conf has
-  # `enabled=False` or the user-dirs locale isn't configured. Refuse to write
-  # a stub file containing only XDG_PROJECTS_DIR — that would decapitate the
-  # rest of the XDG state. Surface honestly instead of printing a success lie.
+  # A tool no-op here would leave only XDG_PROJECTS_DIR in a new stub, hiding the
+  # missing spec keys; surface the drift instead.
   warn "skipped XDG reconcile — $xdg_dirs not present (xdg-user-dirs-update silently no-op'd; check /etc/xdg/user-dirs.conf)"
 fi
 
-# ── 2. stow repo-owned files ─────────────────────────────────────────────────
-# Targets live in our OWN namespaces (~/.config/dotfiles, ~/.ssh, ~/.local/bin,
-# ~/.config/tmux/local.conf) — never Omarchy-managed files [D-DELTA-STORAGE].
+# ── stow repo-owned files ────────────────────────────────────────────────────
+# Stow only repo-owned namespaces; Omarchy-owned files get managed blocks. [D-DELTA-STORAGE]
 step "Stow"
 prestow_backup "$HOME/.ssh/config"
-# tmux: old layout stowed ~/.tmux.conf, but tmux prefers ~/.config/tmux/tmux.conf
-# (Omarchy's), so it was shadowed. We now load via ~/.config/tmux/local.conf
-# (sourced from Omarchy's tmux.conf below). Drop the stale ~/.tmux.conf if it's ours.
+# Remove only our obsolete ~/.tmux.conf symlink; tmux now loads through Omarchy's
+# XDG config path so the overlay is not shadowed.
 if [ -L "$HOME/.tmux.conf" ]; then
   _t="$(readlink -f "$HOME/.tmux.conf" 2>/dev/null || true)"
-  # Only remove if it canonicalizes INTO this repo — never delete a foreign or
-  # unresolvable (empty) broken link.
+  # Never delete foreign or unresolvable links.
   case "$_t" in "$REPO"/*) rm -f "$HOME/.tmux.conf" ;; esac
   unset _t
 fi
@@ -226,14 +180,14 @@ STOW_PKGS=(bash ssh bin hypr tmux)
 stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
 success "stowed: ${STOW_PKGS[*]}"
 
-# ssh wants tight perms
+# ssh ignores overly-open config paths.
 [ -d "$HOME/.ssh" ] && chmod 700 "$HOME/.ssh" 2>/dev/null || true
 [ -e "$HOME/.ssh/config" ] && chmod 600 "$HOME/.ssh/config" 2>/dev/null || true
 
-# ── 3. integration blocks into Omarchy-owned files ──────────────────────────
+# ── integration blocks ───────────────────────────────────────────────────────
 step "Integration"
 
-# 3a. bash: source our shell additions, last so our aliases win [D-SHELL-SEAM][F-BASH-CHAIN]
+# Source shell additions last so personal aliases win. [D-SHELL-SEAM][F-BASH-CHAIN]
 upsert_block "$HOME/.bashrc" \
   "# >>> dotfiles managed (shell) >>>" \
   "# <<< dotfiles managed (shell) <<<" <<'EOF'
@@ -242,11 +196,11 @@ upsert_block "$HOME/.bashrc" \
 [ -f ~/.config/dotfiles/shell.local.sh ] && . ~/.config/dotfiles/shell.local.sh
 EOF
 
-# 3b. hyprland: source our override fragment last so it wins [D-CAPS-CTRL][F-HYPR-SEAM]
+# Source the Hypr overlay last so repo-owned deltas win. [D-CAPS-CTRL][F-HYPR-SEAM]
 HYPR_CONF="$HOME/.config/hypr/hyprland.conf"
 hypr_body="# [D-DELTA-STORAGE] personal Hyprland overlay, sourced last — docs/architecture.html#D-DELTA-STORAGE
 source = ~/.config/dotfiles/hypr.conf"
-# Only source the device-local fragment if it exists (Hyprland errors on a missing source).
+# Hyprland errors on missing source files.
 if [ -f "$HOME/.config/dotfiles/hypr.local.conf" ]; then
   hypr_body+=$'\n'"source = ~/.config/dotfiles/hypr.local.conf"
 fi
@@ -254,8 +208,7 @@ printf '%s\n' "$hypr_body" | upsert_block "$HYPR_CONF" \
   "# >>> dotfiles managed (hypr) >>>" \
   "# <<< dotfiles managed (hypr) <<<"
 
-# 3c. nvim: add a few keymaps to Omarchy's user-extension file — do NOT stow the
-# nvim tree (Omarchy owns/overwrites it) [D-NVIM-KEYMAPS][F-NVIM-OWNED]
+# Use Omarchy's user-extension file because it owns/overwrites the nvim tree. [D-NVIM-KEYMAPS][F-NVIM-OWNED]
 upsert_block "$HOME/.config/nvim/lua/config/keymaps.lua" \
   "-- >>> dotfiles managed (keymaps) >>>" \
   "-- <<< dotfiles managed (keymaps) <<<" <<'EOF'
@@ -264,8 +217,7 @@ vim.keymap.set({ "n", "v" }, "<leader>y", '"+y', { desc = "Yank to system clipbo
 vim.keymap.set("n", "<leader>Y", '"+Y', { desc = "Yank line to system clipboard" })
 EOF
 
-# 3d. tmux: source our overlay LAST from Omarchy's tmux.conf — the XDG path tmux
-# prefers over ~/.tmux.conf — so our binds/settings win. [D-TMUX-KEEP][F-TMUX-XDG]
+# Source via Omarchy's preferred XDG tmux config so our deltas win. [D-TMUX-KEEP][F-TMUX-XDG]
 upsert_block "$HOME/.config/tmux/tmux.conf" \
   "# >>> dotfiles managed (tmux) >>>" \
   "# <<< dotfiles managed (tmux) <<<" <<'EOF'
@@ -273,7 +225,7 @@ upsert_block "$HOME/.config/tmux/tmux.conf" \
 source-file ~/.config/tmux/local.conf
 EOF
 
-# ── 4. validate Hyprland ─────────────────────────────────────────────────────
+# ── validation ───────────────────────────────────────────────────────────────
 if have hyprctl && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
   step "Validate Hyprland"
   if hyprctl reload >/dev/null 2>&1; then success "hyprctl reload ok"; else warn "hyprctl reload failed"; fi

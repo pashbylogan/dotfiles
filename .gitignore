@@ -3,7 +3,6 @@ bash/.config/dotfiles/shell.local.sh
 hypr/.config/dotfiles/hypr.local.conf
 ssh/.ssh/config.local
 
-# Editor / OS cruft
 *.swp
 *~
 .DS_Store

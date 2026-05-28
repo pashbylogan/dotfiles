@@ -1,14 +1,7 @@
 name: CI
 
-# Repo hygiene for the minimal Omarchy overlay: lint + format the shell scripts,
-# and keep the docs/ knowledge base internally consistent. Everything here is
-# static/filesystem-only, so it runs fine on GitHub's Ubuntu runners (no Omarchy,
-# no sudo). Tool versions are pinned to match local dev so CI and `./` agree.
-#
-# This job installs the two tools the runner lacks (shellcheck, shfmt; node +
-# python3 are preinstalled) and then runs `make ci`. The Makefile is the single
-# source of truth for the checks, so CI runs *exactly* what a contributor runs
-# locally — there is no second copy of the file lists to drift. [D-CI]
+# CI delegates to Makefile so file lists and checks stay single-sourced. [D-CI]
+# Pinned shell tools keep Ubuntu runners aligned with local Omarchy installs.
 
 on:
   push:
@@ -48,7 +41,5 @@ jobs:
       - name: Tool versions
         run: make tools
 
-      # The whole gate, defined once in the Makefile (shellcheck + shfmt +
-      # prettier + docs integrity). Any check added to `make ci` runs here too.
       - name: make ci
         run: make ci

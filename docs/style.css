@@ -1,5 +1,4 @@
-/* Omarchy dotfiles docs — shared styling.
-   Tokyo Night-inspired palette (matches the active omarchy theme). */
+/* Match Omarchy's active Tokyo Night theme. */
 
 :root {
   --bg:        #1a1b26;
@@ -33,7 +32,6 @@ body {
   font-size: 16px;
 }
 
-/* ---- top nav ---- */
 .topnav {
   position: sticky; top: 0; z-index: 10;
   display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.25rem;
@@ -51,7 +49,6 @@ body {
 .topnav a.nav:hover { color: var(--cyan); border-bottom-color: var(--cyan); }
 .topnav a.nav[aria-current="page"] { color: var(--purple); border-bottom-color: var(--purple); }
 
-/* ---- layout ---- */
 .container { max-width: var(--maxw); margin: 0 auto; padding: 2rem 1.25rem 4rem; }
 
 h1, h2, h3 { line-height: 1.25; color: #fff; }
@@ -66,11 +63,9 @@ a:hover { color: var(--cyan); }
 .meta { color: var(--muted); font-size: .85rem; }
 hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
 
-/* ---- hero (index) ---- */
 .hero { padding: 1rem 0 .5rem; }
 .hero h1 { font-size: 2.4rem; }
 
-/* ---- cards grid ---- */
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
 .card {
   display: block; text-decoration: none; color: inherit;
@@ -82,7 +77,6 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
 .card p { margin: 0; font-size: .9rem; color: var(--muted); }
 .card .arrow { color: var(--purple); }
 
-/* ---- badges ---- */
 .badge { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .04em;
   padding: .12rem .5rem; border-radius: 999px; border: 1px solid transparent; vertical-align: middle; }
 .badge-done   { color: var(--green);  background: rgba(158,206,106,.12); border-color: rgba(158,206,106,.35); }
@@ -91,20 +85,17 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
 .badge-future { color: var(--purple); background: rgba(187,154,247,.12); border-color: rgba(187,154,247,.35); }
 .badge-drop   { color: var(--red);    background: rgba(247,118,142,.12); border-color: rgba(247,118,142,.35); }
 
-/* ---- code ---- */
 code { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: .88em; background: var(--bg-soft); color: var(--cyan); padding: .12em .4em; border-radius: 6px; border: 1px solid var(--border); }
 pre { background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 1rem 1.1rem; overflow-x: auto; line-height: 1.5; }
 pre code { background: none; border: none; padding: 0; color: var(--text-soft); font-size: .85rem; }
 
-/* ---- tables ---- */
 table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .92rem; }
 th, td { text-align: left; padding: .6rem .7rem; border-bottom: 1px solid var(--border); vertical-align: top; }
 th { color: var(--cyan); font-weight: 600; background: var(--surface); }
 tr:hover td { background: var(--bg-soft); }
 
-/* ---- callouts ---- */
 .callout { border-left: 3px solid var(--blue); background: var(--surface); border-radius: 0 var(--radius) var(--radius) 0;
   padding: .8rem 1rem; margin: 1.2rem 0; }
 .callout.note { border-left-color: var(--cyan); }

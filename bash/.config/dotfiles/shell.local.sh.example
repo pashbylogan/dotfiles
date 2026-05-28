@@ -1,13 +1,8 @@
-# shell.local.sh — machine/work-specific bash, NOT committed. [D-SECRETS-LOCAL]
+# Keep secrets, project IDs, and device-specific shell values out of git. [D-SECRETS-LOCAL]
 # shellcheck shell=bash
-# Copy to ~/.config/dotfiles/shell.local.sh and fill in. It is sourced after
-# shell.sh (so it can override anything there). Holds secrets, project IDs, and
-# device-specific values that must not live in the shared repo.
 
-# ── Android mirroring (scrcpy) — set your device serial ──────────────────────
 # alias android='scrcpy --serial=XXXXXXXXXX'
 
-# ── Claude Code via Vertex AI ────────────────────────────────────────────────
 # _claude_run() {
 #   export CLAUDE_CODE_USE_VERTEX=1
 #   export CLOUD_ML_REGION=us-east5
@@ -16,7 +11,6 @@
 # }
 # alias claude='_claude_run'
 
-# ── Gemini CLI via Vertex AI ─────────────────────────────────────────────────
 # _gemini_run() {
 #   export GOOGLE_GENAI_USE_VERTEXAI=true
 #   export GOOGLE_CLOUD_LOCATION=us-central1

@@ -351,6 +351,27 @@
             </td>
             <td><span class="badge badge-done">done</span></td>
           </tr>
+          <tr>
+            <td>toolchain</td>
+            <td>
+              Caught a non-omarchy-native dev-tool install:
+              <code>shfmt</code> was deposited by <code>go install</code> into
+              mise's go install dir
+              (<code>~/.local/share/mise/installs/go/&lt;ver&gt;/bin</code>),
+              which mise does NOT shim. It worked in the user's interactive bash
+              (where <code>mise activate</code> dynamically PATH-injects that
+              dir) but was invisible to non-interactive shells — forcing a
+              manual PATH prepend for every agent/CI-style <code>make ci</code>.
+              Fix: removed via <code>rm</code> (Go has no first-class
+              <code>uninstall</code> — issue #49500); installed via
+              <code>omarchy pkg add shfmt</code> at <code>/usr/bin/shfmt</code>;
+              both <code>shellcheck</code> and <code>shfmt</code> now tracked in
+              <code>packages.txt</code> so <code>./install</code> ensures both.
+              <code>make tools</code> hints updated to point at
+              <code>./install</code> first.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
         </tbody>
       </table>
 

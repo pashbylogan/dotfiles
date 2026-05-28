@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# Live-machine overlay health check, invoked by `make verify` (also from
-# `make update`'s tail). Read-only — no sudo, no installs. Exit 0 = pass,
-# exit 1 = at least one check failed (typically: re-run ./install to reconcile).
+# Read-only live-machine check; failures should be reconcilable with ./install.
 # [D-CI][D-IDEMPOTENT][D-DELTA-STORAGE][F-HYPR-SEAM]
 
 set -u
 
+# ── output helpers ───────────────────────────────────────────────────────────
 if [ -t 1 ]; then
   GREEN=$'\033[32m'
   RED=$'\033[31m'
@@ -25,11 +24,9 @@ miss() {
   fails=$((fails + 1))
 }
 skip() { printf '  %s- skipped: %s%s\n' "$DIM" "$1" "$NC"; }
-# Cosmetic: print absolute home paths as ~/... in output. Anchored to a path
-# boundary so /home/userN-backup/x doesn't get mis-shortened to ~-backup/x.
+# Anchor the $HOME rewrite so /home/userN-backup does not become ~-backup.
 pretty() {
-  # The "~" in the printf output is a literal character for display, not a
-  # tilde-expansion target — disable shellcheck's well-meaning warning.
+  # The printed "~" is display text, not a tilde-expansion target.
   # shellcheck disable=SC2088
   case "$1" in
     "$HOME"/*) printf '%s' "~/${1#"$HOME"/}" ;;
@@ -38,10 +35,9 @@ pretty() {
   esac
 }
 
-# Repo root (script lives at .github/scripts/verify.sh).
 REPO="$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)"
 
-# ── Hyprland config errors (only meaningful while Hyprland is running) ──────
+# ── Hyprland config ──────────────────────────────────────────────────────────
 if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && command -v hyprctl >/dev/null 2>&1; then
   errs="$(hyprctl configerrors 2>&1 || true)"
   if [ -z "${errs//[[:space:]]/}" ] || printf '%s' "$errs" | grep -qiF 'no error'; then
@@ -53,7 +49,7 @@ else
   skip "hyprctl (Hyprland not running in this session)"
 fi
 
-# ── Managed blocks present in each integration target ──────────────────────
+# ── managed blocks ───────────────────────────────────────────────────────────
 check_block() {
   local file="$1" marker="$2"
   if [ -f "$file" ] && grep -qxF -- "$marker" "$file"; then
@@ -67,7 +63,7 @@ check_block "$HOME/.config/hypr/hyprland.conf" '# >>> dotfiles managed (hypr) >>
 check_block "$HOME/.config/nvim/lua/config/keymaps.lua" '-- >>> dotfiles managed (keymaps) >>>'
 check_block "$HOME/.config/tmux/tmux.conf" '# >>> dotfiles managed (tmux) >>>'
 
-# ── Stow symlinks (sample of repo-managed files; must resolve into the repo) ─
+# ── stow links ───────────────────────────────────────────────────────────────
 check_link() {
   local link="$1" resolved
   if [ ! -L "$link" ]; then
@@ -75,9 +71,7 @@ check_link() {
     return
   fi
   resolved="$(readlink -f "$link" 2>/dev/null || true)"
-  # `readlink -f` returns the canonical *would-be* path even when the target
-  # doesn't exist — so a dangling symlink pointing into the repo would otherwise
-  # report green. `-e` follows the link and tests for target existence.
+  # `readlink -f` resolves dangling links, so test target existence separately.
   if [ ! -e "$link" ]; then
     miss "$(pretty "$link") is a dangling symlink -> $resolved"
     return
@@ -92,11 +86,9 @@ check_link "$HOME/.config/dotfiles/hypr.conf"
 check_link "$HOME/.ssh/config"
 check_link "$HOME/.config/tmux/local.conf"
 
-# ── Dev-env tools on PATH and NOT owned by pacman ──────────────────────────
-# (We don't pin paths — omarchy's dev-env lands these wherever the underlying
-# tool's default is, which can shift; the contract is "dev-env owns this tool,
-# not pacman.") One failure max per tool — pacman-ownership shadows the PATH
-# question, since `./install` will drop the pacman copy and reinstall.
+# ── dev-env tools ────────────────────────────────────────────────────────────
+# Dev-env tool paths can move; ownership contract matters more than location.
+# Report pacman ownership first because ./install can reconcile that drift.
 check_tool() {
   local tool="$1" current
   if pacman -Qq "$tool" >/dev/null 2>&1; then
@@ -113,11 +105,9 @@ check_tool() {
 check_tool uv
 check_tool go
 
-# ── XDG user dirs (per ./install) ───────────────────────────────────────────
-# We match the literal $HOME text since that's what xdg-user-dirs-update writes
-# for the spec keys. For values ending in '/' (the "collapsed to $HOME" form),
-# we also accept the slash-less variant — xdg-user-dirs versions differ on
-# whether they emit a trailing slash when the target equals $HOME exactly.
+# ── XDG user dirs ────────────────────────────────────────────────────────────
+# Match literal $HOME values and accept optional trailing slash because
+# xdg-user-dirs versions differ when a key collapses exactly to $HOME.
 check_xdg() {
   local key="$1" expected="$2" file="$HOME/.config/user-dirs.dirs" alt=""
   case "$expected" in
@@ -139,7 +129,7 @@ check_xdg XDG_MUSIC_DIR '$HOME/'
 # shellcheck disable=SC2016
 check_xdg XDG_PROJECTS_DIR '$HOME/Projects'
 
-# ── Summary ─────────────────────────────────────────────────────────────────
+# ── summary ──────────────────────────────────────────────────────────────────
 echo
 if [ "$fails" -gt 0 ]; then
   printf '%sverify: %d check(s) failed%s — re-run ./install to reconcile.\n' "$RED" "$fails" "$NC"

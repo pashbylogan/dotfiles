@@ -1,32 +1,22 @@
-# shell.sh — personal bash additions (repo-owned).
-# Sourced fragment (no shebang). The directives below tell shellcheck it's bash,
-# and to allow the guarded optional `source`s (uv venv / gcloud SDK, absent at
-# lint time) plus the intentional `test && cmd || fallback` idiom.
+# Sourced fragment: tell shellcheck the dialect and allow guarded optional sources.
 # shellcheck shell=bash
 # shellcheck disable=SC1090,SC1091,SC2015
 # Sourced LAST from the ~/.bashrc managed block, so these win where they
 # intentionally overlap Omarchy. [D-SHELL-SEAM][D-SHELL-BASH][F-BASH-CHAIN][D-CARRY-SET]
-#
-# Kept deliberately minimal. Omarchy already provides (so we DON'T duplicate):
-#   EDITOR=nvim (uwsm/default) + SUDO_EDITOR, starship prompt, zoxide `cd`,
-#   eza `ls`, mise runtimes, and aliases t / g / gcm / gcam / n / ga / gd /
-#   tdl / fip. Node comes from mise (no nvm).
-# Install tools via official Omarchy methods (pacman / AUR / mise) so they land
-# on PATH. The ~/apps/* blocks below are GUARDED FALLBACKS for manual installs
-# and stay inert otherwise. Secrets/host values live in shell.local.sh. [D-SECRETS-LOCAL]
 
-# ── aliases (additive to Omarchy's set) ──────────────────────────────────────
+# ── aliases ──────────────────────────────────────────────────────────────────
 alias de='deactivate'
 alias uf='uvx ruff format '
 alias vim='nvim'
-alias ta='tmux attach -t' # attach to a named session, e.g. `ta portal`
+alias ta='tmux attach -t'
 alias tn='tmux new-session'
 alias tl='tmux list-sessions'
 alias gs='git status'
 alias gap='git add -p'
 alias sz='source ~/.bashrc'
 
-# ── git worktrees (own verbs; Omarchy's ga/gd only create NEW branches) ──────
+# ── git worktrees ────────────────────────────────────────────────────────────
+# Keep worktree verbs separate from Omarchy's new-branch aliases.
 wta() { git worktree add "$@"; }
 wtl() { git worktree list; }
 wtp() { git worktree prune; }
@@ -44,7 +34,8 @@ cdwt() {
   }
 }
 
-# ── python venv: prefer local .venv, else the central uv base venv ───────────
+# ── python ───────────────────────────────────────────────────────────────────
+# Prefer project venvs, with the central uv base as a fallback.
 ve() {
   local local_activate=".venv/bin/activate"
   local base_activate="$HOME/apps/uv/central_venv_repo/base/.venv/bin/activate"
@@ -54,8 +45,7 @@ ve() {
     . "$base_activate"
   fi
 }
-# uv: prefer mise/pacman uv on PATH. Only a manual ~/apps/uv install needs these
-# env overrides, so they are guarded (fallback only).
+# Manual ~/apps/uv installs need isolated env paths; normal Omarchy installs do not.
 if [ -d "$HOME/apps/uv" ]; then
   uv_dir="$HOME/apps/uv"
   export UV_UNMANAGED_INSTALL="$uv_dir" UV_INSTALL_DIR="$uv_dir" \
@@ -65,10 +55,8 @@ if [ -d "$HOME/apps/uv" ]; then
   unset uv_dir
 fi
 
-# ── GCP / gcloud ─────────────────────────────────────────────────────────────
-# Prefer `omarchy pkg aur add google-cloud-cli` (puts gcloud + completions on
-# PATH). gssh works with any gcloud on PATH; the sourcing below only handles a
-# manual ~/apps/google-cloud-sdk fallback install.
+# ── GCP ──────────────────────────────────────────────────────────────────────
+# Manual SDK installs need sourcing; AUR-installed gcloud is already on PATH.
 gssh() {
   local ip
   ip="$(gcloud compute instances describe "$1" --format='get(networkInterfaces[0].networkIP)' "${@:2}")"
@@ -83,7 +71,7 @@ fi
   *":$HOME/apps/cloud-sql-proxy:"*) ;; *) export PATH="$PATH:$HOME/apps/cloud-sql-proxy" ;;
 esac
 
-# ── VPN: switch between WireGuard (cypris) and a Tailscale exit node ──────────
+# ── VPN ──────────────────────────────────────────────────────────────────────
 exitnode() {
   if [ "$1" = "up" ]; then
     tailscale exit-node suggest | awk -F ": " '/Suggested exit node/ {print $2}' |

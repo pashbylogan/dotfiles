@@ -1,10 +1,7 @@
-# packages.aur.txt — AUR packages installed by `install` via `omarchy pkg aur add` (yay-backed). [D-SCRIPTS-MINIMAL][F-CLI]
-# Same syntax as packages.txt: one package per line; '#' comments and blank lines ignored.
-# Reserved for things NOT in Arch's official repos (proprietary apps, JetBrains tooling, etc.).
-# Prefer packages.txt where the same software is also in an official repo (more stable, faster).
+# AUR-only packages installed by `install`; prefer packages.txt when available.
+# Same syntax as packages.txt. [D-SCRIPTS-MINIMAL][F-CLI]
 
 slack-desktop          # workspace 3 — AUR-only on Arch (no official-repo package)
 spotify                # workspace 10 — matches omarchy-base.packages (omarchy's chosen Spotify path is AUR)
-# jetbrains-toolbox: JetBrains' own installer/updater — most-stable channel for
-# IntelliJ Ultimate (workspace 5): version-pinnable, single launcher for all JetBrains IDEs.
+# JetBrains Toolbox owns IDE updates/version pinning better than AUR IDE packages.
 jetbrains-toolbox
