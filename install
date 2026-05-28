@@ -117,14 +117,94 @@ else
 fi
 
 # Optional extra packages, one per line in packages.txt (# comments ignored).
+# AUR-only entries live in packages.aur.txt (parallel format, `omarchy pkg aur add`).
+# `tr -d '\r'` strips CRLF endings introduced by a Windows editor — without it,
+# sed/grep would emit package names with a trailing CR that breaks pacman/yay.
+parse_pkg_file() {
+  tr -d '\r' <"$1" | sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | grep -v '^$' || true
+}
+
 if [ -f packages.txt ]; then
-  # Strip inline '#' comments and surrounding whitespace, drop blank lines, so an
-  # annotated line like "  ripgrep   # fast" yields just "ripgrep".
-  mapfile -t PKGS < <(sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' packages.txt | grep -v '^$' || true)
+  mapfile -t PKGS < <(parse_pkg_file packages.txt)
   if [ "${#PKGS[@]}" -gt 0 ]; then
     info "installing extras: ${PKGS[*]}"
     omarchy pkg add "${PKGS[@]}"
   fi
+fi
+
+if [ -f packages.aur.txt ]; then
+  mapfile -t AUR_PKGS < <(parse_pkg_file packages.aur.txt)
+  if [ "${#AUR_PKGS[@]}" -gt 0 ]; then
+    info "installing AUR extras: ${AUR_PKGS[*]}"
+    omarchy pkg aur add "${AUR_PKGS[@]}"
+  fi
+fi
+
+# Dev-env tools — this repo declares omarchy's `install dev-env` as the canonical
+# install path for uv and go. The helper drops any pacman copy and ensures the
+# tool is on PATH via dev-env (whichever location omarchy currently installs to:
+# today Astral's ~/.local/bin/uv and mise's ~/.local/share/mise/shims/go, but we
+# don't hardcode that — `command -v` finds it wherever omarchy lands it).
+# Idempotent on a correct machine; corrective on a drifted one. NOTE: dev-env
+# pulls *latest* at the time it runs (mise use --global python@latest, Astral's
+# uv installer, etc.), so a fresh bootstrap on a different day may yield
+# different versions; `make update` exists to bump them deliberately.
+# [D-DEV-ENV][F-CLI][D-IDEMPOTENT]
+ensure_dev_env_tool() {
+  local tool="$1" kind="$2"
+  if pacman -Qq "$tool" >/dev/null 2>&1; then
+    info "dropping pacman copy of $tool (omarchy dev-env is canonical for this tool)"
+    # `omarchy pkg drop` wraps `pacman -Rns --noconfirm`, which refuses when
+    # another installed package depends on this one. Warn and continue rather
+    # than aborting the whole installer; the reconcile is best-effort.
+    if ! omarchy pkg drop "$tool"; then
+      warn "  could not drop pacman $tool (likely a reverse dependency); leaving it in place"
+    fi
+  fi
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    info "installing $tool via 'omarchy install dev-env $kind'"
+    omarchy install dev-env "$kind"
+  fi
+}
+
+ensure_dev_env_tool uv python
+ensure_dev_env_tool go go
+
+# XDG user dirs — encode the deltas vs Omarchy's defaults.
+# Omarchy's install/config/user-dirs.sh already collapses Templates/Public/Desktop
+# to $HOME. We additionally collapse Documents/Music (unused) and add a
+# non-standard XDG_PROJECTS_DIR for personal scripts that read user-dirs.dirs.
+# `xdg-user-dirs-update` is idempotent and the canonical edit path for the
+# 8 spec keys; XDG_PROJECTS_DIR is hand-managed since the tool doesn't know it.
+# [F-CLI]
+step "XDG user dirs"
+# Guard the tool itself the same way we guard `stow` — bootstrap via omarchy if
+# missing. Without this, a stripped variant without xdg-user-dirs preinstalled
+# would kill the script here under `set -e` before stow and managed blocks run.
+if ! have xdg-user-dirs-update; then
+  info "installing xdg-user-dirs via omarchy"
+  omarchy pkg add xdg-user-dirs
+fi
+mkdir -p "$HOME/Projects"
+xdg-user-dirs-update --set DOCUMENTS "$HOME"
+xdg-user-dirs-update --set MUSIC "$HOME"
+xdg_dirs="$HOME/.config/user-dirs.dirs"
+# $HOME stays LITERAL in user-dirs.dirs (matches the format
+# xdg-user-dirs-update writes for the spec keys).
+# shellcheck disable=SC2016
+projects_line='XDG_PROJECTS_DIR="$HOME/Projects"'
+if [ -f "$xdg_dirs" ]; then
+  if ! grep -qxF -- "$projects_line" "$xdg_dirs"; then
+    sed -i '/^XDG_PROJECTS_DIR=/d' "$xdg_dirs"
+    printf '%s\n' "$projects_line" >>"$xdg_dirs"
+  fi
+  success "XDG dirs reconciled (Documents/Music -> \$HOME; Projects=\~/Projects)"
+else
+  # xdg-user-dirs-update silently no-ops if /etc/xdg/user-dirs.conf has
+  # `enabled=False` or the user-dirs locale isn't configured. Refuse to write
+  # a stub file containing only XDG_PROJECTS_DIR — that would decapitate the
+  # rest of the XDG state. Surface honestly instead of printing a success lie.
+  warn "skipped XDG reconcile — $xdg_dirs not present (xdg-user-dirs-update silently no-op'd; check /etc/xdg/user-dirs.conf)"
 fi
 
 # ── 2. stow repo-owned files ─────────────────────────────────────────────────

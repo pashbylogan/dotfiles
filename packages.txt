@@ -1,15 +1,19 @@
-# packages.txt — OPTIONAL extra packages beyond Omarchy's base. [D-SCRIPTS-MINIMAL][F-CLI]
+# packages.txt — extra packages installed by `install` via `omarchy pkg add` (--needed). [D-SCRIPTS-MINIMAL][F-CLI]
 # One package per line; '#' comments and blank lines are ignored.
-# `install` passes the active lines to `omarchy pkg add` (idempotent, --needed).
+# AUR-only entries live in packages.aur.txt (`omarchy pkg aur add`).
+# Most CLI tools the bin/ scripts use (fzf, ripgrep, jq, git, gh, tmux,
+# wl-clipboard, lazygit) are already in Omarchy's base — list only genuine
+# extras here.
 #
-# Most CLI tools the bin/ scripts use (fzf, ripgrep, jq, git, github-cli, tmux,
-# wl-clipboard) are already in Omarchy's base — list only genuine extras here.
-# Prefer installing tools the official way; these are the methods for the
-# integrations kept in shell.sh. Uncomment what you actually want per machine:
-#
-# wireguard-tools    # vpns() / exitnode() — wg-quick (tailscale is already in omarchy base)
-# uv                 # python tooling (alternatively manage via mise)
-# scrcpy             # android screen mirroring (see shell.local.sh)
-#
-# AUR-only — install manually with `omarchy pkg aur add <pkg>`:
-#   google-cloud-cli # gcloud / gssh / GCP (puts gcloud + completions on PATH)
+# Not listed here because the install script invokes a native omarchy path:
+#   uv         → bootstrapped by `./install` via `omarchy install dev-env python`
+#                (Astral installer + Python via mise; one-time, skipped on re-runs)
+
+# CLI tools
+git-delta              # syntax-highlighted git diffs (binary: delta)
+wireguard-tools        # wg-quick — used by vpns() / exitnode() in shell.sh
+
+# GUI workflow apps (pinned by hypr workspace rules; see hypr.conf).
+# obsidian was an omarchy base package removed by "Remove Preinstalled"; this re-adds it.
+obsidian               # workspace 3 — notes
+discord                # chat (native client; omarchy default is a webapp — we want full voice/screen-share)

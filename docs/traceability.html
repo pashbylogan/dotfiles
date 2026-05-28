@@ -98,14 +98,25 @@
           <tr>
             <td><code>D-CI</code></td>
             <td>
-              Makefile = single source of truth for checks; CI invokes it
-              (shellcheck/shfmt/prettier + docs-integrity)
+              Makefile = single source of truth for repo ops (CI gates +
+              <code>make update</code> + <code>make verify</code>); CI invokes
+              it
             </td>
             <td><a href="decisions.html#D-CI">decisions</a></td>
             <td>
               <code>Makefile</code>, <code>.github/workflows/ci.yml</code>,
-              <code>.github/scripts/check_docs.py</code>
+              <code>.github/scripts/check_docs.py</code>,
+              <code>.github/scripts/verify.sh</code>
             </td>
+          </tr>
+          <tr>
+            <td><code>D-DEV-ENV</code></td>
+            <td>
+              uv/go owned by <code>omarchy install dev-env</code>; install
+              reconciles pacman copies
+            </td>
+            <td><a href="decisions.html#D-DEV-ENV">decisions</a></td>
+            <td><code>install</code></td>
           </tr>
           <tr>
             <td><code>D-SHELL-BASH</code></td>

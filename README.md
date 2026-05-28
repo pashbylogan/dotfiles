@@ -27,16 +27,18 @@ update, etc.) and the machine reconverges. [D-IDEMPOTENT]
 
 ## What `install` does
 
-1. Ensures `stow` (and any [`packages.txt`](packages.txt) extras) via `omarchy pkg add`.
-2. Stows repo-owned static files into `$HOME` — only into our own namespaces, never
+1. Ensures `stow`, then installs any [`packages.txt`](packages.txt) extras via `omarchy pkg add` and any [`packages.aur.txt`](packages.aur.txt) extras via `omarchy pkg aur add`.
+2. Reconciles dev-env tools (`uv`, `go`): drops any pacman copy and ensures the tool is on PATH via `omarchy install dev-env python` / `omarchy install dev-env go`. omarchy lands these wherever the underlying tool defaults (today Astral's `~/.local/bin/uv` and mise's `~/.local/share/mise/shims/go`); we don't hardcode that, so the reconciliation survives upstream path changes. Idempotent on a correct machine. **Caveat:** dev-env pulls "latest" at the time it runs (mise `python@latest` / `go@latest`, Astral's uv installer), so a fresh bootstrap on a different day may yield different Python/uv/go versions. Use `make update` to bump them deliberately later.
+3. Encodes XDG user-dir deltas vs Omarchy's defaults: collapses `DOCUMENTS`/`MUSIC` to `$HOME` and adds the non-standard `XDG_PROJECTS_DIR=$HOME/Projects` (read by personal scripts). Templates/Public/Desktop are already collapsed by Omarchy.
+4. Stows repo-owned static files into `$HOME` — only into our own namespaces, never
    Omarchy-owned files. [D-DELTA-STORAGE]
-3. Upserts one **managed block** (re-anchored at end-of-file, so it loads last and wins)
+5. Upserts one **managed block** (re-anchored at end-of-file, so it loads last and wins)
    into four Omarchy-owned files:
    - `~/.bashrc` → sources `~/.config/dotfiles/shell.sh`
    - `~/.config/hypr/hyprland.conf` → `source = ~/.config/dotfiles/hypr.conf`
    - `~/.config/nvim/lua/config/keymaps.lua` → a couple of `<leader>y` clipboard maps
    - `~/.config/tmux/tmux.conf` → `source-file ~/.config/tmux/local.conf` (your tmux overlay)
-4. Validates Hyprland (`hyprctl reload && hyprctl configerrors`).
+6. Validates Hyprland (`hyprctl reload && hyprctl configerrors`).
 
 ## Repo layout
 
@@ -44,6 +46,7 @@ update, etc.) and the machine reconverges. [D-IDEMPOTENT]
 install                      # the only runtime script (stow + managed integration blocks)
 Makefile                     # `make` menu; `make ci` mirrors CI; `make fmt` auto-fixes
 packages.txt                 # optional extra packages → omarchy pkg add
+packages.aur.txt             # optional AUR packages → omarchy pkg aur add (Slack, JetBrains Toolbox, …)
 bash/.config/dotfiles/       # shell.sh (ported aliases) + shell.local.sh.example
 ssh/.ssh/                    # config (+ Include config.local) + config.local.example
 bin/.local/bin/              # personal commands → ~/.local/bin (on PATH)
@@ -63,6 +66,8 @@ so **green locally means green in CI**.
 - `make ci` — full gate (shellcheck + shfmt + prettier + docs integrity); run before committing
 - `make fmt` — auto-fix formatting in place (shfmt + prettier)
 - `make tools` — show required tools and how to install them on Omarchy
+- `make update` — refresh everything (omarchy/pacman/AUR + firmware + uv) and run `verify`
+- `make verify` — read-only health check of the live overlay (hyprctl, managed blocks, stow links, dev-env tools, XDG dirs)
 
 Tooling is Omarchy-native: `omarchy pkg add shfmt shellcheck` (or the leaner
 `omarchy pkg aur add shellcheck-bin`); prettier runs via `npx` (pinned), the docs
@@ -82,9 +87,16 @@ automatically and never committed. [D-SECRETS-LOCAL]
 ## Updates (manual — no script) [D-SCRIPTS-MINIMAL]
 
 ```sh
-omarchy update -y    # all packages to latest stable + migrations + AUR; skips the menu.
-                     # May still prompt for a required restart/reboot. [F-CLI]
+make update          # one command for everything package-manager-reachable on the box
 ```
+
+`make update` chains three things `omarchy update -y` alone doesn't cover together:
+
+1. `omarchy update -y` — pacman + AUR + omarchy itself + migrations + keyring + orphan cleanup. May still prompt for a required restart/reboot. [F-CLI]
+2. `omarchy update firmware` — `fwupdmgr` BIOS/firmware updates (NOT included in step 1).
+3. `uv self update` — only if `uv` is on PATH (the Astral installer used by `omarchy install dev-env python` lives outside pacman/yay).
+
+JetBrains IDEs managed by `jetbrains-toolbox` update via the Toolbox UI — there's no headless CLI for them — so open Toolbox separately. (The `jetbrains-toolbox` AUR package itself does update in step 1.)
 
 If an Omarchy refresh/migration ever strips one of the managed blocks, just re-run `./install`.
 

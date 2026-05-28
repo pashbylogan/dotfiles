@@ -90,16 +90,17 @@
 
       <h2>The repo at a glance</h2>
       <pre><code>dotfiles/
-├── install                      # the ONLY runtime script — stow + managed integration blocks (idempotent)
-├── Makefile                     # `make` checks; `make ci` mirrors CI; `make fmt` auto-fixes
-├── packages.txt                 # optional extra packages → omarchy pkg add
+├── install                      # the ONLY runtime script — stow + managed blocks + dev-env reconcile + XDG (idempotent)
+├── Makefile                     # `make ci|fmt|tools|update|verify` — single ops interface; CI invokes `make ci`
+├── packages.txt                 # extras → omarchy pkg add
+├── packages.aur.txt             # AUR extras → omarchy pkg aur add (slack/spotify/jetbrains-toolbox)
 ├── bash/.config/dotfiles/       # shell.sh (ported aliases) + shell.local.sh.example
 ├── ssh/.ssh/                    # config (+ Include config.local) + config.local.example
 ├── bin/.local/bin/              # personal commands → ~/.local/bin (on PATH)
 ├── tmux/.config/tmux/local.conf  # tmux overlay (source-file'd from omarchy's tmux.conf)
 ├── hypr/.config/dotfiles/       # hypr.conf override fragment + hypr.local.conf.example
 ├── docs/                        # this knowledge base
-└── .github/                     # CI workflow + docs-integrity checker (scripts/check_docs.py)</code></pre>
+└── .github/                     # CI workflow + scripts/check_docs.py (docs gate) + scripts/verify.sh (live gate)</code></pre>
 
       <div class="callout note">
         <span class="label">Reproduction recipe</span>

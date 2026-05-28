@@ -202,6 +202,26 @@
               handling.
             </td>
           </tr>
+          <tr>
+            <td><code>omarchy update firmware</code></td>
+            <td>
+              firmware via <code>fwupdmgr refresh --force</code> +
+              <code>sudo fwupdmgr update</code>. Separate invocation —
+              <strong>not</strong> chained from <code>omarchy update -y</code>.
+            </td>
+          </tr>
+          <tr>
+            <td><code>omarchy install dev-env &lt;kind&gt;</code></td>
+            <td>
+              Canonical install path for language tools. Today
+              <code>python</code> installs Python via
+              <code>mise use --global python@latest</code> then drops uv via
+              Astral's installer; <code>go</code> uses
+              <code>mise use --global go@latest</code>. Pulls latest at the
+              moment it runs (no version pin) — see
+              <a href="decisions.html#D-DEV-ENV">D-DEV-ENV</a>.
+            </td>
+          </tr>
         </tbody>
       </table>
 

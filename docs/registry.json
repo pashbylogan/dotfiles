@@ -51,15 +51,24 @@
     },
     {
       "id": "D-CI",
-      "title": "Makefile is the single source of truth for checks; CI invokes it; shellcheck/shfmt/prettier + docs-integrity gates",
+      "title": "Makefile is the single source of truth for repo operations (CI gates + `update` orchestrator + `verify` live health check); CI invokes it",
       "canonical": "decisions.html#D-CI",
       "appears_in": ["architecture.html", "todos.html"],
       "code_paths": [
         "Makefile",
         ".github/workflows/ci.yml",
-        ".github/scripts/check_docs.py"
+        ".github/scripts/check_docs.py",
+        ".github/scripts/verify.sh"
       ],
-      "related": ["D-SCRIPTS-MINIMAL", "D-IDEMPOTENT"]
+      "related": ["D-SCRIPTS-MINIMAL", "D-IDEMPOTENT", "D-DEV-ENV"]
+    },
+    {
+      "id": "D-DEV-ENV",
+      "title": "uv and go are owned by omarchy's `install dev-env` path; `./install` actively drops pacman copies and reconciles to the dev-env install",
+      "canonical": "decisions.html#D-DEV-ENV",
+      "appears_in": ["findings.html"],
+      "code_paths": ["install"],
+      "related": ["D-SCRIPTS-MINIMAL", "D-IDEMPOTENT", "F-CLI"]
     },
     {
       "id": "D-SHELL-BASH",

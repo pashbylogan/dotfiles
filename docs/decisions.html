@@ -94,17 +94,37 @@
         </thead>
         <tbody>
           <tr id="D-CI">
-            <td><code class="meta">D-CI</code> Checks &amp; CI</td>
+            <td><code class="meta">D-CI</code> Makefile = ops interface</td>
             <td>
               A root <code>Makefile</code> is the
-              <strong>single source of truth</strong> for checks (file sets +
-              commands); GitHub Actions (<code>.github/workflows/ci.yml</code>)
-              invokes the same targets, so <code>make ci</code> == CI and
-              <code>make fmt</code> auto-fixes. Gates:
-              <code>shellcheck</code> (lint) + <code>shfmt</code> (format,
-              <code>-i 2 -ci</code>) on the shell set, pinned
-              <code>prettier</code> on docs HTML/JSON, and
-              <code>.github/scripts/check_docs.py</code> for docs integrity.
+              <strong>single source of truth</strong> for repo operations.
+              GitHub Actions (<code>.github/workflows/ci.yml</code>) invokes the
+              same targets, so <code>make ci</code> == CI. Targets:
+              <ul>
+                <li>
+                  <code>make ci</code> — gates: <code>shellcheck</code> +
+                  <code>shfmt</code> (<code>-i 2 -ci</code>) on the shell set,
+                  pinned <code>prettier</code> on docs HTML/JSON, and
+                  <code>.github/scripts/check_docs.py</code> for docs integrity.
+                  <code>make fmt</code> auto-fixes.
+                </li>
+                <li>
+                  <code>make update</code> — chained refresh of everything
+                  package-manager-reachable: <code>omarchy update -y</code>
+                  (pacman + AUR + omarchy migrations) +
+                  <code>omarchy update firmware</code> (fwupd) +
+                  <code>uv self update</code>, then <code>make verify</code>.
+                  Each step is warn-on-failure so a non-zero exit (no firmware
+                  devices, reboot decline, etc.) doesn't silently skip the rest.
+                </li>
+                <li>
+                  <code>make verify</code> — read-only live health check
+                  (<code>.github/scripts/verify.sh</code>): hyprctl
+                  configerrors, all four managed blocks present, stow links
+                  resolve into the repo (including dangling detection), dev-env
+                  tools on PATH and not pacman-owned, XDG state.
+                </li>
+              </ul>
               Tooling is Omarchy-native and version-pinned.
             </td>
             <td>
@@ -112,11 +132,41 @@
               the two can't drift. The docs checker turns the traceability
               discipline (registry ↔ anchors ↔ <code>[ID]</code> code tokens,
               links, <code>appears_in</code>) into an enforced invariant rather
-              than a convention. Dev tooling only — the lone
-              <em>runtime</em> script is still <code>install</code> (<a
+              than a convention. The Makefile is <em>dev/ops tooling</em>; the
+              lone <em>runtime</em> script is still <code>install</code> (<a
                 href="decisions.html#D-SCRIPTS-MINIMAL"
                 >D-SCRIPTS-MINIMAL</a
               >).
+            </td>
+          </tr>
+          <tr id="D-DEV-ENV">
+            <td><code class="meta">D-DEV-ENV</code> dev-env reconcile</td>
+            <td>
+              <code>uv</code> and <code>go</code> are owned by Omarchy's
+              <code>omarchy install dev-env &lt;kind&gt;</code> path, not by
+              pacman/AUR or hand-rolled installers. <code>./install</code>'s
+              <code>ensure_dev_env_tool</code> helper actively reconciles: if
+              pacman owns the tool, <code>omarchy pkg drop</code> it (graceful
+              on dep-conflict refusal); if not on PATH, install via
+              <code>omarchy install dev-env</code>. No path pinning — omarchy
+              lands each tool wherever the underlying installer defaults today
+              (Astral's <code>~/.local/bin/uv</code>; mise's
+              <code>~/.local/share/mise/shims/go</code>) and
+              <code>command -v</code> finds it.
+            </td>
+            <td>
+              The user's rule:
+              <em
+                >if a tool is installed in a way the repo doesn't declare, it
+                should get replaced</em
+              >. Reconciling on <code>./install</code> enforces that for the
+              main drift vector (pacman) while staying robust to upstream path
+              changes.
+              <strong>Latest-at-bootstrap caveat:</strong>
+              <code>omarchy install dev-env</code> pulls latest at the time it
+              runs (mise <code>@latest</code>, Astral installer), so a fresh
+              bootstrap on different days may yield different versions;
+              <code>make update</code> is the deliberate bumper.
             </td>
           </tr>
         </tbody>

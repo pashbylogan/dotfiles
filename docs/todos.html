@@ -205,6 +205,152 @@
             </td>
             <td><span class="badge badge-done">done</span></td>
           </tr>
+          <tr>
+            <td>gaps</td>
+            <td>
+              Zero window gaps (owner backlog) — resolved with
+              <strong>no repo change</strong>. Omarchy's native toggle (<code
+                >SUPER+SHIFT+Backspace</code
+              >
+              → <code>omarchy-hyprland-toggle window-no-gaps</code>) already
+              does it and <strong>persists across reboots</strong> by writing a
+              state file under <code>~/.local/state/omarchy/toggles/</code> that
+              <code>hyprland.conf</code> re-sources every launch. Deliberately
+              <em>not</em> set in the owned <code>hypr.conf</code> overlay: that
+              fragment is sourced last, so a <code>general {}</code> block there
+              would override and disable the toggle. Omarchy-native + minimal
+              wins over a tracked overlay here.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>apps</td>
+            <td>
+              Essential workflow apps + ansible-branch CLI tools (owner backlog
+              items 6 + 7). Added <code>packages.aur.txt</code> handling to
+              <code>install</code> (parallel to <code>packages.txt</code>;
+              processed via <code>omarchy pkg aur add</code>). Audit of
+              <code>ansible-bootstrap-and-convergence</code>: it's a Fedora/Sway
+              bootstrap, most of its plumbing is already in Omarchy's base, and
+              it declares no GUI apps. Each candidate then audited against
+              Omarchy's install menu (<code>omarchy-install-*</code>),
+              <code>omarchy-base.packages</code>, and
+              <code>install/packaging/webapps.sh</code>; three corrections
+              followed:
+              <ul>
+                <li>
+                  <code>uv</code> — installed by <code>./install</code> via
+                  <code>omarchy install dev-env python</code> (Astral's
+                  installer + Python via mise), guarded by
+                  <code>have uv</code> so re-runs are no-ops.
+                </li>
+                <li>
+                  Spotify — use AUR <code>spotify</code> (matches
+                  <code>omarchy-base.packages</code>), not extra
+                  <code>spotify-launcher</code>.
+                </li>
+                <li>
+                  Discord — keep native <code>discord</code> (extra) for full
+                  voice/screen-share; omarchy's default is a webapp via
+                  <code>webapps.sh</code> but the webapp limits voice.
+                </li>
+              </ul>
+              Final lists:
+              <code>packages.txt</code> = <code>git-delta</code>,
+              <code>wireguard-tools</code>, <code>obsidian</code> (a base
+              package removed by Remove-Preinstalled), <code>discord</code>;
+              <code>packages.aur.txt</code> = <code>slack-desktop</code>,
+              <code>spotify</code>, <code>jetbrains-toolbox</code> (JetBrains'
+              own installer is the most stable channel for IntelliJ Ultimate).
+              Re-run <code>./install</code> to apply.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>reconcile</td>
+            <td>
+              Hardened apply + added a verify gate, in response to a candid
+              critique of apply/update separation:
+              <ul>
+                <li>
+                  <strong>Dev-env reconciliation:</strong>
+                  <code>./install</code> now actively replaces the main off-path
+                  install vector (pacman) for the tools this repo owns. The
+                  <code>ensure_dev_env_tool</code> helper:
+                  <code>omarchy pkg drop $tool</code> when pacman owns it, then
+                  <code>omarchy install dev-env &lt;kind&gt;</code> if the tool
+                  isn't on PATH. No path pinning — omarchy lands uv/go wherever
+                  the underlying tool defaults today (Astral
+                  <code>~/.local/bin/uv</code>; mise
+                  <code>~/.local/share/mise/shims/go</code>) and we trust
+                  <code>command -v</code> to find it, so the reconciliation
+                  survives upstream path changes.
+                </li>
+                <li>
+                  <strong>XDG user dirs folded in:</strong> resolves the
+                  deferred "old install's XDG tweak" item.
+                  <code>./install</code> collapses <code>DOCUMENTS</code> and
+                  <code>MUSIC</code> to <code>$HOME</code> via
+                  <code>xdg-user-dirs-update</code> and hand-manages the
+                  non-standard <code>XDG_PROJECTS_DIR=$HOME/Projects</code>
+                  (templates/public/desktop are already collapsed by Omarchy).
+                </li>
+                <li>
+                  <strong><code>make verify</code></strong> — new read-only
+                  health check (<code>.github/scripts/verify.sh</code>): hyprctl
+                  configerrors, all four managed blocks present, stow links
+                  resolve into the repo, dev-env tools on PATH and not owned by
+                  pacman, XDG state matches. Also runs at the tail of
+                  <code>make update</code>, so post-update drift surfaces
+                  immediately.
+                </li>
+                <li>
+                  <strong>Latest-at-bootstrap caveat documented</strong> —
+                  README notes that <code>omarchy install dev-env</code>
+                  pulls latest at install time, so a fresh bootstrap on
+                  different days may yield different Python/uv/go versions;
+                  <code>make update</code> is the deliberate bumper.
+                </li>
+              </ul>
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>review-2</td>
+            <td>
+              Third <code>/code-review</code> pass on the apply/update/verify
+              surface. Fixes:
+              <ul>
+                <li>
+                  <code>install</code> — graceful
+                  <code>omarchy pkg drop</code> (warn on dep-conflict refusal
+                  instead of aborting via <code>set -e</code>);
+                  <code>have xdg-user-dirs-update</code> guard with
+                  omarchy-pkg-add fallback; refuse to write a stub
+                  <code>user-dirs.dirs</code> when the tool silently no-ops
+                  (e.g. <code>enabled=False</code>) — surface the skip honestly;
+                  CRLF defense for package-list parsing (<code>tr -d '\r'</code
+                  >).
+                </li>
+                <li>
+                  <code>Makefile :: update</code> — each chain step may now fail
+                  independently with a visible WARN, rather than silently
+                  aborting downstream uv/verify. Banner up-front warns that a
+                  mid-flight reboot from <code>omarchy update -y</code> will
+                  skip the rest.
+                </li>
+                <li>
+                  <code>verify.sh</code> — detects dangling stow symlinks (the
+                  target-exists check <code>readlink -f</code> alone didn't
+                  catch); <code>check_tool</code> reports at most one failure
+                  per drifted tool; <code>check_xdg</code> accepts both
+                  trailing-slash and slashless XDG forms (xdg-user-dirs version
+                  drift); <code>pretty()</code> anchored to a path boundary.
+                </li>
+              </ul>
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
         </tbody>
       </table>
 
@@ -218,10 +364,6 @@
         <li>
           Which <code>.zsh_profile</code> aliases survive the bash port (final
           dedupe vs. Omarchy defaults).
-        </li>
-        <li>
-          Whether to fold the old <code>install</code>'s XDG-dir tweak (disable
-          Documents/Music) into the new install.
         </li>
         <li>
           Exact repo path the gitignored local files land in (folded vs.
@@ -351,42 +493,6 @@
               Make all themeable apps follow the system theme (Obsidian, Zen
               browser, etc.) via omarchy's <code>theme-set</code> hook + per-app
               files in <code>~/.config/omarchy/current/theme/</code>.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <span class="badge badge-future">future</span> Zero window gaps
-            </td>
-            <td>Quick</td>
-            <td>
-              Remove the gap between tiled windows — set
-              <code>general { gaps_in = 0; gaps_out = 0 }</code> in the hypr
-              overlay / <code>looknfeel.conf</code>.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <span class="badge badge-future">future</span> Install essential
-              workflow apps
-            </td>
-            <td>Setup</td>
-            <td>
-              Install core apps from the most stable/official omarchy sources
-              (<code>omarchy pkg add</code> / <code>pkg aur add</code>; populate
-              <code>packages.txt</code> + a new <code>packages.aur.txt</code>).
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <span class="badge badge-future">future</span> Port apps from
-              ansible branch
-            </td>
-            <td>Setup</td>
-            <td>
-              Install apps defined in
-              <code>ansible-bootstrap-and-convergence</code> but not yet here —
-              review that branch's package/flatpak lists and bring over the
-              wanted ones.
             </td>
           </tr>
         </tbody>

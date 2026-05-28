@@ -22,13 +22,14 @@ SHFMT_FLAGS        := -ln bash -i 2 -ci
 # The fragments have no shebang; they carry a `# shellcheck shell=bash` directive.
 SHELL_FILES := install $(wildcard bin/.local/bin/*) \
 	bash/.config/dotfiles/shell.sh \
-	bash/.config/dotfiles/shell.local.sh.example
+	bash/.config/dotfiles/shell.local.sh.example \
+	$(wildcard .github/scripts/*.sh)
 # Docs: hand-written HTML knowledge base + the machine-readable registry.
 PRETTIER_GLOBS := docs/*.html docs/registry.json
 DOCS_CHECK     := .github/scripts/check_docs.py
 
 .DEFAULT_GOAL := help
-.PHONY: help ci fmt tools
+.PHONY: help ci fmt tools update verify
 
 help: ## Show this menu
 	@awk 'BEGIN{FS=":.*## "} /^[a-zA-Z0-9_-]+:.*## /{printf "  \033[36m%-6s\033[0m %s\n",$$1,$$2}' $(MAKEFILE_LIST)
@@ -52,3 +53,24 @@ tools: ## Show required tools + how to install them on Omarchy
 	@if command -v shfmt >/dev/null 2>&1; then echo "  shfmt:      $$(shfmt --version)"; else echo "  shfmt:      MISSING -> omarchy pkg add shfmt"; fi
 	@if command -v npx >/dev/null 2>&1; then echo "  node/npx:   present (prettier runs via '$(PRETTIER)')"; else echo "  node/npx:   MISSING -> install node via mise"; fi
 	@if command -v python3 >/dev/null 2>&1; then echo "  python3:    $$(python3 --version | awk '{print $$2}')"; else echo "  python3:    MISSING"; fi
+
+# ── update: single command to refresh everything on this machine ─────────────
+# `omarchy update -y` covers pacman + AUR + omarchy itself + migrations + keyring
+# + orphan cleanup, but NOT firmware (separate omarchy command) and NOT uv (Astral
+# self-installer, lives outside pacman/yay). This target chains all three so
+# `make update` truly updates everything package-manager-reachable on the box.
+# JetBrains IDEs managed inside jetbrains-toolbox have no headless update path —
+# open Toolbox to update those (the toolbox AUR package itself is updated above).
+update: ## Update everything: omarchy/pacman/AUR + firmware + uv, then `make verify`
+	@printf "Note: if 'omarchy update -y' triggers a reboot, the firmware/uv/verify steps below will NOT run automatically — re-invoke 'make update' afterwards.\n\n"
+	@# Each step is allowed to fail independently so a non-zero exit (no firmware
+	@# devices, transient network, reboot decline) does not silently skip the rest.
+	omarchy update -y || printf "\nWARN: 'omarchy update -y' returned non-zero (benign if a reboot was requested).\n"
+	omarchy update firmware || printf "\nWARN: 'omarchy update firmware' returned non-zero (no fwupd devices? offline? expected on some hardware).\n"
+	@if command -v uv >/dev/null 2>&1; then printf "\nUpdating uv...\n"; uv self update || true; fi
+	@printf "\nNote: JetBrains IDEs managed by jetbrains-toolbox update via Toolbox's own UI.\n"
+	@printf "\nPost-update verify:\n"
+	@$(MAKE) --no-print-directory verify
+
+verify: ## Health-check the live overlay (hyprctl, managed blocks, stow links, dev-env tools, XDG dirs)
+	bash .github/scripts/verify.sh
