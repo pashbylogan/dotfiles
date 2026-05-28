@@ -62,6 +62,7 @@ check_block "$HOME/.bashrc" '# >>> dotfiles managed (shell) >>>'
 check_block "$HOME/.config/hypr/hyprland.conf" '# >>> dotfiles managed (hypr) >>>'
 check_block "$HOME/.config/nvim/lua/config/keymaps.lua" '-- >>> dotfiles managed (keymaps) >>>'
 check_block "$HOME/.config/tmux/tmux.conf" '# >>> dotfiles managed (tmux) >>>'
+check_block "$HOME/.config/waybar/style.css" '/* >>> dotfiles managed (waybar) >>> */'
 
 # ── stow links ───────────────────────────────────────────────────────────────
 check_link() {
@@ -128,6 +129,41 @@ check_xdg XDG_DOCUMENTS_DIR '$HOME/'
 check_xdg XDG_MUSIC_DIR '$HOME/'
 # shellcheck disable=SC2016
 check_xdg XDG_PROJECTS_DIR '$HOME/Projects'
+
+# ── default-tracking overrides ───────────────────────────────────────────────
+# Every overlay value should be a delta from omarchy's defaults. The single
+# exception is a value we must re-set because a downstream omarchy toggle
+# would otherwise zero it (see hypr.conf's border_size note). Check that the
+# pinned value still matches omarchy's default — if not, omarchy moved on and
+# our override needs a deliberate update. [D-LOOKNFEEL]
+check_default_match() {
+  local label="$1" repo_file="$2" omarchy_file="$3" key="$4"
+  if [ ! -f "$omarchy_file" ]; then
+    skip "$label default-tracking ($(pretty "$omarchy_file") not present)"
+    return
+  fi
+  if [ ! -f "$repo_file" ]; then
+    skip "$label default-tracking ($(pretty "$repo_file") not present)"
+    return
+  fi
+  # Pre-strip comment lines so a `# example: key = N` line above the real
+  # setting can't shadow it. The regex is then applied to live config lines.
+  local repo_val omarchy_val
+  repo_val=$(grep -v '^[[:space:]]*#' "$repo_file" | grep -oE "${key}[[:space:]]*=[[:space:]]*[0-9A-Za-z_-]+" | head -1 | awk -F= '{gsub(/[[:space:]]/,"",$2); print $2}')
+  omarchy_val=$(grep -v '^[[:space:]]*#' "$omarchy_file" | grep -oE "${key}[[:space:]]*=[[:space:]]*[0-9A-Za-z_-]+" | head -1 | awk -F= '{gsub(/[[:space:]]/,"",$2); print $2}')
+  if [ -z "$repo_val" ] || [ -z "$omarchy_val" ]; then
+    miss "$label could not be extracted (repo='$repo_val' omarchy='$omarchy_val')"
+  elif [ "$repo_val" = "$omarchy_val" ]; then
+    pass "$label tracks omarchy default ($repo_val)"
+  else
+    miss "$label drift: overlay=$repo_val, omarchy default=$omarchy_val — update both together"
+  fi
+}
+check_default_match \
+  "border_size" \
+  "$REPO/hypr/.config/dotfiles/hypr.conf" \
+  "$HOME/.local/share/omarchy/default/hypr/looknfeel.conf" \
+  border_size
 
 # ── summary ──────────────────────────────────────────────────────────────────
 echo

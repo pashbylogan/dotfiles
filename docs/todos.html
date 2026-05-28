@@ -352,6 +352,38 @@
             <td><span class="badge badge-done">done</span></td>
           </tr>
           <tr>
+            <td>waybar</td>
+            <td>
+              Personal waybar deltas split across two coupled overlays: jq
+              filters in <code>waybar/deltas.jq</code> for
+              <code>config.jsonc</code> (applied by <code>install</code>'s
+              <code>apply_jq_deltas</code> helper) and a managed block in
+              <code>style.css</code> (via the existing
+              <code>upsert_block</code> helper) for the matching CSS. waybar
+              restarts only when content actually changed (hash-compare around
+              both files) and the restart polls <code>pgrep -x waybar</code> to
+              verify the process came back. New decision / finding pair
+              documents the pattern and the omarchy mutation surface that makes
+              a delta overlay safer than either a fork or a direct edit:
+              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>,
+              <a href="findings.html#F-WAYBAR-MIGRATIONS">F-WAYBAR-MIGRATIONS</a
+              >. Initial deltas: drop the 1-5
+              <code>persistent-workspaces</code> pin so workspaces grow
+              i3-style; add an icon-only <code>memory</code> module (glyph
+              <code></code> nf-fa-bars, after cpu, on a 5 s interval) with
+              used/total/% in <code>tooltip-format</code> on hover; extend
+              omarchy's <code>#cpu, #battery, ...</code> CSS selector to include
+              <code>#memory</code> so the new module renders with matching
+              margins. The jq filter is defensive: refuses non-object roots,
+              merges the memory module instead of replacing it, and checks all
+              modules-* groups before inserting so a future omarchy reshuffle
+              can't produce duplicates. Battery-audited: zero added wake events
+              at the design level (verbose 1 s clock tick considered and
+              deliberately rejected because it would prevent deep C-states).
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
             <td>toolchain</td>
             <td>
               Caught a non-omarchy-native dev-tool install:
@@ -506,17 +538,6 @@
             <td>
               Make the omarchy themes use the Yaru icon theme in Nautilus (GTK
               icon-theme via dconf or a <code>theme-set</code> hook).
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <span class="badge badge-future">future</span> Waybar to taste
-            </td>
-            <td>When you want to tweak the bar</td>
-            <td>
-              Customize waybar (modules + style);
-              <code>omarchy restart waybar</code> after edits. Decide
-              repo-overlay vs. editing <code>~/.config/waybar</code> directly.
             </td>
           </tr>
           <tr>

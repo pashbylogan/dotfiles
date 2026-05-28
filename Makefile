@@ -19,6 +19,7 @@ SHELL_FILES := install $(wildcard bin/.local/bin/*) \
 	$(wildcard .github/scripts/*.sh)
 PRETTIER_GLOBS := docs/*.html docs/registry.json
 DOCS_CHECK     := .github/scripts/check_docs.py
+JQ_FILTERS     := $(wildcard waybar/*.jq)
 
 .DEFAULT_GOAL := help
 .PHONY: help ci fmt tools update verify
@@ -29,10 +30,14 @@ help: ## Show this menu
 	@echo
 	@echo "Run 'make ci' before committing — it's exactly what GitHub Actions runs."
 
-ci: ## Run the full gate: shellcheck + shfmt + prettier + docs integrity
+ci: ## Run the full gate: shellcheck + shfmt + prettier + jq filter parse + docs integrity
 	shellcheck $(SHELL_FILES)
 	shfmt -d $(SHFMT_FLAGS) $(SHELL_FILES)
 	$(PRETTIER) --check $(PRETTIER_GLOBS)
+	@# Smoke-check each jq filter against an empty-object fixture so syntax
+	@# errors + obvious filter bugs surface here, not at ./install time.
+	@for f in $(JQ_FILTERS); do echo '{}' | jq -f "$$f" >/dev/null || { echo "jq filter failed: $$f"; exit 1; }; done
+	@if [ -n "$(JQ_FILTERS)" ]; then echo "jq filters parse + smoke pass: $(JQ_FILTERS)"; fi
 	python3 $(DOCS_CHECK)
 	@echo "OK - all checks passed"
 

@@ -263,6 +263,62 @@
         removed.
       </p>
 
+      <h2 id="F-WAYBAR-MIGRATIONS">
+        Waybar config drifts via two omarchy patterns
+        <code class="meta">F-WAYBAR-MIGRATIONS</code>
+      </h2>
+      <p>
+        The omarchy
+        <a href="https://learn.omacom.io/2/the-omarchy-manual/65/dotfiles"
+          >Dotfiles</a
+        >
+        page claims files in <code>~/.config</code> "will not be overwritten on
+        updates" — but the
+        <a href="https://learn.omacom.io/2/the-omarchy-manual/102/common-tweaks"
+          >Common tweaks</a
+        >
+        page quietly admits "it might occasionally be necessary for system
+        updates to restore certain configs to their original condition" and
+        instructs the user to find their old version in a
+        <code>.bak</code> file. For waybar the second claim is the accurate one:
+        <code>~/.config/waybar/config.jsonc</code> is mutated by omarchy updates
+        two distinct ways.
+      </p>
+      <ol>
+        <li>
+          <strong>Wholesale overwrite</strong> via
+          <code>omarchy-refresh-waybar</code> (a thin wrapper around
+          <code>omarchy-refresh-config waybar/config.jsonc</code>), which backs
+          up the user file as <code>config.jsonc.bak.&lt;epoch&gt;</code> and
+          then <code>cp -f</code>s the upstream default over it. Invoked from
+          migrations such as <code>1751887718.sh</code>,
+          <code>1752725616.sh</code>, and <code>1753495989.sh</code>.
+        </li>
+        <li>
+          <strong>Surgical <code>sed -i</code> edits</strong> against the live
+          user file, guarded by <code>grep</code> idempotency checks. Examples:
+          <code>1763409505.sh</code> inserts <code>"10": "0"</code>;
+          <code>1764067068.sh</code> adds the bluetooth-off icon;
+          <code>1771602647.sh</code> injects the notification-silencing
+          indicator.
+        </li>
+      </ol>
+      <p>
+        These coexist on purpose: <code>refresh-waybar</code> handles structural
+        changes; surgical migrations add single keys without disturbing personal
+        edits to the rest of the file. The implication for this repo is that
+        <strong
+          >forking the whole <code>config.jsonc</code> would silently drop every
+          future surgical migration</strong
+        >
+        (we'd never see the new keys upstream adds), while leaving the file
+        unmanaged means a periodic
+        <code>refresh-waybar</code> erases personal edits. The resolution lives
+        in <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>: own
+        only the deltas as jq filters, applied idempotently on every
+        <code>./install</code>.
+      </p>
+
       <h2 id="F-AGENT-GUIDANCE">
         Agent instruction files should be concise and concrete
         <code class="meta">F-AGENT-GUIDANCE</code>
@@ -376,6 +432,18 @@
         <li>
           <a href="https://learn.omacom.io/2/the-omarchy-manual/65/dotfiles"
             >Omarchy manual — Dotfiles</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://learn.omacom.io/2/the-omarchy-manual/102/common-tweaks"
+            >Omarchy manual — Common tweaks (waybar examples)</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://raw.githubusercontent.com/basecamp/omarchy/master/bin/omarchy-refresh-config"
+            >omarchy-refresh-config (wholesale config restore)</a
           >
         </li>
         <li>

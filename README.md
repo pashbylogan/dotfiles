@@ -54,6 +54,7 @@ ssh/.ssh/                    # config (+ Include config.local) + config.local.ex
 bin/.local/bin/              # personal commands → ~/.local/bin (on PATH)
 tmux/.config/tmux/local.conf # tmux overlay; install source-file's it from omarchy's tmux.conf
 hypr/.config/dotfiles/       # hypr.conf override fragment + hypr.local.conf.example
+waybar/deltas.jq             # personal waybar deltas (jq filters) applied to ~/.config/waybar/config.jsonc
 docs/                        # HTML knowledge base + registry.json
 .github/                     # CI workflow + docs-integrity checker (scripts/check_docs.py)
 ```
@@ -62,6 +63,13 @@ Most coding-agent harnesses (Codex, opencode, crush, Cursor, Copilot, Windsurf,
 Cline, Continue.dev, Zed, JetBrains Junie, Sourcegraph Amp, Devin, Kilo) read
 `AGENTS.md` natively; Claude Code reads `CLAUDE.md`, which is a one-line
 `@AGENTS.md` pointer. `make ci` enforces the bridge stays correct. [F-AGENT-GUIDANCE]
+
+The waybar config is omarchy-owned and mutated two different ways by omarchy
+updates (wholesale `omarchy-refresh-waybar` + surgical `sed` migrations —
+[F-WAYBAR-MIGRATIONS]). Rather than forking it (which would silently drop future
+upstream additions) or editing in place (wiped on the next refresh), this repo
+owns only the personal deltas as jq filters in `waybar/deltas.jq`; `install`
+applies them idempotently and only restarts waybar on a real change. [D-WAYBAR-DELTAS]
 
 ## Checks (`make`)
 

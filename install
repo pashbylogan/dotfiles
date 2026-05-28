@@ -69,6 +69,42 @@ upsert_block() {
   info "managed block updated in ${file/#$HOME/\~}"
 }
 
+# Idempotent jq overlay for an omarchy-owned JSON config. Returns 0 only when
+# the file actually changed so callers can gate side effects (waybar restart).
+# cp -f follows symlinks + preserves mode (same idiom as omarchy-refresh-config).
+# [D-WAYBAR-DELTAS][F-WAYBAR-MIGRATIONS]
+apply_jq_deltas() {
+  local target="$1" filter="$2" label="${3:-jq deltas}" new tmp target_clean
+  if [ ! -f "$target" ]; then
+    warn "skip $label — missing $target"
+    return 1
+  fi
+  # Surface jq's actual diagnostic (parse error, type error, bad path) instead
+  # of swallowing it; debugging a failed filter requires that context.
+  if ! new=$(jq -f "$filter" "$target"); then
+    die "$label: jq filter failed on $filter against $target (see error above)"
+  fi
+  # Both $() captures strip trailing newlines, so comparing them is tolerant
+  # of whether the source file ends with 0, 1, or more terminal newlines.
+  target_clean=$(<"$target")
+  if [ "$new" = "$target_clean" ]; then
+    return 1
+  fi
+  tmp="$target.dotfiles.tmp"
+  if ! printf '%s\n' "$new" >"$tmp"; then
+    rm -f "$tmp"
+    die "$label: failed to stage $tmp (disk full? permission denied?)"
+  fi
+  # cp -f follows symlinks and preserves the destination's mode + ownership.
+  if ! cp -f "$tmp" "$target"; then
+    rm -f "$tmp"
+    die "$label: failed to install $target from $tmp"
+  fi
+  rm -f "$tmp"
+  info "$label applied to ${target/#$HOME/\~}"
+  return 0
+}
+
 # Back up foreign files/symlinks once so stow can manage the path safely.
 # Targets already symlinked into the repo are left alone (stow -R is a no-op).
 prestow_backup() {
@@ -94,6 +130,16 @@ else
   have omarchy || die "Omarchy CLI not found — this repo targets Omarchy. Install stow manually: sudo pacman -S stow"
   info "installing stow via omarchy"
   omarchy pkg add stow
+fi
+
+# jq is required by apply_jq_deltas. Ships in omarchy-base, but reconcile in
+# case it was pruned (Remove Preinstalled) or never installed.
+if have jq; then
+  success "jq present"
+else
+  have omarchy || die "jq required by apply_jq_deltas but Omarchy CLI not found. Install jq manually: sudo pacman -S jq"
+  info "installing jq via omarchy"
+  omarchy pkg add jq
 fi
 
 # `tr -d '\r'` strips CRLF endings introduced by a Windows editor — without it,
@@ -226,6 +272,71 @@ upsert_block "$HOME/.config/tmux/tmux.conf" \
 # [D-TMUX-KEEP] personal tmux overlay — see docs/decisions.html#D-TMUX-KEEP
 source-file ~/.config/tmux/local.conf
 EOF
+
+# Apply both waybar overlays (config.jsonc via jq, style.css via managed block);
+# restart only on real content change. [D-WAYBAR-DELTAS][F-WAYBAR-MIGRATIONS]
+waybar_changed=0
+
+if apply_jq_deltas "$HOME/.config/waybar/config.jsonc" "$REPO/waybar/deltas.jq" "waybar deltas"; then
+  waybar_changed=1
+fi
+
+# Style.css gets a managed block so #memory matches omarchy's cpu/battery
+# spacing (otherwise the new module renders pinched against neighbors).
+# Hash-compare around upsert_block because the helper always rewrites the
+# file; only flag a real content change.
+WAYBAR_STYLE="$HOME/.config/waybar/style.css"
+if [ -f "$WAYBAR_STYLE" ]; then
+  pre_hash=$(sha256sum "$WAYBAR_STYLE" | cut -d' ' -f1)
+  upsert_block "$WAYBAR_STYLE" \
+    "/* >>> dotfiles managed (waybar) >>> */" \
+    "/* <<< dotfiles managed (waybar) <<< */" <<'EOF'
+/* [D-WAYBAR-DELTAS] equidistant + tighter module spacing. Omarchy's
+ * defaults are asymmetric — every right-side module ships its own
+ * margin-right (#custom-expand-icon 18, #bluetooth 17, #tray 16,
+ * #network 13, the cpu/battery/pulseaudio rule 7.5) and #memory gets
+ * no rule at all. We flatten every right-side module to a uniform 4px
+ * on each side — equidistant ~8px gaps, snug but not pinched. Overrides
+ * omarchy's per-module margin-right via later-rule-wins specificity
+ * (these rules sit at EOF). */
+#memory,
+#custom-expand-icon,
+#tray,
+#bluetooth,
+#network,
+#cpu,
+#battery,
+#pulseaudio {
+  min-width: 12px;
+  margin: 0 4px;
+}
+EOF
+  post_hash=$(sha256sum "$WAYBAR_STYLE" | cut -d' ' -f1)
+  [ "$pre_hash" != "$post_hash" ] && waybar_changed=1
+fi
+unset pre_hash post_hash WAYBAR_STYLE
+
+if [ "$waybar_changed" -eq 1 ]; then
+  if [ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+    info "waybar overlay updated; restart skipped (no live Hyprland session)"
+  elif ! have omarchy-restart-waybar; then
+    warn "waybar overlay updated; omarchy-restart-waybar not on PATH — restart manually"
+  else
+    # omarchy-restart-waybar exits 0 as soon as setsid forks, even if waybar
+    # then dies. Poll briefly to verify the process actually relaunched.
+    omarchy-restart-waybar
+    for _ in 1 2 3 4 5; do
+      pgrep -x waybar >/dev/null 2>&1 && break
+      sleep 0.1
+    done
+    if pgrep -x waybar >/dev/null 2>&1; then
+      success "waybar restarted"
+    else
+      warn "waybar did not relaunch — check journalctl --user -t waybar"
+    fi
+  fi
+fi
+unset waybar_changed
 
 # ── validation ───────────────────────────────────────────────────────────────
 if have hyprctl && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then

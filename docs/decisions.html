@@ -364,6 +364,103 @@
               <code>SUPER+arrows</code>.
             </td>
           </tr>
+          <tr id="D-LOOKNFEEL">
+            <td><code class="meta">D-LOOKNFEEL</code> Looknfeel deltas</td>
+            <td><span class="badge badge-done">in (fragment)</span></td>
+            <td>
+              Two overlay-sourced-last deltas to omarchy's looknfeel chain: (1)
+              <code>general { border_size = 2 }</code> so the
+              <code>window-no-gaps</code> toggle keeps killing gaps without also
+              killing borders — this is the single line in any overlay that
+              re-states an omarchy default value (<code>border_size = 2</code>
+              in <code>looknfeel.conf</code>) because a downstream toggle would
+              otherwise zero it, so <code>make verify</code> compares the two
+              and fails loudly if omarchy ever moves their default; (2)
+              <code>windowrule = rounding 8, match:float 1</code> — same
+              windowrule grammar omarchy uses for tagged popups (<code
+                >rounding 8, match:tag pop</code
+              >
+              in <code>default/hypr/apps/system.conf</code>), but state-based on
+              the floating bit instead of a tag, so tiles stay square (omarchy
+              global default) and any floating window rounds. Edits to
+              <code>~/.config/hypr/looknfeel.conf</code> wouldn't fix the border
+              problem because that file loads <em>before</em> the window-no-gaps
+              toggle in hyprland.conf's source chain — only an overlay sourced
+              <em>after</em> the toggle can win, which is exactly what our
+              fragment is. See
+              <a href="findings.html#F-HYPR-SEAM">F-HYPR-SEAM</a> for the full
+              ordering.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Waybar deltas</h2>
+      <p>
+        Waybar's config sits in <code>~/.config/waybar/config.jsonc</code>, an
+        omarchy-seeded file that the live system mutates two different ways (<a
+          href="findings.html#F-WAYBAR-MIGRATIONS"
+          >F-WAYBAR-MIGRATIONS</a
+        >). Omarchy's manual recommends direct edits and treats periodic
+        <code>.bak</code> restores as the recovery story; this repo applies
+        <a href="architecture.html#D-DELTA-STORAGE">D-DELTA-STORAGE</a> to JSON
+        instead: own thin deltas, re-apply them every <code>./install</code>,
+        restart only on real change.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Choice</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="D-WAYBAR-DELTAS">
+            <td>
+              <code class="meta">D-WAYBAR-DELTAS</code> Waybar overlay shape
+            </td>
+            <td>
+              <strong
+                >Two coupled overlays: <code>waybar/deltas.jq</code> holds
+                personal <code>config.jsonc</code> deltas as composed jq
+                filters; a managed block in <code>style.css</code> (via the
+                existing <code>upsert_block</code> helper) carries the matching
+                CSS rules.</strong
+              >
+              <code>install</code>'s <code>apply_jq_deltas</code> applies the jq
+              filters idempotently; the style block is re-anchored at EOF the
+              same way as the bashrc/hyprland/tmux/keymaps blocks. waybar is
+              only restarted when content actually changed (hash-compare around
+              both files), and the restart waits-and-polls
+              <code>pgrep -x waybar</code> to verify the process actually came
+              back. Initial deltas: drop the 1-5
+              <code>persistent-workspaces</code> pin so workspaces grow on
+              demand (i3-style), add an icon-only <code>memory</code> module on
+              the same 5 s nominal interval as cpu (with used/total/% in
+              <code>tooltip-format</code> on hover), and extend omarchy's
+              <code>#cpu, #battery, ...</code> CSS spacing rule to include
+              <code>#memory</code> so the new module renders with the same
+              margins as its neighbors.
+            </td>
+            <td>
+              Forking the whole file would silently drop every future surgical
+              migration (<a href="findings.html#F-WAYBAR-MIGRATIONS"
+                >F-WAYBAR-MIGRATIONS</a
+              >); direct edits would be wiped on the next
+              <code>omarchy-refresh-waybar</code> and only recoverable through a
+              <code>.bak</code> diff. Owning <em>only the deltas</em>
+              survives both mutation patterns: refresh overwrites get re-patched
+              on next install, surgical migrations either pre-date our filter or
+              touch keys our filter doesn't (the memory module uses a merge
+              pattern so future upstream keys survive). Each delta was
+              battery-audited: memory uses the same 5 s nominal interval as cpu
+              — waybar runs per-module timers independently so this isn't strict
+              coalescing, but it's the cheapest practical cadence. A verbose 1 s
+              clock tick was considered and deliberately rejected because it
+              would prevent deep C-states.
+            </td>
+          </tr>
         </tbody>
       </table>
 
