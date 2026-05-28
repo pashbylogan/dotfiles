@@ -24,10 +24,10 @@
       <p class="eyebrow">Research Findings</p>
       <h1>How Omarchy actually behaves</h1>
       <p class="lead">
-        Verified by reading the live system (<code>omarchy 3.8.2</code>) and
-        Omarchy's source/manual. These facts justify the
-        <a href="architecture.html">architecture</a>. Each finding has a stable
-        ID (see <a href="traceability.html">Trace</a>).
+        Verified by reading the live system (<code>omarchy 3.8.2</code>),
+        Omarchy's source/manual, and selected agent-tool documentation. These
+        facts justify the <a href="architecture.html">architecture</a>. Each
+        finding has a stable ID (see <a href="traceability.html">Trace</a>).
       </p>
 
       <h2 id="F-HYPR-SEAM">
@@ -263,8 +263,55 @@
         removed.
       </p>
 
+      <h2 id="F-AGENT-GUIDANCE">
+        Agent instruction files should be concise and concrete
+        <code class="meta">F-AGENT-GUIDANCE</code>
+      </h2>
+      <p>
+        <code>AGENTS.md</code> is the most universal repo-root name for shared
+        coding-agent guidance: the AGENTS.md project describes it as a
+        predictable "README for agents" and lists common sections such as setup,
+        testing, code style, and security. Claude Code now documents
+        <code>AGENTS.md</code> interoperability explicitly: Claude itself reads
+        <code>CLAUDE.md</code>, but a project can make Claude consume the shared
+        guidance by importing <code>@AGENTS.md</code> from
+        <code>CLAUDE.md</code>. Aider similarly recommends putting coding
+        conventions in a small markdown file and loading it read-only.
+      </p>
+      <p>
+        The writing guidance is consistent across current toolchains: keep the
+        file lean because it consumes model context, use specific/verifiable
+        instructions instead of vague "best practices", put exact commands near
+        the top, and treat the file as advisory guidance rather than a hard
+        policy layer. This repo's <code>AGENTS.md</code> therefore records only
+        frequently relevant commands, boundaries, traceability rules, and the
+        comment conventions; durable explanations and source-backed rationale
+        stay in <code>docs/</code>.
+      </p>
+
       <h2>Sources</h2>
       <ul class="clean">
+        <li>
+          <a href="https://agents.md/"
+            >AGENTS.md — a simple, open format for guiding coding agents</a
+          >
+        </li>
+        <li>
+          <a href="https://code.claude.com/docs/en/memory"
+            >Claude Code docs — How Claude remembers your project</a
+          >
+        </li>
+        <li>
+          <a href="https://aider.chat/docs/usage/conventions.html"
+            >Aider docs — Specifying coding conventions</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://codex-best-practices-d67bea.pages.oit.duke.edu/best-practices/agents.html"
+            >Codex Starter Best Practices — AGENTS.md</a
+          >
+        </li>
         <li>
           <a href="https://learn.omacom.io/2/the-omarchy-manual/65/dotfiles"
             >Omarchy manual — Dotfiles</a

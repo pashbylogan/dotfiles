@@ -245,6 +245,14 @@
       "appears_in": [],
       "code_paths": ["tmux/.config/tmux/local.conf", "install"],
       "related": ["D-TMUX-KEEP"]
+    },
+    {
+      "id": "F-AGENT-GUIDANCE",
+      "title": "AGENTS.md is the shared repo-root agent guidance file; keep it concise, concrete, command-oriented, and route durable rationale to docs",
+      "canonical": "findings.html#F-AGENT-GUIDANCE",
+      "appears_in": [],
+      "code_paths": ["AGENTS.md"],
+      "related": ["D-CI"]
     }
   ]
 }

@@ -43,6 +43,7 @@ update, etc.) and the machine reconverges. [D-IDEMPOTENT]
 ## Repo layout
 
 ```
+AGENTS.md                   # concise coding-agent guidance + comment conventions
 install                      # the only runtime script (stow + managed integration blocks)
 Makefile                     # `make` menu; `make ci` mirrors CI; `make fmt` auto-fixes
 packages.txt                 # optional extra packages → omarchy pkg add
