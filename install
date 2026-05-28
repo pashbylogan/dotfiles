@@ -20,16 +20,28 @@ cd "$REPO"
 
 # ── pretty output ────────────────────────────────────────────────────────────
 if [ -t 1 ]; then
-  BOLD=$'\033[1m'; CYAN=$'\033[0;36m'; GREEN=$'\033[0;32m'
-  YELLOW=$'\033[1;33m'; RED=$'\033[0;31m'; NC=$'\033[0m'
+  BOLD=$'\033[1m'
+  CYAN=$'\033[0;36m'
+  GREEN=$'\033[0;32m'
+  YELLOW=$'\033[1;33m'
+  RED=$'\033[0;31m'
+  NC=$'\033[0m'
 else
-  BOLD=; CYAN=; GREEN=; YELLOW=; RED=; NC=
+  BOLD=
+  CYAN=
+  GREEN=
+  YELLOW=
+  RED=
+  NC=
 fi
-step()    { printf '\n%s── %s ──%s\n' "$BOLD" "$*" "$NC"; }
-info()    { printf '%sℹ%s %s\n' "$CYAN" "$NC" "$*"; }
+step() { printf '\n%s── %s ──%s\n' "$BOLD" "$*" "$NC"; }
+info() { printf '%sℹ%s %s\n' "$CYAN" "$NC" "$*"; }
 success() { printf '%s✔%s %s\n' "$GREEN" "$NC" "$*"; }
-warn()    { printf '%s⚠%s %s\n' "$YELLOW" "$NC" "$*"; }
-die()     { printf '%s✖%s %s\n' "$RED" "$NC" "$*" >&2; exit 1; }
+warn() { printf '%s⚠%s %s\n' "$YELLOW" "$NC" "$*"; }
+die() {
+  printf '%s✖%s %s\n' "$RED" "$NC" "$*" >&2
+  exit 1
+}
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
@@ -52,7 +64,8 @@ upsert_block() {
   # line that merely contains the marker text can't trigger block deletion.
   if grep -qxF -- "$begin" "$file"; then
     grep -qxF -- "$end" "$file" || die "begin marker without end marker in $file — refusing to edit"
-    local _nb; _nb=$(grep -cxF -- "$begin" "$file")
+    local _nb
+    _nb=$(grep -cxF -- "$begin" "$file")
     [ "$_nb" -gt 1 ] && die "duplicate begin marker ($_nb) in $file — refusing to edit"
   fi
   # Drop any existing managed block AND trailing blank lines, then append a
@@ -65,12 +78,12 @@ upsert_block() {
     !s{ buf[++n]=$0 }
     s&&$0==e{s=0}
     END{ while (n>0 && buf[n] ~ /^[[:space:]]*$/) n--; for(i=1;i<=n;i++) print buf[i] }
-  ' "$file" > "$file.dotfiles.tmp"; then
+  ' "$file" >"$file.dotfiles.tmp"; then
     rm -f "$file.dotfiles.tmp"
     die "failed to rewrite $file (awk error) — left it untouched"
   fi
   mv "$file.dotfiles.tmp" "$file"
-  printf '\n%s\n%s\n%s\n' "$begin" "$body" "$end" >> "$file"
+  printf '\n%s\n%s\n%s\n' "$begin" "$body" "$end" >>"$file"
   info "managed block updated in ${file/#$HOME/\~}"
 }
 
@@ -172,7 +185,7 @@ vim.keymap.set("n", "<leader>Y", '"+Y', { desc = "Yank line to system clipboard"
 EOF
 
 # 3d. tmux: source our overlay LAST from Omarchy's tmux.conf — the XDG path tmux
-# prefers over ~/.tmux.conf — so our binds/settings win. [D-TMUX-KEEP]
+# prefers over ~/.tmux.conf — so our binds/settings win. [D-TMUX-KEEP][F-TMUX-XDG]
 upsert_block "$HOME/.config/tmux/tmux.conf" \
   "# >>> dotfiles managed (tmux) >>>" \
   "# <<< dotfiles managed (tmux) <<<" <<'EOF'
@@ -190,7 +203,8 @@ if have hyprctl && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
   if [ -z "${errs//[[:space:]]/}" ] || printf '%s' "$errs" | grep -qiF 'no error'; then
     success "no Hyprland config errors"
   else
-    warn "hyprctl reported config issues:"; printf '%s\n' "$errs"
+    warn "hyprctl reported config issues:"
+    printf '%s\n' "$errs"
   fi
 fi
 

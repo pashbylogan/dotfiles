@@ -14,7 +14,7 @@ customizations on top, using official Omarchy paths. There is one script: `insta
 ```sh
 # 1. Install Omarchy.
 # 2. Run "Remove Preinstalled" from the Omarchy menu (Super + Alt + Space → Remove).
-#    This repo's baseline is the post-Remove-Preinstalled state. [D-BASELINE]
+#    This repo's baseline is the post-Remove-Preinstalled state. [D-BASELINE][F-BASELINE]
 # 3. Clone and install:
 git clone <this-repo> ~/Projects/dotfiles
 cd ~/Projects/dotfiles
@@ -41,7 +41,8 @@ update, etc.) and the machine reconverges. [D-IDEMPOTENT]
 ## Repo layout
 
 ```
-install                      # the only script (stow + managed integration blocks)
+install                      # the only runtime script (stow + managed integration blocks)
+Makefile                     # `make` menu; `make ci` mirrors CI; `make fmt` auto-fixes
 packages.txt                 # optional extra packages → omarchy pkg add
 bash/.config/dotfiles/       # shell.sh (ported aliases) + shell.local.sh.example
 ssh/.ssh/                    # config (+ Include config.local) + config.local.example
@@ -49,7 +50,23 @@ bin/.local/bin/              # personal commands → ~/.local/bin (on PATH)
 tmux/.config/tmux/local.conf # tmux overlay; install source-file's it from omarchy's tmux.conf
 hypr/.config/dotfiles/       # hypr.conf override fragment + hypr.local.conf.example
 docs/                        # HTML knowledge base + registry.json
+.github/                     # CI workflow + docs-integrity checker (scripts/check_docs.py)
 ```
+
+## Checks (`make`)
+
+A [`Makefile`](Makefile) is the single source of truth for repo checks, and CI
+([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) invokes the same targets —
+so **`make ci` runs exactly what GitHub Actions runs**.
+
+- `make` / `make help` — list every target
+- `make ci` — full gate (shellcheck + shfmt + prettier + docs integrity); run before committing
+- `make fmt` — auto-fix formatting in place (shfmt + prettier)
+- `make tools` — show required tools and how to install them on Omarchy
+
+Tooling is Omarchy-native: `omarchy pkg add shfmt shellcheck` (or the leaner
+`omarchy pkg aur add shellcheck-bin`); prettier runs via `npx` (pinned), the docs
+checker via system `python3`.
 
 ## Machine-local overrides (gitignored)
 

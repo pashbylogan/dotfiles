@@ -1,4 +1,5 @@
 # shell.local.sh — machine/work-specific bash, NOT committed. [D-SECRETS-LOCAL]
+# shellcheck shell=bash
 # Copy to ~/.config/dotfiles/shell.local.sh and fill in. It is sourced after
 # shell.sh (so it can override anything there). Holds secrets, project IDs, and
 # device-specific values that must not live in the shared repo.

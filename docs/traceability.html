@@ -1,83 +1,270 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Traceability — Omarchy Dotfiles</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<nav class="topnav">
-  <a class="brand" href="index.html"><span class="dot"></span> Omarchy Dotfiles</a>
-  <a class="nav" href="index.html">Home</a>
-  <a class="nav" href="architecture.html">Architecture</a>
-  <a class="nav" href="decisions.html">Decisions</a>
-  <a class="nav" href="findings.html">Findings</a>
-  <a class="nav" href="todos.html">To-Dos</a>
-  <a class="nav" href="traceability.html" aria-current="page">Trace</a>
-  <a class="nav" href="augmentation-approach.html">Design Note</a>
-</nav>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Traceability — Omarchy Dotfiles</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <nav class="topnav">
+      <a class="brand" href="index.html"
+        ><span class="dot"></span> Omarchy Dotfiles</a
+      >
+      <a class="nav" href="index.html">Home</a>
+      <a class="nav" href="architecture.html">Architecture</a>
+      <a class="nav" href="decisions.html">Decisions</a>
+      <a class="nav" href="findings.html">Findings</a>
+      <a class="nav" href="todos.html">To-Dos</a>
+      <a class="nav" href="traceability.html" aria-current="page">Trace</a>
+      <a class="nav" href="augmentation-approach.html">Design Note</a>
+    </nav>
 
-<div class="container">
-  <p class="eyebrow">Traceability</p>
-  <h1>Change-impact index</h1>
-  <p class="lead">Every design decision (<code>D-*</code>) and research finding (<code>F-*</code>) has a stable,
-  grep-able ID. This page mirrors <a href="registry.json">registry.json</a> (the machine-readable source of
-  truth) so a human or agent can see, at a glance, <em>where each idea lives and what it governs</em>.</p>
+    <div class="container">
+      <p class="eyebrow">Traceability</p>
+      <h1>Change-impact index</h1>
+      <p class="lead">
+        Every design decision (<code>D-*</code>) and research finding
+        (<code>F-*</code>) has a stable, grep-able ID. This page mirrors
+        <a href="registry.json">registry.json</a> (the machine-readable source
+        of truth) so a human or agent can see, at a glance,
+        <em>where each idea lives and what it governs</em>.
+      </p>
 
-  <div class="callout key">
-    <span class="label">How to use this when something changes</span>
-    <ol style="margin:.3rem 0 0;">
-      <li><strong>Grep the ID</strong> across the repo (e.g. <code>grep -rn D-DELTA-STORAGE</code>) — it appears in
-      docs, in <code>registry.json</code>, and as a <code>[D-DELTA-STORAGE]</code> token in the governing code's comments.</li>
-      <li>Or open <a href="registry.json">registry.json</a> and read the entry's <code>code_paths</code> +
-      <code>appears_in</code> — that is the authoritative "update these places" list.</li>
-      <li>Update the canonical doc section, every listed doc/code touchpoint, and the registry entry itself.</li>
-    </ol>
-  </div>
+      <div class="callout key">
+        <span class="label">How to use this when something changes</span>
+        <ol style="margin: 0.3rem 0 0">
+          <li>
+            <strong>Grep the ID</strong> across the repo (e.g.
+            <code>grep -rn D-DELTA-STORAGE</code>) — it appears in docs, in
+            <code>registry.json</code>, and as a
+            <code>[D-DELTA-STORAGE]</code> token in the governing code's
+            comments.
+          </li>
+          <li>
+            Or open <a href="registry.json">registry.json</a> and read the
+            entry's <code>code_paths</code> + <code>appears_in</code> — that is
+            the authoritative "update these places" list.
+          </li>
+          <li>
+            Update the canonical doc section, every listed doc/code touchpoint,
+            and the registry entry itself.
+          </li>
+        </ol>
+      </div>
 
-  <h2>Decisions</h2>
-  <table>
-    <thead><tr><th>ID</th><th>Decision</th><th>Canonical</th><th>Governs (code)</th></tr></thead>
-    <tbody>
-      <tr><td><code>D-ENGINE</code></td><td>Shell + Omarchy CLI + stow; no Ansible/convergence engine</td><td><a href="decisions.html#D-ENGINE">decisions</a></td><td><code>install</code></td></tr>
-      <tr><td><code>D-SCRIPTS-MINIMAL</code></td><td>Only <code>install</code>; updates/cleanup are manual</td><td><a href="decisions.html#D-SCRIPTS-MINIMAL">decisions</a></td><td><code>install</code>, <code>README.md</code></td></tr>
-      <tr><td><code>D-DELTA-STORAGE</code></td><td>Own fragments + managed block; never symlink Omarchy files</td><td><a href="architecture.html#D-DELTA-STORAGE">architecture</a></td><td><code>install</code>, <code>hypr/.config/dotfiles/hypr.conf</code></td></tr>
-      <tr><td><code>D-IDEMPOTENT</code></td><td><code>install</code> idempotent (upsert_block + stow -R + pkg --needed)</td><td><a href="architecture.html#D-IDEMPOTENT">architecture</a></td><td><code>install</code></td></tr>
-      <tr><td><code>D-SHELL-BASH</code></td><td>Bash login shell; no chsh</td><td><a href="decisions.html#D-SHELL-BASH">decisions</a></td><td><code>bash/.config/dotfiles/shell.sh</code></td></tr>
-      <tr><td><code>D-SHELL-SEAM</code></td><td>Aliases via <code>~/.bashrc</code> managed block at EOF</td><td><a href="decisions.html#D-SHELL-SEAM">decisions</a></td><td><code>install</code>, <code>bash/.config/dotfiles/shell.sh</code></td></tr>
-      <tr><td><code>D-SECRETS-LOCAL</code></td><td>Secrets/host-specific in gitignored <code>*.local</code></td><td><a href="decisions.html#D-SECRETS-LOCAL">decisions</a></td><td><code>*.local.*.example</code>, <code>.gitignore</code></td></tr>
-      <tr><td><code>D-CARRY-SET</code></td><td>What we carry vs. drop</td><td><a href="decisions.html#D-CARRY-SET">decisions</a></td><td><code>shell.sh</code>, <code>ssh/config</code>, <code>bin/.local/bin</code>, <code>tmux/.config/tmux/local.conf</code></td></tr>
-      <tr><td><code>D-TMUX-KEEP</code></td><td>Keep tmux; clipboard → <code>wl-copy</code></td><td><a href="decisions.html#D-TMUX-KEEP">decisions</a></td><td><code>tmux/.config/tmux/local.conf</code>, <code>install</code></td></tr>
-      <tr><td><code>D-NVIM-KEYMAPS</code></td><td>nvim maps via managed block; don't stow nvim tree</td><td><a href="decisions.html#D-NVIM-KEYMAPS">decisions</a></td><td><code>install</code></td></tr>
-      <tr><td><code>D-CAPS-CTRL</code></td><td>caps→ctrl in owned fragment</td><td><a href="decisions.html#D-CAPS-CTRL">decisions</a></td><td><code>hypr.conf</code>, <code>install</code></td></tr>
-      <tr><td><code>D-WORKSPACE-RULES</code></td><td>Workspace app-assignments in fragment</td><td><a href="decisions.html#D-WORKSPACE-RULES">decisions</a></td><td><code>hypr.conf</code></td></tr>
-      <tr><td><code>D-MOUSE-ACCEL</code></td><td>MX Master accel in <code>hypr.local.conf</code></td><td><a href="decisions.html#D-MOUSE-ACCEL">decisions</a></td><td><code>hypr.local.conf.example</code></td></tr>
-      <tr><td><code>D-HJKL-DECLINED</code></td><td>Declined hjkl focus</td><td><a href="decisions.html#D-HJKL-DECLINED">decisions</a></td><td>—</td></tr>
-      <tr><td><code>D-BASELINE</code></td><td>Baseline = post-Remove-Preinstalled; bindings.conf untracked</td><td><a href="decisions.html#D-BASELINE">decisions</a></td><td><code>README.md</code></td></tr>
-    </tbody>
-  </table>
+      <h2>Decisions</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Decision</th>
+            <th>Canonical</th>
+            <th>Governs (code)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>D-ENGINE</code></td>
+            <td>Shell + Omarchy CLI + stow; no Ansible/convergence engine</td>
+            <td><a href="decisions.html#D-ENGINE">decisions</a></td>
+            <td><code>install</code></td>
+          </tr>
+          <tr>
+            <td><code>D-SCRIPTS-MINIMAL</code></td>
+            <td>Only <code>install</code>; updates/cleanup are manual</td>
+            <td><a href="decisions.html#D-SCRIPTS-MINIMAL">decisions</a></td>
+            <td><code>install</code>, <code>README.md</code></td>
+          </tr>
+          <tr>
+            <td><code>D-DELTA-STORAGE</code></td>
+            <td>Own fragments + managed block; never symlink Omarchy files</td>
+            <td>
+              <a href="architecture.html#D-DELTA-STORAGE">architecture</a>
+            </td>
+            <td>
+              <code>install</code>, <code>hypr/.config/dotfiles/hypr.conf</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-IDEMPOTENT</code></td>
+            <td>
+              <code>install</code> idempotent (upsert_block + stow -R + pkg
+              --needed)
+            </td>
+            <td><a href="architecture.html#D-IDEMPOTENT">architecture</a></td>
+            <td><code>install</code></td>
+          </tr>
+          <tr>
+            <td><code>D-CI</code></td>
+            <td>
+              Makefile = single source of truth for checks; CI invokes it
+              (shellcheck/shfmt/prettier + docs-integrity)
+            </td>
+            <td><a href="decisions.html#D-CI">decisions</a></td>
+            <td>
+              <code>Makefile</code>, <code>.github/workflows/ci.yml</code>,
+              <code>.github/scripts/check_docs.py</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-SHELL-BASH</code></td>
+            <td>Bash login shell; no chsh</td>
+            <td><a href="decisions.html#D-SHELL-BASH">decisions</a></td>
+            <td><code>bash/.config/dotfiles/shell.sh</code></td>
+          </tr>
+          <tr>
+            <td><code>D-SHELL-SEAM</code></td>
+            <td>Aliases via <code>~/.bashrc</code> managed block at EOF</td>
+            <td><a href="decisions.html#D-SHELL-SEAM">decisions</a></td>
+            <td>
+              <code>install</code>, <code>bash/.config/dotfiles/shell.sh</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-SECRETS-LOCAL</code></td>
+            <td>Secrets/host-specific in gitignored <code>*.local</code></td>
+            <td><a href="decisions.html#D-SECRETS-LOCAL">decisions</a></td>
+            <td><code>*.local.*.example</code>, <code>.gitignore</code></td>
+          </tr>
+          <tr>
+            <td><code>D-CARRY-SET</code></td>
+            <td>What we carry vs. drop</td>
+            <td><a href="decisions.html#D-CARRY-SET">decisions</a></td>
+            <td>
+              <code>shell.sh</code>, <code>ssh/config</code>,
+              <code>bin/.local/bin</code>,
+              <code>tmux/.config/tmux/local.conf</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-TMUX-KEEP</code></td>
+            <td>Keep tmux; clipboard → <code>wl-copy</code></td>
+            <td><a href="decisions.html#D-TMUX-KEEP">decisions</a></td>
+            <td>
+              <code>tmux/.config/tmux/local.conf</code>, <code>install</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-NVIM-KEYMAPS</code></td>
+            <td>nvim maps via managed block; don't stow nvim tree</td>
+            <td><a href="decisions.html#D-NVIM-KEYMAPS">decisions</a></td>
+            <td><code>install</code></td>
+          </tr>
+          <tr>
+            <td><code>D-CAPS-CTRL</code></td>
+            <td>caps→ctrl in owned fragment</td>
+            <td><a href="decisions.html#D-CAPS-CTRL">decisions</a></td>
+            <td><code>hypr.conf</code>, <code>install</code></td>
+          </tr>
+          <tr>
+            <td><code>D-WORKSPACE-RULES</code></td>
+            <td>Workspace app-assignments in fragment</td>
+            <td><a href="decisions.html#D-WORKSPACE-RULES">decisions</a></td>
+            <td><code>hypr.conf</code></td>
+          </tr>
+          <tr>
+            <td><code>D-MOUSE-ACCEL</code></td>
+            <td>MX Master accel in <code>hypr.local.conf</code></td>
+            <td><a href="decisions.html#D-MOUSE-ACCEL">decisions</a></td>
+            <td><code>hypr.local.conf.example</code></td>
+          </tr>
+          <tr>
+            <td><code>D-HJKL-DECLINED</code></td>
+            <td>Declined hjkl focus</td>
+            <td><a href="decisions.html#D-HJKL-DECLINED">decisions</a></td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><code>D-BASELINE</code></td>
+            <td>
+              Baseline = post-Remove-Preinstalled; bindings.conf untracked
+            </td>
+            <td><a href="decisions.html#D-BASELINE">decisions</a></td>
+            <td><code>README.md</code></td>
+          </tr>
+        </tbody>
+      </table>
 
-  <h2>Findings</h2>
-  <table>
-    <thead><tr><th>ID</th><th>Finding</th><th>Canonical</th><th>Drives</th></tr></thead>
-    <tbody>
-      <tr><td><code>F-HYPR-SEAM</code></td><td>hyprland.conf sourcing order (later wins)</td><td><a href="findings.html#F-HYPR-SEAM">findings</a></td><td><code>D-DELTA-STORAGE</code>, <code>D-CAPS-CTRL</code></td></tr>
-      <tr><td><code>F-REFRESH-WRITETHROUGH</code></td><td>refresh backs up but cp writes through symlinks</td><td><a href="findings.html#F-REFRESH-WRITETHROUGH">findings</a></td><td><code>D-DELTA-STORAGE</code></td></tr>
-      <tr><td><code>F-LUA</code></td><td>dev branch already on Lua Hyprland config</td><td><a href="findings.html#F-LUA">findings</a></td><td><code>D-DELTA-STORAGE</code></td></tr>
-      <tr><td><code>F-BASH-CHAIN</code></td><td>bash chain; user section at EOF; known omarchy aliases</td><td><a href="findings.html#F-BASH-CHAIN">findings</a></td><td><code>D-SHELL-SEAM</code></td></tr>
-      <tr><td><code>F-NVIM-OWNED</code></td><td>omarchy-nvim-setup overwrites nvim tree</td><td><a href="findings.html#F-NVIM-OWNED">findings</a></td><td><code>D-NVIM-KEYMAPS</code></td></tr>
-      <tr><td><code>F-BASELINE</code></td><td>Remove Preinstalled explains trimmed bindings.conf</td><td><a href="findings.html#F-BASELINE">findings</a></td><td><code>D-BASELINE</code></td></tr>
-      <tr><td><code>F-CLI</code></td><td>Omarchy CLI surface</td><td><a href="findings.html#F-CLI">findings</a></td><td><code>D-ENGINE</code></td></tr>
-      <tr><td><code>F-SHELL-RESEARCH</code></td><td>zsh vs bash → stay on bash</td><td><a href="findings.html#F-SHELL-RESEARCH">findings</a></td><td><code>D-SHELL-BASH</code></td></tr>
-      <tr><td><code>F-TMUX-XDG</code></td><td>tmux prefers omarchy's XDG tmux.conf, shadowing ~/.tmux.conf</td><td><a href="findings.html#F-TMUX-XDG">findings</a></td><td><code>D-TMUX-KEEP</code></td></tr>
-    </tbody>
-  </table>
+      <h2>Findings</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Finding</th>
+            <th>Canonical</th>
+            <th>Drives</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>F-HYPR-SEAM</code></td>
+            <td>hyprland.conf sourcing order (later wins)</td>
+            <td><a href="findings.html#F-HYPR-SEAM">findings</a></td>
+            <td><code>D-DELTA-STORAGE</code>, <code>D-CAPS-CTRL</code></td>
+          </tr>
+          <tr>
+            <td><code>F-REFRESH-WRITETHROUGH</code></td>
+            <td>refresh backs up but cp writes through symlinks</td>
+            <td><a href="findings.html#F-REFRESH-WRITETHROUGH">findings</a></td>
+            <td><code>D-DELTA-STORAGE</code></td>
+          </tr>
+          <tr>
+            <td><code>F-LUA</code></td>
+            <td>dev branch already on Lua Hyprland config</td>
+            <td><a href="findings.html#F-LUA">findings</a></td>
+            <td><code>D-DELTA-STORAGE</code></td>
+          </tr>
+          <tr>
+            <td><code>F-BASH-CHAIN</code></td>
+            <td>bash chain; user section at EOF; known omarchy aliases</td>
+            <td><a href="findings.html#F-BASH-CHAIN">findings</a></td>
+            <td><code>D-SHELL-SEAM</code></td>
+          </tr>
+          <tr>
+            <td><code>F-NVIM-OWNED</code></td>
+            <td>omarchy-nvim-setup overwrites nvim tree</td>
+            <td><a href="findings.html#F-NVIM-OWNED">findings</a></td>
+            <td><code>D-NVIM-KEYMAPS</code></td>
+          </tr>
+          <tr>
+            <td><code>F-BASELINE</code></td>
+            <td>Remove Preinstalled explains trimmed bindings.conf</td>
+            <td><a href="findings.html#F-BASELINE">findings</a></td>
+            <td><code>D-BASELINE</code></td>
+          </tr>
+          <tr>
+            <td><code>F-CLI</code></td>
+            <td>Omarchy CLI surface</td>
+            <td><a href="findings.html#F-CLI">findings</a></td>
+            <td><code>D-ENGINE</code></td>
+          </tr>
+          <tr>
+            <td><code>F-SHELL-RESEARCH</code></td>
+            <td>zsh vs bash → stay on bash</td>
+            <td><a href="findings.html#F-SHELL-RESEARCH">findings</a></td>
+            <td><code>D-SHELL-BASH</code></td>
+          </tr>
+          <tr>
+            <td><code>F-TMUX-XDG</code></td>
+            <td>
+              tmux prefers omarchy's XDG tmux.conf, shadowing ~/.tmux.conf
+            </td>
+            <td><a href="findings.html#F-TMUX-XDG">findings</a></td>
+            <td><code>D-TMUX-KEEP</code></td>
+          </tr>
+        </tbody>
+      </table>
 
-  <p class="meta">Source of truth: <a href="registry.json">registry.json</a>. If you add/rename an ID, update the
-  registry, this table, the canonical doc anchor, and the <code>[ID]</code> tokens in code.</p>
-</div>
+      <p class="meta">
+        Source of truth: <a href="registry.json">registry.json</a>. If you
+        add/rename an ID, update the registry, this table, the canonical doc
+        anchor, and the <code>[ID]</code> tokens in code.
+      </p>
+    </div>
 
-<footer>Omarchy dotfiles knowledge base · <a href="index.html">Home</a></footer>
-</body>
+    <footer>
+      Omarchy dotfiles knowledge base · <a href="index.html">Home</a>
+    </footer>
+  </body>
 </html>

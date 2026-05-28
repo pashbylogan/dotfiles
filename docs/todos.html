@@ -1,81 +1,409 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>To-Dos — Omarchy Dotfiles</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<nav class="topnav">
-  <a class="brand" href="index.html"><span class="dot"></span> Omarchy Dotfiles</a>
-  <a class="nav" href="index.html">Home</a>
-  <a class="nav" href="architecture.html">Architecture</a>
-  <a class="nav" href="decisions.html">Decisions</a>
-  <a class="nav" href="findings.html">Findings</a>
-  <a class="nav" href="todos.html" aria-current="page">To-Dos</a>
-  <a class="nav" href="traceability.html">Trace</a>
-  <a class="nav" href="augmentation-approach.html">Design Note</a>
-</nav>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>To-Dos — Omarchy Dotfiles</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <nav class="topnav">
+      <a class="brand" href="index.html"
+        ><span class="dot"></span> Omarchy Dotfiles</a
+      >
+      <a class="nav" href="index.html">Home</a>
+      <a class="nav" href="architecture.html">Architecture</a>
+      <a class="nav" href="decisions.html">Decisions</a>
+      <a class="nav" href="findings.html">Findings</a>
+      <a class="nav" href="todos.html" aria-current="page">To-Dos</a>
+      <a class="nav" href="traceability.html">Trace</a>
+      <a class="nav" href="augmentation-approach.html">Design Note</a>
+    </nav>
 
-<div class="container">
-  <p class="eyebrow">Status &amp; Future Work</p>
-  <h1>To-Dos</h1>
-  <p class="lead">Living checklist. Updated as implementation proceeds. <span class="meta">Last updated: code complete, code-reviewed, and live-verified end-to-end. Ready to commit.</span></p>
+    <div class="container">
+      <p class="eyebrow">Status &amp; Future Work</p>
+      <h1>To-Dos</h1>
+      <p class="lead">
+        Living checklist. Updated as implementation proceeds.
+        <span class="meta"
+          >Last updated: code complete, code-reviewed, and live-verified
+          end-to-end. Ready to commit.</span
+        >
+      </p>
 
-  <h2>Implementation progress</h2>
-  <table>
-    <thead><tr><th>Phase</th><th>Work</th><th>Status</th></tr></thead>
-    <tbody>
-      <tr><td>0</td><td>Restructure repo: drop X11/replaced packages (i3, i3status, picom, ghostty, desktops, nvim, zsh); <code>git mv</code> bin → <code>bin/.local/bin</code>; keep tmux + ssh; rewrite <code>.gitignore</code> + README.</td><td><span class="badge badge-done">done</span></td></tr>
-      <tr><td>1</td><td>Idempotent <code>install</code> (<code>upsert_block</code> + <code>stow -R --no-folding</code>); <code>bash/shell.sh</code> + <code>shell.local.sh.example</code>; <code>ssh/config</code> + <code>config.local.example</code>; <code>packages.txt</code>; tmux clipboard → <code>wl-copy</code>.</td><td><span class="badge badge-done">done</span></td></tr>
-      <tr><td>2</td><td>Authored <code>hypr/.config/dotfiles/hypr.conf</code> (caps→ctrl + workspace rules) + <code>hypr.local.conf.example</code>; install sources it last. (Optional one-time <code>omarchy refresh config hypr/input.conf</code> to dedupe — see deferred.)</td><td><span class="badge badge-done">done</span></td></tr>
-      <tr><td>3</td><td>nvim <code>&lt;leader&gt;y</code> maps via managed block; README quick-start (Remove Preinstalled → <code>./install</code> + manual update/cleanup).</td><td><span class="badge badge-done">done</span></td></tr>
-      <tr><td>docs</td><td>HTML knowledge base + traceability (<code>registry.json</code>, <code>traceability.html</code>, <code>D-*</code>/<code>F-*</code> anchors + code tokens).</td><td><span class="badge badge-done">done</span></td></tr>
-      <tr><td>verify</td><td>Live <code>./install</code> verified: idempotent &amp; byte-stable; symlinks correct; caps→ctrl active with no <code>hyprctl configerrors</code>; shell additions load without clobbering Omarchy builtins; ssh target <code>0600</code>; nvim keymap valid; tmux <code>wl-copy</code>.</td><td><span class="badge badge-done">done</span></td></tr>
-      <tr><td>review</td><td>A <code>/code-review</code> pass hardened <code>install</code> (awk-failure &amp; duplicate-marker guards so re-runs can never duplicate/eat a block; reload-failure warning; grep-impl-robust <code>configerrors</code> check) and <code>shell.sh</code> (restored <code>wta</code>, hardened <code>cdwt</code>); README cleanup notes the old <code>~/.local/scripts</code>. Known limitation: <code>stow -R</code> aborts loudly (no corruption) if a stow target pre-exists as a real file beyond <code>~/.ssh/config</code>.</td><td><span class="badge badge-done">done</span></td></tr>
-      <tr><td>minimize</td><td>Line-by-line dotfile audit. Cut from <code>shell.sh</code>: the editor block (Omarchy already exports <code>EDITOR=nvim</code> via <code>uwsm/default</code> + <code>SUDO_EDITOR</code> via <code>bash/envs</code> — confirmed live), the <code>vimrc</code> alias, the pnpm block, and dead <code>go</code>/<code>zig</code>/<code>hugo</code>/<code>heroku</code>/<code>opencode</code>/<code>dbmate</code> PATH/aliases. Kept GCP/gcloud, VPN, and uv/python as <strong>guarded <code>~/apps</code> fallbacks</strong> (official Omarchy install preferred — see <code>packages.txt</code>). <code>hypr.conf</code> / <code>tmux.conf</code> / <code>ssh/config</code> were already minimal (no Omarchy overlap).</td><td><span class="badge badge-done">done</span></td></tr>
-      <tr><td>omarchy-fit</td><td>Subagent audit vs official omarchy methods. <strong>Bug fixed:</strong> tmux was shadowed (omarchy ships <code>~/.config/tmux/tmux.conf</code>, which tmux prefers over <code>~/.tmux.conf</code>) — now loaded via a <code>source-file</code> overlay (<code>~/.config/tmux/local.conf</code>) that <em>inherits</em> omarchy's good defaults (tmux-256color, mouse, 50k history, themed status bar, M-/C-M- nav) and overrides only our deltas; reload-path bug fixed. Removed the global <code>ssh</code> TERM alias (omarchy fixes ssh flakiness via MTU probing, not TERM). Dropped redundant <code>kb_layout</code> (omarchy auto-detects). Shell aliases confirmed all additive; <code>~/.bashrc</code> is the only sanctioned shell seam. Kept editing bashrc/hyprland.conf/keymaps.lua/tmux.conf in place (sanctioned seams); no post-update hook (manual re-run, per minimalism).</td><td><span class="badge badge-done">done</span></td></tr>
-      <tr><td>hardening</td><td>Second <code>/code-review</code> pass. <code>install</code>: <code>upsert_block</code> matches markers WHOLE-LINE (a stray line containing the marker text can't trigger block deletion); stale <code>~/.tmux.conf</code> removal only deletes links resolving into the repo; <code>packages.txt</code> parsing strips inline comments/whitespace; ssh-chmod made set -e-safe. <code>bin/</code>: <code>tmux-sessionizer</code>/<code>dev</code> search <code>~/Projects</code> (was lowercase — broke the sessionizer), <code>createVenv</code> <code>setuptools</code> typo, removed broken <code>brew-update</code> (bad shebang + Homebrew). Docs: propagated the tmux path rename and recomputed <code>registry.json</code> <code>appears_in</code> for token-accuracy.</td><td><span class="badge badge-done">done</span></td></tr>
-    </tbody>
-  </table>
+      <h2>Implementation progress</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Phase</th>
+            <th>Work</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>0</td>
+            <td>
+              Restructure repo: drop X11/replaced packages (i3, i3status, picom,
+              ghostty, desktops, nvim, zsh); <code>git mv</code> bin →
+              <code>bin/.local/bin</code>; keep tmux + ssh; rewrite
+              <code>.gitignore</code> + README.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td>
+              Idempotent <code>install</code> (<code>upsert_block</code> +
+              <code>stow -R --no-folding</code>); <code>bash/shell.sh</code> +
+              <code>shell.local.sh.example</code>; <code>ssh/config</code> +
+              <code>config.local.example</code>; <code>packages.txt</code>; tmux
+              clipboard → <code>wl-copy</code>.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>
+              Authored <code>hypr/.config/dotfiles/hypr.conf</code> (caps→ctrl +
+              workspace rules) + <code>hypr.local.conf.example</code>; install
+              sources it last. (Optional one-time
+              <code>omarchy refresh config hypr/input.conf</code> to dedupe —
+              see deferred.)
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>
+              nvim <code>&lt;leader&gt;y</code> maps via managed block; README
+              quick-start (Remove Preinstalled → <code>./install</code> + manual
+              update/cleanup).
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>docs</td>
+            <td>
+              HTML knowledge base + traceability (<code>registry.json</code>,
+              <code>traceability.html</code>, <code>D-*</code>/<code>F-*</code>
+              anchors + code tokens).
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>verify</td>
+            <td>
+              Live <code>./install</code> verified: idempotent &amp;
+              byte-stable; symlinks correct; caps→ctrl active with no
+              <code>hyprctl configerrors</code>; shell additions load without
+              clobbering Omarchy builtins; ssh target <code>0600</code>; nvim
+              keymap valid; tmux <code>wl-copy</code>.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>review</td>
+            <td>
+              A <code>/code-review</code> pass hardened
+              <code>install</code> (awk-failure &amp; duplicate-marker guards so
+              re-runs can never duplicate/eat a block; reload-failure warning;
+              grep-impl-robust <code>configerrors</code> check) and
+              <code>shell.sh</code> (restored <code>wta</code>, hardened
+              <code>cdwt</code>); README cleanup notes the old
+              <code>~/.local/scripts</code>. Known limitation:
+              <code>stow -R</code> aborts loudly (no corruption) if a stow
+              target pre-exists as a real file beyond
+              <code>~/.ssh/config</code>.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>minimize</td>
+            <td>
+              Line-by-line dotfile audit. Cut from <code>shell.sh</code>: the
+              editor block (Omarchy already exports <code>EDITOR=nvim</code> via
+              <code>uwsm/default</code> + <code>SUDO_EDITOR</code> via
+              <code>bash/envs</code> — confirmed live), the
+              <code>vimrc</code> alias, the pnpm block, and dead
+              <code>go</code
+              >/<code>zig</code>/<code>hugo</code>/<code>heroku</code>/<code>opencode</code>/<code
+                >dbmate</code
+              >
+              PATH/aliases. Kept GCP/gcloud, VPN, and uv/python as
+              <strong>guarded <code>~/apps</code> fallbacks</strong> (official
+              Omarchy install preferred — see <code>packages.txt</code>).
+              <code>hypr.conf</code> / <code>tmux.conf</code> /
+              <code>ssh/config</code> were already minimal (no Omarchy overlap).
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>omarchy-fit</td>
+            <td>
+              Subagent audit vs official omarchy methods.
+              <strong>Bug fixed:</strong> tmux was shadowed (omarchy ships
+              <code>~/.config/tmux/tmux.conf</code>, which tmux prefers over
+              <code>~/.tmux.conf</code>) — now loaded via a
+              <code>source-file</code> overlay
+              (<code>~/.config/tmux/local.conf</code>) that
+              <em>inherits</em> omarchy's good defaults (tmux-256color, mouse,
+              50k history, themed status bar, M-/C-M- nav) and overrides only
+              our deltas; reload-path bug fixed. Removed the global
+              <code>ssh</code> TERM alias (omarchy fixes ssh flakiness via MTU
+              probing, not TERM). Dropped redundant
+              <code>kb_layout</code> (omarchy auto-detects). Shell aliases
+              confirmed all additive; <code>~/.bashrc</code> is the only
+              sanctioned shell seam. Kept editing
+              bashrc/hyprland.conf/keymaps.lua/tmux.conf in place (sanctioned
+              seams); no post-update hook (manual re-run, per minimalism).
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>hardening</td>
+            <td>
+              Second <code>/code-review</code> pass. <code>install</code>:
+              <code>upsert_block</code> matches markers WHOLE-LINE (a stray line
+              containing the marker text can't trigger block deletion); stale
+              <code>~/.tmux.conf</code> removal only deletes links resolving
+              into the repo; <code>packages.txt</code> parsing strips inline
+              comments/whitespace; ssh-chmod made set -e-safe.
+              <code>bin/</code>: <code>tmux-sessionizer</code>/<code>dev</code>
+              search <code>~/Projects</code> (was lowercase — broke the
+              sessionizer), <code>createVenv</code>
+              <code>setuptools</code> typo, removed broken
+              <code>brew-update</code> (bad shebang + Homebrew). Docs:
+              propagated the tmux path rename and recomputed
+              <code>registry.json</code> <code>appears_in</code> for
+              token-accuracy.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>ci</td>
+            <td>
+              GitHub Actions (<code>.github/workflows/ci.yml</code>), two
+              parallel jobs. A root <code>Makefile</code> is the single source
+              of truth for the checks (file sets + commands); CI invokes the
+              same targets, so <code>make ci</code> runs exactly what CI runs
+              and <code>make fmt</code> auto-fixes.
+              <strong>shell:</strong> pinned <code>shellcheck</code> (v0.11.0,
+              Omarchy's <code>extra</code>-repo version) lints
+              <code>install</code> + <code>bin/.local/bin/*</code> + the sourced
+              <code>shell.sh</code>/<code>shell.local.sh.example</code> (which
+              carry a <code>shell=bash</code> directive), and pinned
+              <code>shfmt</code> (v3.10.0, <code>-i 2 -ci</code>) enforces
+              formatting. <strong>docs:</strong>
+              <code>.github/scripts/check_docs.py</code> (stdlib only) verifies
+              <code>registry.json</code> ↔ HTML anchors ↔ code paths (existence
+              + the <code>[ID]</code> grep token), that every internal link/nav
+              entry resolves, and that <code>appears_in</code> is accurate;
+              pinned <code>prettier@3.8.3</code> checks HTML + JSON formatting.
+              All shell + docs files reformatted clean to pass on first run.
+              Rationale: <a href="decisions.html#D-CI">D-CI</a>.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+        </tbody>
+      </table>
 
-  <h2>Deferred decisions (resolve at implementation)</h2>
-  <ul class="clean">
-    <li>Exact workspace app→number mapping and live window classes — verify with <code>hyprctl clients</code>; confirm current browser (Zen / Brave / Chrome).</li>
-    <li>Which <code>.zsh_profile</code> aliases survive the bash port (final dedupe vs. Omarchy defaults).</li>
-    <li>Whether to fold the old <code>install</code>'s XDG-dir tweak (disable Documents/Music) into the new install.</li>
-    <li>Exact repo path the gitignored local files land in (folded vs. unfolded stow dir) — verify and adjust <code>.gitignore</code>.</li>  </ul>
+      <h2>Deferred decisions (resolve at implementation)</h2>
+      <ul class="clean">
+        <li>
+          Exact workspace app→number mapping and live window classes — verify
+          with <code>hyprctl clients</code>; confirm current browser (Zen /
+          Brave / Chrome).
+        </li>
+        <li>
+          Which <code>.zsh_profile</code> aliases survive the bash port (final
+          dedupe vs. Omarchy defaults).
+        </li>
+        <li>
+          Whether to fold the old <code>install</code>'s XDG-dir tweak (disable
+          Documents/Music) into the new install.
+        </li>
+        <li>
+          Exact repo path the gitignored local files land in (folded vs.
+          unfolded stow dir) — verify and adjust <code>.gitignore</code>.
+        </li>
+      </ul>
 
-  <h2>Future work</h2>
-  <table>
-    <thead><tr><th>Item</th><th>Trigger</th><th>Notes</th></tr></thead>
-    <tbody>
-      <tr><td><span class="badge badge-future">future</span> Hyprland <code>.conf</code> → Lua port</td><td>When Omarchy ships Lua config on stable</td><td>Port <code>hypr.conf</code> → a small Lua module; swap the single integration line to <code>require("dotfiles.hypr")</code>. One module + one line. See <a href="findings.html#F-LUA">Findings → Lua</a>.</td></tr>
-      <tr><td><span class="badge badge-future">future</span> Post-update integrity hook</td><td>If a refresh is observed stripping integration blocks in practice</td><td>A <code>~/.config/omarchy/hooks/post-update.d/</code> hook that <em>checks</em> the <code>source =</code> line / bashrc block are present and reports a recovery action (<code>./install</code>). Must not auto-rewrite Omarchy config.</td></tr>
-      <tr><td><span class="badge badge-future">future</span> <code>omarchy/</code> stow package</td><td>When there's a real custom hook or branding file to track</td><td>Excluded from the initial stow set (git can't track empty dirs; <code>stow omarchy</code> would fail).</td></tr>
-      <tr><td><span class="badge badge-future">future</span> Terminal config</td><td>If a genuine ghostty/terminal delta emerges</td><td>Currently deferring to Omarchy's terminal entirely.</td></tr>
-      <tr><td><span class="badge badge-future">future</span> Custom theme / branding</td><td>If the owner wants a personalized theme or about/screensaver branding</td><td>Use <code>~/.config/omarchy/themes/</code> and <code>~/.config/omarchy/branding/</code> — official extension points.</td></tr>
-      <tr><td colspan="3" style="padding-top:1rem;"><strong>Owner backlog</strong> (explicitly captured so it's not forgotten):</td></tr>
-      <tr><td><span class="badge badge-future">future</span> Deeper package cleanup</td><td>When you want a leaner base</td><td>A cleanup script to remove more unneeded omarchy builtins (e.g. btop). <strong>Caveat:</strong> some "builtins" are wired into omarchy's shell — <code>zoxide</code> backs the <code>cd</code> alias, <code>fzf</code> the key-bindings — so audit before removing or you'll break omarchy defaults.</td></tr>
-      <tr><td><span class="badge badge-future">future</span> Nautilus icons → Yaru</td><td>Theming</td><td>Make the omarchy themes use the Yaru icon theme in Nautilus (GTK icon-theme via dconf or a <code>theme-set</code> hook).</td></tr>
-      <tr><td><span class="badge badge-future">future</span> Waybar to taste</td><td>When you want to tweak the bar</td><td>Customize waybar (modules + style); <code>omarchy restart waybar</code> after edits. Decide repo-overlay vs. editing <code>~/.config/waybar</code> directly.</td></tr>
-      <tr><td><span class="badge badge-future">future</span> Unified app theming</td><td>Ongoing</td><td>Make all themeable apps follow the system theme (Obsidian, Zen browser, etc.) via omarchy's <code>theme-set</code> hook + per-app files in <code>~/.config/omarchy/current/theme/</code>.</td></tr>
-      <tr><td><span class="badge badge-future">future</span> Zero window gaps</td><td>Quick</td><td>Remove the gap between tiled windows — set <code>general { gaps_in = 0; gaps_out = 0 }</code> in the hypr overlay / <code>looknfeel.conf</code>.</td></tr>
-      <tr><td><span class="badge badge-future">future</span> Install essential workflow apps</td><td>Setup</td><td>Install core apps from the most stable/official omarchy sources (<code>omarchy pkg add</code> / <code>pkg aur add</code>; populate <code>packages.txt</code> + a new <code>packages.aur.txt</code>).</td></tr>
-      <tr><td><span class="badge badge-future">future</span> Port apps from ansible branch</td><td>Setup</td><td>Install apps defined in <code>ansible-bootstrap-and-convergence</code> but not yet here — review that branch's package/flatpak lists and bring over the wanted ones.</td></tr>
-      <tr><td><span class="badge badge-future">future</span> CI: formatting + docs integrity</td><td>Repo hygiene</td><td>GitHub Actions to (a) check formatting of all repo files (shfmt/shellcheck for scripts, a formatter for html/json), and (b) verify <code>docs/</code> integrity: every nav link/anchor resolves, <code>index.html</code> lists all pages, and <code>registry.json</code> IDs match the doc anchors + cited code paths.</td></tr>
-    </tbody>
-  </table>
+      <h2>Future work</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Trigger</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Hyprland
+              <code>.conf</code> → Lua port
+            </td>
+            <td>When Omarchy ships Lua config on stable</td>
+            <td>
+              Port <code>hypr.conf</code> → a small Lua module; swap the single
+              integration line to <code>require("dotfiles.hypr")</code>. One
+              module + one line. See
+              <a href="findings.html#F-LUA">Findings → Lua</a>.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Post-update
+              integrity hook
+            </td>
+            <td>
+              If a refresh is observed stripping integration blocks in practice
+            </td>
+            <td>
+              A <code>~/.config/omarchy/hooks/post-update.d/</code> hook that
+              <em>checks</em> the <code>source =</code> line / bashrc block are
+              present and reports a recovery action (<code>./install</code>).
+              Must not auto-rewrite Omarchy config.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span>
+              <code>omarchy/</code> stow package
+            </td>
+            <td>When there's a real custom hook or branding file to track</td>
+            <td>
+              Excluded from the initial stow set (git can't track empty dirs;
+              <code>stow omarchy</code> would fail).
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Terminal config
+            </td>
+            <td>If a genuine ghostty/terminal delta emerges</td>
+            <td>Currently deferring to Omarchy's terminal entirely.</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Custom theme /
+              branding
+            </td>
+            <td>
+              If the owner wants a personalized theme or about/screensaver
+              branding
+            </td>
+            <td>
+              Use <code>~/.config/omarchy/themes/</code> and
+              <code>~/.config/omarchy/branding/</code> — official extension
+              points.
+            </td>
+          </tr>
+          <tr>
+            <td colspan="3" style="padding-top: 1rem">
+              <strong>Owner backlog</strong> (explicitly captured so it's not
+              forgotten):
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Deeper package
+              cleanup
+            </td>
+            <td>When you want a leaner base</td>
+            <td>
+              A cleanup script to remove more unneeded omarchy builtins (e.g.
+              btop). <strong>Caveat:</strong> some "builtins" are wired into
+              omarchy's shell — <code>zoxide</code> backs the
+              <code>cd</code> alias, <code>fzf</code> the key-bindings — so
+              audit before removing or you'll break omarchy defaults.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Nautilus icons →
+              Yaru
+            </td>
+            <td>Theming</td>
+            <td>
+              Make the omarchy themes use the Yaru icon theme in Nautilus (GTK
+              icon-theme via dconf or a <code>theme-set</code> hook).
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Waybar to taste
+            </td>
+            <td>When you want to tweak the bar</td>
+            <td>
+              Customize waybar (modules + style);
+              <code>omarchy restart waybar</code> after edits. Decide
+              repo-overlay vs. editing <code>~/.config/waybar</code> directly.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Unified app theming
+            </td>
+            <td>Ongoing</td>
+            <td>
+              Make all themeable apps follow the system theme (Obsidian, Zen
+              browser, etc.) via omarchy's <code>theme-set</code> hook + per-app
+              files in <code>~/.config/omarchy/current/theme/</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Zero window gaps
+            </td>
+            <td>Quick</td>
+            <td>
+              Remove the gap between tiled windows — set
+              <code>general { gaps_in = 0; gaps_out = 0 }</code> in the hypr
+              overlay / <code>looknfeel.conf</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Install essential
+              workflow apps
+            </td>
+            <td>Setup</td>
+            <td>
+              Install core apps from the most stable/official omarchy sources
+              (<code>omarchy pkg add</code> / <code>pkg aur add</code>; populate
+              <code>packages.txt</code> + a new <code>packages.aur.txt</code>).
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Port apps from
+              ansible branch
+            </td>
+            <td>Setup</td>
+            <td>
+              Install apps defined in
+              <code>ansible-bootstrap-and-convergence</code> but not yet here —
+              review that branch's package/flatpak lists and bring over the
+              wanted ones.
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-  <div class="callout note">
-    <span class="label">Maintenance note for agents</span>
-    Keep this page and the others current as the code evolves. When a phase completes, flip its badge to
-    <span class="badge badge-done">done</span>; when a future item lands, move it into the progress table and
-    record the "why" in <a href="decisions.html">Decisions</a>.
-  </div>
-</div>
+      <div class="callout note">
+        <span class="label">Maintenance note for agents</span>
+        Keep this page and the others current as the code evolves. When a phase
+        completes, flip its badge to
+        <span class="badge badge-done">done</span>; when a future item lands,
+        move it into the progress table and record the "why" in
+        <a href="decisions.html">Decisions</a>.
+      </div>
+    </div>
 
-<footer>Omarchy dotfiles knowledge base · <a href="index.html">Home</a></footer>
-</body>
+    <footer>
+      Omarchy dotfiles knowledge base · <a href="index.html">Home</a>
+    </footer>
+  </body>
 </html>
