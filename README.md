@@ -56,8 +56,8 @@ docs/                        # HTML knowledge base + registry.json
 ## Checks (`make`)
 
 A [`Makefile`](Makefile) is the single source of truth for repo checks, and CI
-([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) invokes the same targets —
-so **`make ci` runs exactly what GitHub Actions runs**.
+([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs `make ci` —
+so **green locally means green in CI**.
 
 - `make` / `make help` — list every target
 - `make ci` — full gate (shellcheck + shfmt + prettier + docs integrity); run before committing

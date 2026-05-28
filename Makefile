@@ -1,11 +1,10 @@
 # Makefile — the single source of truth for this repo's checks. [D-CI]
 #
 # This repo is a minimal personal overlay on Omarchy (start: docs/index.html).
-# `.github/workflows/ci.yml` invokes these same targets, so **`make ci` runs
-# exactly what GitHub Actions runs** — green locally == green in CI.
+# `.github/workflows/ci.yml` runs `make ci`, so green locally == green in CI.
 #
-# Humans & agents: run `make` (or `make help`) for the menu, `make fmt` to
-# auto-fix formatting, and `make ci` before committing.
+# Humans & agents: `make` for the menu, `make fmt` to auto-fix formatting,
+# `make ci` before committing.
 
 # ── pinned tooling ───────────────────────────────────────────────────────────
 # prettier is pinned here and used by BOTH local and CI (CI calls this Makefile).
@@ -29,43 +28,22 @@ PRETTIER_GLOBS := docs/*.html docs/registry.json
 DOCS_CHECK     := .github/scripts/check_docs.py
 
 .DEFAULT_GOAL := help
-.PHONY: help ci lint fmt fmt-check shellcheck shfmt-check shfmt-fix \
-	prettier-check prettier-fix docs apply tools
+.PHONY: help ci fmt tools
 
 help: ## Show this menu
-	@awk 'BEGIN{FS=":.*## "} /^[a-zA-Z0-9_-]+:.*## /{printf "  \033[36m%-15s\033[0m %s\n",$$1,$$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN{FS=":.*## "} /^[a-zA-Z0-9_-]+:.*## /{printf "  \033[36m%-6s\033[0m %s\n",$$1,$$2}' $(MAKEFILE_LIST)
 	@echo
-	@echo "Run 'make ci' before committing — it mirrors GitHub Actions exactly."
+	@echo "Run 'make ci' before committing — it's exactly what GitHub Actions runs."
 
-ci: lint fmt-check docs ## Run the full CI gate locally (what GitHub Actions runs)
-	@echo "OK - all CI checks passed"
-
-lint: shellcheck ## Lint shell scripts for bugs (shellcheck)
-
-fmt: shfmt-fix prettier-fix ## Auto-fix all formatting in place (shfmt + prettier)
-
-fmt-check: shfmt-check prettier-check ## Check formatting without writing (CI does this)
-
-docs: ## Verify docs/ integrity (registry <-> anchors <-> code paths, links, appears_in)
-	python3 $(DOCS_CHECK)
-
-apply: ## Run the overlay installer (./install) — idempotent
-	./install
-
-# ── granular targets (ci.yml calls these directly) ───────────────────────────
-shellcheck: ## Lint the shell file set
+ci: ## Run the full gate: shellcheck + shfmt + prettier + docs integrity
 	shellcheck $(SHELL_FILES)
-
-shfmt-check: ## Shell formatting check (diff only, no write)
 	shfmt -d $(SHFMT_FLAGS) $(SHELL_FILES)
-
-shfmt-fix: ## Format shell files in place
-	shfmt -w $(SHFMT_FLAGS) $(SHELL_FILES)
-
-prettier-check: ## Docs formatting check (HTML + JSON)
 	$(PRETTIER) --check $(PRETTIER_GLOBS)
+	python3 $(DOCS_CHECK)
+	@echo "OK - all checks passed"
 
-prettier-fix: ## Format docs in place (HTML + JSON)
+fmt: ## Auto-fix formatting in place (shfmt + prettier)
+	shfmt -w $(SHFMT_FLAGS) $(SHELL_FILES)
 	$(PRETTIER) --write $(PRETTIER_GLOBS)
 
 tools: ## Show required tools + how to install them on Omarchy
