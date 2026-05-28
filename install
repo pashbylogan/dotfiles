@@ -35,9 +35,8 @@ die() {
 have() { command -v "$1" >/dev/null 2>&1; }
 
 # ── helpers ──────────────────────────────────────────────────────────────────
-# Re-anchor managed blocks at EOF because bash/Hyprland/tmux precedence depends
-# on load order, not just presence. Body on stdin (callers pipe a heredoc).
-# [D-DELTA-STORAGE][D-IDEMPOTENT]
+# Re-anchor managed blocks at EOF because load order decides precedence.
+# Body comes from stdin. [D-DELTA-STORAGE][D-IDEMPOTENT]
 upsert_block() {
   local file="$1" begin="$2" end="$3" body
   body="$(cat)"
@@ -69,9 +68,8 @@ upsert_block() {
   info "managed block updated in ${file/#$HOME/\~}"
 }
 
-# Idempotent jq overlay for an omarchy-owned JSON config. Returns 0 only when
-# the file actually changed so callers can gate side effects (waybar restart).
-# cp -f follows symlinks + preserves mode (same idiom as omarchy-refresh-config).
+# Idempotent jq overlay for omarchy-owned JSON; returns 0 only on content change.
+# cp -f follows symlinks + preserves mode, matching omarchy-refresh-config.
 # [D-WAYBAR-DELTAS][F-WAYBAR-MIGRATIONS]
 apply_jq_deltas() {
   local target="$1" filter="$2" label="${3:-jq deltas}" new tmp target_clean
@@ -95,7 +93,6 @@ apply_jq_deltas() {
     rm -f "$tmp"
     die "$label: failed to stage $tmp (disk full? permission denied?)"
   fi
-  # cp -f follows symlinks and preserves the destination's mode + ownership.
   if ! cp -f "$tmp" "$target"; then
     rm -f "$tmp"
     die "$label: failed to install $target from $tmp"
@@ -281,24 +278,16 @@ if apply_jq_deltas "$HOME/.config/waybar/config.jsonc" "$REPO/waybar/deltas.jq" 
   waybar_changed=1
 fi
 
-# Style.css gets a managed block so #memory matches omarchy's cpu/battery
-# spacing (otherwise the new module renders pinched against neighbors).
-# Hash-compare around upsert_block because the helper always rewrites the
-# file; only flag a real content change.
+# Hash-compare around the style block because upsert_block always rewrites;
+# only a real content change should restart waybar.
 WAYBAR_STYLE="$HOME/.config/waybar/style.css"
 if [ -f "$WAYBAR_STYLE" ]; then
   pre_hash=$(sha256sum "$WAYBAR_STYLE" | cut -d' ' -f1)
   upsert_block "$WAYBAR_STYLE" \
     "/* >>> dotfiles managed (waybar) >>> */" \
     "/* <<< dotfiles managed (waybar) <<< */" <<'EOF'
-/* [D-WAYBAR-DELTAS] equidistant + tighter module spacing. Omarchy's
- * defaults are asymmetric — every right-side module ships its own
- * margin-right (#custom-expand-icon 18, #bluetooth 17, #tray 16,
- * #network 13, the cpu/battery/pulseaudio rule 7.5) and #memory gets
- * no rule at all. We flatten every right-side module to a uniform 4px
- * on each side — equidistant ~8px gaps, snug but not pinched. Overrides
- * omarchy's per-module margin-right via later-rule-wins specificity
- * (these rules sit at EOF). */
+/* [D-WAYBAR-DELTAS] Keep the personal #memory module spaced like its
+ * right-side neighbors; full rationale lives in docs/decisions.html#D-WAYBAR-DELTAS. */
 #memory,
 #custom-expand-icon,
 #tray,

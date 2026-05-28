@@ -4,8 +4,8 @@
 # Dev toolchain — used by `make ci` / `make fmt`. Pin to pacman (not mise's go
 # install dir, which mise doesn't shim) so they're on PATH unconditionally —
 # including in non-interactive shells where `mise activate` isn't loaded.
-shellcheck             # shell lint
-shfmt                  # shell formatter
+shellcheck
+shfmt
 
 git-delta              # syntax-highlighted git diffs (binary: delta)
 wireguard-tools        # wg-quick — used by vpns() / exitnode() in shell.sh

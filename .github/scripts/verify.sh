@@ -131,11 +131,8 @@ check_xdg XDG_MUSIC_DIR '$HOME/'
 check_xdg XDG_PROJECTS_DIR '$HOME/Projects'
 
 # ── default-tracking overrides ───────────────────────────────────────────────
-# Every overlay value should be a delta from omarchy's defaults. The single
-# exception is a value we must re-set because a downstream omarchy toggle
-# would otherwise zero it (see hypr.conf's border_size note). Check that the
-# pinned value still matches omarchy's default — if not, omarchy moved on and
-# our override needs a deliberate update. [D-LOOKNFEEL]
+# The border_size overlay deliberately re-states an Omarchy default to beat the
+# window-no-gaps toggle; fail if upstream changes that default. [D-LOOKNFEEL]
 check_default_match() {
   local label="$1" repo_file="$2" omarchy_file="$3" key="$4"
   if [ ! -f "$omarchy_file" ]; then

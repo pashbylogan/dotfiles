@@ -11,10 +11,8 @@ else . end
 # 1. Drop the fixed 1-5 workspace pin so the bar grows i3-style.
 | del(.["hyprland/workspaces"]."persistent-workspaces")
 
-# 2. Memory module. Merge (not assignment) so any future omarchy upstream
-#    keys (states, format-alt, …) survive our overlay; ours win on conflict.
-#    Spacing comes from the #memory rule we install into style.css, so the
-#    format string stays minimal — matches the omarchy cpu format idiom.
+# 2. Memory module. Merge so future upstream keys survive; CSS spacing lives in
+#    the style.css managed block. [D-WAYBAR-DELTAS]
 | .memory = ((.memory // {}) + {
     "interval": 5,
     "format": "",
@@ -22,10 +20,8 @@ else . end
     "on-click": "omarchy-launch-or-focus-tui btop"
   })
 
-# 3. Ensure "memory" appears in some modules-* group. If omarchy ever moves
-#    it to modules-left/center/right, no-op here (no duplicates). Otherwise
-#    insert into modules-right after cpu / before battery / at the end.
-#    Type-guarded so a malformed modules-right doesn't crash apply_jq_deltas.
+# 3. Add "memory" only if absent from every modules-* group; prefer
+#    modules-right after cpu / before battery, and guard malformed inputs.
 | if [ (.["modules-left"]   // []),
        (.["modules-center"] // []),
        (.["modules-right"]  // []) ]
