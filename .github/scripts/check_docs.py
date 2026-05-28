@@ -20,6 +20,8 @@ Checks (the spec lives in docs/todos.html "CI" + docs/traceability.html):
   8.  index.html links every page, and every page carries the full shared topnav
   9.  appears_in is accurate: recomputing it from the prose yields the stored value
   10. no stale tokens (removed paths/scripts) outside their changelog home
+  11. AGENTS.md <= 32 KiB (Codex cap) and CLAUDE.md is the one-line `@AGENTS.md`
+      bridge so every harness sees the same instructions [F-AGENT-GUIDANCE]
 """
 
 import json
@@ -168,6 +170,20 @@ def main():
             if has_token(body, token) and label not in allowed:
                 where = ", ".join(sorted(allowed)) or "nowhere"
                 bad(f"stale token '{token}' in {label} (only allowed in: {where})")
+
+    # CLAUDE.md is a one-line bridge so Claude Code (which doesn't auto-read
+    # AGENTS.md yet) sees the same instructions as every other harness.
+    # [F-AGENT-GUIDANCE]
+    agents_path = os.path.join(REPO, "AGENTS.md")
+    claude_path = os.path.join(REPO, "CLAUDE.md")
+    if not os.path.exists(agents_path):
+        bad("AGENTS.md missing at repo root")
+    elif os.path.getsize(agents_path) > 32 * 1024:
+        bad(f"AGENTS.md is {os.path.getsize(agents_path)} bytes, exceeds 32 KiB Codex cap")
+    if not os.path.exists(claude_path):
+        bad("CLAUDE.md bridge missing at repo root (must contain '@AGENTS.md')")
+    elif read(claude_path).strip() != "@AGENTS.md":
+        bad("CLAUDE.md must be exactly '@AGENTS.md' (one-line Claude Code bridge)")
 
     return finish(len(reg.get("decisions", [])), len(reg.get("findings", [])))
 

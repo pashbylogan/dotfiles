@@ -248,10 +248,10 @@
     },
     {
       "id": "F-AGENT-GUIDANCE",
-      "title": "AGENTS.md is the shared repo-root agent guidance file; keep it concise, concrete, command-oriented, and route durable rationale to docs",
+      "title": "AGENTS.md is the canonical agent-guidance file; CLAUDE.md is a one-line `@AGENTS.md` bridge so every harness reads the same instructions",
       "canonical": "findings.html#F-AGENT-GUIDANCE",
-      "appears_in": [],
-      "code_paths": ["AGENTS.md"],
+      "appears_in": ["README.md"],
+      "code_paths": ["AGENTS.md", ".github/scripts/check_docs.py"],
       "related": ["D-CI"]
     }
   ]

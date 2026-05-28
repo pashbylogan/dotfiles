@@ -288,6 +288,35 @@
         comment conventions; durable explanations and source-backed rationale
         stay in <code>docs/</code>.
       </p>
+      <p>
+        <strong>Harness coverage.</strong> As of May 2026,
+        <code>AGENTS.md</code> at repo root is read natively by Codex, opencode,
+        crush, Cursor, GitHub Copilot's coding agent, Windsurf, Cline,
+        Continue.dev, JetBrains Junie, Sourcegraph Amp, Devin, Kilo Code, and
+        Zed (with caveats). The only harness in our mix that does NOT yet
+        auto-load <code>AGENTS.md</code> is Claude Code (tracked in
+        <a href="https://github.com/anthropics/claude-code/issues/34235"
+          >anthropics/claude-code#34235</a
+        >). Bridge: a one-line <code>CLAUDE.md</code> containing
+        <code>@AGENTS.md</code> — Claude Code's <code>@file</code> import pulls
+        the canonical file into every session, and Anthropic's auto-memory
+        writes land in the small bridge file rather than mutating
+        <code>AGENTS.md</code>. The bridge is enforced by
+        <code>.github/scripts/check_docs.py</code> check #11, which also guards
+        the 32 KiB Codex cap on AGENTS.md content.
+      </p>
+      <p>
+        <strong>What we deliberately don't add.</strong> Legacy harness-specific
+        files (<code>.rules</code>, <code>.cursorrules</code>,
+        <code>.windsurfrules</code>, <code>.clinerules</code>,
+        <code>.github/copilot-instructions.md</code>, <code>AGENT.md</code>) are
+        not created at repo root: Zed's "first-match wins" precedence ranks
+        several of these above <code>AGENTS.md</code> and would shadow it,
+        opencode reads only the first matching file per category, and most
+        harnesses that read both end up loading duplicated content. The
+        canonical-plus-bridge pattern keeps the root clean and the source of
+        truth singular.
+      </p>
 
       <h2>Sources</h2>
       <ul class="clean">
@@ -310,6 +339,38 @@
           <a
             href="https://codex-best-practices-d67bea.pages.oit.duke.edu/best-practices/agents.html"
             >Codex Starter Best Practices — AGENTS.md</a
+          >
+        </li>
+        <li>
+          <a href="https://github.com/anthropics/claude-code/issues/34235"
+            >anthropics/claude-code#34235 — native AGENTS.md support
+            (tracking)</a
+          >
+        </li>
+        <li>
+          <a href="https://opencode.ai/docs/rules/"
+            >opencode — Rules (AGENTS.md / CLAUDE.md discovery)</a
+          >
+        </li>
+        <li>
+          <a href="https://github.com/charmbracelet/crush/discussions/912"
+            >charmbracelet/crush — AGENTS.md as default init target (v0.18.0)</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://github.blog/changelog/2025-08-28-copilot-coding-agent-now-supports-agents-md-custom-instructions/"
+            >GitHub Copilot coding agent — AGENTS.md support changelog</a
+          >
+        </li>
+        <li>
+          <a href="https://docs.windsurf.com/windsurf/cascade/agents-md"
+            >Windsurf — AGENTS.md discovery</a
+          >
+        </li>
+        <li>
+          <a href="https://zed.dev/docs/ai/rules"
+            >Zed — AI Rules precedence (first-match wins)</a
           >
         </li>
         <li>

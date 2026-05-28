@@ -43,7 +43,8 @@ update, etc.) and the machine reconverges. [D-IDEMPOTENT]
 ## Repo layout
 
 ```
-AGENTS.md                   # concise coding-agent guidance + comment conventions
+AGENTS.md                   # concise coding-agent guidance + comment conventions (canonical for every harness)
+CLAUDE.md                   # one-line `@AGENTS.md` bridge — Claude Code reads this until it learns AGENTS.md natively
 install                      # the only runtime script (stow + managed integration blocks)
 Makefile                     # `make` menu; `make ci` mirrors CI; `make fmt` auto-fixes
 packages.txt                 # optional extra packages → omarchy pkg add
@@ -56,6 +57,11 @@ hypr/.config/dotfiles/       # hypr.conf override fragment + hypr.local.conf.exa
 docs/                        # HTML knowledge base + registry.json
 .github/                     # CI workflow + docs-integrity checker (scripts/check_docs.py)
 ```
+
+Most coding-agent harnesses (Codex, opencode, crush, Cursor, Copilot, Windsurf,
+Cline, Continue.dev, Zed, JetBrains Junie, Sourcegraph Amp, Devin, Kilo) read
+`AGENTS.md` natively; Claude Code reads `CLAUDE.md`, which is a one-line
+`@AGENTS.md` pointer. `make ci` enforces the bridge stays correct. [F-AGENT-GUIDANCE]
 
 ## Checks (`make`)
 
