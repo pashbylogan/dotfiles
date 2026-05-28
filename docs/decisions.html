@@ -104,7 +104,10 @@
                 <li>
                   <code>make ci</code> — gates: <code>shellcheck</code> +
                   <code>shfmt</code> (<code>-i 2 -ci</code>) on the shell set,
-                  pinned <code>prettier</code> on docs HTML/JSON, and
+                  pinned <code>prettier</code> on docs HTML/JSON, an
+                  empty-object smoke-check of every
+                  <code>waybar/*.jq</code> filter (so jq syntax/behavior bugs
+                  surface here rather than at <code>./install</code> time), and
                   <code>.github/scripts/check_docs.py</code> for docs integrity.
                   <code>make fmt</code> auto-fixes.
                 </li>
@@ -120,9 +123,13 @@
                 <li>
                   <code>make verify</code> — read-only live health check
                   (<code>.github/scripts/verify.sh</code>): hyprctl
-                  configerrors, all four managed blocks present, stow links
-                  resolve into the repo (including dangling detection), dev-env
-                  tools on PATH and not pacman-owned, XDG state.
+                  configerrors, all five managed blocks present (bashrc, hypr,
+                  keymaps, tmux, waybar style.css), stow links resolve into the
+                  repo (including dangling detection), dev-env tools on PATH and
+                  not pacman-owned, XDG state, and the default-tracking override
+                  comparison (border_size = 2 vs omarchy's looknfeel.conf
+                  default — see
+                  <a href="decisions.html#D-LOOKNFEEL">D-LOOKNFEEL</a>).
                 </li>
               </ul>
               Tooling is Omarchy-native and version-pinned.

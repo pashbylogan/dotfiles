@@ -33,12 +33,14 @@ update, etc.) and the machine reconverges. [D-IDEMPOTENT]
 4. Stows repo-owned static files into `$HOME` — only into our own namespaces, never
    Omarchy-owned files. [D-DELTA-STORAGE]
 5. Upserts one **managed block** (re-anchored at end-of-file, so it loads last and wins)
-   into four Omarchy-owned files:
+   into five Omarchy-owned files:
    - `~/.bashrc` → sources `~/.config/dotfiles/shell.sh`
    - `~/.config/hypr/hyprland.conf` → `source = ~/.config/dotfiles/hypr.conf`
    - `~/.config/nvim/lua/config/keymaps.lua` → a couple of `<leader>y` clipboard maps
    - `~/.config/tmux/tmux.conf` → `source-file ~/.config/tmux/local.conf` (your tmux overlay)
-6. Validates Hyprland (`hyprctl reload && hyprctl configerrors`).
+   - `~/.config/waybar/style.css` → CSS rules for the personal `#memory` module + equidistant module spacing
+6. Applies jq deltas to `~/.config/waybar/config.jsonc` from `waybar/deltas.jq` and restarts waybar only on real content change. [D-WAYBAR-DELTAS]
+7. Validates Hyprland (`hyprctl reload && hyprctl configerrors`).
 
 ## Repo layout
 
@@ -82,7 +84,7 @@ so **green locally means green in CI**.
 - `make fmt` — auto-fix formatting in place (shfmt + prettier)
 - `make tools` — show required tools and how to install them on Omarchy
 - `make update` — refresh everything (omarchy/pacman/AUR + firmware + uv) and run `verify`
-- `make verify` — read-only health check of the live overlay (hyprctl, managed blocks, stow links, dev-env tools, XDG dirs)
+- `make verify` — read-only health check of the live overlay (hyprctl, managed blocks, stow links, dev-env tools, XDG dirs, default-tracking overrides)
 
 Tooling is Omarchy-native: `omarchy pkg add shfmt shellcheck` (or the leaner
 `omarchy pkg aur add shellcheck-bin`); prettier runs via `npx` (pinned), the docs

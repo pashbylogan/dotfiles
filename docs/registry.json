@@ -182,7 +182,12 @@
       "id": "D-WAYBAR-DELTAS",
       "title": "Personal waybar deltas as composed jq filters in waybar/deltas.jq, applied idempotently by install (apply_jq_deltas helper); restart waybar only when content changes",
       "canonical": "decisions.html#D-WAYBAR-DELTAS",
-      "appears_in": ["README.md", "findings.html", "todos.html"],
+      "appears_in": [
+        "README.md",
+        "architecture.html",
+        "findings.html",
+        "todos.html"
+      ],
       "code_paths": ["install", "waybar/deltas.jq"],
       "related": ["D-DELTA-STORAGE", "F-WAYBAR-MIGRATIONS", "D-IDEMPOTENT"]
     },
@@ -276,7 +281,12 @@
       "id": "F-WAYBAR-MIGRATIONS",
       "title": "Omarchy mutates ~/.config/waybar/config.jsonc via two patterns: wholesale refresh-waybar overwrites AND surgical sed-style migrations; the manual's 'will not be overwritten' claim is inaccurate for waybar",
       "canonical": "findings.html#F-WAYBAR-MIGRATIONS",
-      "appears_in": ["README.md", "decisions.html", "todos.html"],
+      "appears_in": [
+        "README.md",
+        "architecture.html",
+        "decisions.html",
+        "todos.html"
+      ],
       "code_paths": ["install", "waybar/deltas.jq"],
       "related": ["D-WAYBAR-DELTAS", "F-REFRESH-WRITETHROUGH"]
     },

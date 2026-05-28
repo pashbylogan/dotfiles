@@ -105,7 +105,7 @@
         every run guarantees (a) exactly one block — idempotency — and (b) that
         our overlay is sourced <em>last</em>, so it overrides Omarchy defaults.
       </p>
-      <p>Applied to four files:</p>
+      <p>Applied to five files:</p>
       <table>
         <thead>
           <tr>
@@ -140,8 +140,27 @@
               we overlay it)
             </td>
           </tr>
+          <tr>
+            <td><code>~/.config/waybar/style.css</code></td>
+            <td>
+              CSS rules for the personal <code>#memory</code> module + a
+              flattened-margins selector that gives every right-side module
+              equidistant spacing. See
+              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>.
+            </td>
+          </tr>
         </tbody>
       </table>
+      <p>
+        Waybar's <code>config.jsonc</code> uses a different mechanism because
+        there's no <code>source =</code>-equivalent for JSON: a new
+        <code>apply_jq_deltas</code> helper applies an idempotent jq filter
+        (<code>waybar/deltas.jq</code>) on every install. Same spirit as the
+        managed block — own only the deltas, never the whole file — but with jq
+        composition instead of text append. See
+        <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a> and
+        <a href="findings.html#F-WAYBAR-MIGRATIONS">F-WAYBAR-MIGRATIONS</a>.
+      </p>
 
       <h2>What stow does (and doesn't)</h2>
       <p>

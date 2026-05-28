@@ -298,11 +298,12 @@
                 <li>
                   <strong><code>make verify</code></strong> — new read-only
                   health check (<code>.github/scripts/verify.sh</code>): hyprctl
-                  configerrors, all four managed blocks present, stow links
-                  resolve into the repo, dev-env tools on PATH and not owned by
-                  pacman, XDG state matches. Also runs at the tail of
-                  <code>make update</code>, so post-update drift surfaces
-                  immediately.
+                  configerrors, every managed block present (four at the time
+                  this row was written; now five with the waybar style.css block
+                  added), stow links resolve into the repo, dev-env tools on
+                  PATH and not owned by pacman, XDG state matches. Also runs at
+                  the tail of <code>make update</code>, so post-update drift
+                  surfaces immediately.
                 </li>
                 <li>
                   <strong>Latest-at-bootstrap caveat documented</strong> —
