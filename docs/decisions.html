@@ -449,6 +449,17 @@
               <code>#cpu, #battery, ...</code> CSS spacing rule to include
               <code>#memory</code> so the new module renders with the same
               margins as its neighbors.
+              <strong>Spacing rationale:</strong> omarchy ships an asymmetric
+              right side — <code>#custom-expand-icon</code> has
+              <code>margin-right: 18 px</code>, <code>#bluetooth</code> 17 px,
+              <code>#tray</code> 16 px, <code>#network</code> 13 px, while
+              <code>#cpu</code>/<code>#battery</code>/<code>#pulseaudio</code>
+              share <code>margin: 0 7.5 px</code> and <code>#memory</code>
+              gets no rule at all. We flatten every right-side module to
+              <code>margin: 0 4 px</code> on each side (equidistant ~8 px gaps,
+              snug but not pinched). The override wins via CSS's later-rule-wins
+              ordering — our managed block sits at EOF of
+              <code>style.css</code>, after omarchy's per-module rules.
             </td>
             <td>
               Forking the whole file would silently drop every future surgical
