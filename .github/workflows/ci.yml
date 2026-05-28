@@ -1,0 +1,54 @@
+name: CI
+
+# Repo hygiene for the minimal Omarchy overlay: lint + format the shell scripts,
+# and keep the docs/ knowledge base internally consistent. Everything here is
+# static/filesystem-only, so it runs fine on GitHub's Ubuntu runners (no Omarchy,
+# no sudo). Tool versions are pinned to match local dev so CI and `./` agree.
+#
+# This job installs the two tools the runner lacks (shellcheck, shfmt; node +
+# python3 are preinstalled) and then runs `make ci`. The Makefile is the single
+# source of truth for the checks, so CI runs *exactly* what a contributor runs
+# locally — there is no second copy of the file lists to drift. [D-CI]
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: make ci
+    runs-on: ubuntu-latest
+    env:
+      SHELLCHECK_VERSION: v0.11.0 # matches Omarchy's extra-repo shellcheck
+      SHFMT_VERSION: v3.10.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pinned shellcheck + shfmt
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin"
+          tmp="$(mktemp -d)"
+          curl -fsSL "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" \
+            | tar -xJ -C "$tmp"
+          mv "$tmp/shellcheck-${SHELLCHECK_VERSION}/shellcheck" "$HOME/.local/bin/shellcheck"
+          curl -fsSL "https://github.com/mvdan/sh/releases/download/${SHFMT_VERSION}/shfmt_${SHFMT_VERSION}_linux_amd64" \
+            -o "$HOME/.local/bin/shfmt"
+          chmod +x "$HOME/.local/bin/shellcheck" "$HOME/.local/bin/shfmt"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Tool versions
+        run: make tools
+
+      # The whole gate, defined once in the Makefile (shellcheck + shfmt +
+      # prettier + docs integrity). Any check added to `make ci` runs here too.
+      - name: make ci
+        run: make ci
