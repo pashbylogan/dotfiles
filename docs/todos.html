@@ -23,13 +23,7 @@
     <div class="container">
       <p class="eyebrow">Status &amp; Future Work</p>
       <h1>To-Dos</h1>
-      <p class="lead">
-        Living checklist. Updated as implementation proceeds.
-        <span class="meta"
-          >Last updated: code complete, code-reviewed, and live-verified
-          end-to-end. Ready to commit.</span
-        >
-      </p>
+      <p class="lead">Living checklist. Updated as implementation proceeds.</p>
 
       <h2>Implementation progress</h2>
       <table>
@@ -408,17 +402,38 @@
           <tr>
             <td>pkg-remove</td>
             <td>
-              Subtractive-overlay scaffolding for package cleanup. New
-              <code>packages.remove.txt</code> mirrors
-              <code>packages.txt</code> / <code>packages.aur.txt</code>;
-              <code>./install</code> parses it via the existing
-              <code>parse_pkg_file</code> helper and passes the result to
-              <code>omarchy pkg drop</code> (which filters to installed-only
-              before <code>pacman -Rns</code>, so already-absent names are a
-              no-op). Removes run after both add steps so a name in both files
-              resolves to "removed". New decision token
-              <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a>; the list
-              ships empty — curation lands in follow-up commits.
+              Subtractive baseline curation via
+              <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a>, four
+              coupled mechanisms:
+              <ul>
+                <li>
+                  <code>packages.remove.txt</code> populated with 12 drops
+                  (btop, eza, zoxide, dust, lazygit, plocate, tldr,
+                  dotnet-runtime-9.0, mariadb-libs, ruby + rubygems paired,
+                  tobi-try); audit-verified vs omarchy bin grep + pacman
+                  reverse-deps. Kept inxi (omarchy-debug uses it unguarded) and
+                  libqalculate (elephant-calc requires it).
+                </li>
+                <li>
+                  <code>elephant/.config/elephant/websearch.toml</code>
+                  stowed — DuckDuckGo replaces elephant's compiled-in Google in
+                  walker's picker, with prestow_backup + hash-compare +
+                  <code>omarchy-restart-walker</code> hook for live convergence.
+                </li>
+                <li>
+                  Stale-launcher cleanup —
+                  <code>rm -f ~/.local/share/applications/typora.desktop</code>
+                  in install (the package is gone post Remove Preinstalled but
+                  the user-dir launcher wasn't).
+                </li>
+                <li>
+                  Matching overlay wiring cleanup: SUPER+T / SUPER+CTRL+T
+                  unbound in <code>hypr.conf</code>; waybar cpu→btop click
+                  handler stripped and memory module no longer launches btop
+                  (<code>waybar/deltas.jq</code> filter 4, substring-guarded for
+                  future migrations).
+                </li>
+              </ul>
             </td>
             <td><span class="badge badge-done">done</span></td>
           </tr>
@@ -531,27 +546,6 @@
               acceleration/sensitivity settings, then decide what belongs in the
               shared <code>hypr.conf</code> overlay vs. device-specific
               <code>hypr.local.conf</code>.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <span class="badge badge-future">future</span> Deeper package
-              cleanup
-            </td>
-            <td>When you want a leaner base</td>
-            <td>
-              Curate the actual removal list. Scaffolding shipped (<a
-                href="decisions.html#D-PKG-REMOVE"
-                >D-PKG-REMOVE</a
-              >
-              — tracked <code>packages.remove.txt</code> + install processing);
-              the list is intentionally empty until candidates are picked.
-              <strong>Caveat:</strong> some "builtins" are wired into omarchy's
-              shell — <code>zoxide</code> backs the <code>cd</code> alias,
-              <code>fzf</code> the key-bindings, <code>btop</code> is
-              <code>SUPER+T</code> — so grep
-              <code>~/.local/share/omarchy/</code> before adding a name or
-              you'll break omarchy defaults.
             </td>
           </tr>
           <tr>
