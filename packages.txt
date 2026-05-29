@@ -9,6 +9,7 @@ shfmt
 
 git-delta              # syntax-highlighted git diffs (binary: delta)
 wireguard-tools        # wg-quick — used by vpns() / exitnode() in shell.sh
+gnome-system-monitor   # GUI process monitor — replaces dropped btop; bound to SUPER+T in hypr.conf
 
 # obsidian was an omarchy base package removed by "Remove Preinstalled"; this re-adds it.
 obsidian               # workspace 3 — notes
