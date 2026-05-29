@@ -1,4 +1,23 @@
 # Omarchy builtins to remove; processed by `install` via `omarchy pkg drop`.
-# Audit ~/.local/share/omarchy/ before adding — some "builtins" back omarchy
-# commands (full rule + examples in decisions.html#D-PKG-REMOVE). [D-PKG-REMOVE]
+# Audit ~/.local/share/omarchy/ before adding (see decisions.html#D-PKG-REMOVE). [D-PKG-REMOVE]
 
+# SUPER+T / SUPER+CTRL+T bindings cleared in hypr.conf.
+btop
+
+# bash/aliases guards `ls`/`cd` with `command -v` — coreutil fallback kicks in.
+eza
+zoxide
+
+# Omitted (omarchy uses them unguarded): libqalculate (elephant-calc) and
+# inxi (omarchy-debug). Re-add to this list only after patching those.
+dust
+lazygit
+plocate
+tldr
+
+# ruby ↔ rubygems mutual dep — both must be in the same pacman -Rns transaction.
+dotnet-runtime-9.0
+mariadb-libs
+ruby
+rubygems
+tobi-try

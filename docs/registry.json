@@ -28,11 +28,7 @@
       "id": "D-DELTA-STORAGE",
       "title": "Own thin fragments + single managed integration block; never symlink Omarchy-owned files",
       "canonical": "architecture.html#D-DELTA-STORAGE",
-      "appears_in": [
-        "README.md",
-        "augmentation-approach.html",
-        "decisions.html"
-      ],
+      "appears_in": ["augmentation-approach.html", "decisions.html"],
       "code_paths": ["install", "hypr/.config/dotfiles/hypr.conf"],
       "related": [
         "F-REFRESH-WRITETHROUGH",
@@ -40,14 +36,15 @@
         "F-HYPR-SEAM",
         "D-IDEMPOTENT",
         "D-WAYBAR-DELTAS",
-        "D-LOOKNFEEL"
+        "D-LOOKNFEEL",
+        "D-PKG-REMOVE"
       ]
     },
     {
       "id": "D-IDEMPOTENT",
       "title": "install must be idempotent (upsert_block + stow -R + pkg --needed)",
       "canonical": "architecture.html#D-IDEMPOTENT",
-      "appears_in": ["README.md", "decisions.html"],
+      "appears_in": ["README.md"],
       "code_paths": ["install"],
       "related": [
         "D-DELTA-STORAGE",
@@ -111,7 +108,7 @@
       "id": "D-CARRY-SET",
       "title": "Carry ssh/bin/aliases/tmux/hypr-fragment/nvim-keymaps; drop i3/i3status/picom/ghostty/desktops/nvim-tree",
       "canonical": "decisions.html#D-CARRY-SET",
-      "appears_in": ["README.md"],
+      "appears_in": [],
       "code_paths": [
         "bash/.config/dotfiles/shell.sh",
         "ssh/.ssh/config",
@@ -183,12 +180,7 @@
       "id": "D-WAYBAR-DELTAS",
       "title": "Personal waybar deltas as composed jq filters in waybar/deltas.jq, applied idempotently by install (apply_jq_deltas helper); restart waybar only when content changes",
       "canonical": "decisions.html#D-WAYBAR-DELTAS",
-      "appears_in": [
-        "README.md",
-        "architecture.html",
-        "findings.html",
-        "todos.html"
-      ],
+      "appears_in": ["architecture.html", "findings.html", "todos.html"],
       "code_paths": ["install", "waybar/deltas.jq"],
       "related": ["D-DELTA-STORAGE", "F-WAYBAR-MIGRATIONS", "D-IDEMPOTENT"]
     },
@@ -202,7 +194,7 @@
     },
     {
       "id": "D-PKG-REMOVE",
-      "title": "Subtractive package overlay via packages.remove.txt",
+      "title": "Subtractive baseline overlay: packages.remove.txt + app-picker curation",
       "canonical": "decisions.html#D-PKG-REMOVE",
       "appears_in": [
         "README.md",
@@ -210,8 +202,20 @@
         "findings.html",
         "todos.html"
       ],
-      "code_paths": ["install", "packages.remove.txt", "README.md"],
-      "related": ["D-IDEMPOTENT", "D-SCRIPTS-MINIMAL", "F-CLI"]
+      "code_paths": [
+        "install",
+        "packages.remove.txt",
+        "README.md",
+        "elephant/.config/elephant/websearch.toml",
+        "hypr/.config/dotfiles/hypr.conf",
+        "waybar/deltas.jq"
+      ],
+      "related": [
+        "D-IDEMPOTENT",
+        "D-SCRIPTS-MINIMAL",
+        "D-DELTA-STORAGE",
+        "F-CLI"
+      ]
     }
   ],
   "findings": [
@@ -295,12 +299,7 @@
       "id": "F-WAYBAR-MIGRATIONS",
       "title": "Omarchy mutates ~/.config/waybar/config.jsonc via two patterns: wholesale refresh-waybar overwrites AND surgical sed-style migrations; the manual's 'will not be overwritten' claim is inaccurate for waybar",
       "canonical": "findings.html#F-WAYBAR-MIGRATIONS",
-      "appears_in": [
-        "README.md",
-        "architecture.html",
-        "decisions.html",
-        "todos.html"
-      ],
+      "appears_in": ["architecture.html", "decisions.html", "todos.html"],
       "code_paths": ["install", "waybar/deltas.jq"],
       "related": ["D-WAYBAR-DELTAS", "F-REFRESH-WRITETHROUGH"]
     },
@@ -308,7 +307,7 @@
       "id": "F-AGENT-GUIDANCE",
       "title": "AGENTS.md is the canonical agent-guidance file; CLAUDE.md is a one-line `@AGENTS.md` bridge so every harness reads the same instructions",
       "canonical": "findings.html#F-AGENT-GUIDANCE",
-      "appears_in": ["README.md"],
+      "appears_in": [],
       "code_paths": ["AGENTS.md", ".github/scripts/check_docs.py"],
       "related": ["D-CI"]
     }

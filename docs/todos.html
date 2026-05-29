@@ -574,6 +574,47 @@
               Make all themeable apps follow the system theme (Obsidian, Zen
               browser, etc.) via omarchy's <code>theme-set</code> hook + per-app
               files in <code>~/.config/omarchy/current/theme/</code>.
+              <strong>Revisit when tackling this:</strong>
+              <code>aether</code> (omarchy's color-extracting theming app —
+              dropped by Remove Preinstalled; likely the right tool to drive
+              this work) and <code>zoom</code> (AUR — re-add and verify it
+              follows GTK/system theme).
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Walker config
+              deltas
+            </td>
+            <td>When walker tweaks accumulate</td>
+            <td>
+              Track personal walker tweaks via a TOML-delta mechanism (parallel
+              to <code>waybar/deltas.jq</code>) instead of forking
+              <code>~/.config/walker/config.toml</code> — omarchy heavily
+              migrates that file (9 migration scripts). Known deltas to land
+              when the infrastructure exists:
+              <ul>
+                <li>
+                  Restore upstream walker's vim navigation bindings (omarchy
+                  seed strips them):
+                  <code>next = ["Down", "ctrl j"]</code> /
+                  <code>previous = ["Up", "ctrl k"]</code> under
+                  <code>[keybinds]</code>. Verified upstream default per
+                  <a href="https://walkerlauncher.com/docs/keybindings"
+                    >walker docs</a
+                  >.
+                </li>
+                <li>
+                  Optional: add <code>calc</code> to
+                  <code>[providers].default</code> so calc results show in the
+                  picker without the <code>=</code> prefix.
+                </li>
+              </ul>
+              Easiest path: small Python tool using stdlib
+              <code>tomllib</code> (already an install-time dep via
+              <code>check_docs.py</code>) that merges a fragment file into the
+              live config, plus a restart hook mirroring the elephant restart we
+              added for <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a>.
             </td>
           </tr>
         </tbody>

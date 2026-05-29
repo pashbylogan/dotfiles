@@ -219,13 +219,17 @@
           <tr>
             <td><code>D-PKG-REMOVE</code></td>
             <td>
-              Subtractive package overlay via
-              <code>packages.remove.txt</code> + <code>omarchy pkg drop</code>
+              Subtractive baseline overlay: pacman drops + elephant websearch
+              override + stale launcher cleanup + matching overlay wiring
+              cleanup
             </td>
             <td><a href="decisions.html#D-PKG-REMOVE">decisions</a></td>
             <td>
               <code>install</code>, <code>packages.remove.txt</code>,
-              <code>README.md</code>
+              <code>README.md</code>,
+              <code>elephant/.config/elephant/websearch.toml</code>,
+              <code>hypr/.config/dotfiles/hypr.conf</code>,
+              <code>waybar/deltas.jq</code>
             </td>
           </tr>
         </tbody>

@@ -224,6 +224,11 @@ fi
 # Stow only repo-owned namespaces; Omarchy-owned files get managed blocks. [D-DELTA-STORAGE]
 step "Stow"
 prestow_backup "$HOME/.ssh/config"
+# Hash before/after stow so we restart elephant only on a real content
+# change (elephant reads websearch.toml at service start, no auto-reload).
+ELEPHANT_WEBSEARCH="$HOME/.config/elephant/websearch.toml"
+elephant_pre_hash=$(sha256sum "$ELEPHANT_WEBSEARCH" 2>/dev/null | cut -d' ' -f1 || true)
+prestow_backup "$ELEPHANT_WEBSEARCH"
 # Remove only our obsolete ~/.tmux.conf symlink; tmux now loads through Omarchy's
 # XDG config path so the overlay is not shadowed.
 if [ -L "$HOME/.tmux.conf" ]; then
@@ -232,9 +237,18 @@ if [ -L "$HOME/.tmux.conf" ]; then
   case "$_t" in "$REPO"/*) rm -f "$HOME/.tmux.conf" ;; esac
   unset _t
 fi
-STOW_PKGS=(bash ssh bin hypr tmux)
+STOW_PKGS=(bash ssh bin hypr tmux elephant)
 stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
 success "stowed: ${STOW_PKGS[*]}"
+
+elephant_post_hash=$(sha256sum "$ELEPHANT_WEBSEARCH" 2>/dev/null | cut -d' ' -f1 || true)
+elephant_changed=0
+[ "$elephant_pre_hash" != "$elephant_post_hash" ] && elephant_changed=1
+unset elephant_pre_hash elephant_post_hash ELEPHANT_WEBSEARCH
+
+# Stale launcher orphans (.desktop files left behind after Remove Preinstalled
+# stripped the underlying package). [D-PKG-REMOVE]
+rm -f "$HOME/.local/share/applications/typora.desktop"
 
 # ssh ignores overly-open config paths.
 [ -d "$HOME/.ssh" ] && chmod 700 "$HOME/.ssh" 2>/dev/null || true
@@ -337,6 +351,18 @@ if [ "$waybar_changed" -eq 1 ]; then
   fi
 fi
 unset waybar_changed
+
+# elephant reads websearch.toml at service start; restart on real content
+# change so the walker picker picks up the new entries. [D-PKG-REMOVE]
+if [ "$elephant_changed" -eq 1 ]; then
+  if have omarchy-restart-walker; then
+    omarchy-restart-walker
+    success "elephant/walker restarted"
+  else
+    warn "elephant overlay updated; omarchy-restart-walker not on PATH — restart manually"
+  fi
+fi
+unset elephant_changed
 
 # ── validation ───────────────────────────────────────────────────────────────
 if have hyprctl && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then

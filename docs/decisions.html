@@ -178,48 +178,68 @@
           </tr>
           <tr id="D-PKG-REMOVE">
             <td>
-              <code class="meta">D-PKG-REMOVE</code> Subtractive package overlay
+              <code class="meta">D-PKG-REMOVE</code> Subtractive baseline
+              overlay
             </td>
             <td>
               <strong
-                >Tracked, declarative removal list at
-                <code>packages.remove.txt</code></strong
+                >Three coupled curation mechanisms that each subtract from the
+                post–Remove-Preinstalled baseline.</strong
               >
-              — symmetric subtractive partner to
-              <code>packages.txt</code> (additive, pacman) and
-              <code>packages.aur.txt</code> (additive, AUR).
-              <code>./install</code> parses it with the same
-              <code>parse_pkg_file</code> helper and passes the result to
-              <code>omarchy pkg drop</code> (which dispatches to
-              <code>~/.local/share/omarchy/bin/omarchy-pkg-drop</code>: filter
-              args to installed-only, then
-              <code>sudo pacman -Rns --noconfirm</code>). Removes run
-              <em>after</em> both add steps so a name present in both files
-              resolves to "removed" — last-write-wins, matching git-overlay
-              intuition. Empty list → no-op; already-absent names → no-op at the
-              omarchy CLI layer (matches <code>pacman --needed</code> semantics
-              on the add side). <strong>Scope:</strong> pacman-tracked packages
-              only (official-repo + AUR — both land in pacman's local db). Web
-              apps are not pacman packages; remove those with
-              <code>omarchy webapp remove</code> instead.
+              <ul>
+                <li>
+                  <code>packages.remove.txt</code> — symmetric subtractive
+                  partner to <code>packages.txt</code> /
+                  <code>packages.aur.txt</code>, processed via
+                  <code>omarchy pkg drop</code> after both add steps so a name
+                  in both files resolves to "removed". Wrapped in
+                  warn-and-continue because <code>pacman -Rns</code> can refuse
+                  on reverse-dep conflicts. Empty list → no-op; already-absent
+                  names → no-op at the omarchy CLI layer.
+                  <strong>Scope:</strong> pacman-tracked only (official-repo +
+                  AUR). Web apps are not pacman packages; remove those with
+                  <code>omarchy webapp remove</code>.
+                </li>
+                <li>
+                  <code>elephant/.config/elephant/websearch.toml</code> — stowed
+                  override of elephant's compiled-in default web-search entry
+                  (Google). Walker's app picker queries elephant; the TOML
+                  override is the elephant-generated, elephant-doc'd way to set
+                  custom engines. Defaults to DuckDuckGo here.
+                </li>
+                <li>
+                  Stale-launcher cleanup in <code>install</code> — explicit
+                  <code>rm -f</code> for known orphan
+                  <code>~/.local/share/applications/*.desktop</code> files whose
+                  underlying package is gone but the user-dir launcher remained
+                  (pacman <code>-Rns</code> only removes files the package
+                  installed, not user-state files copied there later).
+                </li>
+              </ul>
             </td>
             <td>
-              The repo's package surface was previously additive-only; the
-              "Deeper package cleanup" backlog wanted a way to express "drop
-              this omarchy default" without depending on the one-shot
+              The repo's overlay surface was previously additive-only for
+              packages and silent on user-state under
+              <code>~/.local/share/applications/</code> and
+              <code>~/.config/elephant/</code>. The "Deeper package cleanup"
+              backlog wanted a way to express "drop this omarchy default"
+              without depending on the one-shot
               <em>Remove Preinstalled</em> menu (per
               <a href="decisions.html#D-BASELINE">D-BASELINE</a>, that menu
-              action is the documented manual prerequisite — not a substitute
-              for ongoing curation). A separate decision token, not a fold into
-              <a href="architecture.html#D-IDEMPOTENT">D-IDEMPOTENT</a>, because
-              the "additive + subtractive overlay" model is a distinct
-              architectural shape worth its own line in the knowledge base.
-              <strong>Audit rule:</strong> before adding a name to the list,
-              grep <code>~/.local/share/omarchy/</code> for usage — omarchy
-              wires some "builtins" into keybindings or shell init (e.g.
+              action is the documented manual prerequisite, not a substitute for
+              ongoing curation). One token, three mechanisms — because they
+              share the same intent (subtract from baseline) but live on
+              different surfaces (pacman db, stowed config, user-state
+              launchers). <strong>Audit rule:</strong> before adding a name to
+              <code>packages.remove.txt</code>, grep
+              <code>~/.local/share/omarchy/</code> for usage — omarchy wires
+              some "builtins" into keybindings or shell init (e.g.
               <code>zoxide</code> → <code>cd</code> alias, <code>fzf</code> →
               keybindings, <code>btop</code> → <code>SUPER+T</code>). Removing
-              one of those silently breaks omarchy commands.
+              one of those silently breaks omarchy commands; cleanup the wiring
+              in our overlay at the same time (e.g. the matching
+              <code>unbind</code> in <code>hypr.conf</code> when we dropped
+              <code>btop</code>).
             </td>
           </tr>
         </tbody>

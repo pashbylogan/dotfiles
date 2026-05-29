@@ -16,8 +16,7 @@ else . end
 | .memory = ((.memory // {}) + {
     "interval": 5,
     "format": "",
-    "tooltip-format": "RAM {used:0.1f}G / {total:0.1f}G  ({percentage}%)",
-    "on-click": "omarchy-launch-or-focus-tui btop"
+    "tooltip-format": "RAM {used:0.1f}G / {total:0.1f}G  ({percentage}%)"
   })
 
 # 3. Add "memory" only if absent from every modules-* group; prefer
@@ -39,3 +38,10 @@ else . end
     end
   )
   end
+
+# 4. btop is in packages.remove.txt; strip omarchy's cpu→btop click handler.
+#    Substring-guarded so a future migration pointing the click elsewhere
+#    survives unchanged. [D-PKG-REMOVE]
+| if (.cpu."on-click" // "") | contains("btop") then
+    .cpu |= del(."on-click")
+  else . end
