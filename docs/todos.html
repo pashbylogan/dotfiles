@@ -558,6 +558,24 @@
           </tr>
           <tr>
             <td>
+              <span class="badge badge-future">future</span> Port old i3
+              keybindings
+            </td>
+            <td>Keybinding parity</td>
+            <td>
+              Bring over personal keybindings from the old i3 config on the
+              other branch. Diff the i3 binds against the current Hyprland set
+              (<code>omarchy menu keybindings --print</code> for the live
+              baseline), then port the ones worth keeping into the shared
+              <code>hypr.conf</code> overlay — using <code>unbind</code> before
+              re-<code>bind</code> on conflicts and <code>bindd</code> so they
+              appear in omarchy's cheatsheet, matching the existing
+              <code>SUPER+T</code> / screenshot overrides. Keep host-specific or
+              one-off binds in <code>hypr.local.conf</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>
               <span class="badge badge-future">future</span> Folder icon
               variants (gray-body / colored-fold aesthetic)
             </td>
