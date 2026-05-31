@@ -525,6 +525,25 @@
           </tr>
           <tr>
             <td>
+              <span class="badge badge-future">future</span> Isolate personal
+              dotfile payloads
+            </td>
+            <td>Backlog cleanup for shell/SSH/scripts/config</td>
+            <td>
+              Move custom aliases, functions, scripts, host entries, app
+              preferences, work shortcuts, and other owner-specific behavior out
+              of shared main files into narrowly scoped include/local files.
+              Main tracked files should stay generic enough to work for any
+              Omarchy user and should primarily provide portable defaults plus
+              the include hook. Example pattern:
+              <code>ssh/.ssh/config</code> keeps key/agent/include wiring;
+              <code>~/.ssh/config.local</code> (from
+              <code>ssh/.ssh/config.local.example</code>) holds personal hosts
+              such as <code>gollum</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>
               <span class="badge badge-future">future</span> Trackpad + mouse
               speed parity
             </td>
