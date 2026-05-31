@@ -577,6 +577,43 @@
           </tr>
           <tr>
             <td>
+              <span class="badge badge-future">future</span> Toggle-conditional
+              compact look
+            </td>
+            <td>
+              If the compact look should switch off, not just always apply
+            </td>
+            <td>
+              Today the
+              <a href="decisions.html#D-LOOKNFEEL">D-LOOKNFEEL</a> compact
+              deltas (slim gaps, <code>border_size = 2</code>,
+              <code>rounding = 8</code>) are <strong>always on</strong>: the
+              overlay sources last and overrides omarchy's
+              <code>window-no-gaps</code> toggle, so
+              <code>SUPER+SHIFT+BACKSPACE</code> and the menu "Gaps" entry are
+              no-ops. To make the toggle flip between
+              <em>pure omarchy default</em> (off) and <em>compact</em> (on), we
+              must own the trigger: omarchy rewrites the toggle's state file
+              from a read-only template
+              (<code>default/hypr/toggles/window-no-gaps.conf</code>) on every
+              enable, so editing that file isn't durable, and an always-on
+              overlay can't tell which state it's in. Both the keybind and the
+              menu call <code>omarchy-hyprland-window-gaps-toggle</code> by bare
+              name with omarchy's <code>bin/</code> earlier on
+              <code>PATH</code>, so a <code>~/.local/bin</code> shadow won't
+              win. Landable paths: (a) rebind
+              <code>SUPER+SHIFT+BACKSPACE</code> in the overlay to a small
+              script that writes the compact values into
+              <code>window-no-gaps.conf</code> instead of zeros — clean and
+              durable via our existing keybind-override pattern, but the menu
+              "Gaps" entry would still produce plain no-gaps; (b) also cover the
+              menu by putting a shadow earlier on the session
+              <code>PATH</code> — fragile and less omarchy-native. Load-order
+              context: <a href="findings.html#F-HYPR-SEAM">F-HYPR-SEAM</a>.
+            </td>
+          </tr>
+          <tr>
+            <td>
               <span class="badge badge-future">future</span> Folder icon
               variants (gray-body / colored-fold aesthetic)
             </td>

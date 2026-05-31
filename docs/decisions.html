@@ -463,32 +463,34 @@
             <td><code class="meta">D-LOOKNFEEL</code> Looknfeel deltas</td>
             <td><span class="badge badge-done">in (fragment)</span></td>
             <td>
-              Three overlay-sourced-last deltas to omarchy's looknfeel chain:
-              (1)
+              An always-on "compact look" of overlay-sourced-last deltas to
+              omarchy's looknfeel chain: (1)
+              <code>general { gaps_in = 2; gaps_out = 4 }</code> — slim but
+              present gaps (omarchy's defaults are
+              <code>5</code>/<code>10</code>); (2)
               <code>general { border_size = 2 }</code> so the
               <code>window-no-gaps</code> toggle keeps killing gaps without also
               killing borders — this is the single line in any overlay that
               re-states an omarchy default value (<code>border_size = 2</code>
-              in <code>looknfeel.conf</code>) because a downstream toggle would
-              otherwise zero it, so <code>make verify</code> compares the two
-              and fails loudly if omarchy ever moves their default; (2)
-              <code>windowrule = rounding 8, match:float 1</code> — same
-              windowrule grammar omarchy uses for tagged popups (<code
-                >rounding 8, match:tag pop</code
-              >
-              in <code>default/hypr/apps/system.conf</code>), but state-based on
-              the floating bit instead of a tag, so tiles stay square (omarchy
-              global default) and any floating window rounds; (3)
+              in <code>looknfeel.conf</code>) because that downstream toggle
+              would otherwise zero it, so <code>make verify</code> compares the
+              two and fails loudly if omarchy ever moves their default; (3)
+              <code>decoration { rounding = 8 }</code> — every corner rounds at
+              omarchy's documented radius (the commented
+              <code>rounding = 8</code> hint in its <code>looknfeel.conf</code>
+              template, and the same radius omarchy applies to popups via
+              <code>rounding 8, match:tag pop</code> in
+              <code>default/hypr/apps/system.conf</code>); (4)
               <code>decoration { blur { size = 8; brightness = 0.72 } }</code>
               plus
               <code>windowrule = opacity 0.86 0.78, match:tag terminal</code>
               so terminals get a mild frosted-glass effect without hard-coding
-              terminal colors or breaking omarchy theme swaps. Edits to
-              <code>~/.config/hypr/looknfeel.conf</code> wouldn't fix the border
-              problem because that file loads <em>before</em> the window-no-gaps
-              toggle in hyprland.conf's source chain — only an overlay sourced
-              <em>after</em> the toggle can win, which is exactly what our
-              fragment is. See
+              terminal colors or breaking omarchy theme swaps. Because the
+              fragment is sourced <em>after</em> both omarchy's defaults and the
+              <code>window-no-gaps</code> toggle in hyprland.conf's source
+              chain, these values win regardless of toggle state — editing
+              <code>~/.config/hypr/looknfeel.conf</code> wouldn't, since it
+              loads <em>before</em> the toggle. See
               <a href="findings.html#F-HYPR-SEAM">F-HYPR-SEAM</a> for the full
               ordering.
             </td>
