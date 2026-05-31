@@ -35,7 +35,9 @@
       </h2>
       <p>
         <code>~/.config/hypr/hyprland.conf</code> is a seeded, owner-owned file
-        that <code>source</code>s, in order:
+        that <code>source</code>s, in order (verified against the live machine
+        and omarchy's shipped seed at
+        <code>~/.local/share/omarchy/config/hypr/hyprland.conf</code>):
       </p>
       <ol>
         <li>
@@ -44,17 +46,27 @@
           <em>never edit these</em>;
         </li>
         <li>
+          the active theme:
+          <code>~/.config/omarchy/current/theme/hyprland.conf</code>;
+        </li>
+        <li>
           the user override files: <code>monitors.conf</code>,
           <code>input.conf</code>, <code>bindings.conf</code>,
           <code>looknfeel.conf</code>, <code>autostart.conf</code>;
         </li>
-        <li><code>~/.config/omarchy/current/theme/hyprland.conf</code>;</li>
         <li><code>~/.local/state/omarchy/toggles/hypr/*.conf</code>.</li>
       </ol>
       <p>
         Later sources win. Our fragment is added <em>after</em> all of these
         (managed block at EOF of <code>hyprland.conf</code>), so it overrides
-        cleanly.
+        cleanly. The toggles-before-fragment ordering is the load-order trap
+        behind two opposite-direction deltas: in
+        <a href="decisions.html#D-LOOKNFEEL">D-LOOKNFEEL</a> we re-state
+        <code>border_size = 2</code> in the fragment to beat the
+        <code>window-no-gaps</code> toggle, while in
+        <a href="decisions.html#D-MONITORS">D-MONITORS</a> we deliberately stay
+        silent on eDP-1 so the <code>internal-monitor-disable.conf</code> toggle
+        retains control.
       </p>
 
       <h2 id="F-REFRESH-WRITETHROUGH">
@@ -378,6 +390,99 @@
         truth singular.
       </p>
 
+      <h2 id="F-MONITOR-RULE-APPLY">
+        Hyprland <code>monitor =</code> rules re-apply on hot-plug;
+        <code>desc:</code> is a prefix match; empty-<code>output</code> is a
+        fallback
+        <code class="meta">F-MONITOR-RULE-APPLY</code>
+      </h2>
+      <p>
+        Three facts from the Hyprland monitors documentation constrain
+        <a href="decisions.html#D-MONITORS">D-MONITORS</a>:
+      </p>
+      <ul class="clean">
+        <li>
+          <strong
+            ><code>desc:</code> matches a prefix of the description.</strong
+          >
+          The wiki: "the description value up to, but not including the portname
+          can be used as the output field with a <code>desc:</code> prefix."
+          When two connected monitors share a prefix (the two Acer XV272U
+          variants on this dock do), the rule must extend the prefix until it's
+          unique. The repo uses the full description string (including the
+          EDID-reported serial tail) in both the overlay and the docs, so the
+          rule reads as "this exact unit" rather than relying on a shortest
+          accident.
+        </li>
+        <li>
+          <strong>Empty-<code>output</code> rules are fallback-only.</strong>
+          Wiki: "Leaving the output empty will define a fallback rule to use
+          when no other rules match." So omarchy's seeded
+          <code>monitor=,preferred,auto,auto</code> in
+          <code>~/.config/hypr/monitors.conf</code> is outranked by every
+          specific <code>desc:</code> or name-matched rule — no need to edit
+          <code>monitors.conf</code> to add specific rules.
+        </li>
+        <li>
+          <strong>The matcher fires on hot-plug, not only at startup.</strong>
+          The "quickly plugging in random monitors" recommendation in the wiki
+          is precisely a hot-plug pattern — the fallback rule is described as
+          applying "when not specified", which by the same mechanism makes any
+          specific <code>monitor =</code> rule auto-apply when a matching
+          monitor is later connected. That delivers the
+          <a href="decisions.html#D-MONITORS">D-MONITORS</a> requirement of
+          "reloaded every time the laptop is plugged into these displays" with
+          zero script: omarchy's <code>omarchy-hyprland-monitor-watch</code>
+          handles the removal-recovery half; Hyprland's built-in matcher handles
+          the connect half.
+        </li>
+      </ul>
+      <p>
+        Both the current Hyprland wiki and the archived 0.54 wiki page agree on
+        these semantics — see the Sources list. The current page renders Lua
+        examples (Hyprland is migrating to Lua, see
+        <a href="findings.html#F-LUA">F-LUA</a>); the 0.54 page is closer to the
+        <code>.conf</code>/hyprlang dialect omarchy 3.x still ships, but the
+        matcher contract is identical.
+      </p>
+
+      <h2 id="F-MONITOR-SCALE-PERSIST">
+        Omarchy's <code>Super + /</code> scale cycle auto-persists only the
+        single-wildcard <code>monitors.conf</code> shape
+        <code class="meta">F-MONITOR-SCALE-PERSIST</code>
+      </h2>
+      <p>
+        The omarchy manual recommends editing
+        <code>~/.config/hypr/monitors.conf</code> to set persistent monitor
+        scale, and the runtime cycle keybind <code>Super + /</code> (script
+        <code>omarchy-hyprland-monitor-scaling-cycle</code>) walks
+        <code>1 → 1.25 → 1.6 → 2 → 3 → 4</code> via
+        <code>hyprctl keyword monitor …</code>. The script also writes the new
+        scale through to <code>monitors.conf</code> so it survives reboot — but
+        only when <code>monitors.conf</code> contains exactly one
+        <code>monitor=</code> line and that line matches the regex
+        <code>^monitor=,preferred,auto,</code> (the omarchy-seeded wildcard).
+      </p>
+      <p>
+        For a multi-monitor layout matched by <code>desc:</code> rules — as
+        <a href="decisions.html#D-MONITORS">D-MONITORS</a> uses — the
+        auto-persist branch is skipped, so the runtime
+        <code>Super + /</code> change reverts at the next reload. The
+        omarchy-native persistence path in that case is the same one the rest of
+        this repo already uses: own the <code>monitor =</code> deltas in our
+        last-sourced overlay (<a href="findings.html#F-HYPR-SEAM">F-HYPR-SEAM</a
+        >), which also stays safe from
+        <code>omarchy refresh hyprland</code>
+        (<a href="findings.html#F-REFRESH-WRITETHROUGH"
+          >F-REFRESH-WRITETHROUGH</a
+        >). The wiki tool
+        <a href="https://github.com/basecamp/omarchy/discussions/4282"
+          >hyprmon</a
+        >
+        helps with positioning but has the same persistence gap, and third-party
+        <code>hyprdynamicmonitors</code> would fill it but is not bundled.
+      </p>
+
       <h2>Sources</h2>
       <ul class="clean">
         <li>
@@ -488,6 +593,27 @@
         <li>
           <a href="https://greg.molnar.io/blog/customizing-omarchy/"
             >Greg Molnar — Customizing Omarchy</a
+          >
+        </li>
+        <li>
+          <a href="https://wiki.hypr.land/Configuring/Basics/Monitors/"
+            >Hyprland wiki — Monitors (current; Lua dialect)</a
+          >
+        </li>
+        <li>
+          <a href="https://wiki.hypr.land/0.54.0/Configuring/Monitors/"
+            >Hyprland wiki — Monitors (0.54, hyprlang/.conf dialect)</a
+          >
+        </li>
+        <li>
+          <a href="https://learn.omacom.io/2/the-omarchy-manual/86/monitors"
+            >Omarchy manual — Monitors (scaling recipes, Super + / cycle)</a
+          >
+        </li>
+        <li>
+          <a href="https://github.com/basecamp/omarchy/discussions/4282"
+            >basecamp/omarchy discussion #4282 — Hyprmon (persistence gap for
+            multi-monitor)</a
           >
         </li>
       </ul>

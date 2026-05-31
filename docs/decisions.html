@@ -465,6 +465,98 @@
               ordering.
             </td>
           </tr>
+          <tr id="D-MONITORS">
+            <td>
+              <code class="meta">D-MONITORS</code> Docked dual-monitor layout
+            </td>
+            <td><span class="badge badge-done">in (fragment)</span></td>
+            <td>
+              Two <code>monitor =</code> lines in the overlay encode the dock
+              layout:
+              <strong>DP-5 (Acer XV272U) primary at <code>0x0</code></strong
+              >,
+              <strong
+                >DP-4 (Acer XV272U V) secondary at <code>1920x0</code></strong
+              >, both at native <code>2560×1440 @ 144 Hz</code> and compositor
+              scale <code>1.333333</code> (effective logical
+              <code>1920×1080</code> per panel — the secondary's position is in
+              <em>scaled</em> pixels, hence <code>1920x0</code> rather than
+              <code>2560x0</code>; see
+              <a href="findings.html#F-MONITOR-SCALE-PERSIST"
+                >F-MONITOR-SCALE-PERSIST</a
+              >
+              for why we set the scale in the overlay rather than via the
+              <code>Super + /</code> cycle). Matched by full
+              <code>desc:</code> identifier (description string up to but not
+              including the trailing portname, per the Hyprland wiki — see
+              <a href="findings.html#F-MONITOR-RULE-APPLY"
+                >F-MONITOR-RULE-APPLY</a
+              >) so cable-swaps between DP ports don't change the layout. The
+              full serial tail is load-bearing because both Acer descriptions
+              share the <code>Acer Technologies XV272U</code> prefix — a panel
+              swap (same model, new EDID serial) silently falls through to the
+              omarchy wildcard, so update the <code>desc:</code> string when
+              that happens. No hot-plug script: Hyprland re-applies
+              <code>monitor =</code> rules on every monitor connect, which is
+              the same matcher behavior that makes omarchy's seeded fallback
+              <code>monitor=,preferred,auto,auto</code> work; the
+              omarchy-shipped <code>omarchy-hyprland-monitor-watch</code>
+              already covers removal recovery. No
+              <code>workspace = N, monitor:…</code> pins — on a
+              <em>fresh session</em>, Hyprland assigns workspace 1 to the
+              leftmost monitor by position (DP-5 at <code>0x0</code>), which is
+              what "primary" means here (Hyprland has no xrandr-style primary
+              concept). One nuance: when these rules first land via
+              <code>hyprctl reload</code> on a running session, the existing
+              workspace→monitor bindings are preserved — workspace 1 stays on
+              whichever monitor it was on, and fully migrates only on next fresh
+              login (or move it now with
+              <code>hyprctl dispatch movecurrentworkspacetomonitor DP-5</code>).
+              <strong>Install restarts waybar on topology change</strong>:
+              <code>install</code>'s validation block snapshots
+              <code>hyprctl monitors</code> around the post-stow
+              <code>hyprctl reload</code> (extracting
+              name/position/mode/disabled per output) and, if the snapshot diff
+              is non-empty, invokes <code>omarchy-restart-waybar</code> with the
+              same poll-and-confirm pattern as the waybar-overlay restart.
+              Waybar's per-output bars don't always survive a layout flip; this
+              is the integration step that makes a fresh
+              <code>./install</code> after a <code>monitor =</code> edit reach a
+              fully-rendered desktop without a manual restart.
+              <strong>eDP-1 is deliberately not in the overlay</strong>:
+              omarchy's lid-switch handler at
+              <code>default/hypr/bindings/utilities.conf</code> calls
+              <code>omarchy-hyprland-monitor-internal off/on</code>, which
+              writes <code>monitor=eDP-1,disable</code> to
+              <code
+                >~/.local/state/omarchy/toggles/hypr/internal-monitor-disable.conf</code
+              >. Our overlay loads <em>after</em> the toggles (<a
+                href="findings.html#F-HYPR-SEAM"
+                >F-HYPR-SEAM</a
+              >), so an explicit eDP-1 rule here would silently beat the toggle.
+              The wildcard <code>monitor=,preferred,auto,auto</code> already
+              activates eDP-1 at its only supported mode (<code
+                >1920×1200 @ 120 Hz</code
+              >) when the toggle isn't present. Same load-order pattern as
+              <a href="decisions.html#D-LOOKNFEEL">D-LOOKNFEEL</a> but inverted:
+              silence to let the downstream toggle win, instead of re-stating to
+              beat it. <strong>GDK_SCALE intentionally untouched</strong>:
+              omarchy seeds <code>env = GDK_SCALE,2</code> in
+              <code>monitors.conf</code> (right for the laptop's 13"/2.8K
+              panel). <code>GDK_SCALE</code> is process-global on Wayland —
+              there is no per-monitor GTK scaling without per-app launchers — so
+              dropping it to <code>1</code> for the 1440p externals would shrink
+              GTK apps on eDP-1. The compositor scale <code>1</code> in our two
+              <code>monitor =</code> lines is the in-scope correctness step; the
+              GTK-oversize trade on the externals is acceptable until per-app
+              launchers become worth it. <strong>Forward risk</strong>: when
+              omarchy ships the Lua hyprland config (<a
+                href="findings.html#F-LUA"
+                >F-LUA</a
+              >), these two lines become two <code>hl.monitor({…})</code> calls;
+              the design is unaffected.
+            </td>
+          </tr>
         </tbody>
       </table>
 

@@ -118,6 +118,28 @@ prestow_backup() {
   done
 }
 
+# `omarchy-restart-waybar` exits 0 as soon as setsid forks even if waybar
+# then dies; poll until the process actually shows up.
+restart_waybar_polled() {
+  omarchy-restart-waybar
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    pgrep -x waybar >/dev/null 2>&1 && break
+    sleep 0.1
+  done
+  if pgrep -x waybar >/dev/null 2>&1; then
+    success "waybar restarted"
+  else
+    warn "waybar did not relaunch — check journalctl --user -t waybar"
+  fi
+}
+
+# Topology snapshot includes scale so a single-monitor scale toggle still trips
+# downstream diffs; empty on failure = downstream no-op. [D-MONITORS]
+snapshot_monitor_topology() {
+  hyprctl monitors -j 2>/dev/null |
+    jq -c '[.[]|{name,x,y,width,height,refreshRate,scale,disabled}]' 2>/dev/null || true
+}
+
 # ── prerequisites ────────────────────────────────────────────────────────────
 # Omarchy CLI is preferred over re-implementing package logic [F-CLI][D-ENGINE].
 step "Prerequisites"
@@ -336,18 +358,7 @@ if [ "$waybar_changed" -eq 1 ]; then
   elif ! have omarchy-restart-waybar; then
     warn "waybar overlay updated; omarchy-restart-waybar not on PATH — restart manually"
   else
-    # omarchy-restart-waybar exits 0 as soon as setsid forks, even if waybar
-    # then dies. Poll briefly to verify the process actually relaunched.
-    omarchy-restart-waybar
-    for _ in 1 2 3 4 5; do
-      pgrep -x waybar >/dev/null 2>&1 && break
-      sleep 0.1
-    done
-    if pgrep -x waybar >/dev/null 2>&1; then
-      success "waybar restarted"
-    else
-      warn "waybar did not relaunch — check journalctl --user -t waybar"
-    fi
+    restart_waybar_polled
   fi
 fi
 unset waybar_changed
@@ -367,6 +378,7 @@ unset elephant_changed
 # ── validation ───────────────────────────────────────────────────────────────
 if have hyprctl && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
   step "Validate Hyprland"
+  monitors_pre=$(snapshot_monitor_topology)
   if hyprctl reload >/dev/null 2>&1; then success "hyprctl reload ok"; else warn "hyprctl reload failed"; fi
   errs="$(hyprctl configerrors 2>/dev/null || true)"
   # Clean when output is empty/whitespace or contains "no error". Don't rely on
@@ -377,6 +389,16 @@ if have hyprctl && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
     warn "hyprctl reported config issues:"
     printf '%s\n' "$errs"
   fi
+  monitors_post=$(snapshot_monitor_topology)
+  if [ -n "$monitors_pre" ] && [ "$monitors_pre" != "$monitors_post" ]; then
+    if ! have omarchy-restart-waybar; then
+      warn "monitor topology changed; omarchy-restart-waybar not on PATH — restart manually"
+    else
+      info "monitor topology changed; restarting waybar"
+      restart_waybar_polled
+    fi
+  fi
+  unset monitors_pre monitors_post
 fi
 
 step "Done"

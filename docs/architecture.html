@@ -164,11 +164,14 @@
 
       <h2>What stow does (and doesn't)</h2>
       <p>
-        Stow only places <em>repo-owned static files</em> into our own
-        namespaces — <code>~/.config/dotfiles/</code>, <code>~/.ssh/</code>,
-        <code>~/.local/bin/</code>, <code>~/.config/tmux/local.conf</code> —
-        none of which Omarchy seeds, so there are no conflicts to fight. Stow
-        never symlinks an Omarchy-managed file.
+        Stow only places <em>repo-owned static files</em> at paths Omarchy
+        doesn't seed — our own namespaces (<code>~/.config/dotfiles/</code>,
+        <code>~/.ssh/</code>, <code>~/.local/bin/</code>,
+        <code>~/.config/tmux/local.conf</code>) and Omarchy
+        <em>extension points</em> reserved for user content (per-provider
+        elephant configs under <code>~/.config/elephant/</code> for
+        <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a>). Stow never
+        symlinks an Omarchy-managed file.
       </p>
 
       <h2 id="D-IDEMPOTENT">

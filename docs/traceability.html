@@ -232,6 +232,18 @@
               <code>waybar/deltas.jq</code>
             </td>
           </tr>
+          <tr>
+            <td><code>D-MONITORS</code></td>
+            <td>
+              Docked dual-Acer layout in the hypr overlay (DP-5 primary at
+              <code>0x0</code>, DP-4 secondary at <code>2560x0</code>, both
+              <code>2560×1440@144</code>); eDP-1 deliberately not overlayed so
+              omarchy's lid switch + internal-monitor-disable toggle keep
+              control; GDK_SCALE intentionally untouched
+            </td>
+            <td><a href="decisions.html#D-MONITORS">decisions</a></td>
+            <td><code>hypr/.config/dotfiles/hypr.conf</code></td>
+          </tr>
         </tbody>
       </table>
 
@@ -250,7 +262,10 @@
             <td><code>F-HYPR-SEAM</code></td>
             <td>hyprland.conf sourcing order (later wins)</td>
             <td><a href="findings.html#F-HYPR-SEAM">findings</a></td>
-            <td><code>D-DELTA-STORAGE</code>, <code>D-CAPS-CTRL</code></td>
+            <td>
+              <code>D-DELTA-STORAGE</code>, <code>D-CAPS-CTRL</code>,
+              <code>D-LOOKNFEEL</code>, <code>D-MONITORS</code>
+            </td>
           </tr>
           <tr>
             <td><code>F-REFRESH-WRITETHROUGH</code></td>
@@ -262,7 +277,7 @@
             <td><code>F-LUA</code></td>
             <td>dev branch already on Lua Hyprland config</td>
             <td><a href="findings.html#F-LUA">findings</a></td>
-            <td><code>D-DELTA-STORAGE</code></td>
+            <td><code>D-DELTA-STORAGE</code>, <code>D-MONITORS</code></td>
           </tr>
           <tr>
             <td><code>F-BASH-CHAIN</code></td>
@@ -320,6 +335,29 @@
             </td>
             <td><a href="findings.html#F-AGENT-GUIDANCE">findings</a></td>
             <td><code>D-CI</code></td>
+          </tr>
+          <tr>
+            <td><code>F-MONITOR-RULE-APPLY</code></td>
+            <td>
+              Hyprland re-applies <code>monitor =</code> rules on hot-plug;
+              <code>desc:</code> is a prefix match (excluding portname);
+              empty-<code>output</code> is fallback-only
+            </td>
+            <td><a href="findings.html#F-MONITOR-RULE-APPLY">findings</a></td>
+            <td><code>D-MONITORS</code></td>
+          </tr>
+          <tr>
+            <td><code>F-MONITOR-SCALE-PERSIST</code></td>
+            <td>
+              Omarchy's <code>Super + /</code> scale cycle auto-persists only
+              when <code>monitors.conf</code> matches the single-wildcard shape;
+              multi-monitor <code>desc:</code> layouts must persist scale in the
+              user's overlay
+            </td>
+            <td>
+              <a href="findings.html#F-MONITOR-SCALE-PERSIST">findings</a>
+            </td>
+            <td><code>D-MONITORS</code></td>
           </tr>
         </tbody>
       </table>

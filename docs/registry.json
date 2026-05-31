@@ -37,6 +37,7 @@
         "D-IDEMPOTENT",
         "D-WAYBAR-DELTAS",
         "D-LOOKNFEEL",
+        "D-MONITORS",
         "D-PKG-REMOVE"
       ]
     },
@@ -161,7 +162,7 @@
       "id": "D-LOOKNFEEL",
       "title": "Hyprland looknfeel deltas in the owned fragment: pin border_size = 2 past the window-no-gaps toggle, and round only floating windows via per-window windowrule (tiles stay omarchy-default square)",
       "canonical": "decisions.html#D-LOOKNFEEL",
-      "appears_in": [],
+      "appears_in": ["findings.html"],
       "code_paths": [
         "hypr/.config/dotfiles/hypr.conf",
         ".github/scripts/verify.sh"
@@ -215,6 +216,22 @@
         "D-SCRIPTS-MINIMAL",
         "D-DELTA-STORAGE",
         "F-CLI"
+      ]
+    },
+    {
+      "id": "D-MONITORS",
+      "title": "Docked dual-monitor layout as desc:-matched monitor= rules in the hypr overlay (compositor scale 1.333333 → effective logical 1920×1080 per external); eDP-1 stays governed by Omarchy's lid switch + internal-monitor-disable toggle (no overlay line); GDK_SCALE intentionally untouched; install restarts waybar when reload changes monitor topology",
+      "canonical": "decisions.html#D-MONITORS",
+      "appears_in": ["findings.html"],
+      "code_paths": ["hypr/.config/dotfiles/hypr.conf", "install"],
+      "related": [
+        "D-DELTA-STORAGE",
+        "F-HYPR-SEAM",
+        "F-MONITOR-RULE-APPLY",
+        "F-MONITOR-SCALE-PERSIST",
+        "F-LUA",
+        "D-CAPS-CTRL",
+        "D-LOOKNFEEL"
       ]
     }
   ],
@@ -310,6 +327,26 @@
       "appears_in": [],
       "code_paths": ["AGENTS.md", ".github/scripts/check_docs.py"],
       "related": ["D-CI"]
+    },
+    {
+      "id": "F-MONITOR-RULE-APPLY",
+      "title": "Hyprland matches `monitor =` rules at startup AND on hot-plug; `desc:` is a documented prefix match (excluding the trailing portname); empty-`output` is a fallback only when no other rule matches",
+      "canonical": "findings.html#F-MONITOR-RULE-APPLY",
+      "appears_in": ["decisions.html"],
+      "code_paths": [],
+      "related": ["D-MONITORS", "F-HYPR-SEAM", "F-LUA"]
+    },
+    {
+      "id": "F-MONITOR-SCALE-PERSIST",
+      "title": "Omarchy's `omarchy-hyprland-monitor-scaling-cycle` (Super+/) auto-persists scale to monitors.conf only when the file matches a single `monitor=,preferred,auto,N` wildcard; multi-monitor desc:-rule layouts must persist scale by editing the user's overlay directly",
+      "canonical": "findings.html#F-MONITOR-SCALE-PERSIST",
+      "appears_in": ["decisions.html"],
+      "code_paths": [],
+      "related": [
+        "D-MONITORS",
+        "F-MONITOR-RULE-APPLY",
+        "F-REFRESH-WRITETHROUGH"
+      ]
     }
   ]
 }
