@@ -132,10 +132,10 @@
     },
     {
       "id": "D-NVIM-KEYMAPS",
-      "title": "nvim <leader>y maps via managed block in Omarchy's keymaps.lua; do NOT stow the nvim tree",
+      "title": "nvim keymaps/options in a tracked ~/.config/dotfiles/nvim.lua fragment, loaded by a one-line dofile managed block in Omarchy's keymaps.lua; do NOT stow the nvim tree",
       "canonical": "decisions.html#D-NVIM-KEYMAPS",
       "appears_in": [],
-      "code_paths": ["install"],
+      "code_paths": ["install", "nvim/.config/dotfiles/nvim.lua"],
       "related": ["F-NVIM-OWNED", "D-DELTA-STORAGE"]
     },
     {

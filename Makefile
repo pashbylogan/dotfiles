@@ -13,7 +13,7 @@ SHFMT_FLAGS        := -ln bash -i 2 -ci
 
 # ── file sets ────────────────────────────────────────────────────────────────
 # Include sourced fragments explicitly because shell globs won't discover them.
-SHELL_FILES := install $(wildcard bin/.local/bin/*) \
+SHELL_FILES := install lib/style.sh $(wildcard bin/.local/bin/*) \
 	bash/.config/dotfiles/shell.sh \
 	bash/.config/dotfiles/shell.local.sh.example \
 	$(wildcard .github/scripts/*.sh)
@@ -21,17 +21,28 @@ PRETTIER_GLOBS := docs/*.html docs/registry.json
 DOCS_CHECK     := .github/scripts/check_docs.py
 JQ_FILTERS     := $(wildcard waybar/*.jq)
 
+# ── output styling ───────────────────────────────────────────────────────────
+# Mirror the shell palette (lib/style.sh: ── headers ──, ℹ info, ⚠ warn) so `make`
+# and the installer read alike — Make can't source that bash file, hence the copy.
+# Set NO_COLOR (any value) for plain piped/CI logs; used only in printf strings. [D-CI]
+ifeq ($(origin NO_COLOR),undefined)
+BOLD   := \033[1m
+CYAN   := \033[0;36m
+YELLOW := \033[1;33m
+NC     := \033[0m
+endif
+
 .DEFAULT_GOAL := help
 .PHONY: help ci fmt tools update update-firmware verify
 
 # ── checks ───────────────────────────────────────────────────────────────────
 help: ## Show this menu
-	@awk 'BEGIN{FS=":.*## "} /^[a-zA-Z0-9_-]+:.*## /{printf "  \033[36m%-6s\033[0m %s\n",$$1,$$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN{FS=":.*## "} /^[a-zA-Z0-9_-]+:.*## /{printf "  $(CYAN)%-6s$(NC) %s\n",$$1,$$2}' $(MAKEFILE_LIST)
 	@echo
 	@echo "Run 'make ci' before committing — it's exactly what GitHub Actions runs."
 
 ci: ## Run the full gate: shellcheck + shfmt + prettier + jq filter parse + docs integrity
-	shellcheck $(SHELL_FILES)
+	shellcheck -x $(SHELL_FILES)
 	shfmt -d $(SHFMT_FLAGS) $(SHELL_FILES)
 	$(PRETTIER) --check $(PRETTIER_GLOBS)
 	@# Smoke-check each jq filter against an empty-object fixture so syntax
@@ -55,24 +66,31 @@ tools: ## Show required tools + how to install them on Omarchy
 # ── machine maintenance ──────────────────────────────────────────────────────
 # Keep package updates separate from firmware/self-managed channels because
 # their prompts, reboot behavior, and failure modes are different. [D-CI]
-update: ## Update packages/Omarchy migrations, then `make verify`
-	@printf "Note: if 'omarchy update -y' triggers a reboot, the verify step below will NOT run automatically — re-invoke 'make update' afterwards.\n\n"
+update: ## Update packages + Omarchy migrations + uv, then `make verify`
+	@printf "$(CYAN)ℹ$(NC) If 'omarchy update -y' triggers a reboot, verify won't run — re-run 'make update' after.\n"
 	@# Still run verify after non-reboot updater failures so drift is visible.
-	@printf "$$ omarchy update -y\n"
-	@omarchy update -y || printf "\nWARN: 'omarchy update -y' returned non-zero (benign if a reboot was requested).\n"
-	@printf "\nUpdating uv...\n"
-	@if command -v uv >/dev/null 2>&1; then printf "$$ uv self update\n"; uv self update || printf "\nWARN: 'uv self update' returned non-zero.\n"; else printf "SKIP: uv not found on PATH.\n"; fi
-	@printf "\nNote: JetBrains IDEs managed by jetbrains-toolbox update via Toolbox's own UI.\n"
-	@printf "\nPost-update verify:\n"
-	@printf "$$ $(MAKE) --no-print-directory verify\n"
+	@printf "\n$(BOLD)── Packages & Omarchy migrations ──$(NC)\n"
+	@printf "$(CYAN)$$ omarchy update -y$(NC)\n"
+	@omarchy update -y || printf "$(YELLOW)⚠$(NC) 'omarchy update -y' returned non-zero (benign if a reboot was requested).\n"
+	@printf "\n$(BOLD)── uv self-update ──$(NC)\n"
+	@if command -v uv >/dev/null 2>&1; then \
+		printf "$(CYAN)$$ uv self update$(NC)\n"; \
+		uv self update || printf "$(YELLOW)⚠$(NC) 'uv self update' returned non-zero.\n"; \
+	else \
+		printf "$(CYAN)ℹ$(NC) uv not found on PATH — skipped.\n"; \
+	fi
+	@printf "\n$(CYAN)ℹ$(NC) JetBrains IDEs update via jetbrains-toolbox's own UI.\n"
+	@printf "\n$(BOLD)── Verify overlay ──$(NC)\n"
+	@printf "$(CYAN)$$ $(MAKE) --no-print-directory verify$(NC)\n"
 	@$(MAKE) --no-print-directory verify
 
 # Firmware and self-managed tools are intentionally opt-in; they can have
 # device-specific reboot/power-cycle outcomes unlike package updates. [D-CI]
-update-firmware: ## Update firmware and self-managed non-package tools (fwupd + uv)
-	@printf "Note: firmware and self-managed updater outcomes are not package-like; review prompts carefully.\n\n"
-	@printf "\n$$ omarchy update firmware\n"
-	@omarchy update firmware || printf "\nWARN: 'omarchy update firmware' returned non-zero (no fwupd devices? offline? expected on some hardware).\n"
+update-firmware: ## Update firmware (fwupd)
+	@printf "$(CYAN)ℹ$(NC) Firmware updater outcomes aren't package-like; review prompts carefully.\n"
+	@printf "\n$(BOLD)── Firmware (fwupd) ──$(NC)\n"
+	@printf "$(CYAN)$$ omarchy update firmware$(NC)\n"
+	@omarchy update firmware || printf "$(YELLOW)⚠$(NC) 'omarchy update firmware' returned non-zero (no fwupd devices? offline? expected on some hardware).\n"
 
 verify: ## Health-check the live overlay (hyprctl, managed blocks, stow links, dev-env tools, XDG dirs)
 	bash .github/scripts/verify.sh

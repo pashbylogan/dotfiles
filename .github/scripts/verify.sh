@@ -4,18 +4,12 @@
 
 set -u
 
+REPO="$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)"
+
 # ── output helpers ───────────────────────────────────────────────────────────
-if [ -t 1 ]; then
-  GREEN=$'\033[32m'
-  RED=$'\033[31m'
-  DIM=$'\033[2m'
-  NC=$'\033[0m'
-else
-  GREEN=
-  RED=
-  DIM=
-  NC=
-fi
+# Shared ANSI palette (TTY-gated); single source of truth in lib/style.sh.
+# shellcheck source=lib/style.sh
+. "$REPO/lib/style.sh"
 
 fails=0
 pass() { printf '  %s✓%s %s\n' "$GREEN" "$NC" "$1"; }
@@ -34,8 +28,6 @@ pretty() {
     *) printf '%s' "$1" ;;
   esac
 }
-
-REPO="$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)"
 
 # ── Hyprland config ──────────────────────────────────────────────────────────
 if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && command -v hyprctl >/dev/null 2>&1; then
@@ -84,6 +76,7 @@ check_link() {
 }
 check_link "$HOME/.config/dotfiles/shell.sh"
 check_link "$HOME/.config/dotfiles/hypr.conf"
+check_link "$HOME/.config/dotfiles/nvim.lua"
 check_link "$HOME/.ssh/config"
 check_link "$HOME/.config/tmux/local.conf"
 

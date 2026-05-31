@@ -3,17 +3,30 @@
 # shellcheck disable=SC1090,SC1091,SC2015
 # Sourced LAST from the ~/.bashrc managed block, so these win where they
 # intentionally overlap Omarchy. [D-SHELL-SEAM][D-SHELL-BASH][F-BASH-CHAIN][D-CARRY-SET]
+# Generic, portable defaults only; personal and device-specific aliases,
+# functions, and keybinds live in the gitignored shell.local.sh, sourced after
+# this.
 
 # ── aliases ──────────────────────────────────────────────────────────────────
 alias de='deactivate'
-alias uf='uvx ruff format '
-alias vim='nvim'
 alias ta='tmux attach -t'
 alias tn='tmux new-session'
 alias tl='tmux list-sessions'
+alias sz='source ~/.bashrc'
+
+# ── git (oh-my-zsh-style) ──────────────────────────────────────────────────────
+# `gd` intentionally shadows Omarchy's destructive gd() worktree-remove; worktree
+# verbs live under wt* below. Sourced last, so this override wins. [D-SHELL-SEAM]
 alias gs='git status'
 alias gap='git add -p'
-alias sz='source ~/.bashrc'
+alias gco='git checkout'
+alias gp='git push'
+alias gd='git diff'
+alias gl='git pull'
+alias gf='git fetch'
+alias gfa='git fetch --all --prune'
+alias gsta='git stash push'
+alias gstp='git stash pop'
 
 # ── ssh-agent ────────────────────────────────────────────────────────────────
 # Both guards are load-bearing: don't clobber a pre-existing SSH_AUTH_SOCK
@@ -43,67 +56,7 @@ cdwt() {
 }
 
 # ── python ───────────────────────────────────────────────────────────────────
-# Prefer project venvs, with the central uv base as a fallback.
+# Activate a project-local venv; uv itself is installed natively (on PATH).
 ve() {
-  local local_activate=".venv/bin/activate"
-  local base_activate="$HOME/apps/uv/central_venv_repo/base/.venv/bin/activate"
-  if [ -f "$local_activate" ]; then
-    . "$local_activate"
-  elif [ -f "$base_activate" ]; then
-    . "$base_activate"
-  fi
-}
-# Manual ~/apps/uv installs need isolated env paths; normal Omarchy installs do not.
-if [ -d "$HOME/apps/uv" ]; then
-  uv_dir="$HOME/apps/uv"
-  export UV_UNMANAGED_INSTALL="$uv_dir" UV_INSTALL_DIR="$uv_dir" \
-    UV_TOOL_DIR="$uv_dir/tools" UV_PYTHON_INSTALL_DIR="$uv_dir/python" \
-    UV_TOOL_BIN_DIR="$uv_dir/bin" UV_CACHE_DIR="$uv_dir/cache" \
-    UV_PYTHON_BIN_DIR="$uv_dir/python/bin"
-  unset uv_dir
-fi
-
-# ── GCP ──────────────────────────────────────────────────────────────────────
-# Manual SDK installs need sourcing; AUR-installed gcloud is already on PATH.
-gssh() {
-  local ip
-  ip="$(gcloud compute instances describe "$1" --format='get(networkInterfaces[0].networkIP)' "${@:2}")"
-  echo "$ip"
-  ssh "$ip"
-}
-if [ -d "$HOME/apps/google-cloud-sdk" ]; then
-  [ -f "$HOME/apps/google-cloud-sdk/path.bash.inc" ] && . "$HOME/apps/google-cloud-sdk/path.bash.inc"
-  [ -f "$HOME/apps/google-cloud-sdk/completion.bash.inc" ] && . "$HOME/apps/google-cloud-sdk/completion.bash.inc"
-fi
-[ -d "$HOME/apps/cloud-sql-proxy" ] && case ":$PATH:" in
-  *":$HOME/apps/cloud-sql-proxy:"*) ;; *) export PATH="$PATH:$HOME/apps/cloud-sql-proxy" ;;
-esac
-
-# ── VPN ──────────────────────────────────────────────────────────────────────
-exitnode() {
-  if [ "$1" = "up" ]; then
-    tailscale exit-node suggest | awk -F ": " '/Suggested exit node/ {print $2}' |
-      xargs -I {} sudo tailscale set --exit-node={} --exit-node-allow-lan-access=true
-  elif [ "$1" = "down" ]; then
-    sudo tailscale set --exit-node=
-  else
-    echo "Usage: exitnode up|down"
-  fi
-}
-vpns() {
-  local wg_up=false ts_up=false
-  ip link show cypris &>/dev/null && wg_up=true
-  tailscale status --json 2>/dev/null | grep -q '"ExitNode": true' && ts_up=true
-  if $wg_up; then
-    echo "wireguard -> mullvad..."
-    sudo wg-quick down cypris
-    exitnode up
-  elif $ts_up; then
-    echo "mullvad -> wireguard..."
-    exitnode down
-    sudo wg-quick up cypris
-  else
-    echo "Error: neither wireguard nor mullvad is active"
-    return 1
-  fi
+  [ -f ".venv/bin/activate" ] && . ".venv/bin/activate"
 }

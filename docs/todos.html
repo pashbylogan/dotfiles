@@ -124,11 +124,16 @@
               >/<code>zig</code>/<code>hugo</code>/<code>heroku</code>/<code>opencode</code>/<code
                 >dbmate</code
               >
-              PATH/aliases. Kept GCP/gcloud, VPN, and uv/python as
-              <strong>guarded <code>~/apps</code> fallbacks</strong> (official
-              Omarchy install preferred — see <code>packages.txt</code>).
-              <code>hypr.conf</code> / <code>tmux.conf</code> /
-              <code>ssh/config</code> were already minimal (no Omarchy overlap).
+              PATH/aliases. GCP/gcloud, VPN, and uv/python were kept as
+              <strong>guarded <code>~/apps</code> fallbacks</strong>, then fully
+              cut on 2026-05-31: <code>uv</code> is native on PATH, gcloud now
+              installs via
+              <code>packages.aur.txt</code> (<code>google-cloud-cli</code>), and
+              the GCP/VPN helpers moved to gitignored
+              <code>shell.local.sh</code> (see the "Isolate personal dotfile
+              payloads" backlog row). <code>hypr.conf</code> /
+              <code>tmux.conf</code> / <code>ssh/config</code> were already
+              minimal (no Omarchy overlap).
             </td>
             <td><span class="badge badge-done">done</span></td>
           </tr>
@@ -541,6 +546,12 @@
               <code>~/.ssh/config.local</code> (from
               <code>ssh/.ssh/config.local.example</code>) holds personal hosts
               such as <code>gollum</code>.
+              <strong>Shell done (2026-05-31):</strong> personal aliases,
+              functions (<code>gssh</code>, VPN
+              <code>vpns</code>/<code>exitnode</code>), and the Ctrl-F
+              sessionizer bind moved to gitignored <code>shell.local.sh</code>;
+              tracked <code>shell.sh</code> is now generic. SSH hosts,
+              <code>bin/</code> scripts, and other config still pending.
             </td>
           </tr>
           <tr>
@@ -565,14 +576,24 @@
             <td>Keybinding parity</td>
             <td>
               Bring over personal keybindings from the old i3 config on the
-              other branch. Diff the i3 binds against the current Hyprland set
-              (<code>omarchy menu keybindings --print</code> for the live
-              baseline), then port the ones worth keeping into the shared
-              <code>hypr.conf</code> overlay — using <code>unbind</code> before
-              re-<code>bind</code> on conflicts and <code>bindd</code> so they
-              appear in omarchy's cheatsheet, matching the existing
-              <code>SUPER+T</code> / screenshot overrides. Keep host-specific or
-              one-off binds in <code>hypr.local.conf</code>.
+              other branch. <strong>Reviewed 2026-05-31:</strong> the old binds
+              were Alt-based and Omarchy already covers nearly all of them under
+              SUPER (terminal, focus via <code>SUPER+arrows</code>, workspaces
+              <code>SUPER+1‑0</code>, fullscreen, close <code>SUPER+W</code>,
+              float <code>SUPER+Shift+V</code>, lock <code>SUPER+Ctrl+L</code>,
+              resize <code>SUPER+ -/=</code>, launcher <code>SUPER+Space</code>,
+              move via <code>SUPER+Shift+arrows</code> swap) — owner chose
+              Omarchy's over remapping, so nothing was ported.
+              <strong>Deferred:</strong> vim-directional focus
+              (<code>SUPER+H/J/K/L</code>) needs unbinding Omarchy's
+              <code>SUPER+J/K/L</code> (split / keybindings cheatsheet /
+              layout-toggle), which the owner declined; revisit if arrow-key
+              focus grates. Move-window resolved: Omarchy's
+              <code>SUPER+Shift+arrows</code> swap (tiled) plus
+              <code>SUPER</code>+drag (floating, via <code>moveactive</code>)
+              suffice — a float-aware <code>hypr-move</code> wrapper was
+              considered and declined. Force-quit for close-to-tray apps moved
+              to the "Waybar system tray icons" row below.
             </td>
           </tr>
           <tr>
@@ -730,7 +751,13 @@
               <code>tray</code> module is present but hidden, whether the module
               needs to be inserted via <code>waybar/deltas.jq</code>, and
               whether appindicator/status-notifier support or per-app
-              close/minimize settings are the real blocker.
+              close/minimize settings are the real blocker. Also in scope: a
+              <strong>force-quit keybind</strong> — bind
+              <code>SUPER+Shift+Q</code> to Hyprland's
+              <code>forcekillactive</code> (SIGKILL, no save prompt) as the
+              explicit "actually quit this app" action, distinct from Omarchy's
+              graceful <code>SUPER+W</code> (<code>killactive</code>) that
+              close-to-tray apps ignore.
             </td>
           </tr>
         </tbody>

@@ -296,8 +296,11 @@
               <code class="meta">D-SECRETS-LOCAL</code> Secrets/host-specific
             </td>
             <td>
-              Gitignored <code>shell.local.sh</code> (Vertex project IDs, device
-              serials).
+              Gitignored <code>shell.local.sh</code> holds personal and
+              device-specific aliases, functions, and keybinds (Vertex project
+              IDs, device serials, the Ctrl-F sessionizer bind, VPN/GCP helpers)
+              — never install-path redirects, since Omarchy installs tools (uv,
+              gcloud, …) natively on PATH.
             </td>
             <td>Keep the shared repo generic and secret-free.</td>
           </tr>
@@ -354,11 +357,16 @@
           </tr>
           <tr id="D-NVIM-KEYMAPS">
             <td><code class="meta">D-NVIM-KEYMAPS</code> nvim keymaps</td>
-            <td><span class="badge badge-done">carry (narrow)</span></td>
+            <td><span class="badge badge-done">carry</span></td>
             <td>
-              Only <code>&lt;leader&gt;y</code> clipboard maps, via a managed
-              block in Omarchy's <code>keymaps.lua</code> — not the nvim tree
-              (<a href="findings.html#F-NVIM-OWNED">F-NVIM-OWNED</a>).
+              Personal keymaps + options live in a tracked Lua fragment
+              (<code>~/.config/dotfiles/nvim.lua</code>) loaded by a one-line
+              <code>dofile</code> managed block in Omarchy's
+              <code>keymaps.lua</code> — the fragment sits in our own namespace,
+              not the cp-reset nvim tree (<a href="findings.html#F-NVIM-OWNED"
+                >F-NVIM-OWNED</a
+              >). Maps that clash with LazyVim which-key groups
+              (<code>&lt;leader&gt;f/s/d/x</code>) are omitted.
             </td>
           </tr>
           <tr>
