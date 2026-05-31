@@ -155,6 +155,14 @@
       "related": ["D-CAPS-CTRL"]
     },
     {
+      "id": "D-SCREENSHOT-FALLBACK",
+      "title": "SUPER+SHIFT+S screenshot fallback while the keyboard PRINT key emits no Linux input event",
+      "canonical": "decisions.html#D-SCREENSHOT-FALLBACK",
+      "appears_in": [],
+      "code_paths": ["hypr/.config/dotfiles/hypr.conf"],
+      "related": ["D-DELTA-STORAGE", "F-HYPR-SEAM"]
+    },
+    {
       "id": "D-MOUSE-ACCEL",
       "title": "External MX Master mouse accel in gitignored hypr.local.conf (device-specific)",
       "canonical": "decisions.html#D-MOUSE-ACCEL",
