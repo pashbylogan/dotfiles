@@ -497,17 +497,6 @@
           </tr>
           <tr>
             <td>
-              <span class="badge badge-future">future</span>
-              <code>omarchy/</code> stow package
-            </td>
-            <td>When there's a real custom hook or branding file to track</td>
-            <td>
-              Excluded from the initial stow set (git can't track empty dirs;
-              <code>stow omarchy</code> would fail).
-            </td>
-          </tr>
-          <tr>
-            <td>
               <span class="badge badge-future">future</span> Terminal config
             </td>
             <td>If a genuine ghostty/terminal delta emerges</td>
@@ -550,13 +539,55 @@
           </tr>
           <tr>
             <td>
-              <span class="badge badge-future">future</span> Nautilus icons →
-              Yaru
+              <span class="badge badge-future">future</span> Folder icon
+              variants (gray-body / colored-fold aesthetic)
             </td>
-            <td>Theming</td>
+            <td>If revisiting Nautilus theming</td>
             <td>
-              Make the omarchy themes use the Yaru icon theme in Nautilus (GTK
-              icon-theme via dconf or a <code>theme-set</code> hook).
+              Investigated 2026-05-30 and backed out — keeping the trade-off
+              study so future-me doesn't re-tread:
+              <ul>
+                <li>
+                  The "gray body, accent in the fold" look is the
+                  <strong>2020-era Yaru</strong> design (Ubuntu 20.04 era).
+                  Upstream Yaru dropped it in ~22.04; modern Yaru and every
+                  bundled accent variant on omarchy ships fully-tinted folder
+                  bodies. <code>Yaru-*-dark</code> siblings only adjust
+                  status-bar glyphs for dark backgrounds — folder PNGs are
+                  near-identical to the light siblings.
+                </li>
+                <li>
+                  The design survives in the
+                  <a href="https://github.com/Jannomag/Yaru-Colors"
+                    >Jannomag/Yaru-Colors</a
+                  >
+                  fork (AUR <code>yaru-colors-icon-theme</code>; upstream
+                  unmaintained). But the fork only ships
+                  <code>places/</code> (folder) icons — verified
+                  <strong>0 app icons</strong> across the whole tree. Its
+                  <code>Inherits=Yaru,Humanity,hicolor</code> chain means GTK
+                  app-icon lookups fall through to plain Yaru's orange palette.
+                </li>
+                <li>
+                  Net effect of installing the fork + flipping gsettings:
+                  Nautilus shows gray-body folders ✓, walker shows
+                  <strong>orange</strong> app icons (Yaru fallback). The
+                  Nautilus/walker mismatch was the reason this got reverted.
+                </li>
+                <li>
+                  Mismatch is structural to the fork's design. Three landable
+                  paths if revisited: (a) accept gray-folders + orange-apps; (b)
+                  pivot to <em>Papirus</em>/<em>Tela</em>/<em>Reversal</em>
+                  — full app sets but fully-tinted folder bodies (different
+                  aesthetic); (c) author a custom merged theme (Yaru-Colors
+                  folders + Papirus apps), fragile across package updates.
+                </li>
+                <li>
+                  Effort: high. Re-opening this without a clean aesthetic spec
+                  just churns. Likely best to wait for an upstream icon theme
+                  that ships gray-body folders <em>and</em> a coherent app set.
+                </li>
+              </ul>
             </td>
           </tr>
           <tr>
