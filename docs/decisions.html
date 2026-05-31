@@ -456,7 +456,8 @@
             <td><code class="meta">D-LOOKNFEEL</code> Looknfeel deltas</td>
             <td><span class="badge badge-done">in (fragment)</span></td>
             <td>
-              Two overlay-sourced-last deltas to omarchy's looknfeel chain: (1)
+              Three overlay-sourced-last deltas to omarchy's looknfeel chain:
+              (1)
               <code>general { border_size = 2 }</code> so the
               <code>window-no-gaps</code> toggle keeps killing gaps without also
               killing borders — this is the single line in any overlay that
@@ -470,7 +471,12 @@
               >
               in <code>default/hypr/apps/system.conf</code>), but state-based on
               the floating bit instead of a tag, so tiles stay square (omarchy
-              global default) and any floating window rounds. Edits to
+              global default) and any floating window rounds; (3)
+              <code>decoration { blur { size = 8; brightness = 0.72 } }</code>
+              plus
+              <code>windowrule = opacity 0.86 0.78, match:tag terminal</code>
+              so terminals get a mild frosted-glass effect without hard-coding
+              terminal colors or breaking omarchy theme swaps. Edits to
               <code>~/.config/hypr/looknfeel.conf</code> wouldn't fix the border
               problem because that file loads <em>before</em> the window-no-gaps
               toggle in hyprland.conf's source chain — only an overlay sourced

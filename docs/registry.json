@@ -172,7 +172,7 @@
     },
     {
       "id": "D-LOOKNFEEL",
-      "title": "Hyprland looknfeel deltas in the owned fragment: pin border_size = 2 past the window-no-gaps toggle, and round only floating windows via per-window windowrule (tiles stay omarchy-default square)",
+      "title": "Hyprland looknfeel deltas in the owned fragment: pin border_size = 2 past the window-no-gaps toggle, round only floating windows, and use theme-preserving terminal blur/opacity",
       "canonical": "decisions.html#D-LOOKNFEEL",
       "appears_in": ["findings.html"],
       "code_paths": [
