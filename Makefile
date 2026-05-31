@@ -60,6 +60,9 @@ update: ## Update packages/Omarchy migrations, then `make verify`
 	@# Still run verify after non-reboot updater failures so drift is visible.
 	@printf "$$ omarchy update -y\n"
 	@omarchy update -y || printf "\nWARN: 'omarchy update -y' returned non-zero (benign if a reboot was requested).\n"
+	@printf "\nUpdating uv...\n"
+	@if command -v uv >/dev/null 2>&1; then printf "$$ uv self update\n"; uv self update || printf "\nWARN: 'uv self update' returned non-zero.\n"; else printf "SKIP: uv not found on PATH.\n"; fi
+	@printf "\nNote: JetBrains IDEs managed by jetbrains-toolbox update via Toolbox's own UI.\n"
 	@printf "\nPost-update verify:\n"
 	@printf "$$ $(MAKE) --no-print-directory verify\n"
 	@$(MAKE) --no-print-directory verify
@@ -70,9 +73,6 @@ update-firmware: ## Update firmware and self-managed non-package tools (fwupd + 
 	@printf "Note: firmware and self-managed updater outcomes are not package-like; review prompts carefully.\n\n"
 	@printf "\n$$ omarchy update firmware\n"
 	@omarchy update firmware || printf "\nWARN: 'omarchy update firmware' returned non-zero (no fwupd devices? offline? expected on some hardware).\n"
-	@printf "\nUpdating uv...\n"
-	@if command -v uv >/dev/null 2>&1; then printf "$$ uv self update\n"; uv self update || printf "\nWARN: 'uv self update' returned non-zero.\n"; else printf "SKIP: uv not found on PATH.\n"; fi
-	@printf "\nNote: JetBrains IDEs managed by jetbrains-toolbox update via Toolbox's own UI.\n"
 
 verify: ## Health-check the live overlay (hyprctl, managed blocks, stow links, dev-env tools, XDG dirs)
 	bash .github/scripts/verify.sh
