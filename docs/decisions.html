@@ -112,13 +112,19 @@
                   <code>make fmt</code> auto-fixes.
                 </li>
                 <li>
-                  <code>make update</code> — chained refresh of everything
-                  package-manager-reachable: <code>omarchy update -y</code>
-                  (pacman + AUR + omarchy migrations) +
+                  <code>make update</code> — package/update-migration path:
+                  <code>omarchy update -y</code> (pacman + AUR + omarchy
+                  migrations), then <code>make verify</code>. The update step is
+                  warn-on-failure so a non-zero exit (reboot decline/request,
+                  package-manager interruption, etc.) stays visible.
+                </li>
+                <li>
+                  <code>make update-firmware</code> — non-package update path:
                   <code>omarchy update firmware</code> (fwupd) +
-                  <code>uv self update</code>, then <code>make verify</code>.
-                  Each step is warn-on-failure so a non-zero exit (no firmware
-                  devices, reboot decline, etc.) doesn't silently skip the rest.
+                  <code>uv self update</code>. These stay separate from
+                  <code>make update</code> because firmware/self-managed
+                  updaters have different prompts, reboot or power-cycle
+                  outcomes, and expected failures than package updates.
                 </li>
                 <li>
                   <code>make verify</code> — read-only live health check
@@ -173,7 +179,8 @@
               <code>omarchy install dev-env</code> pulls latest at the time it
               runs (mise <code>@latest</code>, Astral installer), so a fresh
               bootstrap on different days may yield different versions;
-              <code>make update</code> is the deliberate bumper.
+              <code>make update-firmware</code> is the deliberate bumper for
+              self-managed tool updates.
             </td>
           </tr>
           <tr id="D-PKG-REMOVE">

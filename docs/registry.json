@@ -61,7 +61,7 @@
     },
     {
       "id": "D-CI",
-      "title": "Makefile is the single source of truth for repo operations (CI gates + `update` orchestrator + `verify` live health check); CI invokes it",
+      "title": "Makefile is the single source of truth for repo operations (CI gates + package `update`, separate `update-firmware`, and `verify` live health check); CI invokes it",
       "canonical": "decisions.html#D-CI",
       "appears_in": ["architecture.html", "todos.html"],
       "code_paths": [

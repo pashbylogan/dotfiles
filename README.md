@@ -110,13 +110,14 @@ gitignored and sourced automatically. [D-SECRETS-LOCAL]
 
 ## Daily use
 
-| Command         | What it does                                                |
-| ---             | ---                                                         |
-| `./install`     | Re-converge the overlay                                     |
-| `make ci`       | Lint + format check + docs integrity (run before committing) |
-| `make fmt`      | Auto-fix formatting (shfmt + prettier)                       |
-| `make verify`   | Live overlay health check (read-only)                       |
-| `make update`   | omarchy + firmware + uv update, then `make verify`           |
+| Command                | What it does                                                 |
+| ---                    | ---                                                          |
+| `./install`            | Re-converge the overlay                                      |
+| `make ci`              | Lint + format check + docs integrity (run before committing) |
+| `make fmt`             | Auto-fix formatting (shfmt + prettier)                       |
+| `make verify`          | Live overlay health check (read-only)                        |
+| `make update`          | Omarchy/pacman/AUR update, then `make verify`                |
+| `make update-firmware` | Firmware + self-managed non-package updates (fwupd + uv)     |
 
 ## Updates
 
@@ -124,7 +125,17 @@ gitignored and sourced automatically. [D-SECRETS-LOCAL]
 make update
 ```
 
-Chains `omarchy update -y` (pacman + AUR + omarchy migrations) +
-`omarchy update firmware` (fwupd) + `uv self update`, then `make verify`.
-Each step is warn-on-failure so a non-zero exit doesn't silently skip the
-rest. [F-CLI]
+Runs `omarchy update -y` (pacman + AUR + Omarchy migrations), then
+`make verify`. The update step is warn-on-failure so a reboot prompt or other
+non-zero exit still leaves a visible verify boundary when the shell continues.
+[F-CLI]
+
+```sh
+make update-firmware
+```
+
+Runs the non-package update channels separately: `omarchy update firmware`
+(fwupd) and `uv self update`. Firmware and self-managed tool updates can have
+different prompts, reboot/power-cycle outcomes, and failure modes than package
+updates, so they stay opt-in. JetBrains IDEs managed by Toolbox still update via
+Toolbox's own UI. [F-CLI]

@@ -22,7 +22,7 @@ DOCS_CHECK     := .github/scripts/check_docs.py
 JQ_FILTERS     := $(wildcard waybar/*.jq)
 
 .DEFAULT_GOAL := help
-.PHONY: help ci fmt tools update verify
+.PHONY: help ci fmt tools update update-firmware verify
 
 # ── checks ───────────────────────────────────────────────────────────────────
 help: ## Show this menu
@@ -53,17 +53,26 @@ tools: ## Show required tools + how to install them on Omarchy
 	@if command -v python3 >/dev/null 2>&1; then echo "  python3:    $$(python3 --version | awk '{print $$2}')"; else echo "  python3:    MISSING"; fi
 
 # ── machine maintenance ──────────────────────────────────────────────────────
-# Omarchy's main updater skips firmware and self-managed uv, so compose them here.
-# JetBrains Toolbox IDEs still require their GUI updater.
-update: ## Update everything: omarchy/pacman/AUR + firmware + uv, then `make verify`
-	@printf "Note: if 'omarchy update -y' triggers a reboot, the firmware/uv/verify steps below will NOT run automatically — re-invoke 'make update' afterwards.\n\n"
-	@# Keep later update channels running after expected partial failures.
-	omarchy update -y || printf "\nWARN: 'omarchy update -y' returned non-zero (benign if a reboot was requested).\n"
-	omarchy update firmware || printf "\nWARN: 'omarchy update firmware' returned non-zero (no fwupd devices? offline? expected on some hardware).\n"
-	@if command -v uv >/dev/null 2>&1; then printf "\nUpdating uv...\n"; uv self update || true; fi
-	@printf "\nNote: JetBrains IDEs managed by jetbrains-toolbox update via Toolbox's own UI.\n"
+# Keep package updates separate from firmware/self-managed channels because
+# their prompts, reboot behavior, and failure modes are different. [D-CI]
+update: ## Update packages/Omarchy migrations, then `make verify`
+	@printf "Note: if 'omarchy update -y' triggers a reboot, the verify step below will NOT run automatically — re-invoke 'make update' afterwards.\n\n"
+	@# Still run verify after non-reboot updater failures so drift is visible.
+	@printf "$$ omarchy update -y\n"
+	@omarchy update -y || printf "\nWARN: 'omarchy update -y' returned non-zero (benign if a reboot was requested).\n"
 	@printf "\nPost-update verify:\n"
+	@printf "$$ $(MAKE) --no-print-directory verify\n"
 	@$(MAKE) --no-print-directory verify
+
+# Firmware and self-managed tools are intentionally opt-in; they can have
+# device-specific reboot/power-cycle outcomes unlike package updates. [D-CI]
+update-firmware: ## Update firmware and self-managed non-package tools (fwupd + uv)
+	@printf "Note: firmware and self-managed updater outcomes are not package-like; review prompts carefully.\n\n"
+	@printf "\n$$ omarchy update firmware\n"
+	@omarchy update firmware || printf "\nWARN: 'omarchy update firmware' returned non-zero (no fwupd devices? offline? expected on some hardware).\n"
+	@printf "\nUpdating uv...\n"
+	@if command -v uv >/dev/null 2>&1; then printf "$$ uv self update\n"; uv self update || printf "\nWARN: 'uv self update' returned non-zero.\n"; else printf "SKIP: uv not found on PATH.\n"; fi
+	@printf "\nNote: JetBrains IDEs managed by jetbrains-toolbox update via Toolbox's own UI.\n"
 
 verify: ## Health-check the live overlay (hyprctl, managed blocks, stow links, dev-env tools, XDG dirs)
 	bash .github/scripts/verify.sh

@@ -304,7 +304,8 @@
                   README notes that <code>omarchy install dev-env</code>
                   pulls latest at install time, so a fresh bootstrap on
                   different days may yield different Python/uv/go versions;
-                  <code>make update</code> is the deliberate bumper.
+                  <code>make update-firmware</code> is the deliberate bumper for
+                  self-managed tool updates.
                 </li>
               </ul>
             </td>
@@ -328,11 +329,11 @@
                   >).
                 </li>
                 <li>
-                  <code>Makefile :: update</code> — each chain step may now fail
-                  independently with a visible WARN, rather than silently
-                  aborting downstream uv/verify. Banner up-front warns that a
-                  mid-flight reboot from <code>omarchy update -y</code> will
-                  skip the rest.
+                  <code>Makefile :: update</code> /
+                  <code>update-firmware</code> — each update channel may now
+                  fail with a visible WARN, and firmware/self-managed updates
+                  are split from package updates because their prompts and
+                  reboot outcomes differ.
                 </li>
                 <li>
                   <code>verify.sh</code> — detects dangling stow symlinks (the
