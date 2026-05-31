@@ -717,6 +717,22 @@
               added for <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a>.
             </td>
           </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Waybar system tray
+              icons
+            </td>
+            <td>App lifecycle visibility</td>
+            <td>
+              Investigate getting Slack, Discord, and similar background apps
+              into Waybar's tray so close-to-tray behavior is visible and it is
+              easy to confirm they really quit. Check whether Omarchy's seeded
+              <code>tray</code> module is present but hidden, whether the module
+              needs to be inserted via <code>waybar/deltas.jq</code>, and
+              whether appindicator/status-notifier support or per-app
+              close/minimize settings are the real blocker.
+            </td>
+          </tr>
         </tbody>
       </table>
 
