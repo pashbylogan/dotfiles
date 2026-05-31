@@ -20,9 +20,13 @@
       "id": "D-SCRIPTS-MINIMAL",
       "title": "One script (install) only; updates/cleanup are manual",
       "canonical": "decisions.html#D-SCRIPTS-MINIMAL",
-      "appears_in": ["README.md", "augmentation-approach.html"],
+      "appears_in": [
+        "README.md",
+        "augmentation-approach.html",
+        "findings.html"
+      ],
       "code_paths": ["install", "README.md"],
-      "related": ["D-ENGINE", "F-CLI", "D-CI", "D-PKG-REMOVE"]
+      "related": ["D-ENGINE", "F-CLI", "D-CI", "D-PKG-REMOVE", "F-SSH-AGENT"]
     },
     {
       "id": "D-DELTA-STORAGE",
@@ -346,6 +350,23 @@
         "D-MONITORS",
         "F-MONITOR-RULE-APPLY",
         "F-REFRESH-WRITETHROUGH"
+      ]
+    },
+    {
+      "id": "F-SSH-AGENT",
+      "title": "Omarchy ships ssh-agent.socket disabled and never exports SSH_AUTH_SOCK; overlay adds a guarded shell export (honors pre-existing SSH_AUTH_SOCK, skips when XDG_RUNTIME_DIR unset), pairs with a one-time `systemctl --user enable` per machine, uses `AddKeysToAgent yes` so the passphrase prompt is once per session, and is verified by `make verify`",
+      "canonical": "findings.html#F-SSH-AGENT",
+      "appears_in": ["README.md"],
+      "code_paths": [
+        "bash/.config/dotfiles/shell.sh",
+        "ssh/.ssh/config",
+        ".github/scripts/verify.sh"
+      ],
+      "related": [
+        "D-SHELL-SEAM",
+        "D-CARRY-SET",
+        "F-BASH-CHAIN",
+        "D-SCRIPTS-MINIMAL"
       ]
     }
   ]

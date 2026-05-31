@@ -483,6 +483,48 @@
         <code>hyprdynamicmonitors</code> would fill it but is not bundled.
       </p>
 
+      <h2 id="F-SSH-AGENT">
+        Omarchy ships ssh-agent dormant <code class="meta">F-SSH-AGENT</code>
+      </h2>
+      <p>
+        OpenSSH installs <code>ssh-agent.socket</code> as a systemd user unit at
+        <code>/usr/lib/systemd/user/ssh-agent.socket</code>, but the unit ships
+        <strong>disabled</strong> and Omarchy's shell init never exports
+        <code>SSH_AUTH_SOCK</code>. A fresh box that runs <code>ssh-add</code>
+        therefore gets "Could not open a connection to your authentication
+        agent." Two one-time costs make the socket usable: a per-machine
+        <code>systemctl --user enable --now ssh-agent.socket</code> (manual per
+        <a href="decisions.html#D-SCRIPTS-MINIMAL">D-SCRIPTS-MINIMAL</a>) plus a
+        single <code>SSH_AUTH_SOCK</code> export added at the end of our shell
+        chain (<a href="findings.html#F-BASH-CHAIN">F-BASH-CHAIN</a>).
+      </p>
+      <p>
+        Socket activation means the agent process is <em>lazy-spawned</em> on
+        first connection to the socket, not at boot — so a fresh session starts
+        with no keys cached, and they stay uncached across reboots unless
+        something re-adds them. The matching <code>~/.ssh/config</code> delta
+        (<code>AddKeysToAgent yes</code> under <code>Host *</code>) reduces this
+        to one passphrase prompt per session without pulling in
+        <code>gnome-keyring</code>, <code>keychain</code>, or
+        <code>pam_ssh</code>. Omarchy's official docs are silent on SSH key
+        management, so this is an upstream-Arch convention bolted on as a small
+        delta rather than an Omarchy-blessed flow.
+      </p>
+      <p>
+        The shell export is guarded — it only fires when
+        <code>SSH_AUTH_SOCK</code> is unset <em>and</em>
+        <code>XDG_RUNTIME_DIR</code> is set. The first guard preserves a
+        pre-existing agent path (forwarded <code>ssh -A</code> sockets,
+        1Password's <code>~/.1password/agent.sock</code>,
+        <code>gcr-ssh-agent.socket</code> publishing
+        <code>$XDG_RUNTIME_DIR/gcr/ssh</code>, <code>gpg-agent</code> with SSH
+        emulation) instead of silently overriding it; the second avoids the
+        root-relative <code>/ssh-agent.socket</code> footgun under interactive
+        shells without a logind seat (<code>su -</code>,
+        <code>docker exec -it</code>, chroots without
+        <code>/run/user/$UID</code>).
+      </p>
+
       <h2>Sources</h2>
       <ul class="clean">
         <li>

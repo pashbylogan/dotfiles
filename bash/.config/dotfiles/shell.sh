@@ -15,6 +15,14 @@ alias gs='git status'
 alias gap='git add -p'
 alias sz='source ~/.bashrc'
 
+# ── ssh-agent ────────────────────────────────────────────────────────────────
+# Both guards are load-bearing: don't clobber a pre-existing SSH_AUTH_SOCK
+# (ssh -A, 1Password, gcr-ssh-agent, gpg-agent), and skip when XDG_RUNTIME_DIR
+# is unset to avoid the root-relative `/ssh-agent.socket` footgun. [F-SSH-AGENT]
+if [ -z "${SSH_AUTH_SOCK:-}" ] && [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+  export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
+fi
+
 # ── git worktrees ────────────────────────────────────────────────────────────
 # Keep worktree verbs separate from Omarchy's new-branch aliases.
 wta() { git worktree add "$@"; }

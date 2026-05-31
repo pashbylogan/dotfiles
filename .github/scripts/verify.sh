@@ -87,6 +87,16 @@ check_link "$HOME/.config/dotfiles/hypr.conf"
 check_link "$HOME/.ssh/config"
 check_link "$HOME/.config/tmux/local.conf"
 
+# ── ssh-agent socket ─────────────────────────────────────────────────────────
+# shell.sh's SSH_AUTH_SOCK export is dead unless this unit is enabled. [F-SSH-AGENT]
+if state=$(systemctl --user is-enabled ssh-agent.socket 2>/dev/null); then
+  pass "ssh-agent.socket $state"
+elif [ -z "${state:-}" ]; then
+  skip "ssh-agent.socket (systemd user manager not reachable)"
+else
+  miss "ssh-agent.socket $state — run 'systemctl --user enable --now ssh-agent.socket' (F-SSH-AGENT)"
+fi
+
 # ── dev-env tools ────────────────────────────────────────────────────────────
 # Dev-env tool paths can move; ownership contract matters more than location.
 # Report pacman ownership first because ./install can reconcile that drift.
