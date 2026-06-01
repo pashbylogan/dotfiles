@@ -129,12 +129,12 @@
                 <li>
                   <code>make verify</code> — read-only live health check
                   (<code>.github/scripts/verify.sh</code>): hyprctl
-                  configerrors, all five managed blocks present (bashrc, hypr,
-                  keymaps, tmux, waybar style.css), stow links resolve into the
-                  repo (including dangling detection), dev-env tools on PATH and
-                  not pacman-owned, XDG state, and the default-tracking override
-                  comparison (border_size = 2 vs omarchy's looknfeel.conf
-                  default — see
+                  configerrors, all six managed blocks present (bashrc, hypr,
+                  keymaps, tmux, waybar style.css, alacritty), stow links
+                  resolve into the repo (including dangling detection), dev-env
+                  tools on PATH and not pacman-owned, XDG state, and the
+                  default-tracking override comparison (border_size = 2 vs
+                  omarchy's looknfeel.conf default — see
                   <a href="decisions.html#D-LOOKNFEEL">D-LOOKNFEEL</a>).
                 </li>
               </ul>
@@ -699,6 +699,37 @@
               snug but not pinched). The override wins via CSS's later-rule-wins
               ordering — our managed block sits at EOF of
               <code>style.css</code>, after omarchy's per-module rules.
+              <strong>Tray menu hover:</strong> the same block also restores the
+              right-click tray (dbusmenu) context-menu hover highlight.
+              omarchy's <code>* { background-color: @background }</code> reset
+              loads at GTK <em>application</em> priority, beating the theme's
+              <code>menuitem:hover</code> by priority rather than specificity —
+              so hovered rows never highlighted. Worse, that reset paints an
+              opaque <code>@background</code> box on <em>every</em> node,
+              including each menuitem's label, so a row-level highlight would
+              only show at the edges with a dark box behind the text. The fix is
+              two same-sheet rules that win by specificity: clear the box on the
+              menuitem content nodes
+              (<code>label</code>/<code>arrow</code>/<code>check</code>/<code
+                >radio</code
+              >
+              → <code>background-color: transparent</code>), then tint the
+              hovered row with
+              <code>alpha(@theme_selected_bg_color, 0.4)</code>. The tint —
+              rather than a solid fill with a foreground/background flip — keeps
+              the menu's dark base so the unchanged light text stays readable;
+              the label-color override a solid highlight would need doesn't take
+              in GTK3's menu nodes (the text rendered invisible).
+              <code>@theme_selected_bg_color</code> is GTK's built-in selection
+              accent (always defined), so it gives a distinct hue without
+              hardcoding. omarchy exposes only <code>@foreground</code>/<code
+                >@background</code
+              >
+              to waybar CSS and keeps its per-theme accent (<code>#7aa2f7</code>
+              for Tokyo Night) in <code>colors.toml</code>, which GTK CSS can't
+              read — matching the accent per-theme would need a separate
+              <code>theme-set</code> hook bridge, out of scope for a tray
+              highlight.
             </td>
             <td>
               Forking the whole file would silently drop every future surgical
@@ -716,6 +747,79 @@
               coalescing, but it's the cheapest practical cadence. A verbose 1 s
               clock tick was considered and deliberately rejected because it
               would prevent deep C-states.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Terminal (Alacritty) deltas</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Choice</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="D-ALACRITTY-MOUSE">
+            <td>
+              <code class="meta">D-ALACRITTY-MOUSE</code> Disable right-click
+              paste
+            </td>
+            <td>
+              <strong
+                >A managed block in
+                <code>~/.config/alacritty/alacritty.toml</code> binds
+                <code>Right</code> mouse to
+                <code>action = "None"</code>.</strong
+              >
+              Alacritty's built-in default is right-click =
+              <code>ExpandSelection</code> and middle-click =
+              <code>PasteSelection</code> (primary selection); omarchy ships no
+              <code>[mouse]</code> config, so the no-op overlays the built-in
+              default and right-click stops doing anything (no paste). Appended
+              at EOF via the same <code>upsert_block</code> helper as the other
+              integration blocks; Alacritty's
+              <code>live_config_reload</code> (default on) picks it up, so
+              <code>install</code> needs no restart step. Shift+Insert paste and
+              OSC52 are untouched.
+            </td>
+            <td>
+              <strong
+                >The managed block is the repo's tracked-delta convention, not
+                omarchy's own recommendation</strong
+              >
+              — omarchy's manual says to edit
+              <code>~/.config/alacritty/alacritty.toml</code> directly, and
+              omarchy treats it as user-editable: its updates surgically
+              <code>sed</code>-patch specific lines in place (the
+              Shift/Ctrl+Insert binds, opacity removal, <code>font-set</code>'s
+              <code>family</code> rewrite) rather than overwriting the file, and
+              only the <em>manual</em>
+              <code>omarchy refresh config alacritty/alacritty.toml</code>
+              <code>cp</code>-resets it. We use a block anyway because a direct
+              edit isn't reproducible: the repo's job is to re-apply tracked
+              deltas on every <code>./install</code>, demarcated from omarchy's
+              content, idempotently — the same pattern as the other integration
+              blocks, and omarchy's line-targeted <code>sed</code>s leave an EOF
+              block alone. <strong>Not stowed</strong> because both omarchy's
+              <code>sed -i</code> migrations and the manual
+              <code>refresh</code> write <em>through</em> a symlink, so stowing
+              would let omarchy mutate our tracked copy (<a
+                href="findings.html#F-REFRESH-WRITETHROUGH"
+                >F-REFRESH-WRITETHROUGH</a
+              >); owning the whole file would also freeze omarchy's seeded
+              defaults. Owning only the one-line delta (<a
+                href="architecture.html#D-DELTA-STORAGE"
+                >D-DELTA-STORAGE</a
+              >) is the same trade as
+              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>.
+              Alacritty's <code>general.import</code> seam doesn't help: adding
+              our file to that array means editing the owned
+              <code>import</code> line in place (TOML can't merge two
+              <code>import</code> keys via append), which is strictly worse than
+              the appended block.
             </td>
           </tr>
         </tbody>

@@ -739,24 +739,28 @@
           </tr>
           <tr>
             <td>
-              <span class="badge badge-future">future</span> Waybar system tray
+              <span class="badge badge-done">done</span> Waybar system tray
               icons
             </td>
             <td>App lifecycle visibility</td>
             <td>
-              Investigate getting Slack, Discord, and similar background apps
-              into Waybar's tray so close-to-tray behavior is visible and it is
-              easy to confirm they really quit. Check whether Omarchy's seeded
-              <code>tray</code> module is present but hidden, whether the module
-              needs to be inserted via <code>waybar/deltas.jq</code>, and
-              whether appindicator/status-notifier support or per-app
-              close/minimize settings are the real blocker. Also in scope: a
-              <strong>force-quit keybind</strong> — bind
-              <code>SUPER+Shift+Q</code> to Hyprland's
-              <code>forcekillactive</code> (SIGKILL, no save prompt) as the
-              explicit "actually quit this app" action, distinct from Omarchy's
-              graceful <code>SUPER+W</code> (<code>killactive</code>) that
-              close-to-tray apps ignore.
+              Resolved. Omarchy already ships a working <code>tray</code> module
+              (waybar registers the <code>StatusNotifierWatcher</code> + host),
+              nested in its <code>group/tray-expander</code> drawer — kept
+              as-is, so no <code>waybar/deltas.jq</code> insertion. Native apps
+              (Discord) register a tray icon when run with their own "minimize
+              to tray" enabled; Slack is the Chromium webapp, whose
+              <code>--app=</code>
+              window never creates a tray icon, so it can't be trayed from here.
+              The one real bug was the right-click tray (dbusmenu) context menu
+              not highlighting on hover — omarchy's
+              <code>* { background-color }</code> reset loads at GTK application
+              priority and flattens <code>menuitem:hover</code>; fixed in the
+              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>
+              managed CSS block with a higher-specificity hover rule. The
+              proposed <code>SUPER+Shift+Q</code> →
+              <code>forcekillactive</code> force-quit keybind was dropped at the
+              owner's request (handled outside the repo).
             </td>
           </tr>
         </tbody>

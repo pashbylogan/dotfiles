@@ -8,7 +8,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 cd "$REPO"
 
-# Shared ANSI palette (TTY-gated); single source of truth in lib/style.sh.
+# Shared palette + managed-block marker contract; single source of truth in lib/style.sh.
 # shellcheck source=lib/style.sh
 . "$REPO/lib/style.sh"
 step() { printf '\n%s── %s ──%s\n' "$BOLD" "$*" "$NC"; }
@@ -26,7 +26,9 @@ have() { command -v "$1" >/dev/null 2>&1; }
 # Re-anchor managed blocks at EOF because load order decides precedence.
 # Body comes from stdin. [D-DELTA-STORAGE][D-IDEMPOTENT]
 upsert_block() {
-  local file="$1" begin="$2" end="$3" body
+  local file="$1" name="$2" copen="$3" cclose="${4:-}" begin end body
+  begin="$(managed_marker begin "$name" "$copen" "$cclose")"
+  end="$(managed_marker end "$name" "$copen" "$cclose")"
   body="$(cat)"
   if [ ! -f "$file" ]; then
     warn "skip managed block — missing $file"
@@ -287,9 +289,7 @@ done
 step "Integration"
 
 # Source shell additions last so personal aliases win. [D-SHELL-SEAM][F-BASH-CHAIN]
-upsert_block "$HOME/.bashrc" \
-  "# >>> dotfiles managed (shell) >>>" \
-  "# <<< dotfiles managed (shell) <<<" <<'EOF'
+upsert_block "$HOME/.bashrc" shell '#' <<'EOF'
 # [D-SHELL-SEAM] personal shell additions — see docs/decisions.html#D-SHELL-SEAM
 [ -f ~/.config/dotfiles/shell.sh ] && . ~/.config/dotfiles/shell.sh
 [ -f ~/.config/dotfiles/shell.local.sh ] && . ~/.config/dotfiles/shell.local.sh
@@ -303,14 +303,10 @@ source = ~/.config/dotfiles/hypr.conf"
 if [ -f "$HOME/.config/dotfiles/hypr.local.conf" ]; then
   hypr_body+=$'\n'"source = ~/.config/dotfiles/hypr.local.conf"
 fi
-printf '%s\n' "$hypr_body" | upsert_block "$HYPR_CONF" \
-  "# >>> dotfiles managed (hypr) >>>" \
-  "# <<< dotfiles managed (hypr) <<<"
+printf '%s\n' "$hypr_body" | upsert_block "$HYPR_CONF" hypr '#'
 
 # Load our tracked nvim fragment via Omarchy's keymaps.lua, not the cp-reset tree. [D-NVIM-KEYMAPS][F-NVIM-OWNED]
-upsert_block "$HOME/.config/nvim/lua/config/keymaps.lua" \
-  "-- >>> dotfiles managed (keymaps) >>>" \
-  "-- <<< dotfiles managed (keymaps) <<<" <<'EOF'
+upsert_block "$HOME/.config/nvim/lua/config/keymaps.lua" keymaps '--' <<'EOF'
 -- [D-NVIM-KEYMAPS] load the tracked fragment — see docs/decisions.html#D-NVIM-KEYMAPS
 -- Skip silently if absent (e.g. pre-stow); surface real load/exec errors instead
 -- of swallowing them, so a typo in the fragment doesn't degrade nvim in silence.
@@ -322,11 +318,18 @@ end
 EOF
 
 # Source via Omarchy's preferred XDG tmux config so our deltas win. [D-TMUX-KEEP][F-TMUX-XDG]
-upsert_block "$HOME/.config/tmux/tmux.conf" \
-  "# >>> dotfiles managed (tmux) >>>" \
-  "# <<< dotfiles managed (tmux) <<<" <<'EOF'
+upsert_block "$HOME/.config/tmux/tmux.conf" tmux '#' <<'EOF'
 # [D-TMUX-KEEP] personal tmux overlay — see docs/decisions.html#D-TMUX-KEEP
 source-file ~/.config/tmux/local.conf
+EOF
+
+# Overlay Alacritty's built-in right-click (ExpandSelection) with a no-op so it
+# never pastes; omarchy ships no mouse bindings. Alacritty live-reloads. [D-ALACRITTY-MOUSE]
+upsert_block "$HOME/.config/alacritty/alacritty.toml" alacritty '#' <<'EOF'
+# [D-ALACRITTY-MOUSE] right-click → no-op — see docs/decisions.html#D-ALACRITTY-MOUSE
+[[mouse.bindings]]
+mouse = "Right"
+action = "None"
 EOF
 
 # Apply both waybar overlays (config.jsonc via jq, style.css via managed block);
@@ -342,9 +345,7 @@ fi
 WAYBAR_STYLE="$HOME/.config/waybar/style.css"
 if [ -f "$WAYBAR_STYLE" ]; then
   pre_hash=$(sha256sum "$WAYBAR_STYLE" | cut -d' ' -f1)
-  upsert_block "$WAYBAR_STYLE" \
-    "/* >>> dotfiles managed (waybar) >>> */" \
-    "/* <<< dotfiles managed (waybar) <<< */" <<'EOF'
+  upsert_block "$WAYBAR_STYLE" waybar '/*' ' */' <<'EOF'
 /* [D-WAYBAR-DELTAS] Keep the personal #memory module spaced like its
  * right-side neighbors; full rationale lives in docs/decisions.html#D-WAYBAR-DELTAS. */
 #memory,
@@ -357,6 +358,17 @@ if [ -f "$WAYBAR_STYLE" ]; then
 #pulseaudio {
   min-width: 12px;
   margin: 0 4px;
+}
+/* The `*{background-color}` reset boxes every menu node; clear the box on the
+ * content nodes, then tint the hovered row. docs/decisions.html#D-WAYBAR-DELTAS */
+menu menuitem label,
+menu menuitem arrow,
+menu menuitem check,
+menu menuitem radio {
+  background-color: transparent;
+}
+menu menuitem:hover {
+  background-color: alpha(@theme_selected_bg_color, 0.4);
 }
 EOF
   post_hash=$(sha256sum "$WAYBAR_STYLE" | cut -d' ' -f1)

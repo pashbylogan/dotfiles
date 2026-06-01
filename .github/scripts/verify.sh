@@ -7,7 +7,7 @@ set -u
 REPO="$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)"
 
 # ── output helpers ───────────────────────────────────────────────────────────
-# Shared ANSI palette (TTY-gated); single source of truth in lib/style.sh.
+# Shared palette + managed-block marker contract; single source of truth in lib/style.sh.
 # shellcheck source=lib/style.sh
 . "$REPO/lib/style.sh"
 
@@ -43,18 +43,21 @@ fi
 
 # ── managed blocks ───────────────────────────────────────────────────────────
 check_block() {
-  local file="$1" marker="$2"
+  local file="$1" marker
+  # Same builder install writes with (lib/style.sh), so a miss is an absent block, not marker drift.
+  marker="$(managed_marker begin "$2" "$3" "${4:-}")"
   if [ -f "$file" ] && grep -qxF -- "$marker" "$file"; then
     pass "$(pretty "$file") managed block present"
   else
     miss "$(pretty "$file") managed block missing — re-run ./install"
   fi
 }
-check_block "$HOME/.bashrc" '# >>> dotfiles managed (shell) >>>'
-check_block "$HOME/.config/hypr/hyprland.conf" '# >>> dotfiles managed (hypr) >>>'
-check_block "$HOME/.config/nvim/lua/config/keymaps.lua" '-- >>> dotfiles managed (keymaps) >>>'
-check_block "$HOME/.config/tmux/tmux.conf" '# >>> dotfiles managed (tmux) >>>'
-check_block "$HOME/.config/waybar/style.css" '/* >>> dotfiles managed (waybar) >>> */'
+check_block "$HOME/.bashrc" shell '#'
+check_block "$HOME/.config/hypr/hyprland.conf" hypr '#'
+check_block "$HOME/.config/nvim/lua/config/keymaps.lua" keymaps '--'
+check_block "$HOME/.config/tmux/tmux.conf" tmux '#'
+check_block "$HOME/.config/waybar/style.css" waybar '/*' ' */'
+check_block "$HOME/.config/alacritty/alacritty.toml" alacritty '#'
 
 # ── stow links ───────────────────────────────────────────────────────────────
 check_link() {

@@ -198,6 +198,18 @@
       "related": ["D-DELTA-STORAGE", "F-WAYBAR-MIGRATIONS", "D-IDEMPOTENT"]
     },
     {
+      "id": "D-ALACRITTY-MOUSE",
+      "title": "Disable Alacritty right-click paste via a managed block (Right -> None); not stowed because the omarchy-owned alacritty.toml must not be symlinked",
+      "canonical": "decisions.html#D-ALACRITTY-MOUSE",
+      "appears_in": ["architecture.html"],
+      "code_paths": ["install"],
+      "related": [
+        "D-DELTA-STORAGE",
+        "D-WAYBAR-DELTAS",
+        "F-REFRESH-WRITETHROUGH"
+      ]
+    },
+    {
       "id": "D-BASELINE",
       "title": "Reference baseline = Omarchy after 'Remove Preinstalled'; bindings.conf left untracked",
       "canonical": "decisions.html#D-BASELINE",
