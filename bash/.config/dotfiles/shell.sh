@@ -15,18 +15,19 @@ alias tl='tmux list-sessions'
 alias sz='source ~/.bashrc'
 
 # ── git (oh-my-zsh-style) ──────────────────────────────────────────────────────
-# `gd` intentionally shadows Omarchy's destructive gd() worktree-remove; worktree
-# verbs live under wt* below. Sourced last, so this override wins. [D-SHELL-SEAM]
 alias gs='git status'
 alias gap='git add -p'
 alias gco='git checkout'
 alias gp='git push'
-alias gd='git diff'
 alias gl='git pull'
 alias gf='git fetch'
 alias gfa='git fetch --all --prune'
 alias gsta='git stash push'
 alias gstp='git stash pop'
+# `gd` shadows Omarchy's destructive gd() worktree-remove with `git diff`. It MUST
+# be a function, not an alias: an active `gd` alias makes bash alias-expand
+# Omarchy's `gd() {` on re-source (sz) into a syntax error. Sourced last, ours wins.
+gd() { git diff "$@"; }
 
 # ── ssh-agent ────────────────────────────────────────────────────────────────
 # Both guards are load-bearing: don't clobber a pre-existing SSH_AUTH_SOCK

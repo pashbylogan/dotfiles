@@ -38,10 +38,3 @@ else . end
     end
   )
   end
-
-# 4. btop is in packages.remove.txt; strip omarchy's cpu→btop click handler.
-#    Substring-guarded so a future migration pointing the click elsewhere
-#    survives unchanged. [D-PKG-REMOVE]
-| if (.cpu."on-click" // "") | contains("btop") then
-    .cpu |= del(."on-click")
-  else . end

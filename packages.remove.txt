@@ -1,11 +1,7 @@
 # Omarchy builtins to remove; processed by `install` via `omarchy pkg drop`.
 # Audit ~/.local/share/omarchy/ before adding (see decisions.html#D-PKG-REMOVE). [D-PKG-REMOVE]
 
-# SUPER+T / SUPER+CTRL+T bindings cleared in hypr.conf.
-btop
-
-# bash/aliases guards `ls`/`cd` with `command -v` — coreutil fallback kicks in.
-eza
+# bash/aliases guards `cd` with `command -v` — coreutil fallback kicks in.
 zoxide
 
 # Omitted (omarchy uses them unguarded): libqalculate (elephant-calc) and

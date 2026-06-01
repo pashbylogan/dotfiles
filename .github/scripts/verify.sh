@@ -80,6 +80,15 @@ check_link "$HOME/.config/dotfiles/nvim.lua"
 check_link "$HOME/.ssh/config"
 check_link "$HOME/.config/tmux/local.conf"
 
+# ── webapp launchers ─────────────────────────────────────────────────────────
+# install reproduces omarchy's Zoom webapp launcher; flag if it drifted away
+# (e.g. Remove Preinstalled / `omarchy webapp remove`) — re-run ./install. [D-WEBAPP]
+if [ -f "$HOME/.local/share/applications/Zoom.desktop" ]; then
+  pass "Zoom webapp launcher present"
+else
+  miss "Zoom webapp launcher missing — re-run ./install"
+fi
+
 # ── ssh-agent socket ─────────────────────────────────────────────────────────
 # shell.sh's SSH_AUTH_SOCK export is dead unless this unit is enabled. [F-SSH-AGENT]
 if state=$(systemctl --user is-enabled ssh-agent.socket 2>/dev/null); then

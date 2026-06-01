@@ -242,11 +242,54 @@
               <code>~/.local/share/omarchy/</code> for usage — omarchy wires
               some "builtins" into keybindings or shell init (e.g.
               <code>zoxide</code> → <code>cd</code> alias, <code>fzf</code> →
-              keybindings, <code>btop</code> → <code>SUPER+T</code>). Removing
-              one of those silently breaks omarchy commands; cleanup the wiring
-              in our overlay at the same time (e.g. the matching
-              <code>unbind</code> in <code>hypr.conf</code> when we dropped
-              <code>btop</code>).
+              keybindings, <code>btop</code> → <code>SUPER+CTRL+T</code>).
+              Removing one of those silently breaks omarchy commands, so clean
+              up the matching wiring in our overlay in the same change (e.g. an
+              <code>unbind</code> in <code>hypr.conf</code> for a keybound tool
+              — which is exactly why <code>btop</code> and <code>eza</code> are
+              <em>not</em> dropped: btop is keybound and eza backs the
+              <code>ls</code> alias).
+            </td>
+          </tr>
+          <tr id="D-WEBAPP">
+            <td>
+              <code class="meta">D-WEBAPP</code> Reproduce curated webapp
+              launchers
+            </td>
+            <td>
+              <code>install</code> re-creates the omarchy webapp launchers we
+              rely on by calling omarchy's own
+              <code>omarchy webapp install</code> with the
+              <strong
+                >exact arguments from omarchy's <code>webapps.sh</code></strong
+              >
+              — currently just <strong>Zoom</strong> (<code
+                >app.zoom.us/wc/home</code
+              >
+              + <code>omarchy-webapp-handler-zoom</code> +
+              <code>zoommtg://</code>/<code>zoomus://</code> scheme handlers).
+              Idempotent: the installer rewrites the <code>.desktop</code> on
+              every run; we re-copy omarchy's own <code>Zoom.png</code> into
+              <code>~/.local/share/applications/icons/</code> (omarchy's
+              <code>icons.sh</code> seeds it at first install) and refresh the
+              desktop database so the <code>zoommtg://</code> handler registers.
+              Removal stays on omarchy's surface too:
+              <code>omarchy webapp remove Zoom</code>.
+            </td>
+            <td>
+              omarchy installs its curated webapps only at first install —
+              <code>webapps.sh</code> doesn't re-run on
+              <code>omarchy update</code>, and
+              <a href="decisions.html#D-BASELINE">Remove Preinstalled</a> / a
+              fresh machine drop them. Calling omarchy's installer rather than
+              hand-writing a <code>.desktop</code> keeps the launcher
+              byte-identical to upstream and inherits the protocol handler. Zoom
+              is the webapp, not the AUR native client: on Wayland the native
+              client's screen-share is unreliable (black screen / crash on
+              re-share), while the Chromium PWA shares screen through the
+              browser's portal — the mirror image of <code>discord</code>, where
+              the native client wins for global push-to-talk + desktop-audio
+              share.
             </td>
           </tr>
         </tbody>

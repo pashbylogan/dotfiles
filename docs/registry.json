@@ -219,9 +219,7 @@
         "install",
         "packages.remove.txt",
         "README.md",
-        "elephant/.config/elephant/websearch.toml",
-        "hypr/.config/dotfiles/hypr.conf",
-        "waybar/deltas.jq"
+        "elephant/.config/elephant/websearch.toml"
       ],
       "related": [
         "D-IDEMPOTENT",
@@ -229,6 +227,14 @@
         "D-DELTA-STORAGE",
         "F-CLI"
       ]
+    },
+    {
+      "id": "D-WEBAPP",
+      "title": "Reproduce omarchy-curated webapp launchers idempotently",
+      "canonical": "decisions.html#D-WEBAPP",
+      "appears_in": [],
+      "code_paths": ["install", ".github/scripts/verify.sh"],
+      "related": ["D-PKG-REMOVE", "D-IDEMPOTENT", "D-SCRIPTS-MINIMAL", "F-CLI"]
     },
     {
       "id": "D-MONITORS",

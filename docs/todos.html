@@ -409,16 +409,22 @@
             <td>pkg-remove</td>
             <td>
               Subtractive baseline curation via
-              <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a>, four
+              <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a>, three
               coupled mechanisms:
               <ul>
                 <li>
-                  <code>packages.remove.txt</code> populated with 12 drops
-                  (btop, eza, zoxide, dust, lazygit, plocate, tldr,
-                  dotnet-runtime-9.0, mariadb-libs, ruby + rubygems paired,
-                  tobi-try); audit-verified vs omarchy bin grep + pacman
-                  reverse-deps. Kept inxi (omarchy-debug uses it unguarded) and
-                  libqalculate (elephant-calc requires it).
+                  <code>packages.remove.txt</code> populated with 10 drops
+                  (zoxide, dust, lazygit, plocate, tldr, dotnet-runtime-9.0,
+                  mariadb-libs, ruby + rubygems paired, tobi-try);
+                  audit-verified vs omarchy bin grep + pacman reverse-deps. Kept
+                  inxi (omarchy-debug uses it unguarded) and libqalculate
+                  (elephant-calc requires it). btop (keybound) and eza (backs
+                  the <code>ls</code> alias) are no longer dropped — both are
+                  omarchy base packages wired into omarchy, so removing them
+                  broke that wiring. Fresh installs keep them; a machine that
+                  ran the earlier drop reinstalls once via
+                  <code>omarchy pkg add btop eza</code>
+                  (<code>pkg drop</code> is one-way).
                 </li>
                 <li>
                   <code>elephant/.config/elephant/websearch.toml</code>
@@ -431,13 +437,6 @@
                   <code>rm -f ~/.local/share/applications/typora.desktop</code>
                   in install (the package is gone post Remove Preinstalled but
                   the user-dir launcher wasn't).
-                </li>
-                <li>
-                  Matching overlay wiring cleanup: SUPER+T / SUPER+CTRL+T
-                  unbound in <code>hypr.conf</code>; waybar cpu→btop click
-                  handler stripped and memory module no longer launches btop
-                  (<code>waybar/deltas.jq</code> filter 4, substring-guarded for
-                  future migrations).
                 </li>
               </ul>
             </td>

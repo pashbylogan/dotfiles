@@ -239,16 +239,26 @@
             <td><code>D-PKG-REMOVE</code></td>
             <td>
               Subtractive baseline overlay: pacman drops + elephant websearch
-              override + stale launcher cleanup + matching overlay wiring
-              cleanup
+              override + stale launcher cleanup
             </td>
             <td><a href="decisions.html#D-PKG-REMOVE">decisions</a></td>
             <td>
               <code>install</code>, <code>packages.remove.txt</code>,
               <code>README.md</code>,
-              <code>elephant/.config/elephant/websearch.toml</code>,
-              <code>hypr/.config/dotfiles/hypr.conf</code>,
-              <code>waybar/deltas.jq</code>
+              <code>elephant/.config/elephant/websearch.toml</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-WEBAPP</code></td>
+            <td>
+              Reproduce omarchy-curated webapp launchers idempotently via
+              <code>omarchy webapp install</code> (Zoom) with exact
+              <code>webapps.sh</code> args + icon re-seed + desktop-DB refresh;
+              <code>verify.sh</code> health-checks the launcher
+            </td>
+            <td><a href="decisions.html#D-WEBAPP">decisions</a></td>
+            <td>
+              <code>install</code>, <code>.github/scripts/verify.sh</code>
             </td>
           </tr>
           <tr>

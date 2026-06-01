@@ -260,6 +260,23 @@ unset elephant_pre_hash elephant_post_hash ELEPHANT_WEBSEARCH
 # stripped the underlying package). [D-PKG-REMOVE]
 rm -f "$HOME/.local/share/applications/typora.desktop"
 
+# Reproduce omarchy's curated Zoom webapp (dropped by Remove Preinstalled, not
+# restored on update): call omarchy's own installer with webapps.sh's exact args,
+# re-seed the icon, and refresh the desktop DB so zoommtg:// registers. [D-WEBAPP]
+ZOOM_ICON_DIR="$HOME/.local/share/applications/icons"
+ZOOM_ICON_SRC="$HOME/.local/share/omarchy/applications/icons/Zoom.png"
+# Best-effort (|| true): a missing source or unwritable dir must not abort install.
+if [ -f "$ZOOM_ICON_SRC" ]; then
+  mkdir -p "$ZOOM_ICON_DIR" || true
+  cp -f "$ZOOM_ICON_SRC" "$ZOOM_ICON_DIR/Zoom.png" || true
+fi
+omarchy webapp install "Zoom" https://app.zoom.us/wc/home Zoom.png \
+  "omarchy-webapp-handler-zoom %u" "x-scheme-handler/zoommtg;x-scheme-handler/zoomus" ||
+  warn "omarchy webapp install Zoom failed — re-run ./install to retry"
+if have update-desktop-database; then
+  update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+fi
+
 # ssh ignores overly-open config paths; harden the dir + every config file.
 [ -d "$HOME/.ssh" ] && chmod 700 "$HOME/.ssh" 2>/dev/null || true
 for f in config config.local; do
