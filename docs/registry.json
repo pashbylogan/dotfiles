@@ -219,7 +219,7 @@
     },
     {
       "id": "D-PKG-REMOVE",
-      "title": "Subtractive baseline overlay: packages.remove.txt + app-picker curation",
+      "title": "Baseline package/app curation: packages.txt restores, packages.remove.txt drops, and app-picker cleanup",
       "canonical": "decisions.html#D-PKG-REMOVE",
       "appears_in": [
         "README.md",
@@ -229,6 +229,7 @@
       ],
       "code_paths": [
         "install",
+        "packages.txt",
         "packages.remove.txt",
         "README.md",
         "elephant/.config/elephant/websearch.toml"

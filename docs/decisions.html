@@ -185,15 +185,23 @@
           </tr>
           <tr id="D-PKG-REMOVE">
             <td>
-              <code class="meta">D-PKG-REMOVE</code> Subtractive baseline
-              overlay
+              <code class="meta">D-PKG-REMOVE</code> Baseline package/app
+              curation
             </td>
             <td>
               <strong
-                >Three coupled curation mechanisms that each subtract from the
+                >Package and launcher curation mechanisms that converge the
                 post–Remove-Preinstalled baseline.</strong
               >
               <ul>
+                <li>
+                  <code>packages.txt</code> / <code>packages.aur.txt</code> —
+                  additive package restores and extras, processed through
+                  <code>omarchy pkg add</code> /
+                  <code>omarchy pkg aur add</code>. This includes restoring
+                  selected Omarchy defaults after <em>Remove Preinstalled</em>,
+                  such as pacman-managed <code>opencode</code>.
+                </li>
                 <li>
                   <code>packages.remove.txt</code> — symmetric subtractive
                   partner to <code>packages.txt</code> /
@@ -234,10 +242,15 @@
               <em>Remove Preinstalled</em> menu (per
               <a href="decisions.html#D-BASELINE">D-BASELINE</a>, that menu
               action is the documented manual prerequisite, not a substitute for
-              ongoing curation). One token, three mechanisms — because they
-              share the same intent (subtract from baseline) but live on
-              different surfaces (pacman db, stowed config, user-state
-              launchers). <strong>Audit rule:</strong> before adding a name to
+              ongoing curation). The same package surface can also restore an
+              upstream default when the current durable Omarchy path is still
+              desirable: <code>opencode</code> stays a pacman package, and
+              <code>install</code> uses <code>omarchy refresh config</code> only
+              to seed a missing <code>opencode.json</code> instead of vendoring
+              it here. One token, several mechanisms — because they share the
+              same intent (curate the baseline) but live on different surfaces
+              (pacman db, stowed config, user-state launchers).
+              <strong>Audit rule:</strong> before adding a name to
               <code>packages.remove.txt</code>, grep
               <code>~/.local/share/omarchy/</code> for usage — omarchy wires
               some "builtins" into keybindings or shell init (e.g.

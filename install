@@ -184,6 +184,15 @@ if [ -f packages.remove.txt ]; then
   fi
 fi
 
+# Package reconciliation above restores OpenCode; its config stays Omarchy-owned
+# and is seeded only when absent so re-runs preserve local edits. [D-PKG-REMOVE][F-CLI]
+OPENCODE_CONFIG="$HOME/.config/opencode/opencode.json"
+if [ ! -f "$OPENCODE_CONFIG" ]; then
+  info "seeding OpenCode config from Omarchy default"
+  omarchy refresh config opencode/opencode.json
+fi
+unset OPENCODE_CONFIG
+
 # Prefer Omarchy's dev-env channel for uv/go so PATH ownership stays consistent.
 # [D-DEV-ENV][F-CLI][D-IDEMPOTENT]
 ensure_dev_env_tool() {
