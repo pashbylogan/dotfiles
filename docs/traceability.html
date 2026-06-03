@@ -403,12 +403,13 @@
             <td><code>F-SSH-AGENT</code></td>
             <td>
               Omarchy ships <code>ssh-agent.socket</code> disabled and never
-              exports <code>SSH_AUTH_SOCK</code>; overlay adds the export and
-              pairs with a one-time <code>systemctl --user enable</code>, plus
+              exports <code>SSH_AUTH_SOCK</code>; overlay adds one UWSM
+              <code>env.d</code> export and pairs with a one-time
+              <code>systemctl --user enable</code>, plus
               <code>AddKeysToAgent yes</code> for once-per-session passphrase
             </td>
             <td><a href="findings.html#F-SSH-AGENT">findings</a></td>
-            <td><code>D-SHELL-SEAM</code>, <code>D-CARRY-SET</code></td>
+            <td><code>D-CARRY-SET</code></td>
           </tr>
         </tbody>
       </table>

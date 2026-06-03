@@ -491,13 +491,19 @@
         OpenSSH installs <code>ssh-agent.socket</code> as a systemd user unit at
         <code>/usr/lib/systemd/user/ssh-agent.socket</code>, but the unit ships
         <strong>disabled</strong> and Omarchy's shell init never exports
-        <code>SSH_AUTH_SOCK</code>. A fresh box that runs <code>ssh-add</code>
-        therefore gets "Could not open a connection to your authentication
-        agent." Two one-time costs make the socket usable: a per-machine
+        <code>SSH_AUTH_SOCK</code>. A fresh box that runs
+        <code>ssh-add</code> therefore gets "Could not open a connection to your
+        authentication agent." GUI apps launched through
+        <code>uwsm-app</code> have the same problem unless the socket is
+        published through UWSM's environment loading path; otherwise Obsidian
+        Git operations fall back to repeated askpass prompts. Two one-time costs
+        make the socket usable for the Omarchy desktop session: a per-machine
         <code>systemctl --user enable --now ssh-agent.socket</code> (manual per
         <a href="decisions.html#D-SCRIPTS-MINIMAL">D-SCRIPTS-MINIMAL</a>) plus a
-        single <code>SSH_AUTH_SOCK</code> export added at the end of our shell
-        chain (<a href="findings.html#F-BASH-CHAIN">F-BASH-CHAIN</a>).
+        guarded <code>SSH_AUTH_SOCK</code> export in the stowed
+        <code>~/.config/uwsm/env.d/dotfiles.sh</code> fragment. UWSM reads that
+        fragment when the graphical session starts, so Obsidian and
+        Omarchy-launched terminals pick it up on the next Omarchy login.
       </p>
       <p>
         Socket activation means the agent process is <em>lazy-spawned</em> on
@@ -512,22 +518,35 @@
         delta rather than an Omarchy-blessed flow.
       </p>
       <p>
-        The shell export is guarded — it only fires when
+        The <code>uwsm</code> export is guarded — it only fires when
         <code>SSH_AUTH_SOCK</code> is unset <em>and</em>
         <code>XDG_RUNTIME_DIR</code> is set. The first guard preserves a
         pre-existing agent path (forwarded <code>ssh -A</code> sockets,
         1Password's <code>~/.1password/agent.sock</code>,
         <code>gcr-ssh-agent.socket</code> publishing
         <code>$XDG_RUNTIME_DIR/gcr/ssh</code>, <code>gpg-agent</code> with SSH
-        emulation) instead of silently overriding it; the second avoids the
-        root-relative <code>/ssh-agent.socket</code> footgun under interactive
-        shells without a logind seat (<code>su -</code>,
-        <code>docker exec -it</code>, chroots without
-        <code>/run/user/$UID</code>).
+        emulation) instead of silently overriding it; the second makes the
+        fragment inert if UWSM ever evaluates it before the runtime directory is
+        available.
       </p>
 
       <h2>Sources</h2>
       <ul class="clean">
+        <li>
+          <a href="https://github.com/Vladimir-csp/uwsm"
+            >UWSM — environment files and app launch environment</a
+          >
+        </li>
+        <li>
+          <a href="https://wiki.hypr.land/Configuring/Environment-variables/"
+            >Hyprland Wiki — environment variables with UWSM</a
+          >
+        </li>
+        <li>
+          <a href="https://man.openbsd.org/OpenBSD-7.8/ssh_config.5"
+            >OpenSSH ssh_config — AddKeysToAgent</a
+          >
+        </li>
         <li>
           <a href="https://agents.md/"
             >AGENTS.md — a simple, open format for guiding coding agents</a

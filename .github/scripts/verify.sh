@@ -80,6 +80,7 @@ check_link() {
 check_link "$HOME/.config/dotfiles/shell.sh"
 check_link "$HOME/.config/dotfiles/hypr.conf"
 check_link "$HOME/.config/dotfiles/nvim.lua"
+check_link "$HOME/.config/uwsm/env.d/dotfiles.sh"
 check_link "$HOME/.ssh/config"
 check_link "$HOME/.config/tmux/local.conf"
 
@@ -93,7 +94,7 @@ else
 fi
 
 # ── ssh-agent socket ─────────────────────────────────────────────────────────
-# shell.sh's SSH_AUTH_SOCK export is dead unless this unit is enabled. [F-SSH-AGENT]
+# The UWSM SSH_AUTH_SOCK export is dead unless this unit is enabled. [F-SSH-AGENT]
 if state=$(systemctl --user is-enabled ssh-agent.socket 2>/dev/null); then
   pass "ssh-agent.socket $state"
 elif [ -z "${state:-}" ]; then

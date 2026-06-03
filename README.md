@@ -29,11 +29,13 @@ represents. Each numbered step is necessary in order.
    ```sh
    ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -C "your@email.com"
    ```
-4. **Enable the systemd ssh-agent socket** — Omarchy ships it disabled and
-   doesn't export `SSH_AUTH_SOCK`; the export lives in `shell.sh`, but the
-   socket needs a one-time enable per machine. [F-SSH-AGENT]
+4. **Enable the systemd ssh-agent socket** — Omarchy ships it disabled; this
+   overlay publishes its socket through UWSM for Omarchy-launched apps and
+   terminals, but the socket needs a one-time enable per machine.
+   [F-SSH-AGENT]
    ```sh
    systemctl --user enable --now ssh-agent.socket
+   systemctl --user is-enabled ssh-agent.socket
    ```
    If you're provisioning over SSH before logging in to the GUI seat
    (headless first boot), `systemctl --user` will fail with
@@ -55,10 +57,10 @@ represents. Each numbered step is necessary in order.
    ./install
    ```
    The very first `git clone` runs before this repo's `~/.ssh/config`
-   (with `AddKeysToAgent yes`) is stowed and before `SSH_AUTH_SOCK` is
-   exported, so ssh prompts for the passphrase directly. Once `./install`
-   finishes and you've opened a new shell (step 8), load the key into the
-   agent so subsequent ssh use is once-per-session:
+   (with `AddKeysToAgent yes`) is stowed, so ssh prompts for the passphrase
+   directly. Once `./install` finishes and you have logged into a new Omarchy
+   session (step 8), load the key into the agent so subsequent ssh use is
+   once-per-session:
    ```sh
    ssh-add ~/.ssh/id_ed25519
    ```
@@ -69,8 +71,13 @@ represents. Each numbered step is necessary in order.
    below). `shell.local.sh` and `~/.ssh/config.local` are picked up on next
    shell / ssh invocation; `hypr.local.conf` requires re-running `./install`
    so its `source =` line gets added.
-8. **Open a new shell** (or `exec bash`) so the bashrc managed block fires
-   and `SSH_AUTH_SOCK` exports.
+8. **Log out and back into Omarchy** so UWSM reads the stowed
+   `~/.config/uwsm/env.d/dotfiles.sh` fragment. Obsidian and terminals launched
+   from the Omarchy session then inherit the same `SSH_AUTH_SOCK`. Quick check:
+   ```sh
+   printf '%s\n' "$SSH_AUTH_SOCK"   # expected: /run/user/<uid>/ssh-agent.socket
+   ssh-add -l || ssh-add ~/.ssh/id_ed25519
+   ```
 
 ### External services
 

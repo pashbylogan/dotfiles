@@ -7,16 +7,19 @@
 PRETTIER           := npx --yes prettier@3.8.3
 SHELLCHECK_VERSION := 0.11.0
 SHFMT_VERSION      := 3.10.0
-# -ln bash: the sourced fragments have no shebang; force the bash dialect so
-# shfmt never falls back to POSIX parsing of their bash-only syntax.
-SHFMT_FLAGS        := -ln bash -i 2 -ci
+# Force dialects for sourced fragments with no shebang so shfmt parses them the
+# same way their real loaders do.
+BASH_SHFMT_FLAGS   := -ln bash -i 2 -ci
+POSIX_SHFMT_FLAGS  := -ln posix -i 2 -ci
 
 # ── file sets ────────────────────────────────────────────────────────────────
 # Include sourced fragments explicitly because shell globs won't discover them.
-SHELL_FILES := install lib/style.sh $(wildcard bin/.local/bin/*) \
+BASH_FILES := install lib/style.sh $(wildcard bin/.local/bin/*) \
 	bash/.config/dotfiles/shell.sh \
 	bash/.config/dotfiles/shell.local.sh.example \
 	$(wildcard .github/scripts/*.sh)
+POSIX_FILES := $(wildcard uwsm/.config/uwsm/env.d/*.sh)
+SHELL_FILES := $(BASH_FILES) $(POSIX_FILES)
 PRETTIER_GLOBS := docs/*.html docs/registry.json
 DOCS_CHECK     := .github/scripts/check_docs.py
 JQ_FILTERS     := $(wildcard waybar/*.jq)
@@ -43,7 +46,8 @@ help: ## Show this menu
 
 ci: ## Run the full gate: shellcheck + shfmt + prettier + jq filter parse + docs integrity
 	shellcheck -x $(SHELL_FILES)
-	shfmt -d $(SHFMT_FLAGS) $(SHELL_FILES)
+	shfmt -d $(BASH_SHFMT_FLAGS) $(BASH_FILES)
+	shfmt -d $(POSIX_SHFMT_FLAGS) $(POSIX_FILES)
 	$(PRETTIER) --check $(PRETTIER_GLOBS)
 	@# Smoke-check each jq filter against an empty-object fixture so syntax
 	@# errors + obvious filter bugs surface here, not at ./install time.
@@ -53,7 +57,8 @@ ci: ## Run the full gate: shellcheck + shfmt + prettier + jq filter parse + docs
 	@echo "OK - all checks passed"
 
 fmt: ## Auto-fix formatting in place (shfmt + prettier)
-	shfmt -w $(SHFMT_FLAGS) $(SHELL_FILES)
+	shfmt -w $(BASH_SHFMT_FLAGS) $(BASH_FILES)
+	shfmt -w $(POSIX_SHFMT_FLAGS) $(POSIX_FILES)
 	$(PRETTIER) --write $(PRETTIER_GLOBS)
 
 tools: ## Show required tools + how to install them on Omarchy

@@ -250,6 +250,8 @@ prestow_backup "$HOME/.ssh/config"
 ELEPHANT_WEBSEARCH="$HOME/.config/elephant/websearch.toml"
 elephant_pre_hash=$(sha256sum "$ELEPHANT_WEBSEARCH" 2>/dev/null | cut -d' ' -f1 || true)
 prestow_backup "$ELEPHANT_WEBSEARCH"
+# UWSM env.d is stowed because Omarchy-launched apps inherit that session env. [F-SSH-AGENT]
+prestow_backup "$HOME/.config/uwsm/env.d/dotfiles.sh"
 # Remove only our obsolete ~/.tmux.conf symlink; tmux now loads through Omarchy's
 # XDG config path so the overlay is not shadowed.
 if [ -L "$HOME/.tmux.conf" ]; then
@@ -258,7 +260,7 @@ if [ -L "$HOME/.tmux.conf" ]; then
   case "$_t" in "$REPO"/*) rm -f "$HOME/.tmux.conf" ;; esac
   unset _t
 fi
-STOW_PKGS=(bash ssh bin hypr tmux elephant nvim)
+STOW_PKGS=(bash ssh bin hypr tmux elephant nvim uwsm)
 stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
 success "stowed: ${STOW_PKGS[*]}"
 
