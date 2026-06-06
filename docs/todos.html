@@ -235,7 +235,8 @@
               Omarchy's install menu (<code>omarchy-install-*</code>),
               <code>omarchy-base.packages</code>, and
               <code>install/packaging/webapps.sh</code>; three corrections
-              followed:
+              followed, later extended by the Slack/Spotify/Obsidian channel
+              audit (<a href="findings.html#F-APP-CHANNELS">F-APP-CHANNELS</a>):
               <ul>
                 <li>
                   <code>uv</code> — installed by <code>./install</code> via
@@ -249,9 +250,22 @@
                   <code>spotify-launcher</code>.
                 </li>
                 <li>
+                  Obsidian — keep official-repo <code>obsidian</code>; Omarchy
+                  migrates away from <code>obsidian-bin</code>, moves launch
+                  flags into <code>~/.config/obsidian/user-flags.conf</code>,
+                  and has an Obsidian theme hook.
+                </li>
+                <li>
                   Discord — keep native <code>discord</code> (extra) for full
                   voice/screen-share; omarchy's default is a webapp via
                   <code>webapps.sh</code> but the webapp limits voice.
+                </li>
+                <li>
+                  Slack — keep native <code>slack-desktop</code> as a local AUR
+                  choice because Omarchy has no Slack default; use Google Chrome
+                  as the huddles/screen-share fallback and avoid adding
+                  <code>libappindicator</code> unless the already-working tray
+                  behavior regresses.
                 </li>
               </ul>
               Final lists:

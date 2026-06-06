@@ -11,7 +11,7 @@ git-delta              # syntax-highlighted git diffs (binary: delta)
 wireguard-tools        # wg-quick — used by vpns() / exitnode() in shell.local.sh
 
 # Selected Omarchy defaults removed by "Remove Preinstalled"; restore them
-# through pacman, not alternate launchers or self-managed installers. [D-PKG-REMOVE]
+# through pacman, not alternate launchers or self-managed installers. [D-PKG-REMOVE][F-APP-CHANNELS]
 opencode               # OpenCode; install seeds Omarchy config only when missing.
 obsidian               # workspace 3 — notes
 discord                # chat (native client; omarchy default is a webapp — we want full voice/screen-share)

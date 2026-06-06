@@ -201,7 +201,14 @@
                   <code>omarchy pkg add</code> /
                   <code>omarchy pkg aur add</code>. This includes restoring
                   selected Omarchy defaults after <em>Remove Preinstalled</em>,
-                  such as pacman-managed <code>opencode</code>.
+                  such as pacman-managed <code>opencode</code>. App channel
+                  choices follow the Omarchy-native audit in
+                  <a href="findings.html#F-APP-CHANNELS">F-APP-CHANNELS</a>:
+                  <code>obsidian</code> stays in the official repo,
+                  <code>spotify</code> stays on Omarchy's AUR path, and
+                  <code>slack-desktop</code> is an intentional local AUR choice
+                  because Omarchy has no Slack package, webapp, binding, or
+                  migration.
                 </li>
                 <li>
                   <code>packages.remove.txt</code> — symmetric subtractive
@@ -303,7 +310,11 @@
               re-share), while the Chromium PWA shares screen through the
               browser's portal — the mirror image of <code>discord</code>, where
               the native client wins for global push-to-talk + desktop-audio
-              share.
+              share. Slack is not reproduced as an Omarchy webapp: unlike Zoom,
+              Omarchy does not ship one, and Slack's Linux huddle support is
+              documented for the desktop app and Google Chrome. Keep native
+              <code>slack-desktop</code> as the daily client; fall back to
+              Chrome only if huddles/screen sharing regress.
             </td>
           </tr>
         </tbody>

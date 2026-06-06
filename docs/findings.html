@@ -172,6 +172,36 @@
         Omarchy-owned and untracked.
       </p>
 
+      <h2 id="F-APP-CHANNELS">
+        App channels: Omarchy-native first
+        <code class="meta">F-APP-CHANNELS</code>
+      </h2>
+      <p>
+        App curation starts with Omarchy's own code and docs, then checks
+        upstream app support and Arch packaging. On this machine that yields
+        three current package-channel outcomes: <code>spotify</code> stays on
+        the AUR package because Omarchy lists <code>spotify</code> in
+        <code>omarchy-base.packages</code> and binds Music to
+        <code>omarchy-launch-or-focus spotify</code>;
+        <code>obsidian</code> stays in Arch <code>extra</code> because Omarchy
+        lists <code>obsidian</code>, migrated <code>obsidian-bin</code> to
+        <code>obsidian</code>, moved its launch flags into
+        <code>~/.config/obsidian/user-flags.conf</code>, and themes Obsidian
+        vaults; <code>slack-desktop</code> stays as a local AUR choice because
+        Omarchy has no Slack package, webapp, binding, or migration.
+      </p>
+      <p>
+        The Slack exception is deliberately narrow. Native Slack provides the
+        installed app identity and <code>slack://</code> handler, and the local
+        tray already works without adding <code>libappindicator</code>. Slack's
+        Linux docs call the desktop app beta, support Ubuntu/RHEL directly, and
+        list huddles on desktop plus Google Chrome on Linux. So the durable
+        baseline is native <code>slack-desktop</code>, with Slack in Google
+        Chrome as the huddles/screen-share fallback if the native app regresses.
+        Do not install or remove anything for these three apps unless that local
+        behavior changes.
+      </p>
+
       <h2 id="F-CLI">
         Omarchy CLI surface (idempotent, preferred over re-implementing)
         <code class="meta">F-CLI</code>
@@ -676,6 +706,43 @@
           <a href="https://github.com/basecamp/omarchy/discussions/4282"
             >basecamp/omarchy discussion #4282 — Hyprmon (persistence gap for
             multi-monitor)</a
+          >
+        </li>
+        <li>
+          <a href="https://slack.com/hc/en-us/articles/212924728"
+            >Slack Help — Download Slack for Linux (beta)</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://slack.com/intl/en-gb/help/articles/4402059015315-Use-huddles-in-Slack-Use-huddles-in-Slack"
+            >Slack Help — Use huddles in Slack</a
+          >
+        </li>
+        <li>
+          <a href="https://slack.com/hc/en-us/articles/115003538426"
+            >Slack Help — Troubleshoot audio and video issues</a
+          >
+        </li>
+        <li>
+          <a href="https://www.spotify.com/do/download/linux"
+            >Spotify — Linux downloads and support note</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://archlinux.org/packages/extra/x86_64/spotify-launcher/"
+            >Arch Linux — spotify-launcher</a
+          >
+        </li>
+        <li>
+          <a href="https://help.obsidian.md/install"
+            >Obsidian Help — Download and install Obsidian</a
+          >
+        </li>
+        <li>
+          <a href="https://archlinux.org/packages/extra/x86_64/obsidian/"
+            >Arch Linux — obsidian</a
           >
         </li>
       </ul>

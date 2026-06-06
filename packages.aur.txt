@@ -2,7 +2,7 @@
 # Same syntax as packages.txt. [D-SCRIPTS-MINIMAL][F-CLI]
 
 slack-desktop          # workspace 3 — AUR-only on Arch (no official-repo package)
-spotify                # workspace 10 — matches omarchy-base.packages (omarchy's chosen Spotify path is AUR)
+spotify                # workspace 10 — matches omarchy-base.packages (omarchy's chosen Spotify path is AUR) [F-APP-CHANNELS]
 # JetBrains Toolbox owns IDE updates/version pinning better than AUR IDE packages.
 jetbrains-toolbox
 

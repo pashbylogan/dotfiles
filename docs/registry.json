@@ -238,7 +238,8 @@
         "D-IDEMPOTENT",
         "D-SCRIPTS-MINIMAL",
         "D-DELTA-STORAGE",
-        "F-CLI"
+        "F-CLI",
+        "F-APP-CHANNELS"
       ]
     },
     {
@@ -318,6 +319,14 @@
       "appears_in": ["README.md", "decisions.html", "index.html"],
       "code_paths": ["README.md"],
       "related": ["D-BASELINE"]
+    },
+    {
+      "id": "F-APP-CHANNELS",
+      "title": "App package/webapp channel choices are audited Omarchy-native first: Spotify follows Omarchy's AUR package, Obsidian follows official extra with Omarchy flags/theme hooks, Slack stays native AUR with Chrome as huddles fallback",
+      "canonical": "findings.html#F-APP-CHANNELS",
+      "appears_in": ["README.md", "decisions.html", "todos.html"],
+      "code_paths": ["packages.txt", "packages.aur.txt"],
+      "related": ["D-PKG-REMOVE", "D-WEBAPP", "F-BASELINE"]
     },
     {
       "id": "F-CLI",
