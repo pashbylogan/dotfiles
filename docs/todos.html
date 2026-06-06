@@ -762,12 +762,11 @@
               (waybar registers the <code>StatusNotifierWatcher</code> + host),
               nested in its <code>group/tray-expander</code> drawer — kept
               as-is, so no <code>waybar/deltas.jq</code> insertion. Native apps
-              (Discord) register a tray icon when run with their own "minimize
-              to tray" enabled; Slack is the Chromium webapp, whose
-              <code>--app=</code>
-              window never creates a tray icon, so it can't be trayed from here.
-              The one real bug was the right-click tray (dbusmenu) context menu
-              not highlighting on hover — omarchy's
+              (Discord and the local <code>slack-desktop</code>) register tray
+              icons through their own app behavior; do not add Slack tray
+              dependencies unless the already-working local tray behavior
+              regresses. The one real bug was the right-click tray (dbusmenu)
+              context menu not highlighting on hover — omarchy's
               <code>* { background-color }</code> reset loads at GTK application
               priority and flattens <code>menuitem:hover</code>; fixed in the
               <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>
