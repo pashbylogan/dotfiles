@@ -112,19 +112,29 @@
                   <code>make fmt</code> auto-fixes.
                 </li>
                 <li>
-                  <code>make update</code> — package/update-migration path:
+                  <code>make update</code> — the frequent, low-risk channel:
                   <code>omarchy update -y</code> (pacman + AUR + omarchy
-                  migrations), then <code>make verify</code>. The update step is
-                  warn-on-failure so a non-zero exit (reboot decline/request,
-                  package-manager interruption, etc.) stays visible.
+                  migrations), then the package-like self-managed tools (<code
+                    >uv self update</code
+                  >, then <code>mise upgrade</code> + <code>mise prune</code>),
+                  then <code>make verify</code>. Every step is warn-on-failure
+                  so a non-zero exit (reboot decline/request, package-manager
+                  interruption, etc.) stays visible.
+                  <code>mise upgrade</code> honors the specs in
+                  <code>~/.config/mise/config.toml</code> —
+                  <code>latest</code> resolves to the newest
+                  <em>stable</em> release (prereleases and nightlies are
+                  excluded unless a spec explicitly asks for one) and exact pins
+                  are left untouched — and omits <code>--bump</code> so the
+                  config is never rewritten; <code>mise prune</code> then
+                  reclaims superseded or orphaned versions.
                 </li>
                 <li>
-                  <code>make update-firmware</code> — non-package update path:
-                  <code>omarchy update firmware</code> (fwupd) +
-                  <code>uv self update</code>. These stay separate from
-                  <code>make update</code> because firmware/self-managed
-                  updaters have different prompts, reboot or power-cycle
-                  outcomes, and expected failures than package updates.
+                  <code>make update-firmware</code> — firmware only:
+                  <code>omarchy update firmware</code> (fwupd). It is the lone
+                  opt-in channel because firmware alone — unlike packages or the
+                  self-managed tools folded into <code>make update</code> — has
+                  device-specific prompts and reboot/power-cycle outcomes.
                 </li>
                 <li>
                   <code>make verify</code> — read-only live health check
@@ -180,8 +190,9 @@
               <code>omarchy install dev-env</code> pulls latest at the time it
               runs (mise <code>@latest</code>, Astral installer), so a fresh
               bootstrap on different days may yield different versions;
-              <code>make update-firmware</code> is the deliberate bumper for
-              self-managed tool updates.
+              <code>make update</code> is the deliberate bumper for self-managed
+              tool updates (<code>uv self update</code> +
+              <code>mise upgrade</code>/<code>prune</code>, stable-only).
             </td>
           </tr>
           <tr id="D-PKG-REMOVE">

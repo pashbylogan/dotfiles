@@ -125,8 +125,8 @@ gitignored and sourced automatically. [D-SECRETS-LOCAL]
 | `make ci`              | Lint + format check + docs integrity (run before committing) |
 | `make fmt`             | Auto-fix formatting (shfmt + prettier)                       |
 | `make verify`          | Live overlay health check (read-only)                        |
-| `make update`          | Omarchy/pacman/AUR update, then `make verify`                |
-| `make update-firmware` | Firmware + self-managed non-package updates (fwupd + uv)     |
+| `make update`          | Omarchy/pacman/AUR + self-managed tools (uv, mise), then `make verify` |
+| `make update-firmware` | Firmware only (fwupd) — opt-in                               |
 
 ## Updates
 
@@ -134,17 +134,21 @@ gitignored and sourced automatically. [D-SECRETS-LOCAL]
 make update
 ```
 
-Runs `omarchy update -y` (pacman + AUR + Omarchy migrations), then
-`make verify`. The update step is warn-on-failure so a reboot prompt or other
-non-zero exit still leaves a visible verify boundary when the shell continues.
-[F-CLI]
+Runs `omarchy update -y` (pacman + AUR + Omarchy migrations), then the
+package-like self-managed tools (`uv self update`, then `mise upgrade` +
+`mise prune`), then `make verify`. Each step is warn-on-failure so a reboot
+prompt or other non-zero exit still leaves a visible verify boundary when the
+shell continues. `mise upgrade` only moves tools to their newest **stable**
+release — it honors the specs in `~/.config/mise/config.toml` (`latest` excludes
+prereleases/nightlies; exact pins like `node = "26.2.0"` stay put) and never
+rewrites that config (no `--bump`); `mise prune` then reclaims superseded or
+orphaned versions. [F-CLI]
 
 ```sh
 make update-firmware
 ```
 
-Runs the non-package update channels separately: `omarchy update firmware`
-(fwupd) and `uv self update`. Firmware and self-managed tool updates can have
-different prompts, reboot/power-cycle outcomes, and failure modes than package
-updates, so they stay opt-in. JetBrains IDEs managed by Toolbox still update via
-Toolbox's own UI. [F-CLI]
+Firmware only: `omarchy update firmware` (fwupd). It stays opt-in because
+firmware updates — unlike packages or self-managed tools — can have
+device-specific prompts and reboot/power-cycle outcomes. JetBrains IDEs managed
+by Toolbox still update via Toolbox's own UI. [F-CLI]

@@ -69,9 +69,11 @@ tools: ## Show required tools + how to install them on Omarchy
 	@if command -v python3 >/dev/null 2>&1; then echo "  python3:    $$(python3 --version | awk '{print $$2}')"; else echo "  python3:    MISSING"; fi
 
 # ── machine maintenance ──────────────────────────────────────────────────────
-# Keep package updates separate from firmware/self-managed channels because
-# their prompts, reboot behavior, and failure modes are different. [D-CI]
-update: ## Update packages + Omarchy migrations + uv, then `make verify`
+# `make update` bundles the frequent, low-risk channels: Omarchy/pacman/AUR
+# packages plus package-like self-managed tools (uv, mise). Firmware is the lone
+# opt-in exception (`make update-firmware`) because it alone carries
+# device-specific reboot/power-cycle risk. [D-CI]
+update: ## Packages + Omarchy migrations + self-managed tools (uv, mise), then `make verify`
 	@printf "$(CYAN)ℹ$(NC) If 'omarchy update -y' triggers a reboot, verify won't run — re-run 'make update' after.\n"
 	@# Still run verify after non-reboot updater failures so drift is visible.
 	@printf "\n$(BOLD)── Packages & Omarchy migrations ──$(NC)\n"
@@ -84,13 +86,24 @@ update: ## Update packages + Omarchy migrations + uv, then `make verify`
 	else \
 		printf "$(CYAN)ℹ$(NC) uv not found on PATH — skipped.\n"; \
 	fi
+	@printf "\n$(BOLD)── mise tool upgrades ──$(NC)\n"
+	@# `latest` specs resolve to newest stable (mise excludes prereleases) and
+	@# exact pins are held; `--bump` is omitted so config.toml is never rewritten.
+	@if command -v mise >/dev/null 2>&1; then \
+		printf "$(CYAN)$$ mise upgrade -y$(NC)\n"; \
+		mise upgrade -y || printf "$(YELLOW)⚠$(NC) 'mise upgrade' returned non-zero.\n"; \
+		printf "$(CYAN)$$ mise prune -y$(NC)\n"; \
+		mise prune -y || printf "$(YELLOW)⚠$(NC) 'mise prune' returned non-zero.\n"; \
+	else \
+		printf "$(CYAN)ℹ$(NC) mise not found on PATH — skipped.\n"; \
+	fi
 	@printf "\n$(CYAN)ℹ$(NC) JetBrains IDEs update via jetbrains-toolbox's own UI.\n"
 	@printf "\n$(BOLD)── Verify overlay ──$(NC)\n"
 	@printf "$(CYAN)$$ $(MAKE) --no-print-directory verify$(NC)\n"
 	@$(MAKE) --no-print-directory verify
 
-# Firmware and self-managed tools are intentionally opt-in; they can have
-# device-specific reboot/power-cycle outcomes unlike package updates. [D-CI]
+# Firmware is intentionally opt-in: unlike packages or self-managed tool
+# upgrades, fwupd outcomes are device-specific and can power-cycle. [D-CI]
 update-firmware: ## Update firmware (fwupd)
 	@printf "$(CYAN)ℹ$(NC) Firmware updater outcomes aren't package-like; review prompts carefully.\n"
 	@printf "\n$(BOLD)── Firmware (fwupd) ──$(NC)\n"
