@@ -573,12 +573,13 @@
           </tr>
           <tr id="D-MONITORS">
             <td>
-              <code class="meta">D-MONITORS</code> Docked dual-monitor layout
+              <code class="meta">D-MONITORS</code> Known external monitor
+              layouts
             </td>
             <td><span class="badge badge-done">in (fragment)</span></td>
             <td>
-              Two <code>monitor =</code> lines in the overlay encode the dock
-              layout:
+              Three <code>monitor =</code> lines in the overlay encode known
+              external displays. The home dock layout is:
               <strong>DP-5 (Acer XV272U) primary at <code>0x0</code></strong
               >,
               <strong
@@ -591,8 +592,15 @@
               <a href="findings.html#F-MONITOR-SCALE-PERSIST"
                 >F-MONITOR-SCALE-PERSIST</a
               >
-              for why we set the scale in the overlay rather than via the
-              <code>Super + /</code> cycle). Matched by full
+              for why we set scale in the overlay rather than via the
+              <code>Super + /</code> cycle). The work monitor is
+              <strong
+                >DP-1 (Dell U2719DC) at <code>0x0</code>, native
+                <code>2560×1440 @ 59.95 Hz</code>, compositor scale
+                <code>1.25</code></strong
+              >; its EDID advertises no higher-refresh native mode, so this rule
+              favors the best-quality native resolution over lower resolution 75
+              Hz fallbacks. All are matched by full
               <code>desc:</code> identifier (description string up to but not
               including the trailing portname, per the Hyprland wiki — see
               <a href="findings.html#F-MONITOR-RULE-APPLY"
@@ -652,15 +660,15 @@
               panel). <code>GDK_SCALE</code> is process-global on Wayland —
               there is no per-monitor GTK scaling without per-app launchers — so
               dropping it to <code>1</code> for the 1440p externals would shrink
-              GTK apps on eDP-1. The compositor scale <code>1</code> in our two
+              GTK apps on eDP-1. The compositor scale in our
               <code>monitor =</code> lines is the in-scope correctness step; the
               GTK-oversize trade on the externals is acceptable until per-app
               launchers become worth it. <strong>Forward risk</strong>: when
               omarchy ships the Lua hyprland config (<a
                 href="findings.html#F-LUA"
                 >F-LUA</a
-              >), these two lines become two <code>hl.monitor({…})</code> calls;
-              the design is unaffected.
+              >), these lines become <code>hl.monitor({…})</code> calls; the
+              design is unaffected.
             </td>
           </tr>
         </tbody>

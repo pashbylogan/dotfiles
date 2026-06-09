@@ -252,7 +252,7 @@
     },
     {
       "id": "D-MONITORS",
-      "title": "Docked dual-monitor layout as desc:-matched monitor= rules in the hypr overlay (compositor scale 1.333333 → effective logical 1920×1080 per external); eDP-1 stays governed by Omarchy's lid switch + internal-monitor-disable toggle (no overlay line); GDK_SCALE intentionally untouched; install restarts waybar when reload changes monitor topology",
+      "title": "Known external monitor layouts as desc:-matched monitor= rules in the hypr overlay: home dual-Acer dock at native 2560×1440@144 with scale 1.333333, work Dell U2719DC at native 2560×1440@59.95 with scale 1.25; eDP-1 stays governed by Omarchy's lid switch + internal-monitor-disable toggle (no overlay line); GDK_SCALE intentionally untouched; install restarts waybar when reload changes monitor topology",
       "canonical": "decisions.html#D-MONITORS",
       "appears_in": ["findings.html"],
       "code_paths": ["hypr/.config/dotfiles/hypr.conf", "install"],
