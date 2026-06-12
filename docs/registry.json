@@ -163,6 +163,14 @@
       "related": ["D-DELTA-STORAGE", "F-HYPR-SEAM"]
     },
     {
+      "id": "D-KEYBIND-OVERRIDES",
+      "title": "Personal keybinding overrides live in the owned Hyprland fragment with conflict notes",
+      "canonical": "decisions.html#D-KEYBIND-OVERRIDES",
+      "appears_in": [],
+      "code_paths": ["hypr/.config/dotfiles/hypr.conf"],
+      "related": ["D-DELTA-STORAGE", "D-BASELINE", "F-HYPR-SEAM"]
+    },
+    {
       "id": "D-MOUSE-ACCEL",
       "title": "External MX Master mouse accel in gitignored hypr.local.conf (device-specific)",
       "canonical": "decisions.html#D-MOUSE-ACCEL",

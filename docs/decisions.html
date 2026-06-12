@@ -919,6 +919,141 @@
         untracked; we do not restore it to vanilla stock. Reproduction recipe:
         install → Remove Preinstalled → <code>./install</code>.
       </div>
+
+      <h2 id="D-KEYBIND-OVERRIDES">
+        Keybinding overrides <code class="meta">D-KEYBIND-OVERRIDES</code>
+      </h2>
+      <div class="callout decision">
+        <span class="label">Track every personal keybind override here</span>
+        Personal keybinds live in the owned Hyprland fragment that is sourced
+        last, not in Omarchy-owned default files. Each override must record the
+        desired chord, the prior binding or conflict audit, and the chosen
+        resolution so future keyboard-layout changes can extend the same table.
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Chord</th>
+            <th>Action</th>
+            <th>Prior binding / conflict audit</th>
+            <th>Resolution</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>SUPER+D</code></td>
+            <td>Open Omarchy menu via <code>omarchy-menu</code></td>
+            <td>
+              Not active in the live post-Remove-Preinstalled
+              <code>bindings.conf</code>. Stock Omarchy app bindings use
+              <code>SUPER+D</code> for Lazy Docker, so the overlay treats that
+              as a possible future conflict.
+            </td>
+            <td>
+              Unbind both <code>SUPER+ALT+SPACE</code> (old menu trigger) and
+              <code>SUPER+D</code>, then bind <code>SUPER+D</code> to the menu.
+              No Lazy Docker replacement is needed unless that workflow becomes
+              important again.
+            </td>
+          </tr>
+          <tr>
+            <td><code>SUPER+I</code></td>
+            <td>Show keybindings via <code>omarchy-menu-keybindings</code></td>
+            <td>
+              No active or checked Omarchy app-default conflict.
+              <code>SUPER+K</code> previously showed keybindings, but
+              <code>K</code> is needed for vim-directional focus.
+              <code>SUPER+?</code> was rejected because full Omarchy app
+              defaults use <code>SUPER+SHIFT+SLASH</code> for Passwords.
+            </td>
+            <td>
+              Unbind <code>SUPER+I</code>, bind it to keybindings help, and
+              reuse <code>SUPER+K</code> for focus up.
+            </td>
+          </tr>
+          <tr>
+            <td><code>SUPER+E</code></td>
+            <td>
+              Toggle workspace layout via
+              <code>omarchy-hyprland-workspace-layout-toggle</code>
+            </td>
+            <td>
+              No active or checked Omarchy app-default conflict.
+              <code>SUPER+L</code> previously toggled workspace layout, but
+              <code>L</code> is needed for vim-directional focus. Full Omarchy
+              app defaults use <code>SUPER+SHIFT+E</code> for Email, not this
+              exact chord.
+            </td>
+            <td>
+              Unbind <code>SUPER+E</code>, bind it to the layout toggle, and
+              reuse <code>SUPER+L</code> for focus right.
+            </td>
+          </tr>
+          <tr>
+            <td><code>SUPER+H</code></td>
+            <td>Focus left</td>
+            <td>No active or checked Omarchy app-default conflict.</td>
+            <td>Unbind <code>SUPER+H</code>, then bind it to focus left.</td>
+          </tr>
+          <tr>
+            <td><code>SUPER+J</code></td>
+            <td>Focus down</td>
+            <td>
+              Conflicted with Omarchy's toggle-split bind. The old i3 config
+              used this chord for focus down, and toggle-split is not currently
+              important enough to preserve.
+            </td>
+            <td>
+              Unbind <code>SUPER+J</code>, then bind it to focus down. Add a new
+              split bind later only if that workflow becomes important.
+            </td>
+          </tr>
+          <tr>
+            <td><code>SUPER+K</code></td>
+            <td>Focus up</td>
+            <td>
+              Conflicted with Omarchy's keybindings-help bind, which moved to
+              <code>SUPER+I</code>.
+            </td>
+            <td>Unbind <code>SUPER+K</code>, then bind it to focus up.</td>
+          </tr>
+          <tr>
+            <td><code>SUPER+L</code></td>
+            <td>Focus right</td>
+            <td>
+              Conflicted with Omarchy's workspace-layout toggle, which moved to
+              <code>SUPER+E</code>.
+            </td>
+            <td>Unbind <code>SUPER+L</code>, then bind it to focus right.</td>
+          </tr>
+          <tr>
+            <td><code>SUPER+SHIFT+H/J/K/L</code></td>
+            <td>Swap active window left/down/up/right</td>
+            <td>
+              No active or checked Omarchy app-default conflict for these exact
+              chords. They copy the old i3 directional move muscle memory while
+              keeping Omarchy's arrow-key swap binds available as fallbacks.
+            </td>
+            <td>
+              Unbind each exact chord, then bind the four directions to
+              Hyprland's <code>swapwindow</code> dispatcher.
+            </td>
+          </tr>
+          <tr>
+            <td><code>SUPER+SHIFT+PERIOD</code></td>
+            <td>Move current workspace to next monitor</td>
+            <td>
+              No active or checked Omarchy app-default conflict. This mirrors
+              the old i3 <code>Mod+Ctrl+&gt;</code> workflow without requiring a
+              second thumb-cluster modifier.
+            </td>
+            <td>
+              Unbind <code>SUPER+SHIFT+PERIOD</code>, then bind it to
+              <code>movecurrentworkspacetomonitor, +1</code>.
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <footer>
