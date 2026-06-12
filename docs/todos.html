@@ -463,8 +463,9 @@
       <ul class="clean">
         <li>
           Exact workspace app→number mapping and live window classes — verify
-          with <code>hyprctl clients</code>; confirm current browser (Zen /
-          Brave / Chrome).
+          with <code>hyprctl clients</code>. Browser default is no longer part
+          of this open item; Brave Origin is converged by
+          <code>./install</code>.
         </li>
         <li>
           Which <code>.zsh_profile</code> aliases survive the bash port (final
@@ -497,6 +498,30 @@
               integration line to <code>require("dotfiles.hypr")</code>. One
               module + one line. See
               <a href="findings.html#F-LUA">Findings → Lua</a>.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Retire Brave Origin
+              stable bridge
+            </td>
+            <td>
+              A released Omarchy version maps <code>brave-origin</code> install
+              and default commands to stable (tracking
+              <a href="https://github.com/basecamp/omarchy/pull/6021"
+                >basecamp/omarchy#6021</a
+              >)
+            </td>
+            <td>
+              Remove the
+              <a href="decisions.html#D-BROWSER-DEFAULT">D-BROWSER-DEFAULT</a>
+              compatibility path that installs
+              <code>brave-origin-bin</code> through
+              <code>omarchy pkg aur add</code>, sets
+              <code>brave-origin.desktop</code>, and stows the
+              <code>theme-set.d/brave-origin-stable</code> hook. Return to
+              <code>omarchy install browser brave-origin</code> and
+              <code>omarchy default browser brave-origin</code>.
             </td>
           </tr>
           <tr>

@@ -251,6 +251,23 @@
       "related": ["D-PKG-REMOVE", "D-IDEMPOTENT", "D-SCRIPTS-MINIMAL", "F-CLI"]
     },
     {
+      "id": "D-BROWSER-DEFAULT",
+      "title": "Stable Brave Origin is the default browser via Omarchy package, theming, and hook surfaces until Omarchy's browser commands map brave-origin to stable",
+      "canonical": "decisions.html#D-BROWSER-DEFAULT",
+      "appears_in": ["README.md", "findings.html", "todos.html"],
+      "code_paths": [
+        "install",
+        ".github/scripts/verify.sh",
+        "omarchy/.config/omarchy/hooks/theme-set.d/brave-origin-stable"
+      ],
+      "related": [
+        "D-IDEMPOTENT",
+        "D-SCRIPTS-MINIMAL",
+        "F-APP-CHANNELS",
+        "F-CLI"
+      ]
+    },
+    {
       "id": "D-MONITORS",
       "title": "Known external monitor layouts as desc:-matched monitor= rules in the hypr overlay: home dual-Acer dock at native 2560×1440@144 with scale 1.333333, work Dell U2719DC at native 2560×1440@59.95 with scale 1.25; eDP-1 stays governed by Omarchy's lid switch + internal-monitor-disable toggle (no overlay line); GDK_SCALE intentionally untouched; install restarts waybar when reload changes monitor topology",
       "canonical": "decisions.html#D-MONITORS",
@@ -322,19 +339,29 @@
     },
     {
       "id": "F-APP-CHANNELS",
-      "title": "App package/webapp channel choices are audited Omarchy-native first: Spotify follows Omarchy's AUR package, Obsidian follows official extra with Omarchy flags/theme hooks, Slack stays native AUR with Chrome as huddles fallback",
+      "title": "App package/webapp/browser channel choices are audited Omarchy-native first: Brave Origin uses stable AUR with Omarchy package, theming, and hook surfaces until Omarchy's browser commands catch up, Spotify follows Omarchy's AUR package, Obsidian follows official extra with Omarchy flags/theme hooks, Slack stays native AUR with Chrome as huddles fallback",
       "canonical": "findings.html#F-APP-CHANNELS",
       "appears_in": ["README.md", "decisions.html", "todos.html"],
-      "code_paths": ["packages.txt", "packages.aur.txt"],
-      "related": ["D-PKG-REMOVE", "D-WEBAPP", "F-BASELINE"]
+      "code_paths": [
+        "install",
+        "packages.txt",
+        "packages.aur.txt",
+        "omarchy/.config/omarchy/hooks/theme-set.d/brave-origin-stable"
+      ],
+      "related": ["D-PKG-REMOVE", "D-WEBAPP", "D-BROWSER-DEFAULT", "F-BASELINE"]
     },
     {
       "id": "F-CLI",
-      "title": "Omarchy CLI surface (pkg add/aur/drop, refresh config, theme/font, update -y)",
+      "title": "Omarchy CLI surface (pkg add/aur/drop, browser install/default caveat, refresh config, theme/font, update -y)",
       "canonical": "findings.html#F-CLI",
       "appears_in": ["README.md"],
       "code_paths": ["install"],
-      "related": ["D-ENGINE", "D-SCRIPTS-MINIMAL", "D-PKG-REMOVE"]
+      "related": [
+        "D-ENGINE",
+        "D-SCRIPTS-MINIMAL",
+        "D-PKG-REMOVE",
+        "D-BROWSER-DEFAULT"
+      ]
     },
     {
       "id": "F-SHELL-RESEARCH",

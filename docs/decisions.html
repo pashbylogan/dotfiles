@@ -328,6 +328,40 @@
               Chrome only if huddles/screen sharing regress.
             </td>
           </tr>
+          <tr id="D-BROWSER-DEFAULT">
+            <td><code class="meta">D-BROWSER-DEFAULT</code> Default browser</td>
+            <td>
+              <strong
+                >Stable Brave Origin is the converged default browser.</strong
+              >
+              Until a released Omarchy version maps its Brave Origin
+              install/default commands to stable, <code>install</code> uses
+              Omarchy's package and theming surfaces directly:
+              <code>omarchy pkg aur add brave-origin-bin</code>, Omarchy's
+              shared Brave policy directory,
+              <code>~/.config/brave-origin-flags.conf</code>, and
+              <code>omarchy-theme-set-browser</code>. It then sets XDG's browser
+              and web MIME defaults to <code>brave-origin.desktop</code> and
+              drops the old <code>brave-origin-beta-bin</code> package.
+            </td>
+            <td>
+              Omarchy's current browser installer/default wrappers still map
+              <code>brave-origin</code> to
+              <code>brave-origin-beta-bin</code> and
+              <code>brave-origin-beta.desktop</code>. Brave now documents
+              <code>brave-origin-bin</code> as the release Arch package, and
+              upstream Omarchy PR
+              <a href="https://github.com/basecamp/omarchy/pull/6021">#6021</a>
+              tracks the same migration. This repo keeps the transition as close
+              to native as possible by reusing Omarchy's package manager,
+              Chromium extension flag, Brave policy theming, and
+              <code>theme-set</code> hook surface. Once a released Omarchy
+              version maps <code>brave-origin</code> to stable, remove the
+              compatibility code and return to
+              <code>omarchy install browser brave-origin</code> /
+              <code>omarchy default browser brave-origin</code>.
+            </td>
+          </tr>
         </tbody>
       </table>
 

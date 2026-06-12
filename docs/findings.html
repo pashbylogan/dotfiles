@@ -179,10 +179,17 @@
       <p>
         App curation starts with Omarchy's own code and docs, then checks
         upstream app support and Arch packaging. On this machine that yields
-        three current package-channel outcomes: <code>spotify</code> stays on
-        the AUR package because Omarchy lists <code>spotify</code> in
-        <code>omarchy-base.packages</code> and binds Music to
-        <code>omarchy-launch-or-focus spotify</code>;
+        four current channel outcomes: <code>brave-origin</code> uses a
+        temporary stable-channel compatibility overlay (<a
+          href="decisions.html#D-BROWSER-DEFAULT"
+          >D-BROWSER-DEFAULT</a
+        >) because Omarchy's current native browser installer/default path still
+        targets <code>brave-origin-beta-bin</code> while Brave documents, and
+        the AUR exposes, stable <code>brave-origin-bin</code>. The overlay still
+        reuses Omarchy's package, flags, policy, theming, and hook surfaces;
+        <code>spotify</code> stays on the AUR package because Omarchy lists
+        <code>spotify</code> in <code>omarchy-base.packages</code> and binds
+        Music to <code>omarchy-launch-or-focus spotify</code>;
         <code>obsidian</code> stays in Arch <code>extra</code> because Omarchy
         lists <code>obsidian</code>, migrated <code>obsidian-bin</code> to
         <code>obsidian</code>, moved its launch flags into
@@ -267,6 +274,29 @@
               <code>mise use --global go@latest</code>. Pulls latest at the
               moment it runs (no version pin) — see
               <a href="decisions.html#D-DEV-ENV">D-DEV-ENV</a>.
+            </td>
+          </tr>
+          <tr>
+            <td><code>omarchy install browser &lt;kind&gt;</code></td>
+            <td>
+              Canonical install path for supported browsers. For
+              <code>brave-origin</code>, current Omarchy installs
+              <code>brave-origin-beta-bin</code>. Until upstream PR
+              <a href="https://github.com/basecamp/omarchy/pull/6021">#6021</a>
+              or equivalent ships, this repo mirrors the script's policy/flags
+              steps against stable <code>brave-origin-bin</code> instead of
+              calling the wrapper.
+            </td>
+          </tr>
+          <tr>
+            <td><code>omarchy default browser &lt;kind&gt;</code></td>
+            <td>
+              Sets XDG's default web browser and the
+              <code>http</code>/<code>https</code>/<code>text/html</code> MIME
+              handlers. Current Omarchy still maps <code>brave-origin</code> to
+              <code>brave-origin-beta.desktop</code>, so this repo sets the
+              stable <code>brave-origin.desktop</code>
+              handlers directly until the upstream mapping changes.
             </td>
           </tr>
         </tbody>
@@ -706,6 +736,23 @@
           <a href="https://github.com/basecamp/omarchy/discussions/4282"
             >basecamp/omarchy discussion #4282 — Hyprmon (persistence gap for
             multi-monitor)</a
+          >
+        </li>
+        <li>
+          <a href="https://github.com/basecamp/omarchy/pull/5304"
+            >basecamp/omarchy PR #5304 — Brave Origin initially only had
+            beta/nightly AUR releases</a
+          >
+        </li>
+        <li>
+          <a href="https://github.com/basecamp/omarchy/pull/6021"
+            >basecamp/omarchy PR #6021 — proposed stable Brave Origin
+            migration</a
+          >
+        </li>
+        <li>
+          <a href="https://brave.com/origin/linux/"
+            >Brave Origin Linux install — release Arch package</a
           >
         </li>
         <li>

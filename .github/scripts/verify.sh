@@ -83,6 +83,48 @@ check_link "$HOME/.config/dotfiles/nvim.lua"
 check_link "$HOME/.config/uwsm/env.d/dotfiles.sh"
 check_link "$HOME/.ssh/config"
 check_link "$HOME/.config/tmux/local.conf"
+check_link "$HOME/.config/omarchy/hooks/theme-set.d/brave-origin-stable"
+
+# ── browser default ──────────────────────────────────────────────────────────
+# install uses Omarchy's package, theming, and hook surfaces until Omarchy's
+# browser commands map brave-origin to stable. [D-BROWSER-DEFAULT]
+BRAVE_ORIGIN_DESKTOP="brave-origin.desktop"
+if [ -f "$HOME/.local/share/applications/$BRAVE_ORIGIN_DESKTOP" ] ||
+  [ -f "$HOME/.nix-profile/share/applications/$BRAVE_ORIGIN_DESKTOP" ] ||
+  [ -f "/usr/share/applications/$BRAVE_ORIGIN_DESKTOP" ]; then
+  pass "Brave Origin desktop entry present"
+else
+  miss "Brave Origin desktop entry missing — re-run ./install"
+fi
+
+if current_browser="$(xdg-settings get default-web-browser 2>/dev/null)"; then
+  if [ "$current_browser" = "$BRAVE_ORIGIN_DESKTOP" ]; then
+    pass "Brave Origin is the default browser"
+  else
+    miss "default browser is $current_browser, expected $BRAVE_ORIGIN_DESKTOP — re-run ./install"
+  fi
+else
+  skip "default browser (xdg-settings unavailable or unusable)"
+fi
+
+if pacman -Qq brave-origin-beta-bin >/dev/null 2>&1; then
+  miss "brave-origin-beta-bin still installed — re-run ./install"
+else
+  pass "Brave Origin Beta package absent"
+fi
+
+if [ -e "$HOME/.config/brave-origin-beta-flags.conf" ]; then
+  miss "$(pretty "$HOME/.config/brave-origin-beta-flags.conf") remains — re-run ./install"
+else
+  pass "Brave Origin Beta flags absent"
+fi
+
+if [ -f "$HOME/.config/mimeapps.list" ] && grep -qF 'brave-origin-beta.desktop' "$HOME/.config/mimeapps.list"; then
+  miss "$(pretty "$HOME/.config/mimeapps.list") still references brave-origin-beta.desktop — re-run ./install"
+else
+  pass "mimeapps has no Brave Origin Beta references"
+fi
+unset BRAVE_ORIGIN_DESKTOP current_browser
 
 # ── webapp launchers ─────────────────────────────────────────────────────────
 # install reproduces omarchy's Zoom webapp launcher; flag if it drifted away

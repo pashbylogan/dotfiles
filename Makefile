@@ -14,9 +14,11 @@ POSIX_SHFMT_FLAGS  := -ln posix -i 2 -ci
 
 # ── file sets ────────────────────────────────────────────────────────────────
 # Include sourced fragments explicitly because shell globs won't discover them.
+OMARCHY_HOOK_FILES := $(shell find omarchy/.config/omarchy/hooks -type f 2>/dev/null)
 BASH_FILES := install lib/style.sh $(wildcard bin/.local/bin/*) \
 	bash/.config/dotfiles/shell.sh \
 	bash/.config/dotfiles/shell.local.sh.example \
+	$(OMARCHY_HOOK_FILES) \
 	$(wildcard .github/scripts/*.sh)
 POSIX_FILES := $(wildcard uwsm/.config/uwsm/env.d/*.sh)
 SHELL_FILES := $(BASH_FILES) $(POSIX_FILES)

@@ -66,7 +66,9 @@ represents. Each numbered step is necessary in order.
    ```
    `./install` is idempotent — re-run after editing a fragment, after an
    Omarchy refresh, or to drop newly-added entries in `packages.remove.txt`.
-   [D-IDEMPOTENT][D-PKG-REMOVE]
+   It also converges stable Brave Origin as the default browser through
+   Omarchy's package, theming, and hook surfaces while Omarchy's browser
+   wrappers still target beta. [D-IDEMPOTENT][D-PKG-REMOVE][D-BROWSER-DEFAULT]
 7. **Create per-machine overrides** (see [Per-machine overrides](#per-machine-overrides)
    below). `shell.local.sh` and `~/.ssh/config.local` are picked up on next
    shell / ssh invocation; `hypr.local.conf` requires re-running `./install`

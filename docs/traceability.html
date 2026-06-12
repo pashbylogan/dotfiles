@@ -273,6 +273,21 @@
             </td>
           </tr>
           <tr>
+            <td><code>D-BROWSER-DEFAULT</code></td>
+            <td>
+              Stable Brave Origin is the default browser via Omarchy package,
+              theming, and hook surfaces until Omarchy's browser commands map
+              <code>brave-origin</code> to stable
+            </td>
+            <td><a href="decisions.html#D-BROWSER-DEFAULT">decisions</a></td>
+            <td>
+              <code>install</code>, <code>.github/scripts/verify.sh</code>,
+              <code
+                >omarchy/.config/omarchy/hooks/theme-set.d/brave-origin-stable</code
+              >
+            </td>
+          </tr>
+          <tr>
             <td><code>D-MONITORS</code></td>
             <td>
               Known external monitor layouts in the hypr overlay: home dual Acer
@@ -346,18 +361,26 @@
             <td><code>F-APP-CHANNELS</code></td>
             <td>
               App package/webapp channel choices are audited Omarchy-native
-              first: Spotify follows Omarchy's AUR package, Obsidian follows
-              official <code>extra</code> with Omarchy flags/theme hooks, Slack
-              stays native AUR with Chrome as huddles fallback
+              first: Brave Origin uses stable AUR with Omarchy package, theming,
+              and hook surfaces until Omarchy's browser commands catch up,
+              Spotify follows Omarchy's AUR package, Obsidian follows official
+              <code>extra</code> with Omarchy flags/theme hooks, Slack stays
+              native AUR with Chrome as huddles fallback
             </td>
             <td><a href="findings.html#F-APP-CHANNELS">findings</a></td>
-            <td><code>D-PKG-REMOVE</code>, <code>D-WEBAPP</code></td>
+            <td>
+              <code>D-PKG-REMOVE</code>, <code>D-WEBAPP</code>,
+              <code>D-BROWSER-DEFAULT</code>
+            </td>
           </tr>
           <tr>
             <td><code>F-CLI</code></td>
-            <td>Omarchy CLI surface</td>
+            <td>
+              Omarchy CLI surface, including package, browser default caveat,
+              refresh, theme/font, update, and dev-env commands
+            </td>
             <td><a href="findings.html#F-CLI">findings</a></td>
-            <td><code>D-ENGINE</code></td>
+            <td><code>D-ENGINE</code>, <code>D-BROWSER-DEFAULT</code></td>
           </tr>
           <tr>
             <td><code>F-SHELL-RESEARCH</code></td>
