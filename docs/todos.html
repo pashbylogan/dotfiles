@@ -130,8 +130,7 @@
               installs via
               <code>packages.aur.txt</code> (<code>google-cloud-cli</code>), and
               the GCP/VPN helpers moved to gitignored
-              <code>shell.local.sh</code> (see the "Isolate personal dotfile
-              payloads" backlog row). <code>hypr.conf</code> /
+              <code>shell.local.sh</code>. <code>hypr.conf</code> /
               <code>tmux.conf</code> / <code>ssh/config</code> were already
               minimal (no Omarchy overlap).
             </td>
@@ -399,6 +398,24 @@
             <td><span class="badge badge-done">done</span></td>
           </tr>
           <tr>
+            <td>tray</td>
+            <td>
+              Waybar system tray icons — resolved with Omarchy's existing
+              <code>tray</code> module nested in
+              <code>group/tray-expander</code>. Native apps (Discord and local
+              <code>slack-desktop</code>) register tray icons through their own
+              app behavior, so no <code>waybar/deltas.jq</code> insertion or
+              Slack tray dependency was needed. The one repo-owned fix was the
+              right-click tray menu hover state: Omarchy's GTK reset flattened
+              <code>menuitem:hover</code>, so
+              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>
+              now carries a higher-specificity rule in the managed waybar CSS
+              block. The proposed force-quit keybind was dropped at the owner's
+              request.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
             <td>toolchain</td>
             <td>
               Caught a non-omarchy-native dev-tool install:
@@ -563,181 +580,23 @@
           </tr>
           <tr>
             <td colspan="3" style="padding-top: 1rem">
-              <strong>Owner backlog</strong> (explicitly captured so it's not
-              forgotten):
+              <strong>Owner watchlist</strong>:
             </td>
           </tr>
           <tr>
             <td>
-              <span class="badge badge-future">future</span> Isolate personal
-              dotfile payloads
+              <span class="badge badge-future">future</span> Watch app theming
             </td>
-            <td>Backlog cleanup for shell/SSH/scripts/config</td>
+            <td>Watch item</td>
             <td>
-              Move custom aliases, functions, scripts, host entries, app
-              preferences, work shortcuts, and other owner-specific behavior out
-              of shared main files into narrowly scoped include/local files.
-              Main tracked files should stay generic enough to work for any
-              Omarchy user and should primarily provide portable defaults plus
-              the include hook. Example pattern:
-              <code>ssh/.ssh/config</code> keeps key/agent/include wiring;
-              <code>~/.ssh/config.local</code> (from
-              <code>ssh/.ssh/config.local.example</code>) holds personal hosts
-              such as <code>gollum</code>.
-              <strong>Shell done (2026-05-31):</strong> personal aliases,
-              functions (<code>gssh</code>, VPN
-              <code>vpns</code>/<code>exitnode</code>), and the Ctrl-F
-              sessionizer bind moved to gitignored <code>shell.local.sh</code>;
-              tracked <code>shell.sh</code> is now generic. SSH hosts,
-              <code>bin/</code> scripts, and other config still pending.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <span class="badge badge-future">future</span> Trackpad + mouse
-              speed parity
-            </td>
-            <td>Input tuning</td>
-            <td>
-              Improve Hyprland trackpad and normal mouse speeds to align with
-              the old i3 config from the other branch. Compare the old
-              acceleration/sensitivity settings, then decide what belongs in the
-              shared <code>hypr.conf</code> overlay vs. device-specific
-              <code>hypr.local.conf</code>.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <span class="badge badge-future">future</span> Port old i3
-              keybindings
-            </td>
-            <td>Keybinding parity</td>
-            <td>
-              Bring over personal keybindings from the old i3 config on the
-              other branch. <strong>Reviewed 2026-05-31:</strong> the old binds
-              were Alt-based and Omarchy already covers nearly all of them under
-              SUPER (terminal, focus via <code>SUPER+arrows</code>, workspaces
-              <code>SUPER+1‑0</code>, fullscreen, close <code>SUPER+W</code>,
-              float <code>SUPER+Shift+V</code>, lock <code>SUPER+Ctrl+L</code>,
-              resize <code>SUPER+ -/=</code>, launcher <code>SUPER+Space</code>,
-              move via <code>SUPER+Shift+arrows</code> swap) — owner chose
-              Omarchy's over remapping, so nothing was ported.
-              <strong>Deferred:</strong> vim-directional focus
-              (<code>SUPER+H/J/K/L</code>) needs unbinding Omarchy's
-              <code>SUPER+J/K/L</code> (split / keybindings cheatsheet /
-              layout-toggle), which the owner declined; revisit if arrow-key
-              focus grates. Move-window resolved: Omarchy's
-              <code>SUPER+Shift+arrows</code> swap (tiled) plus
-              <code>SUPER</code>+drag (floating, via <code>moveactive</code>)
-              suffice — a float-aware <code>hypr-move</code> wrapper was
-              considered and declined. Force-quit for close-to-tray apps moved
-              to the "Waybar system tray icons" row below.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <span class="badge badge-future">future</span> Toggle-conditional
-              compact look
-            </td>
-            <td>
-              If the compact look should switch off, not just always apply
-            </td>
-            <td>
-              Today the
-              <a href="decisions.html#D-LOOKNFEEL">D-LOOKNFEEL</a> compact
-              deltas (slim gaps, <code>border_size = 2</code>,
-              <code>rounding = 8</code>) are <strong>always on</strong>: the
-              overlay sources last and overrides omarchy's
-              <code>window-no-gaps</code> toggle, so
-              <code>SUPER+SHIFT+BACKSPACE</code> and the menu "Gaps" entry are
-              no-ops. To make the toggle flip between
-              <em>pure omarchy default</em> (off) and <em>compact</em> (on), we
-              must own the trigger: omarchy rewrites the toggle's state file
-              from a read-only template
-              (<code>default/hypr/toggles/window-no-gaps.conf</code>) on every
-              enable, so editing that file isn't durable, and an always-on
-              overlay can't tell which state it's in. Both the keybind and the
-              menu call <code>omarchy-hyprland-window-gaps-toggle</code> by bare
-              name with omarchy's <code>bin/</code> earlier on
-              <code>PATH</code>, so a <code>~/.local/bin</code> shadow won't
-              win. Landable paths: (a) rebind
-              <code>SUPER+SHIFT+BACKSPACE</code> in the overlay to a small
-              script that writes the compact values into
-              <code>window-no-gaps.conf</code> instead of zeros — clean and
-              durable via our existing keybind-override pattern, but the menu
-              "Gaps" entry would still produce plain no-gaps; (b) also cover the
-              menu by putting a shadow earlier on the session
-              <code>PATH</code> — fragile and less omarchy-native. Load-order
-              context: <a href="findings.html#F-HYPR-SEAM">F-HYPR-SEAM</a>.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <span class="badge badge-future">future</span> Folder icon
-              variants (gray-body / colored-fold aesthetic)
-            </td>
-            <td>If revisiting Nautilus theming</td>
-            <td>
-              Investigated 2026-05-30 and backed out — keeping the trade-off
-              study so future-me doesn't re-tread:
-              <ul>
-                <li>
-                  The "gray body, accent in the fold" look is the
-                  <strong>2020-era Yaru</strong> design (Ubuntu 20.04 era).
-                  Upstream Yaru dropped it in ~22.04; modern Yaru and every
-                  bundled accent variant on omarchy ships fully-tinted folder
-                  bodies. <code>Yaru-*-dark</code> siblings only adjust
-                  status-bar glyphs for dark backgrounds — folder PNGs are
-                  near-identical to the light siblings.
-                </li>
-                <li>
-                  The design survives in the
-                  <a href="https://github.com/Jannomag/Yaru-Colors"
-                    >Jannomag/Yaru-Colors</a
-                  >
-                  fork (AUR <code>yaru-colors-icon-theme</code>; upstream
-                  unmaintained). But the fork only ships
-                  <code>places/</code> (folder) icons — verified
-                  <strong>0 app icons</strong> across the whole tree. Its
-                  <code>Inherits=Yaru,Humanity,hicolor</code> chain means GTK
-                  app-icon lookups fall through to plain Yaru's orange palette.
-                </li>
-                <li>
-                  Net effect of installing the fork + flipping gsettings:
-                  Nautilus shows gray-body folders ✓, walker shows
-                  <strong>orange</strong> app icons (Yaru fallback). The
-                  Nautilus/walker mismatch was the reason this got reverted.
-                </li>
-                <li>
-                  Mismatch is structural to the fork's design. Three landable
-                  paths if revisited: (a) accept gray-folders + orange-apps; (b)
-                  pivot to <em>Papirus</em>/<em>Tela</em>/<em>Reversal</em>
-                  — full app sets but fully-tinted folder bodies (different
-                  aesthetic); (c) author a custom merged theme (Yaru-Colors
-                  folders + Papirus apps), fragile across package updates.
-                </li>
-                <li>
-                  Effort: high. Re-opening this without a clean aesthetic spec
-                  just churns. Likely best to wait for an upstream icon theme
-                  that ships gray-body folders <em>and</em> a coherent app set.
-                </li>
-              </ul>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <span class="badge badge-future">future</span> Unified app theming
-            </td>
-            <td>Ongoing</td>
-            <td>
-              Make all themeable apps follow the system theme (Obsidian, Zen
-              browser, etc.) via omarchy's <code>theme-set</code> hook + per-app
-              files in <code>~/.config/omarchy/current/theme/</code>.
-              <strong>Revisit when tackling this:</strong>
-              <code>aether</code> (omarchy's color-extracting theming app —
-              dropped by Remove Preinstalled; likely the right tool to drive
-              this work) and <code>zoom</code> (AUR — re-add and verify it
-              follows GTK/system theme).
+              Keep an eye on whether themeable apps follow the system theme
+              cleanly. Possible future surface: omarchy's
+              <code>theme-set</code> hook plus per-app files in
+              <code>~/.config/omarchy/current/theme/</code>. If this becomes
+              real work, revisit <code>aether</code> (omarchy's color-extracting
+              theming app, dropped by Remove Preinstalled) and
+              <code>zoom</code> (AUR; re-add and verify GTK/system theme
+              behavior).
             </td>
           </tr>
           <tr>
@@ -774,31 +633,6 @@
               <code>check_docs.py</code>) that merges a fragment file into the
               live config, plus a restart hook mirroring the elephant restart we
               added for <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a>.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <span class="badge badge-done">done</span> Waybar system tray
-              icons
-            </td>
-            <td>App lifecycle visibility</td>
-            <td>
-              Resolved. Omarchy already ships a working <code>tray</code> module
-              (waybar registers the <code>StatusNotifierWatcher</code> + host),
-              nested in its <code>group/tray-expander</code> drawer — kept
-              as-is, so no <code>waybar/deltas.jq</code> insertion. Native apps
-              (Discord and the local <code>slack-desktop</code>) register tray
-              icons through their own app behavior; do not add Slack tray
-              dependencies unless the already-working local tray behavior
-              regresses. The one real bug was the right-click tray (dbusmenu)
-              context menu not highlighting on hover — omarchy's
-              <code>* { background-color }</code> reset loads at GTK application
-              priority and flattens <code>menuitem:hover</code>; fixed in the
-              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>
-              managed CSS block with a higher-specificity hover rule. The
-              proposed <code>SUPER+Shift+Q</code> →
-              <code>forcekillactive</code> force-quit keybind was dropped at the
-              owner's request (handled outside the repo).
             </td>
           </tr>
         </tbody>

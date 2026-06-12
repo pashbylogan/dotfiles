@@ -182,7 +182,7 @@
       "id": "D-LOOKNFEEL",
       "title": "Hyprland looknfeel deltas in the owned fragment (always-on compact look): slim window gaps, pin border_size = 2 past the window-no-gaps toggle, round all corners at omarchy's recommended radius, and use theme-preserving terminal blur/opacity",
       "canonical": "decisions.html#D-LOOKNFEEL",
-      "appears_in": ["findings.html", "todos.html"],
+      "appears_in": ["findings.html"],
       "code_paths": [
         "hypr/.config/dotfiles/hypr.conf",
         ".github/scripts/verify.sh"
@@ -297,7 +297,7 @@
       "id": "F-HYPR-SEAM",
       "title": "hyprland.conf sources defaults -> user override files -> theme -> toggles; later wins",
       "canonical": "findings.html#F-HYPR-SEAM",
-      "appears_in": ["decisions.html", "todos.html"],
+      "appears_in": ["decisions.html"],
       "code_paths": ["hypr/.config/dotfiles/hypr.conf", "install"],
       "related": ["D-DELTA-STORAGE", "D-CAPS-CTRL", "D-LOOKNFEEL"]
     },
