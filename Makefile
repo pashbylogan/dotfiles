@@ -6,7 +6,7 @@
 # ci.yml's install step; the versions below are what CI uses — keep in sync.
 PRETTIER           := npx --yes prettier@3.8.3
 SHELLCHECK_VERSION := 0.11.0
-SHFMT_VERSION      := 3.10.0
+SHFMT_VERSION      := 3.13.1
 # Force dialects for sourced fragments with no shebang so shfmt parses them the
 # same way their real loaders do.
 BASH_SHFMT_FLAGS   := -ln bash -i 2 -ci

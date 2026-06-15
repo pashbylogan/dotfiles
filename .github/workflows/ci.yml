@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SHELLCHECK_VERSION: v0.11.0 # matches Omarchy's extra-repo shellcheck
-      SHFMT_VERSION: v3.10.0
+      SHFMT_VERSION: v3.13.1
     steps:
       - uses: actions/checkout@v4
 
