@@ -2,8 +2,8 @@
 
 A small, idempotent overlay on top of [Omarchy](https://omarchy.org/)
 (Arch + Hyprland). Omarchy installs and seeds the desktop; this repo
-layers my customizations on top via official paths. One script: `install`.
-[D-SCRIPTS-MINIMAL]
+layers my customizations on top via official paths. One convergence script:
+`install`. [D-SCRIPTS-MINIMAL]
 
 > **Design docs:** open [`docs/index.html`](docs/index.html) for
 > architecture, decisions, findings, and traceability. This README is
@@ -129,6 +129,7 @@ gitignored and sourced automatically. [D-SECRETS-LOCAL]
 | `make verify`          | Live overlay health check (read-only)                        |
 | `make update`          | Omarchy/pacman/AUR + self-managed tools (uv, mise), then `make verify` |
 | `make update-firmware` | Firmware only (fwupd) — opt-in                               |
+| `pkg-residue <package>` | Read-only audit for package leftovers after removal [D-PKG-REMOVE] |
 
 ## Updates
 

@@ -18,7 +18,7 @@
     },
     {
       "id": "D-SCRIPTS-MINIMAL",
-      "title": "One script (install) only; updates/cleanup are manual",
+      "title": "One convergence script (install); updates and cleanup audits are explicit operator actions",
       "canonical": "decisions.html#D-SCRIPTS-MINIMAL",
       "appears_in": [
         "README.md",
@@ -227,7 +227,7 @@
     },
     {
       "id": "D-PKG-REMOVE",
-      "title": "Baseline package/app curation: packages.txt restores, packages.remove.txt drops, and app-picker cleanup",
+      "title": "Baseline package/app curation: packages.txt restores, packages.remove.txt drops, app-picker cleanup, and residue audit",
       "canonical": "decisions.html#D-PKG-REMOVE",
       "appears_in": [
         "README.md",
@@ -240,7 +240,8 @@
         "packages.txt",
         "packages.remove.txt",
         "README.md",
-        "elephant/.config/elephant/websearch.toml"
+        "elephant/.config/elephant/websearch.toml",
+        "bin/.local/bin/pkg-residue"
       ],
       "related": [
         "D-IDEMPOTENT",

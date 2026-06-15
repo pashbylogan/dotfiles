@@ -38,7 +38,7 @@ NC     := \033[0m
 endif
 
 .DEFAULT_GOAL := help
-.PHONY: help ci fmt tools update update-firmware verify
+.PHONY: help ci fmt tools update update-firmware verify pkg-residue
 
 # ── checks ───────────────────────────────────────────────────────────────────
 help: ## Show this menu
@@ -114,3 +114,7 @@ update-firmware: ## Update firmware (fwupd)
 
 verify: ## Health-check the live overlay (hyprctl, managed blocks, stow links, dev-env tools, XDG dirs)
 	bash .github/scripts/verify.sh
+
+pkg-residue: ## Read-only audit for files left behind by PACKAGE=<pkg>
+	@test -n "$(PACKAGE)" || { echo "Usage: make pkg-residue PACKAGE=telegram-desktop"; exit 2; }
+	bash bin/.local/bin/pkg-residue "$(PACKAGE)"

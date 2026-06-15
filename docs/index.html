@@ -31,8 +31,8 @@
         <p class="lead">
           This repo does <strong>not</strong> rebuild a desktop. Omarchy
           installs and seeds everything; this repo layers only the owner's
-          intentional customizations on top, using official Omarchy paths and a
-          single idempotent <code>install</code> script.
+          intentional customizations on top, using official Omarchy paths and
+          one idempotent convergence script: <code>install</code>.
         </p>
       </header>
 
@@ -92,13 +92,13 @@
       <pre><code>dotfiles/
 ├── AGENTS.md                    # concise agent guidance + comment conventions (canonical for every harness)
 ├── CLAUDE.md                    # one-line `@AGENTS.md` bridge — Claude Code reads this until anthropics/claude-code#34235 lands
-├── install                      # the ONLY runtime script — stow + managed blocks + dev-env reconcile + XDG (idempotent)
-├── Makefile                     # `make ci|fmt|tools|update|update-firmware|verify` — single ops interface; CI invokes `make ci`
+├── install                      # the only convergence script — stow + managed blocks + dev-env reconcile + XDG (idempotent)
+├── Makefile                     # `make ci|fmt|tools|update|update-firmware|verify|pkg-residue` — single ops interface; CI invokes `make ci`
 ├── packages.txt                 # extras → omarchy pkg add
 ├── packages.aur.txt             # AUR extras → omarchy pkg aur add (slack/spotify/jetbrains-toolbox)
 ├── bash/.config/dotfiles/       # shell.sh (ported aliases) + shell.local.sh.example
 ├── ssh/.ssh/                    # config (+ Include config.local) + config.local.example
-├── bin/.local/bin/              # personal commands → ~/.local/bin (on PATH)
+├── bin/.local/bin/              # personal commands → ~/.local/bin (on PATH), incl. package residue audits
 ├── tmux/.config/tmux/local.conf  # tmux overlay (source-file'd from omarchy's tmux.conf)
 ├── hypr/.config/dotfiles/       # hypr.conf override fragment + hypr.local.conf.example
 ├── omarchy/.config/omarchy/hooks/ # Omarchy hook extensions (theme-set refresh bridge)

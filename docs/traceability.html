@@ -72,7 +72,10 @@
           </tr>
           <tr>
             <td><code>D-SCRIPTS-MINIMAL</code></td>
-            <td>Only <code>install</code>; updates/cleanup are manual</td>
+            <td>
+              Only <code>install</code> converges the machine; package updates
+              and cleanup audits are explicit operator actions
+            </td>
             <td><a href="decisions.html#D-SCRIPTS-MINIMAL">decisions</a></td>
             <td><code>install</code>, <code>README.md</code></td>
           </tr>
@@ -258,13 +261,15 @@
             <td><code>D-PKG-REMOVE</code></td>
             <td>
               Baseline package/app curation: pacman restores and drops, elephant
-              websearch override, and stale launcher cleanup
+              websearch override, stale launcher cleanup, and read-only residue
+              audit
             </td>
             <td><a href="decisions.html#D-PKG-REMOVE">decisions</a></td>
             <td>
               <code>install</code>, <code>packages.txt</code>,
               <code>packages.remove.txt</code>, <code>README.md</code>,
-              <code>elephant/.config/elephant/websearch.toml</code>
+              <code>elephant/.config/elephant/websearch.toml</code>,
+              <code>bin/.local/bin/pkg-residue</code>
             </td>
           </tr>
           <tr>

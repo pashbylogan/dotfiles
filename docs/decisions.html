@@ -54,13 +54,16 @@
           <tr id="D-SCRIPTS-MINIMAL">
             <td><code class="meta">D-SCRIPTS-MINIMAL</code> Scripts</td>
             <td>
-              <strong>One script: <code>install</code>.</strong> No
-              update/cleanup scripts.
+              <strong>One convergence script: <code>install</code>.</strong>
+              User commands may be stowed under <code>bin/.local/bin</code>, but
+              package updates and cleanup remain explicit operator actions.
             </td>
             <td>
               Owner chose pure-minimal. Updates run via
-              <code>omarchy update -y</code>; one-time i3/zsh cleanup is a
-              documented manual step.
+              <code>make update</code> / <code>omarchy update -y</code>; package
+              cleanup uses <code>packages.remove.txt</code> plus read-only
+              audits such as <code>pkg-residue</code>, not an automatic cleanup
+              engine.
             </td>
           </tr>
           <tr id="D-DELTA-STORAGE">
@@ -147,6 +150,11 @@
                   state, and the default-tracking override comparison
                   (border_size = 2 vs omarchy's looknfeel.conf default — see
                   <a href="decisions.html#D-LOOKNFEEL">D-LOOKNFEEL</a>).
+                </li>
+                <li>
+                  <code>make pkg-residue PACKAGE=&lt;name&gt;</code> — wrapper
+                  around the stowed <code>pkg-residue</code> command for
+                  read-only package-leftover audits.
                 </li>
               </ul>
               Tooling is Omarchy-native and version-pinned.
@@ -248,6 +256,16 @@
                   underlying package is gone but the user-dir launcher remained
                   (pacman <code>-Rns</code> only removes files the package
                   installed, not user-state files copied there later).
+                </li>
+                <li>
+                  <code>bin/.local/bin/pkg-residue</code> — read-only audit for
+                  package leftovers after removal. It derives search terms from
+                  the package name and any known pacman/cache file list, uses
+                  <code>rg --files</code> as the fast path for file matches,
+                  uses <code>find -type d</code> for directory matches, filters
+                  paths owned by pacman, and reports likely residual user state,
+                  system state, and package cache entries without deleting
+                  anything.
                 </li>
               </ul>
             </td>
