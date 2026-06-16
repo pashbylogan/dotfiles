@@ -9,3 +9,6 @@ jetbrains-toolbox
 # gcloud core CLI (no official-repo pkg); used by gssh() in shell.local.sh.
 # Ships /etc/profile.d/google-cloud-cli.sh, so gcloud lands on PATH natively.
 google-cloud-cli
+# GKE auth plugin kubectl invokes by name (binary in /usr/bin); split of the
+# google-cloud-cli base above, whose credentials it uses. [F-APP-CHANNELS]
+google-cloud-cli-component-gke-gcloud-auth-plugin

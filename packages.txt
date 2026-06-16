@@ -10,6 +10,10 @@ shfmt
 git-delta              # syntax-highlighted git diffs (binary: delta)
 wireguard-tools        # wg-quick — used by vpns() / exitnode() in shell.local.sh
 
+# kubectl + the GKE auth plugin must share /usr/bin (pacman, not mise) so kubectl
+# can invoke the plugin by name in every shell. [F-APP-CHANNELS]
+kubectl
+
 # Selected Omarchy defaults removed by "Remove Preinstalled"; restore them
 # through pacman, not alternate launchers or self-managed installers. [D-PKG-REMOVE][F-APP-CHANNELS]
 opencode               # OpenCode; install seeds Omarchy config only when missing.

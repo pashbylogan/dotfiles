@@ -208,6 +208,26 @@
         Do not install or remove anything for these three apps unless that local
         behavior changes.
       </p>
+      <p>
+        Google Cloud tooling follows the same audit. <code>gcloud</code> stays
+        on the AUR <code>google-cloud-cli</code> package, but that install is
+        managed by an external package manager, so
+        <code>gcloud components install</code> is disabled and cannot add the
+        GKE auth plugin in place. Rather than switch to Google's
+        <code>curl | bash</code> installer — which bypasses pacman, self-manages
+        PATH, updates outside <code>omarchy update</code>, and would conflict
+        with the AUR package — the plugin comes from
+        <code>google-cloud-cli-component-gke-gcloud-auth-plugin</code>, a split
+        of the same <code>google-cloud-cli</code> base, so it is version-locked
+        and updated by the same path. It ships only the
+        <code>gke-gcloud-auth-plugin</code> binary on <code>/usr/bin</code>,
+        which is what kubectl &ge;1.26 invokes by name through PATH.
+        <code>kubectl</code> itself moves to the official Arch
+        <code>extra</code> package (off mise) so both binaries resolve via
+        <code>/usr/bin</code> in every shell, including non-interactive ones
+        where <code>mise activate</code> is not loaded — the same reasoning that
+        pins the dev toolchain to pacman.
+      </p>
 
       <h2 id="F-CLI">
         Omarchy CLI surface (idempotent, preferred over re-implementing)

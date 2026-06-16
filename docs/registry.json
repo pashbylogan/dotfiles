@@ -379,7 +379,7 @@
     },
     {
       "id": "F-APP-CHANNELS",
-      "title": "App package/webapp/browser channel choices are audited Omarchy-native first: Brave Origin uses stable AUR with Omarchy package, theming, and hook surfaces until Omarchy's browser commands catch up, Spotify follows Omarchy's AUR package, Obsidian follows official extra with Omarchy flags/theme hooks, Slack stays native AUR with Chrome as huddles fallback",
+      "title": "App package/webapp/browser channel choices are audited Omarchy-native first: Brave Origin uses stable AUR with Omarchy package, theming, and hook surfaces until Omarchy's browser commands catch up, Spotify follows Omarchy's AUR package, Obsidian follows official extra with Omarchy flags/theme hooks, Slack stays native AUR with Chrome as huddles fallback, and Google Cloud tooling stays on AUR gcloud with the GKE auth plugin as a version-locked split package while kubectl moves to the official extra repo",
       "canonical": "findings.html#F-APP-CHANNELS",
       "appears_in": ["README.md", "decisions.html", "todos.html"],
       "code_paths": [
