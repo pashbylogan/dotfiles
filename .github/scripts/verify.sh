@@ -58,6 +58,24 @@ check_block "$HOME/.config/nvim/lua/config/keymaps.lua" keymaps '--'
 check_block "$HOME/.config/tmux/tmux.conf" tmux '#'
 check_block "$HOME/.config/waybar/style.css" waybar '/*' ' */'
 check_block "$HOME/.config/alacritty/alacritty.toml" alacritty '#'
+check_block "$HOME/.config/starship.toml" starship-venv '#'
+
+# ── starship venv reference ──────────────────────────────────────────────────
+# The starship-venv block only renders if the format scalar references it; the
+# block check above can't see that in-place edit, so grep for it. Drift (e.g. a
+# refreshed Omarchy default dropping the $character anchor) → re-run ./install.
+# [D-STARSHIP-VENV]
+STARSHIP_TOML="$HOME/.config/starship.toml"
+# ${custom.venv} is a literal starship token grep must match, not an expansion.
+# shellcheck disable=SC2016
+if [ ! -f "$STARSHIP_TOML" ]; then
+  skip "starship venv reference ($(pretty "$STARSHIP_TOML") not present)"
+elif grep -qF '${custom.venv}' "$STARSHIP_TOML"; then
+  pass "starship format references the venv module (\${custom.venv})"
+else
+  miss "starship format missing \${custom.venv} — venv won't show; re-run ./install"
+fi
+unset STARSHIP_TOML
 
 # ── stow links ───────────────────────────────────────────────────────────────
 check_link() {

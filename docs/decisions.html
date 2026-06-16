@@ -142,9 +142,9 @@
                 <li>
                   <code>make verify</code> — read-only live health check
                   (<code>.github/scripts/verify.sh</code>): hyprctl
-                  configerrors, all six managed blocks present (bashrc, hypr,
-                  keymaps, tmux, waybar style.css, alacritty), stow links
-                  resolve into the repo (including the
+                  configerrors, all seven managed blocks present (bashrc, hypr,
+                  keymaps, tmux, waybar style.css, alacritty, starship-venv),
+                  stow links resolve into the repo (including the
                   <code>uwsm/env.d</code> SSH-agent fragment and dangling
                   detection), dev-env tools on PATH and not pacman-owned, XDG
                   state, and the default-tracking override comparison
@@ -916,6 +916,83 @@
               <code>import</code> line in place (TOML can't merge two
               <code>import</code> keys via append), which is strictly worse than
               the appended block.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Prompt (Starship) deltas</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Choice</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="D-STARSHIP-VENV">
+            <td>
+              <code class="meta">D-STARSHIP-VENV</code> Show the active Python
+              venv name in the prompt
+            </td>
+            <td>
+              <strong
+                >A <code>[custom.venv]</code> module keyed on
+                <code>$VIRTUAL_ENV</code> prints just the active venv's name
+                (e.g. <code>(.venv)</code>) — and nothing when no venv is
+                active, in any directory.</strong
+              >
+              Omarchy seeds a stripped
+              <code
+                >format =
+                "[$directory$git_branch$git_status]($style)$character"</code
+              >. <code>install</code> inserts <code>${custom.venv}</code> before
+              <code>$character</code> (in-place, grep-guarded) and appends the
+              module table as a standard <code>upsert_block</code> managed block
+              that runs <code>basename "$VIRTUAL_ENV"</code> <code>when</code>
+              <code>$VIRTUAL_ENV</code> is set, styled
+              <code>italic yellow</code>. <code>verify.sh</code> greps the
+              <code>${custom.venv}</code> format reference and
+              <code>check_block</code>s the module.
+            </td>
+            <td>
+              <strong
+                >A <code>$VIRTUAL_ENV</code>-keyed custom module, not starship's
+                native <code>python</code> module.</strong
+              >
+              The <code>python</code> module is starship's <em>default</em> venv
+              display, but it only renders inside a detected Python-project
+              directory and bundles <code>via 🐍 &lt;version&gt;</code>; the
+              goal here is just the venv name, shown whenever a venv is active
+              regardless of directory — exactly what a custom module on
+              <code>$VIRTUAL_ENV</code> expresses. Storage is a
+              <strong>hybrid in-place delta</strong>: the format reference must
+              edit Omarchy's scalar <code>format</code> key — starship has no
+              <code>include</code> and TOML can't merge two
+              <code>format</code>s.
+              <a href="decisions.html#D-ALACRITTY-MOUSE">D-ALACRITTY-MOUSE</a>
+              sidesteps that wall by appending a separate
+              <code>[[mouse.bindings]]</code> table and
+              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a> uses
+              structured jq, but a <code>format</code> reference has no append
+              or merge option, so this is a deliberate text-level
+              <code>sed</code> — the repo's one in-place text edit. The module
+              <em>table</em>, by contrast, is append-only and rides the standard
+              managed block. <strong>Not stowed</strong>:
+              <code>~/.config/starship.toml</code> is seeded once (an Omarchy
+              migration <code>cp</code>s the default only
+              <code>if omarchy-cmd-missing starship</code>), is never
+              auto-refreshed, and only the <em>manual</em>
+              <code>omarchy refresh config starship.toml</code> rewrites it —
+              its <code>cp&nbsp;-f</code> would write <em>through</em> a stow
+              symlink (<a href="findings.html#F-REFRESH-WRITETHROUGH"
+                >F-REFRESH-WRITETHROUGH</a
+              >), and owning the whole file would restate and freeze Omarchy's
+              seeded defaults, against the deltas-only rule (<a
+                href="architecture.html#D-DELTA-STORAGE"
+                >D-DELTA-STORAGE</a
+              >).
             </td>
           </tr>
         </tbody>

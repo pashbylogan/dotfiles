@@ -406,6 +406,38 @@ mouse = "Right"
 action = "None"
 EOF
 
+# Show the active venv's name in the prompt via a $VIRTUAL_ENV-keyed custom
+# module. starship.toml is seed-once + never auto-refreshed, so editing in place
+# is safe; the format scalar can't take a merged delta, so reference the module
+# there with sed, then define the module table via a managed block. Full
+# rationale: docs/decisions.html#D-STARSHIP-VENV. [D-STARSHIP-VENV]
+STARSHIP_TOML="$HOME/.config/starship.toml"
+if [ ! -f "$STARSHIP_TOML" ]; then
+  warn "skip starship venv delta — missing ${STARSHIP_TOML/#$HOME/\~}"
+else
+  # ${custom.venv} / $character are literal starship tokens for grep + sed, not
+  # shell expansions; silence SC2016 across the in-place reference edit below.
+  # shellcheck disable=SC2016
+  if grep -qF '${custom.venv}' "$STARSHIP_TOML"; then
+    : # already references the module (idempotent)
+  elif grep -qF '$character' "$STARSHIP_TOML"; then
+    sed -i 's/\$character/${custom.venv}$character/' "$STARSHIP_TOML"
+    info "starship: referenced \${custom.venv} before \$character"
+  else
+    warn "starship: no \$character anchor in ${STARSHIP_TOML/#$HOME/\~} — left untouched"
+  fi
+  # Define the module: print the venv name only, nothing when $VIRTUAL_ENV unset.
+  upsert_block "$STARSHIP_TOML" starship-venv '#' <<'EOF'
+# [D-STARSHIP-VENV] active venv name — see docs/decisions.html#D-STARSHIP-VENV
+[custom.venv]
+command = 'basename "$VIRTUAL_ENV"'
+when = 'test -n "$VIRTUAL_ENV"'
+format = '[\($output\)]($style) '
+style = 'italic yellow'
+EOF
+fi
+unset STARSHIP_TOML
+
 # Apply both waybar overlays (config.jsonc via jq, style.css via managed block);
 # restart only on real content change. [D-WAYBAR-DELTAS][F-WAYBAR-MIGRATIONS]
 waybar_changed=0

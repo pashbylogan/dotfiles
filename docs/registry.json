@@ -218,6 +218,19 @@
       ]
     },
     {
+      "id": "D-STARSHIP-VENV",
+      "title": "Show the active Python venv name in the prompt via a $VIRTUAL_ENV-keyed [custom.venv] module; hybrid delta = in-place format-key edit + appended managed block, not stowed (like D-WAYBAR-DELTAS)",
+      "canonical": "decisions.html#D-STARSHIP-VENV",
+      "appears_in": [],
+      "code_paths": ["install", ".github/scripts/verify.sh"],
+      "related": [
+        "D-DELTA-STORAGE",
+        "D-WAYBAR-DELTAS",
+        "D-IDEMPOTENT",
+        "F-REFRESH-WRITETHROUGH"
+      ]
+    },
+    {
       "id": "D-BASELINE",
       "title": "Reference baseline = Omarchy after 'Remove Preinstalled'; bindings.conf left untracked",
       "canonical": "decisions.html#D-BASELINE",
