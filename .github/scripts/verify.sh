@@ -102,6 +102,21 @@ check_link "$HOME/.config/uwsm/env.d/dotfiles.sh"
 check_link "$HOME/.ssh/config"
 check_link "$HOME/.config/tmux/local.conf"
 check_link "$HOME/.config/omarchy/hooks/theme-set.d/brave-origin-stable"
+check_link "$HOME/.claude/statusline-command.sh"
+
+# ── claude code ──────────────────────────────────────────────────────────────
+# statusline is stowed (checked above); settings.json is jq-overlaid in place. Re-
+# run the overlay filter and check it's a no-op — that's exactly what install
+# asserts, so it covers every managed key and scales with the filter. [D-CLAUDE-CONFIG]
+CLAUDE_SETTINGS="$HOME/.claude/settings.json"
+if [ ! -f "$CLAUDE_SETTINGS" ]; then
+  miss "$(pretty "$CLAUDE_SETTINGS") missing — re-run ./install"
+elif [ "$(jq -f "$REPO/claude/settings.jq" "$CLAUDE_SETTINGS" 2>/dev/null)" = "$(cat "$CLAUDE_SETTINGS")" ]; then
+  pass "claude settings overlay fully applied (settings.jq is a no-op)"
+else
+  miss "claude settings overlay drifted — re-run ./install"
+fi
+unset CLAUDE_SETTINGS
 
 # ── browser default ──────────────────────────────────────────────────────────
 # install uses Omarchy's package, theming, and hook surfaces until Omarchy's

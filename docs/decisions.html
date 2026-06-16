@@ -998,6 +998,60 @@
         </tbody>
       </table>
 
+      <h2>Claude Code config</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Choice</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="D-CLAUDE-CONFIG">
+            <td>
+              <code class="meta">D-CLAUDE-CONFIG</code> Track Claude Code's
+              custom config
+            </td>
+            <td>
+              <strong
+                >Consolidate the two genuine custom-config artifacts under
+                <code>~/.claude</code>, split by how Claude Code treats
+                them.</strong
+              >
+              <code>statusline-command.sh</code> (a self-contained, theme-aware
+              prompt script Claude never rewrites) is
+              <strong>stowed</strong> via a new <code>claude</code> package,
+              like <a href="decisions.html#D-TMUX-KEEP">tmux/local.conf</a>.
+              <code>settings.json</code> is instead applied as an idempotent
+              <strong>jq delta</strong> (<code>claude/settings.jq</code> +
+              <code>apply_jq_deltas</code>) that <code>install</code> overlays
+              onto the live file, seeding <code>{}</code> first so a
+              pre-first-run box still converges.
+              <code>verify.sh</code> link-checks the script and confirms the
+              settings overlay landed.
+            </td>
+            <td>
+              <strong>Tool-rewritten JSON gets a delta, not a symlink.</strong>
+              Claude Code rewrites <code>settings.json</code> itself (via
+              <code>/config</code>), so stowing it risks the same write-through
+              / rename-detach failure that keeps Omarchy-owned files off
+              symlinks (<a href="findings.html#F-REFRESH-WRITETHROUGH"
+                >F-REFRESH-WRITETHROUGH</a
+              >); asserting only our keys via jq preserves anything Claude adds
+              and re-converges every run — the same trade as
+              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>. The
+              repo therefore never contains <code>settings.json</code>, only the
+              filter, so no credential or machine state can leak. Everything
+              else under <code>~/.claude</code> is secrets/state/cache
+              (<code>.credentials.json</code>, <code>~/.claude.json</code>,
+              <code>projects/</code> transcripts + auto memory, history, caches,
+              sessions) and is deliberately excluded — nothing there is tracked.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
       <h2 id="D-BASELINE">
         Baseline &amp; bindings.conf <code class="meta">D-BASELINE</code>
       </h2>

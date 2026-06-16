@@ -18,13 +18,14 @@ OMARCHY_HOOK_FILES := $(shell find omarchy/.config/omarchy/hooks -type f 2>/dev/
 BASH_FILES := install lib/style.sh $(wildcard bin/.local/bin/*) \
 	bash/.config/dotfiles/shell.sh \
 	bash/.config/dotfiles/shell.local.sh.example \
+	claude/.claude/statusline-command.sh \
 	$(OMARCHY_HOOK_FILES) \
 	$(wildcard .github/scripts/*.sh)
 POSIX_FILES := $(wildcard uwsm/.config/uwsm/env.d/*.sh)
 SHELL_FILES := $(BASH_FILES) $(POSIX_FILES)
 PRETTIER_GLOBS := docs/*.html docs/registry.json
 DOCS_CHECK     := .github/scripts/check_docs.py
-JQ_FILTERS     := $(wildcard waybar/*.jq)
+JQ_FILTERS     := $(wildcard waybar/*.jq) $(wildcard claude/*.jq)
 
 # ── output styling ───────────────────────────────────────────────────────────
 # Mirror the shell palette (lib/style.sh: ── headers ──, ℹ info, ⚠ warn) so `make`

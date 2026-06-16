@@ -231,6 +231,24 @@
       ]
     },
     {
+      "id": "D-CLAUDE-CONFIG",
+      "title": "Consolidate Claude Code custom config: stow statusline-command.sh, jq-delta settings.json (Claude rewrites it), exclude all secrets/state/cache",
+      "canonical": "decisions.html#D-CLAUDE-CONFIG",
+      "appears_in": [],
+      "code_paths": [
+        "install",
+        "claude/settings.jq",
+        "claude/.claude/statusline-command.sh",
+        ".github/scripts/verify.sh"
+      ],
+      "related": [
+        "D-WAYBAR-DELTAS",
+        "D-IDEMPOTENT",
+        "D-DELTA-STORAGE",
+        "D-SECRETS-LOCAL"
+      ]
+    },
+    {
       "id": "D-BASELINE",
       "title": "Reference baseline = Omarchy after 'Remove Preinstalled'; bindings.conf left untracked",
       "canonical": "decisions.html#D-BASELINE",

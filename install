@@ -315,6 +315,9 @@ elephant_pre_hash=$(sha256sum "$ELEPHANT_WEBSEARCH" 2>/dev/null | cut -d' ' -f1 
 prestow_backup "$ELEPHANT_WEBSEARCH"
 # UWSM env.d is stowed because Omarchy-launched apps inherit that session env. [F-SSH-AGENT]
 prestow_backup "$HOME/.config/uwsm/env.d/dotfiles.sh"
+# Claude Code statusline is a pure user script (Claude never rewrites it), so it
+# stows; settings.json is tool-rewritten and rides a jq delta instead. [D-CLAUDE-CONFIG]
+prestow_backup "$HOME/.claude/statusline-command.sh"
 # Remove only our obsolete ~/.tmux.conf symlink; tmux now loads through Omarchy's
 # XDG config path so the overlay is not shadowed.
 if [ -L "$HOME/.tmux.conf" ]; then
@@ -323,7 +326,7 @@ if [ -L "$HOME/.tmux.conf" ]; then
   case "$_t" in "$REPO"/*) rm -f "$HOME/.tmux.conf" ;; esac
   unset _t
 fi
-STOW_PKGS=(bash ssh bin hypr tmux elephant nvim uwsm omarchy)
+STOW_PKGS=(bash ssh bin hypr tmux elephant nvim uwsm omarchy claude)
 stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
 success "stowed: ${STOW_PKGS[*]}"
 
@@ -504,6 +507,16 @@ if [ "$elephant_changed" -eq 1 ]; then
   fi
 fi
 unset elephant_changed
+
+# Overlay our Claude Code settings idempotently. Claude rewrites settings.json
+# itself (via /config), so we assert only our keys via jq — preserving any keys
+# Claude adds — instead of stowing the file. Seed {} first because apply_jq_deltas
+# warns + skips on a missing target (pre-first-run machine). [D-CLAUDE-CONFIG]
+mkdir -p "$HOME/.claude"
+[ -f "$HOME/.claude/settings.json" ] || printf '{}\n' >"$HOME/.claude/settings.json"
+# `|| true`: apply_jq_deltas returns 1 on "no change" under set -e; a real jq
+# error still dies inside the helper.
+apply_jq_deltas "$HOME/.claude/settings.json" "$REPO/claude/settings.jq" "claude settings" || true
 
 # ── validation ───────────────────────────────────────────────────────────────
 if have hyprctl && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then

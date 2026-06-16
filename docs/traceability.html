@@ -262,6 +262,21 @@
             </td>
           </tr>
           <tr>
+            <td><code>D-CLAUDE-CONFIG</code></td>
+            <td>
+              Consolidate Claude Code custom config: stow
+              <code>statusline-command.sh</code>, jq-delta
+              <code>settings.json</code> (Claude rewrites it), exclude all
+              secrets/state/cache
+            </td>
+            <td><a href="decisions.html#D-CLAUDE-CONFIG">decisions</a></td>
+            <td>
+              <code>install</code>, <code>claude/settings.jq</code>,
+              <code>claude/.claude/statusline-command.sh</code>,
+              <code>.github/scripts/verify.sh</code>
+            </td>
+          </tr>
+          <tr>
             <td><code>D-BASELINE</code></td>
             <td>
               Baseline = post-Remove-Preinstalled; bindings.conf untracked
