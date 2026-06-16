@@ -624,8 +624,18 @@
               plus
               <code>windowrule = opacity 0.86 0.78, match:tag terminal</code>
               so terminals get a mild frosted-glass effect without hard-coding
-              terminal colors or breaking omarchy theme swaps. Because the
-              fragment is sourced <em>after</em> both omarchy's defaults and the
+              terminal colors or breaking omarchy theme swaps; (5)
+              <code>misc { focus_on_activate = false }</code> so an app's
+              activation request (chat message, browser opening a link, a
+              finished build) only marks the window urgent instead of stealing
+              focus and jumping you to its workspace — omarchy sets this
+              <code>true</code> in
+              <code>default/hypr/looknfeel.conf</code> whereas Hyprland's own
+              default is <code>false</code>, so this inverts an omarchy
+              non-default rather than re-stating a default (no
+              <code>make verify</code> guard needed, unlike
+              <code>border_size</code>). Because the fragment is sourced
+              <em>after</em> both omarchy's defaults and the
               <code>window-no-gaps</code> toggle in hyprland.conf's source
               chain, these values win regardless of toggle state — editing
               <code>~/.config/hypr/looknfeel.conf</code> wouldn't, since it
@@ -784,6 +794,22 @@
               <code>#cpu, #battery, ...</code> CSS spacing rule to include
               <code>#memory</code> so the new module renders with the same
               margins as its neighbors.
+              <strong>Urgent workspaces:</strong> omarchy ships no urgent
+              styling, and its <code>#workspaces button { all: initial }</code>
+              reset means a workspace flagged urgent shows nothing — so with
+              <a href="decisions.html#D-LOOKNFEEL">focus_on_activate off</a> a
+              window requesting attention would be invisible. The block adds a
+              <code>#workspaces button.urgent label</code> rule that recolors
+              the workspace digit to a muted red <code>#a55555</code> — the same
+              attention accent the bar already uses for its
+              screen-record/idle/notify-silence indicators — reproducing i3's
+              number-color cue. It targets the <code>label</code> node because
+              omarchy's global <code>* { color: @foreground }</code> paints the
+              digit directly, overriding a button-only color rule. The color is
+              a literal for the same reason as the tray accent below — waybar
+              CSS only receives
+              <code>@foreground</code>/<code>@background</code>, never the
+              theme's per-theme accent.
               <strong>Spacing rationale:</strong> omarchy ships an asymmetric
               right side — <code>#custom-expand-icon</code> has
               <code>margin-right: 18 px</code>, <code>#bluetooth</code> 17 px,

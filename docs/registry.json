@@ -180,7 +180,7 @@
     },
     {
       "id": "D-LOOKNFEEL",
-      "title": "Hyprland looknfeel deltas in the owned fragment (always-on compact look): slim window gaps, pin border_size = 2 past the window-no-gaps toggle, round all corners at omarchy's recommended radius, and use theme-preserving terminal blur/opacity",
+      "title": "Hyprland looknfeel deltas in the owned fragment (always-on compact look): slim window gaps, pin border_size = 2 past the window-no-gaps toggle, round all corners at omarchy's recommended radius, use theme-preserving terminal blur/opacity, and disable focus_on_activate so apps can't steal focus or yank the workspace",
       "canonical": "decisions.html#D-LOOKNFEEL",
       "appears_in": ["findings.html"],
       "code_paths": [

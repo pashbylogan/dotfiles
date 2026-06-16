@@ -220,8 +220,10 @@
               Always-on compact look in the owned fragment — slim gaps, a
               re-stated <code>border_size = 2</code> so the
               <code>window-no-gaps</code> toggle keeps gaps off without killing
-              borders, global <code>rounding = 8</code>, and frosted terminal
-              opacity/blur with theme-owned colors
+              borders, global <code>rounding = 8</code>, frosted terminal
+              opacity/blur with theme-owned colors, and
+              <code>focus_on_activate = false</code> so apps can't steal focus
+              or yank the workspace
             </td>
             <td><a href="decisions.html#D-LOOKNFEEL">decisions</a></td>
             <td>
@@ -232,8 +234,9 @@
           <tr>
             <td><code>D-WAYBAR-DELTAS</code></td>
             <td>
-              Personal waybar deltas as jq filters; install applies them
-              idempotently
+              Personal waybar deltas (jq filters + style.css managed block);
+              install applies them idempotently — includes an urgent-workspace
+              highlight (#workspaces button.urgent)
             </td>
             <td><a href="decisions.html#D-WAYBAR-DELTAS">decisions</a></td>
             <td><code>install</code>, <code>waybar/deltas.jq</code></td>

@@ -479,6 +479,11 @@ menu menuitem radio {
 menu menuitem:hover {
   background-color: alpha(@theme_selected_bg_color, 0.4);
 }
+/* [D-WAYBAR-DELTAS] No urgent styling ships with omarchy; recolor the urgent
+ * workspace label (the global `*{color}` beats a button-only rule). docs/decisions.html#D-WAYBAR-DELTAS */
+#workspaces button.urgent label {
+  color: #a55555;
+}
 EOF
   post_hash=$(sha256sum "$WAYBAR_STYLE" | cut -d' ' -f1)
   [ "$pre_hash" != "$post_hash" ] && waybar_changed=1
