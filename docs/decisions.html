@@ -563,6 +563,26 @@
               <code>hyprctl clients</code>.
             </td>
           </tr>
+          <tr id="D-SLACK-HUDDLE-FLOAT">
+            <td>
+              <code class="meta">D-SLACK-HUDDLE-FLOAT</code> Float Slack huddle,
+              tile the main window
+            </td>
+            <td><span class="badge badge-done">in (fragment)</span></td>
+            <td>
+              <code
+                >windowrule = float on, match:class slack, match:title
+                Huddle</code
+              >. Every Slack window shares <code>class=slack</code>, so the rule
+              keys on title. <code>float</code> is a static rule, so Hyprland
+              matches it against <code>initialTitle</code> — the huddle window's
+              is <code>Slack - Huddle Preview</code> while the main window's is
+              just <code>Slack</code>, so only the huddle floats. Match the bare
+              word <code>Huddle</code> (no colon — a <code>:</code> breaks
+              Hyprland's RE2 regex). Verify titles via
+              <code>hyprctl clients</code>.
+            </td>
+          </tr>
           <tr id="D-SCREENSHOT-FALLBACK">
             <td>
               <code class="meta">D-SCREENSHOT-FALLBACK</code> Screenshot
