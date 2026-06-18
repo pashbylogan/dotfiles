@@ -144,7 +144,7 @@
       "canonical": "decisions.html#D-CAPS-CTRL",
       "appears_in": [],
       "code_paths": ["hypr/.config/dotfiles/hypr.conf", "install"],
-      "related": ["D-DELTA-STORAGE", "F-HYPR-SEAM"]
+      "related": ["D-DELTA-STORAGE", "F-HYPR-SEAM", "D-KINESIS-REMAP"]
     },
     {
       "id": "D-WORKSPACE-RULES",
@@ -176,7 +176,12 @@
       "canonical": "decisions.html#D-KEYBIND-OVERRIDES",
       "appears_in": [],
       "code_paths": ["hypr/.config/dotfiles/hypr.conf"],
-      "related": ["D-DELTA-STORAGE", "D-BASELINE", "F-HYPR-SEAM"]
+      "related": [
+        "D-DELTA-STORAGE",
+        "D-BASELINE",
+        "F-HYPR-SEAM",
+        "D-KINESIS-REMAP"
+      ]
     },
     {
       "id": "D-MOUSE-ACCEL",
@@ -330,6 +335,14 @@
         "D-CAPS-CTRL",
         "D-LOOKNFEEL"
       ]
+    },
+    {
+      "id": "D-KINESIS-REMAP",
+      "title": "Kinesis Advantage360 SmartSet profile-1 thumb remap: SUPER on both bottom thumb keys (END/PGDN) for either-hand chording, Alt moved to the inner-right key (RWIN), Home->Tab, Calc->F14 bound by keycode 192 to the clipboard; Caps left as-is; layout backed up in kinesis/",
+      "canonical": "decisions.html#D-KINESIS-REMAP",
+      "appears_in": [],
+      "code_paths": ["kinesis/README.md", "hypr/.config/dotfiles/hypr.conf"],
+      "related": ["D-KEYBIND-OVERRIDES", "D-CAPS-CTRL"]
     }
   ],
   "findings": [
