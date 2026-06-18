@@ -251,6 +251,7 @@
       "code_paths": [
         "install",
         "claude/settings.jq",
+        "claude/.stow-local-ignore",
         "claude/.claude/statusline-command.sh",
         ".github/scripts/verify.sh"
       ],

@@ -1095,7 +1095,11 @@
               <strong>jq delta</strong> (<code>claude/settings.jq</code> +
               <code>apply_jq_deltas</code>) that <code>install</code> overlays
               onto the live file, seeding <code>{}</code> first so a
-              pre-first-run box still converges.
+              pre-first-run box still converges. Because that filter is a build
+              input read in place — not a dotfile — a
+              <code>claude/.stow-local-ignore</code> keeps stow from symlinking
+              it into <code>$HOME</code> (it sits at the package root, so it
+              would otherwise land at <code>~/settings.jq</code>).
               <code>verify.sh</code> link-checks the script and confirms the
               settings overlay landed.
             </td>
