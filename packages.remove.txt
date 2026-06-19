@@ -17,3 +17,8 @@ mariadb-libs
 ruby
 rubygems
 tobi-try
+
+# User-removed browsers (not omarchy builtins, so no ~/.local/share/omarchy/
+# audit applies). Brave Origin is the sole browser. [D-PKG-REMOVE]
+chromium
+zen-browser-bin
