@@ -20,3 +20,9 @@ kubectl
 opencode               # OpenCode; install seeds Omarchy config only when missing.
 obsidian               # workspace 3 — notes
 discord                # chat (native client; omarchy default is a webapp — we want full voice/screen-share)
+
+# Claude Desktop Cowork sandbox: an app-managed ephemeral QEMU/KVM microVM for
+# running agent code in isolation. Enabled by default; KVM is already usable here
+# (/dev/kvm is world-rw). The app owns the VM lifecycle — we only supply the tools. [F-APP-CHANNELS]
+qemu-base              # headless QEMU + KVM emulator (pulls virtiofsd for the host↔VM folder share)
+edk2-ovmf              # OVMF UEFI firmware the Cowork VM boots through

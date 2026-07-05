@@ -228,6 +228,24 @@
         where <code>mise activate</code> is not loaded — the same reasoning that
         pins the dev toolchain to pacman.
       </p>
+      <p>
+        Claude Desktop follows the same audit. Anthropic ships an official Linux
+        build, but only as a Debian/Ubuntu <code>.deb</code> from a GPG-signed
+        apt repo with no self-updater, and Arch has no native consumer of that
+        repo. The community AUR packages first repackaged the
+        <em>Windows</em> MSIX/exe; once they caught up to the official Linux
+        <code>.deb</code>, <code>claude-desktop</code> became the durable choice
+        because it installs Anthropic's <code>.deb</code>
+        <strong>verbatim</strong> — its committed checksum matches the signed
+        <code>InRelease</code> — and rides <code>omarchy update</code>'s
+        <code>yay -Sua</code> like the other AUR apps, rather than a
+        self-managed rebuild. Cowork's sandbox is an app-managed QEMU/KVM
+        microVM, so <code>qemu-base</code> and <code>edk2-ovmf</code> are added
+        to <code>packages.txt</code> to enable it by default; every other
+        feature dependency (the Hyprland portal, <code>gnome-keyring</code>,
+        <code>libayatana-appindicator</code>, <code>gvfs</code>) is already part
+        of the Omarchy baseline.
+      </p>
 
       <h2 id="F-CLI">
         Omarchy CLI surface (idempotent, preferred over re-implementing)
@@ -612,6 +630,18 @@
 
       <h2>Sources</h2>
       <ul class="clean">
+        <li>
+          <a href="https://code.claude.com/docs/en/desktop-linux"
+            >Claude Desktop on Linux (beta) — official apt repo, no
+            self-updater, beta feature list</a
+          >
+        </li>
+        <li>
+          <a href="https://aur.archlinux.org/packages/claude-desktop"
+            >AUR — claude-desktop (installs Anthropic's official Linux .deb
+            verbatim)</a
+          >
+        </li>
         <li>
           <a href="https://github.com/Vladimir-csp/uwsm"
             >UWSM — environment files and app launch environment</a
