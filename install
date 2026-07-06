@@ -180,6 +180,19 @@ if [ -f packages.aur.txt ]; then
   fi
 fi
 
+# claude-code lives in both the omarchy repo (pinned) and the AUR (current); a
+# bare name resolves to the stale repo build, so force AUR — but only when the
+# installed build isn't already newer than the repo pin, so this is a cheap,
+# offline-safe no-op once switched, and self-heals a repo reinstall. [F-APP-CHANNELS]
+cc_have="$(pacman -Q claude-code 2>/dev/null | awk '{print $2}')"
+cc_repo="$(pacman -Si claude-code 2>/dev/null | awk '/^Version/{print $3; exit}')"
+if [ -z "$cc_have" ] || [ -z "$cc_repo" ] || [ "$(vercmp "$cc_have" "$cc_repo")" -le 0 ]; then
+  info "installing current claude-code from AUR (omarchy repo build is pinned)"
+  if ! yay -S --noconfirm --needed aur/claude-code; then
+    warn "  claude-code AUR install failed (AUR unavailable?); continuing"
+  fi
+fi
+
 if [ -f packages.remove.txt ]; then
   mapfile -t REMOVE_PKGS < <(parse_pkg_file packages.remove.txt)
   if [ "${#REMOVE_PKGS[@]}" -gt 0 ]; then
