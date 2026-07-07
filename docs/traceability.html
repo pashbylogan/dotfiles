@@ -280,7 +280,9 @@
             <td>
               Consolidate Claude Code custom config: stow
               <code>statusline-command.sh</code>, jq-delta
-              <code>settings.json</code> (Claude rewrites it), exclude all
+              <code>settings.json</code> (Claude rewrites it), pin the default
+              model via <code>.env.ANTHROPIC_MODEL</code> in the settings
+              overlay (not the UI-owned top-level model key), exclude all
               secrets/state/cache
             </td>
             <td><a href="decisions.html#D-CLAUDE-CONFIG">decisions</a></td>

@@ -1103,9 +1103,18 @@
               input read in place — not a dotfile — a
               <code>claude/.stow-local-ignore</code> keeps stow from symlinking
               it into <code>$HOME</code> (it sits at the package root, so it
-              would otherwise land at <code>~/settings.jq</code>).
+              would otherwise land at <code>~/settings.jq</code>). The default
+              model is pinned as <code>.env.ANTHROPIC_MODEL = "opus"</code> in
+              the same overlay — not a top-level <code>model</code> key: the
+              <code>/model</code> picker owns and rewrites
+              <code>model</code> (selecting <em>Default</em> even clears it), so
+              a pinned value drifts on every switch, but it never touches
+              <code>.env</code>, so the overlay stays a no-op. Claude Code
+              applies its settings <code>env</code> block to the session
+              (verified: it selects the model), so this sets the startup default
+              while <code>/model</code> still switches at runtime.
               <code>verify.sh</code> link-checks the script and confirms the
-              settings overlay landed.
+              settings overlay landed (which covers the env pin).
             </td>
             <td>
               <strong>Tool-rewritten JSON gets a delta, not a symlink.</strong>

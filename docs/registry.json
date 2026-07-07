@@ -245,7 +245,7 @@
     },
     {
       "id": "D-CLAUDE-CONFIG",
-      "title": "Consolidate Claude Code custom config: stow statusline-command.sh, jq-delta settings.json (Claude rewrites it), exclude all secrets/state/cache",
+      "title": "Consolidate Claude Code custom config: stow statusline-command.sh, jq-delta settings.json (Claude rewrites it), pin the default model via .env.ANTHROPIC_MODEL in the settings overlay (not the UI-owned top-level model key), exclude all secrets/state/cache",
       "canonical": "decisions.html#D-CLAUDE-CONFIG",
       "appears_in": [],
       "code_paths": [
