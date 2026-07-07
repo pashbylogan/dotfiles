@@ -137,15 +137,17 @@ gitignored and sourced automatically. [D-SECRETS-LOCAL]
 make update
 ```
 
-Runs `omarchy update -y` (pacman + AUR + Omarchy migrations), then the
+Runs `omarchy update -y` (pacman + AUR + Omarchy migrations), force-refreshes
+Claude Code from the AUR (`yay -S --needed aur/claude-code` — the repo build is
+pinned and Omarchy's foreign-only `yay -Sua` skips it), then updates the
 package-like self-managed tools (`uv self update`, then `mise upgrade` +
-`mise prune`), then `make verify`. Each step is warn-on-failure so a reboot
-prompt or other non-zero exit still leaves a visible verify boundary when the
-shell continues. `mise upgrade` only moves tools to their newest **stable**
-release — it honors the specs in `~/.config/mise/config.toml` (`latest` excludes
-prereleases/nightlies; exact pins like `node = "26.2.0"` stay put) and never
-rewrites that config (no `--bump`); `mise prune` then reclaims superseded or
-orphaned versions. [F-CLI]
+`mise prune`), then
+`make verify`. Each step is warn-on-failure so a reboot prompt or other non-zero
+exit still leaves a visible verify boundary when the shell continues. `mise
+upgrade` only moves tools to their newest **stable** release — it honors the
+specs in `~/.config/mise/config.toml` (`latest` excludes prereleases/nightlies;
+exact pins like `node = "26.2.0"` stay put) and never rewrites that config (no
+`--bump`); `mise prune` then reclaims superseded or orphaned versions. [F-CLI]
 
 ```sh
 make update-firmware

@@ -82,6 +82,11 @@ update: ## Packages + Omarchy migrations + self-managed tools (uv, mise), then `
 	@printf "\n$(BOLD)── Packages & Omarchy migrations ──$(NC)\n"
 	@printf "$(CYAN)$$ omarchy update -y$(NC)\n"
 	@omarchy update -y || printf "$(YELLOW)⚠$(NC) 'omarchy update -y' returned non-zero (benign if a reboot was requested).\n"
+	@printf "\n$(BOLD)── Claude Code AUR refresh ──$(NC)\n"
+	@# omarchy update's `yay -Sua` skips claude-code (native via the same-name
+	@# repo pkg), so force the AUR build here; --needed no-ops. [F-APP-CHANNELS]
+	@printf "$(CYAN)$$ yay -S --noconfirm --needed --cleanafter aur/claude-code$(NC)\n"
+	@yay -S --noconfirm --needed --cleanafter aur/claude-code || printf "$(YELLOW)⚠$(NC) 'yay -S aur/claude-code' returned non-zero.\n"
 	@printf "\n$(BOLD)── uv self-update ──$(NC)\n"
 	@if command -v uv >/dev/null 2>&1; then \
 		printf "$(CYAN)$$ uv self update$(NC)\n"; \

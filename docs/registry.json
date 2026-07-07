@@ -401,11 +401,12 @@
     },
     {
       "id": "F-APP-CHANNELS",
-      "title": "App package/webapp/browser channel choices are audited Omarchy-native first: Brave Origin uses stable AUR with Omarchy package, theming, and hook surfaces until Omarchy's browser commands catch up, Spotify follows Omarchy's AUR package, Obsidian follows official extra with Omarchy flags/theme hooks, Slack stays native AUR with Chrome as huddles fallback, and Google Cloud tooling stays on AUR gcloud with the GKE auth plugin as a version-locked split package while kubectl moves to the official extra repo",
+      "title": "App package/webapp/browser channel choices are audited Omarchy-native first: Brave Origin uses stable AUR with Omarchy package, theming, and hook surfaces until Omarchy's browser commands catch up, Spotify follows Omarchy's AUR package, Obsidian follows official extra with Omarchy flags/theme hooks, Slack stays native AUR with Chrome as huddles fallback, Claude Code is force-installed from the AUR via `yay -S --needed aur/claude-code` in both install and make update because Omarchy publishes a stale same-name package that its foreign-only `yay -Sua` step skips, and Google Cloud tooling stays on AUR gcloud with the GKE auth plugin as a version-locked split package while kubectl moves to the official extra repo",
       "canonical": "findings.html#F-APP-CHANNELS",
       "appears_in": ["README.md", "decisions.html", "todos.html"],
       "code_paths": [
         "install",
+        "Makefile",
         "packages.txt",
         "packages.aur.txt",
         "omarchy/.config/omarchy/hooks/theme-set.d/brave-origin-stable"

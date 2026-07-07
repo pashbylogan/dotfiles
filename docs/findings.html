@@ -250,18 +250,24 @@
         Claude Code (the CLI) follows the same audit, with a twist. It ships in
         <em>both</em> the Omarchy repo — pinned and slow to move (it sat on
         <code>2.1.179</code> for weeks) — and the AUR, where an automated
-        pipeline tracks upstream within hours, checksum-pins Anthropic's
-        official binary, and rides <code>omarchy update</code>'s
-        <code>yay -Sua</code> like the other AUR apps. Anthropic's
-        <code>curl | bash</code> native installer is rejected for the same
-        reason as gcloud's: it bypasses pacman, self-manages PATH, and updates
-        outside <code>omarchy update</code>. The twist is the shared package
-        name — a bare <code>claude-code</code> resolves to the pinned repo build
-        — so <code>install</code> forces the AUR build with an explicit
-        <code>aur/claude-code</code> step, gated on a
-        <code>vercmp</code> against the repo pin so it only fires when the
-        installed build is not already ahead: it upgrades a fresh machine (or a
-        repo reinstall) and is otherwise a cheap, offline-safe no-op.
+        pipeline tracks upstream within hours and checksum-pins Anthropic's
+        official binary. Anthropic's <code>curl | bash</code> native installer
+        is rejected for the same reason as gcloud's: it bypasses pacman,
+        self-manages PATH, and updates outside <code>omarchy update</code>. The
+        twist is the shared package name: a bare
+        <code>claude-code</code> resolves to the pinned repo build, and once the
+        AUR build is installed, pacman classifies it as native because the same
+        name exists in the Omarchy sync database. Omarchy's
+        <code>yay -Sua</code> step upgrades only foreign packages, so it never
+        sees later AUR releases. <code>install</code> and
+        <code>make update</code> therefore both run
+        <code>yay -S --needed --cleanafter aur/claude-code</code> — the same
+        <code>aur/</code>-prefixed form Omarchy's own installer uses: the prefix
+        forces the current AUR build past the repo pin,
+        <code>--needed</code> makes it a no-op until the AUR moves ahead, and
+        <code>--cleanafter</code>
+        drops the build tree. No bespoke update script is needed; yay already
+        does the clone, version compare, and build.
       </p>
 
       <h2 id="F-CLI">

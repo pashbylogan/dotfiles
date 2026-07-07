@@ -10,7 +10,7 @@ claude-desktop         # Claude Desktop — installs Anthropic's official Linux 
 
 # claude-code is intentionally NOT a plain entry: it exists in both the omarchy
 # repo (pinned) and the AUR, and the batch `omarchy pkg aur add` uses bare names
-# (repo wins). `install` forces the current AUR build via `aur/claude-code`. [F-APP-CHANNELS]
+# (repo wins). install/make update force it via `yay -S --needed aur/claude-code`. [F-APP-CHANNELS]
 
 # gcloud core CLI (no official-repo pkg); used by gssh() in shell.local.sh.
 # Ships /etc/profile.d/google-cloud-cli.sh, so gcloud lands on PATH natively.

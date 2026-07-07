@@ -227,7 +227,11 @@
                   <code>spotify</code> stays on Omarchy's AUR path, and
                   <code>slack-desktop</code> is an intentional local AUR choice
                   because Omarchy has no Slack package, webapp, binding, or
-                  migration.
+                  migration. <code>claude-code</code> is force-installed from
+                  the AUR via
+                  <code>yay -S --needed aur/claude-code</code> because Omarchy
+                  publishes a stale same-name package that hides it from generic
+                  <code>yay -Sua</code>.
                 </li>
                 <li>
                   <code>packages.remove.txt</code> — symmetric subtractive
