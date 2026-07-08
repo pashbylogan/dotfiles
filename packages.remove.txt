@@ -22,3 +22,8 @@ tobi-try
 # audit applies). Brave Origin is the sole browser. [D-PKG-REMOVE]
 chromium
 zen-browser-bin
+
+# Replaced by ghostty as the default terminal; install sets the default before
+# this drop. Base-package/reinstall caveat: decisions.html#D-TERM-GHOSTTY.
+# [D-TERM-GHOSTTY]
+alacritty

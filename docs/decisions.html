@@ -142,9 +142,11 @@
                 <li>
                   <code>make verify</code> — read-only live health check
                   (<code>.github/scripts/verify.sh</code>): hyprctl
-                  configerrors, all seven managed blocks present (bashrc, hypr,
-                  keymaps, tmux, waybar style.css, alacritty, starship-venv),
-                  stow links resolve into the repo (including the
+                  configerrors, all six managed blocks present (bashrc, hypr,
+                  keymaps, tmux, waybar style.css, starship-venv), the default
+                  terminal is ghostty (<a href="decisions.html#D-TERM-GHOSTTY"
+                    >D-TERM-GHOSTTY</a
+                  >), stow links resolve into the repo (including the
                   <code>uwsm/env.d</code> SSH-agent fragment and dangling
                   detection), dev-env tools on PATH and not pacman-owned, XDG
                   state, and the default-tracking override comparison
@@ -513,7 +515,11 @@
             <td>ghostty</td>
             <td><span class="badge badge-drop">drop</span></td>
             <td>
-              Terminal is Omarchy's concern; revisit if a real delta appears.
+              The old i3-era ghostty <em>config</em> is not carried — Omarchy
+              seeds it. The terminal <em>choice</em> is now made though: ghostty
+              is the default (<a href="decisions.html#D-TERM-GHOSTTY"
+                >D-TERM-GHOSTTY</a
+              >), still on Omarchy's seeded config, no overlay.
             </td>
           </tr>
           <tr>
@@ -920,7 +926,7 @@
         </tbody>
       </table>
 
-      <h2>Terminal (Alacritty) deltas</h2>
+      <h2>Terminal (Ghostty default)</h2>
       <table>
         <thead>
           <tr>
@@ -930,64 +936,59 @@
           </tr>
         </thead>
         <tbody>
-          <tr id="D-ALACRITTY-MOUSE">
+          <tr id="D-TERM-GHOSTTY">
             <td>
-              <code class="meta">D-ALACRITTY-MOUSE</code> Disable right-click
-              paste
+              <code class="meta">D-TERM-GHOSTTY</code> Ghostty is the default
+              terminal; Alacritty removed
             </td>
             <td>
               <strong
-                >A managed block in
-                <code>~/.config/alacritty/alacritty.toml</code> binds
-                <code>Right</code> mouse to
-                <code>action = "None"</code>.</strong
+                ><code>install</code> runs a guarded
+                <code>omarchy install terminal ghostty</code> and adds
+                <code>alacritty</code> to
+                <code>packages.remove.txt</code>.</strong
               >
-              Alacritty's built-in default is right-click =
-              <code>ExpandSelection</code> and middle-click =
-              <code>PasteSelection</code> (primary selection); omarchy ships no
-              <code>[mouse]</code> config, so the no-op overlays the built-in
-              default and right-click stops doing anything (no paste). Appended
-              at EOF via the same <code>upsert_block</code> helper as the other
-              integration blocks; Alacritty's
-              <code>live_config_reload</code> (default on) picks it up, so
-              <code>install</code> needs no restart step. Shift+Insert paste and
-              OSC52 are untouched.
+              The omarchy CLI is the whole mechanism: it installs the package,
+              seeds <code>~/.config/ghostty</code> when missing, and rewrites
+              <code>~/.config/xdg-terminals.list</code> — whose first entry is
+              the sole definition of the default terminal (Super+Return goes
+              through <code>xdg-terminal-exec</code>). The install step runs
+              <strong>before</strong> the package drop so the list never points
+              at an already-removed terminal, and its guard keys on
+              <code>omarchy-default-terminal</code> (the first list entry), not
+              merely "ghostty installed", so re-runs are idempotent. No terminal
+              config is carried — Omarchy seeds ghostty, and ghostty's default
+              right-click is a context menu (not paste), so the former Alacritty
+              right-click no-op overlay was retired rather than ported.
             </td>
             <td>
               <strong
-                >The managed block is the repo's tracked-delta convention, not
-                omarchy's own recommendation</strong
+                >Letting the omarchy CLI own the desktop-entry id and the list
+                is the delta-only, omarchy-native path</strong
               >
-              — omarchy's manual says to edit
-              <code>~/.config/alacritty/alacritty.toml</code> directly, and
-              omarchy treats it as user-editable: its updates surgically
-              <code>sed</code>-patch specific lines in place (the
-              Shift/Ctrl+Insert binds, opacity removal, <code>font-set</code>'s
-              <code>family</code> rewrite) rather than overwriting the file, and
-              only the <em>manual</em>
-              <code>omarchy refresh config alacritty/alacritty.toml</code>
-              <code>cp</code>-resets it. We use a block anyway because a direct
-              edit isn't reproducible: the repo's job is to re-apply tracked
-              deltas on every <code>./install</code>, demarcated from omarchy's
-              content, idempotently — the same pattern as the other integration
-              blocks, and omarchy's line-targeted <code>sed</code>s leave an EOF
-              block alone. <strong>Not stowed</strong> because both omarchy's
-              <code>sed -i</code> migrations and the manual
-              <code>refresh</code> write <em>through</em> a symlink, so stowing
-              would let omarchy mutate our tracked copy (<a
-                href="findings.html#F-REFRESH-WRITETHROUGH"
-                >F-REFRESH-WRITETHROUGH</a
-              >); owning the whole file would also freeze omarchy's seeded
-              defaults. Owning only the one-line delta (<a
-                href="architecture.html#D-DELTA-STORAGE"
-                >D-DELTA-STORAGE</a
-              >) is the same trade as
-              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>.
-              Alacritty's <code>general.import</code> seam doesn't help: adding
-              our file to that array means editing the owned
-              <code>import</code> line in place (TOML can't merge two
-              <code>import</code> keys via append), which is strictly worse than
-              the appended block.
+              (<a href="architecture.html#D-DELTA-STORAGE">D-DELTA-STORAGE</a>);
+              hand-writing <code>xdg-terminals.list</code> would pin an
+              omarchy-owned detail (<code>com.mitchellh.ghostty.desktop</code>).
+              Removal uses the existing
+              <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a> mechanism
+              because leaving an explicitly-unwanted package installed isn't
+              "respecting defaults". The pre-removal audit confirmed Alacritty
+              is safe to drop: <code>Required By: None</code>,
+              <code>omarchy-launch-screensaver</code> dispatches on the actual
+              default terminal (it has a ghostty branch), and every other
+              omarchy script naming <code>alacritty.toml</code> is guarded by an
+              <code>[[ -f ]]</code> test so it no-ops when the file is gone.
+              <strong>One known loose end, accepted deliberately:</strong>
+              stock omarchy waybar binds the CPU module's right-click to
+              <code>alacritty</code> in <code>config.jsonc</code>; after removal
+              that one right-click launches nothing. Fixing it would mean the
+              repo owning all of waybar's <code>config.jsonc</code> and silently
+              pinning every upstream change — a far worse trade than a dead
+              right-click on one module, so it is left as-is. The one durability
+              caveat: <code>omarchy-reinstall-pkgs</code> (a manual recovery
+              flow, never <code>omarchy update</code>) reinstalls base packages
+              including Alacritty; the remove step is idempotent, so re-running
+              <code>./install</code> re-drops it.
             </td>
           </tr>
         </tbody>
@@ -1043,15 +1044,13 @@
               edit Omarchy's scalar <code>format</code> key — starship has no
               <code>include</code> and TOML can't merge two
               <code>format</code>s.
-              <a href="decisions.html#D-ALACRITTY-MOUSE">D-ALACRITTY-MOUSE</a>
-              sidesteps that wall by appending a separate
-              <code>[[mouse.bindings]]</code> table and
-              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a> uses
-              structured jq, but a <code>format</code> reference has no append
-              or merge option, so this is a deliberate text-level
-              <code>sed</code> — the repo's one in-place text edit. The module
-              <em>table</em>, by contrast, is append-only and rides the standard
-              managed block. <strong>Not stowed</strong>:
+              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>
+              sidesteps that wall with structured jq, but a
+              <code>format</code> reference has no append or merge option, so
+              this is a deliberate text-level <code>sed</code> — the repo's one
+              in-place text edit. The module <em>table</em>, by contrast, is
+              append-only and rides the standard managed block.
+              <strong>Not stowed</strong>:
               <code>~/.config/starship.toml</code> is seeded once (an Omarchy
               migration <code>cp</code>s the default only
               <code>if omarchy-cmd-missing starship</code>), is never

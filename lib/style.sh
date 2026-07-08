@@ -18,6 +18,8 @@ else
   BOLD='' CYAN='' GREEN='' YELLOW='' RED='' DIM='' NC=''
 fi
 
+have() { command -v "$1" >/dev/null 2>&1; }
+
 # Begin/end sentinel for a managed block. install writes these and verify.sh
 # greps for them (whole-line), so the `>>> dotfiles managed (NAME) >>>` contract
 # lives here once. $1=begin|end  $2=name  $3=comment-open  $4=comment-close(opt).

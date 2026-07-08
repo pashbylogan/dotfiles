@@ -20,8 +20,6 @@ die() {
   exit 1
 }
 
-have() { command -v "$1" >/dev/null 2>&1; }
-
 # ── helpers ──────────────────────────────────────────────────────────────────
 # Re-anchor managed blocks at EOF because load order decides precedence.
 # Body comes from stdin. [D-DELTA-STORAGE][D-IDEMPOTENT]
@@ -187,6 +185,20 @@ if ! yay -S --noconfirm --needed --cleanafter aur/claude-code; then
   warn "  claude-code AUR install/update failed (AUR unavailable?); continuing"
 fi
 
+# Ghostty is the default terminal, set BEFORE the alacritty drop below so the
+# list never points at a removed terminal; guard on the actual default (not just
+# "ghostty installed") to stay idempotent. omarchy-install-terminal is fail-open
+# — it swallows a failed package install and exits 0 without rewriting the list
+# — so re-assert afterward and abort before the drop, else a transient failure
+# breaks the default. Base-package/reinstall caveat: decisions.html#D-TERM-GHOSTTY.
+# [D-TERM-GHOSTTY]
+if [ "$(omarchy-default-terminal)" != "ghostty" ]; then
+  info "setting ghostty as the default terminal"
+  omarchy install terminal ghostty
+  [ "$(omarchy-default-terminal)" = "ghostty" ] ||
+    die "ghostty did not become the default (install failed?) — not removing alacritty; re-run ./install"
+fi
+
 if [ -f packages.remove.txt ]; then
   mapfile -t REMOVE_PKGS < <(parse_pkg_file packages.remove.txt)
   if [ "${#REMOVE_PKGS[@]}" -gt 0 ]; then
@@ -275,7 +287,7 @@ ensure_dev_env_tool() {
       warn "  could not drop pacman $tool (likely a reverse dependency); leaving it in place"
     fi
   fi
-  if ! command -v "$tool" >/dev/null 2>&1; then
+  if ! have "$tool"; then
     info "installing $tool via 'omarchy install dev-env $kind'"
     omarchy install dev-env "$kind"
   fi
@@ -405,15 +417,6 @@ EOF
 upsert_block "$HOME/.config/tmux/tmux.conf" tmux '#' <<'EOF'
 # [D-TMUX-KEEP] personal tmux overlay — see docs/decisions.html#D-TMUX-KEEP
 source-file ~/.config/tmux/local.conf
-EOF
-
-# Overlay Alacritty's built-in right-click (ExpandSelection) with a no-op so it
-# never pastes; omarchy ships no mouse bindings. Alacritty live-reloads. [D-ALACRITTY-MOUSE]
-upsert_block "$HOME/.config/alacritty/alacritty.toml" alacritty '#' <<'EOF'
-# [D-ALACRITTY-MOUSE] right-click → no-op — see docs/decisions.html#D-ALACRITTY-MOUSE
-[[mouse.bindings]]
-mouse = "Right"
-action = "None"
 EOF
 
 # Show the active venv's name in the prompt via a $VIRTUAL_ENV-keyed custom

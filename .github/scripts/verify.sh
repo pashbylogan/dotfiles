@@ -30,7 +30,7 @@ pretty() {
 }
 
 # ── Hyprland config ──────────────────────────────────────────────────────────
-if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && command -v hyprctl >/dev/null 2>&1; then
+if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && have hyprctl; then
   errs="$(hyprctl configerrors 2>&1 || true)"
   if [ -z "${errs//[[:space:]]/}" ] || printf '%s' "$errs" | grep -qiF 'no error'; then
     pass "hyprctl: no config errors"
@@ -57,8 +57,22 @@ check_block "$HOME/.config/hypr/hyprland.conf" hypr '#'
 check_block "$HOME/.config/nvim/lua/config/keymaps.lua" keymaps '--'
 check_block "$HOME/.config/tmux/tmux.conf" tmux '#'
 check_block "$HOME/.config/waybar/style.css" waybar '/*' ' */'
-check_block "$HOME/.config/alacritty/alacritty.toml" alacritty '#'
 check_block "$HOME/.config/starship.toml" starship-venv '#'
+
+# ── default terminal ─────────────────────────────────────────────────────────
+# Ghostty replaced Alacritty; the default is the first entry of
+# xdg-terminals.list, which omarchy-default-terminal reports. Checks the default
+# only — a re-added alacritty package won't change it. [D-TERM-GHOSTTY]
+if ! have omarchy-default-terminal; then
+  skip "default terminal (omarchy-default-terminal not on PATH)"
+else
+  term="$(omarchy-default-terminal)"
+  if [ "$term" = "ghostty" ]; then
+    pass "default terminal is ghostty"
+  else
+    miss "default terminal is ${term:-<none>}, expected ghostty — re-run ./install"
+  fi
+fi
 
 # ── starship venv reference ──────────────────────────────────────────────────
 # The starship-venv block only renders if the format scalar references it; the

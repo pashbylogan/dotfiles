@@ -219,16 +219,16 @@
       "related": ["D-DELTA-STORAGE", "F-WAYBAR-MIGRATIONS", "D-IDEMPOTENT"]
     },
     {
-      "id": "D-ALACRITTY-MOUSE",
-      "title": "Disable Alacritty right-click paste via a managed block (Right -> None); not stowed because the omarchy-owned alacritty.toml must not be symlinked",
-      "canonical": "decisions.html#D-ALACRITTY-MOUSE",
-      "appears_in": ["architecture.html"],
-      "code_paths": ["install"],
-      "related": [
-        "D-DELTA-STORAGE",
-        "D-WAYBAR-DELTAS",
-        "F-REFRESH-WRITETHROUGH"
-      ]
+      "id": "D-TERM-GHOSTTY",
+      "title": "Ghostty is the default terminal, Alacritty removed: install runs a guarded `omarchy install terminal ghostty` (rewrites xdg-terminals.list, installs, seeds ~/.config/ghostty) BEFORE dropping Alacritty via packages.remove.txt, so the default is never a removed terminal; guard keys on omarchy-default-terminal (first line of the list), not merely ghostty-installed, to stay idempotent; Alacritty is an omarchy base package with no reverse deps and `omarchy update` never resurrects it (only manual omarchy-reinstall-pkgs does); no terminal config is carried (Omarchy seeds ghostty) and ghostty's default right-click is a context menu, not paste, so no mouse overlay is needed (retired the former D-ALACRITTY-MOUSE)",
+      "canonical": "decisions.html#D-TERM-GHOSTTY",
+      "appears_in": ["todos.html"],
+      "code_paths": [
+        "install",
+        "packages.remove.txt",
+        ".github/scripts/verify.sh"
+      ],
+      "related": ["D-PKG-REMOVE", "D-IDEMPOTENT", "D-CARRY-SET", "F-CLI"]
     },
     {
       "id": "D-STARSHIP-VENV",
