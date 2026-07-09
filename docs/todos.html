@@ -591,6 +591,67 @@
             </td>
           </tr>
           <tr>
+            <td>
+              <span class="badge badge-future">future</span> AppImage
+              application pattern
+            </td>
+            <td>
+              When a needed desktop app has no supported Omarchy, official-repo,
+              AUR, or Flatpak route
+            </td>
+            <td>
+              Treat an AppImage as an explicit application decision, not a
+              hand-managed <code>.desktop</code> file. Prefer native-AUR
+              <code>gearlever</code> for integration only: it owns the menu
+              entry and icon, while normal AUR updates maintain Gear Lever
+              itself. Keep the image unextracted unless the candidate is proven
+              compatible with extraction, then evaluate its updater before
+              enabling any second updater:
+              <ul>
+                <li>
+                  Check for vendor self-updating, standard AppImage
+                  <code>.upd_info</code>, and the expected update trigger.
+                  Preserve a normal <code>APPIMAGE</code> launch environment
+                  when the vendor updater needs it.
+                </li>
+                <li>
+                  Do not assume Gear Lever can provide background updates. The
+                  installed Omarchy portal backends do not expose the XDG
+                  Background portal, and its background setting checks/notifies
+                  rather than silently installing updates.
+                </li>
+                <li>
+                  Avoid a generic automatic-update/extraction manager when it
+                  would duplicate a working vendor updater. AppImageLauncher v3
+                  remains beta and appimaged is deprecated; AppManager needs a
+                  separate candidate-specific evaluation.
+                </li>
+                <li>
+                  Record vendor provenance, update behavior, desktop launch
+                  flags, and security review before adoption. If accepted, add
+                  <code>gearlever</code> to <code>packages.aur.txt</code> and
+                  document the resulting managed behavior through the normal
+                  decision/finding flow.
+                </li>
+              </ul>
+              Initial candidate: Traycer Desktop. Its current official AppImage
+              has no standard <code>.upd_info</code>, but its Electron updater
+              checks on launch/resume and requires a user-confirmed download and
+              restart. Its vendor desktop entry uses <code>--no-sandbox</code>;
+              review that risk and the vendor updater-credential exposure before
+              installation (no credential is recorded in this repo). Sources:
+              <a href="https://docs.traycer.ai/install">Traycer install</a>,
+              <a href="https://github.com/mijorus/gearlever">Gear Lever</a>,
+              <a href="https://www.electron.build/docs/features/auto-update/"
+                >electron-builder updates</a
+              >, and
+              <a
+                href="https://docs.appimage.org/packaging-guide/optional/updates.html"
+                >AppImage updates</a
+              >.
+            </td>
+          </tr>
+          <tr>
             <td colspan="3" style="padding-top: 1rem">
               <strong>Owner watchlist</strong>:
             </td>
