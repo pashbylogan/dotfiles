@@ -10,6 +10,7 @@ shfmt
 git-delta              # syntax-highlighted git diffs (binary: delta)
 wireguard-tools        # wg-quick — used by vpns() / exitnode() in shell.local.sh
 azure-cli              # Azure CLI (binary: az) — official extra-repo pkg, so here not packages.aur.txt (unlike gcloud)
+nmap                   # network discovery and security auditing
 
 # Keep malware scanning explicit and on-demand; no clamd/on-access services. [F-MALWARE-SCANNER]
 clamav                 # file-signature scanner; refresh signatures before each incident scan

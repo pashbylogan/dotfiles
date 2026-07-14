@@ -131,6 +131,10 @@ gitignored and sourced automatically. [D-SECRETS-LOCAL]
 | `make update-firmware` | Firmware only (fwupd) — opt-in                               |
 | `pkg-residue <package>` | Read-only audit for package leftovers after removal [D-PKG-REMOVE] |
 
+Network diagnostics are available through `nmap`, installed from Arch `extra`
+via `packages.txt` and the repo's normal `omarchy pkg add` convergence path.
+[D-PKG-REMOVE][F-CLI]
+
 ## Security scans
 
 ClamAV is installed from Arch `extra` through `packages.txt`, but no ClamAV

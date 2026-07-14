@@ -279,7 +279,7 @@
     },
     {
       "id": "D-PKG-REMOVE",
-      "title": "Baseline package/app curation: packages.txt restores, packages.remove.txt drops, app-picker cleanup, and residue audit",
+      "title": "Package/app and operator-tool curation: packages.txt restores and adds, packages.remove.txt drops, app-picker cleanup, and residue audit",
       "canonical": "decisions.html#D-PKG-REMOVE",
       "appears_in": [
         "README.md",
