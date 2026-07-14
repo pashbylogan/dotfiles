@@ -270,6 +270,32 @@
         does the clone, version compare, and build.
       </p>
 
+      <h2 id="F-MALWARE-SCANNER">
+        Malware scanning: ClamAV on demand
+        <code class="meta">F-MALWARE-SCANNER</code>
+      </h2>
+      <p>
+        As of July 2026, the installed Omarchy source and its public repository
+        do not prescribe or bundle a malware scanner. Arch packages
+        <code>clamav</code> in the official <code>extra</code> repository, and
+        the ArchWiki identifies it as one of the few actively developed Linux
+        anti-malware options. Cisco's own documentation is narrower: ClamAV is a
+        file scanner, not a traditional endpoint-security suite, although it can
+        detect malware in ELF files, archives, HTML, PDFs, Office documents, and
+        other formats.
+      </p>
+      <p>
+        The durable choice is therefore the official-repository package through
+        <code>packages.txt</code> and <code>omarchy pkg add</code>, used as a
+        second-opinion incident-response tool. Signature refreshes and scans are
+        explicit operator actions; <code>clamd</code>,
+        <code>clamav-clamonacc</code>, and their services remain disabled. Scan
+        results are reviewed without <code>--remove</code> because a signature
+        match needs context and can be a false positive. A clean result
+        complements process, persistence, permission, download, and network
+        checks rather than proving that compromise never occurred.
+      </p>
+
       <h2 id="F-CLI">
         Omarchy CLI surface (idempotent, preferred over re-implementing)
         <code class="meta">F-CLI</code>
@@ -863,6 +889,26 @@
         <li>
           <a href="https://archlinux.org/packages/extra/x86_64/obsidian/"
             >Arch Linux — obsidian</a
+          >
+        </li>
+        <li>
+          <a href="https://github.com/basecamp/omarchy"
+            >Omarchy source — no bundled malware-scanner integration</a
+          >
+        </li>
+        <li>
+          <a href="https://archlinux.org/packages/extra/x86_64/clamav/"
+            >Arch Linux — clamav</a
+          >
+        </li>
+        <li>
+          <a href="https://wiki.archlinux.org/title/ClamAV"
+            >ArchWiki — ClamAV installation and on-demand scanning</a
+          >
+        </li>
+        <li>
+          <a href="https://docs.clamav.net/Introduction.html"
+            >ClamAV documentation — capabilities and endpoint-suite scope</a
           >
         </li>
       </ul>

@@ -233,7 +233,12 @@
                   the AUR via
                   <code>yay -S --needed aur/claude-code</code> because Omarchy
                   publishes a stale same-name package that hides it from generic
-                  <code>yay -Sua</code>.
+                  <code>yay -Sua</code>. Security tooling follows
+                  <a href="findings.html#F-MALWARE-SCANNER">F-MALWARE-SCANNER</a
+                  >: <code>clamav</code> comes from Arch
+                  <code>extra</code> through <code>packages.txt</code>, while
+                  signature refreshes and scans remain explicit operator actions
+                  with no background daemon enabled.
                 </li>
                 <li>
                   <code>packages.remove.txt</code> — symmetric subtractive

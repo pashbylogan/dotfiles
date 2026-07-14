@@ -26,7 +26,14 @@
         "findings.html"
       ],
       "code_paths": ["install", "README.md"],
-      "related": ["D-ENGINE", "F-CLI", "D-CI", "D-PKG-REMOVE", "F-SSH-AGENT"]
+      "related": [
+        "D-ENGINE",
+        "F-CLI",
+        "D-CI",
+        "D-PKG-REMOVE",
+        "F-SSH-AGENT",
+        "F-MALWARE-SCANNER"
+      ]
     },
     {
       "id": "D-DELTA-STORAGE",
@@ -293,7 +300,8 @@
         "D-SCRIPTS-MINIMAL",
         "D-DELTA-STORAGE",
         "F-CLI",
-        "F-APP-CHANNELS"
+        "F-APP-CHANNELS",
+        "F-MALWARE-SCANNER"
       ]
     },
     {
@@ -425,6 +433,14 @@
         "D-PKG-REMOVE",
         "D-BROWSER-DEFAULT"
       ]
+    },
+    {
+      "id": "F-MALWARE-SCANNER",
+      "title": "ClamAV is the repo-managed on-demand malware scanner from Arch extra; signatures and scans are explicit operator actions, with no background daemon enabled",
+      "canonical": "findings.html#F-MALWARE-SCANNER",
+      "appears_in": ["README.md", "decisions.html"],
+      "code_paths": ["packages.txt", "README.md"],
+      "related": ["D-PKG-REMOVE", "D-SCRIPTS-MINIMAL", "F-CLI"]
     },
     {
       "id": "F-SHELL-RESEARCH",

@@ -11,6 +11,9 @@ git-delta              # syntax-highlighted git diffs (binary: delta)
 wireguard-tools        # wg-quick — used by vpns() / exitnode() in shell.local.sh
 azure-cli              # Azure CLI (binary: az) — official extra-repo pkg, so here not packages.aur.txt (unlike gcloud)
 
+# Keep malware scanning explicit and on-demand; no clamd/on-access services. [F-MALWARE-SCANNER]
+clamav                 # file-signature scanner; refresh signatures before each incident scan
+
 # kubectl + the GKE auth plugin must share /usr/bin (pacman, not mise) so kubectl
 # can invoke the plugin by name in every shell. [F-APP-CHANNELS]
 kubectl

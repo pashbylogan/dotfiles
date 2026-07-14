@@ -131,6 +131,22 @@ gitignored and sourced automatically. [D-SECRETS-LOCAL]
 | `make update-firmware` | Firmware only (fwupd) — opt-in                               |
 | `pkg-residue <package>` | Read-only audit for package leftovers after removal [D-PKG-REMOVE] |
 
+## Security scans
+
+ClamAV is installed from Arch `extra` through `packages.txt`, but no ClamAV
+daemon or on-access service is enabled. Refresh its signatures immediately
+before an explicit scan; review detections rather than auto-removing files:
+[F-MALWARE-SCANNER]
+
+```sh
+sudo freshclam
+clamscan --recursive --infected "$HOME"
+```
+
+ClamAV is a file-signature scanner, not a complete endpoint-security suite. A
+clean result complements process, persistence, browser-permission, download,
+and network checks; it does not prove that a machine was never compromised.
+
 ## Updates
 
 ```sh
