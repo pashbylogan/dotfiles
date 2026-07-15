@@ -143,10 +143,11 @@
                   <code>make verify</code> — read-only live health check
                   (<code>.github/scripts/verify.sh</code>): hyprctl
                   configerrors, all six managed blocks present (bashrc, hypr,
-                  keymaps, tmux, waybar style.css, starship-venv), the default
-                  terminal is ghostty (<a href="decisions.html#D-TERM-GHOSTTY"
-                    >D-TERM-GHOSTTY</a
-                  >), stow links resolve into the repo (including the
+                  keymaps, tmux, waybar style.css, starship-venv), terminal
+                  convergence (Ghostty default plus no Alacritty package or user
+                  launcher;
+                  <a href="decisions.html#D-TERM-GHOSTTY">D-TERM-GHOSTTY</a>),
+                  stow links resolve into the repo (including the
                   <code>uwsm/env.d</code> SSH-agent fragment and dangling
                   detection), dev-env tools on PATH and not pacman-owned, XDG
                   state, and the default-tracking override comparison
@@ -964,10 +965,15 @@
               <strong>before</strong> the package drop so the list never points
               at an already-removed terminal, and its guard keys on
               <code>omarchy-default-terminal</code> (the first list entry), not
-              merely "ghostty installed", so re-runs are idempotent. No terminal
-              config is carried — Omarchy seeds ghostty, and ghostty's default
-              right-click is a context menu (not paste), so the former Alacritty
-              right-click no-op overlay was retired rather than ported.
+              merely "ghostty installed", so re-runs are idempotent. After the
+              package drop, install also removes Omarchy migration
+              <code>1763558828</code>'s user-owned
+              <code>~/.local/share/applications/Alacritty.desktop</code> and
+              restarts Elephant/Walker when that launcher existed; pacman does
+              not own or remove the override. No terminal config is carried —
+              Omarchy seeds ghostty, and ghostty's default right-click is a
+              context menu (not paste), so the former Alacritty right-click
+              no-op overlay was retired rather than ported.
             </td>
             <td>
               <strong
@@ -995,8 +1001,11 @@
               right-click on one module, so it is left as-is. The one durability
               caveat: <code>omarchy-reinstall-pkgs</code> (a manual recovery
               flow, never <code>omarchy update</code>) reinstalls base packages
-              including Alacritty; the remove step is idempotent, so re-running
-              <code>./install</code> re-drops it.
+              including Alacritty; the package and migration-created launcher
+              cleanup are idempotent, so re-running
+              <code>./install</code> re-drops both.
+              <code>make verify</code> checks the default, package, and user
+              launcher so this residue cannot pass unnoticed again.
             </td>
           </tr>
         </tbody>

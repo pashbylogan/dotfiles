@@ -61,8 +61,9 @@ check_block "$HOME/.config/starship.toml" starship-venv '#'
 
 # ── default terminal ─────────────────────────────────────────────────────────
 # Ghostty replaced Alacritty; the default is the first entry of
-# xdg-terminals.list, which omarchy-default-terminal reports. Checks the default
-# only — a re-added alacritty package won't change it. [D-TERM-GHOSTTY]
+# xdg-terminals.list, which omarchy-default-terminal reports. Alacritty's old
+# Omarchy migration-created user launcher must also be absent or Walker will
+# still index it after the package is gone. [D-TERM-GHOSTTY]
 if ! have omarchy-default-terminal; then
   skip "default terminal (omarchy-default-terminal not on PATH)"
 else
@@ -73,6 +74,20 @@ else
     miss "default terminal is ${term:-<none>}, expected ghostty — re-run ./install"
   fi
 fi
+
+if pacman -Qq alacritty >/dev/null 2>&1; then
+  miss "Alacritty package still installed — re-run ./install"
+else
+  pass "Alacritty package absent"
+fi
+
+ALACRITTY_DESKTOP="$HOME/.local/share/applications/Alacritty.desktop"
+if [ -e "$ALACRITTY_DESKTOP" ]; then
+  miss "$(pretty "$ALACRITTY_DESKTOP") remains and will appear in Walker — re-run ./install"
+else
+  pass "Alacritty user launcher absent"
+fi
+unset ALACRITTY_DESKTOP
 
 # ── starship venv reference ──────────────────────────────────────────────────
 # The starship-venv block only renders if the format scalar references it; the

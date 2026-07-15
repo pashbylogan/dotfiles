@@ -354,9 +354,20 @@ elephant_changed=0
 [ "$elephant_pre_hash" != "$elephant_post_hash" ] && elephant_changed=1
 unset elephant_pre_hash elephant_post_hash ELEPHANT_WEBSEARCH
 
-# Stale launcher orphans (.desktop files left behind after Remove Preinstalled
-# stripped the underlying package). [D-PKG-REMOVE]
-rm -f "$HOME/.local/share/applications/typora.desktop"
+# Stale launcher orphans (.desktop files left behind after the package was
+# stripped). Track real removals so elephant drops them from Walker immediately.
+# [D-PKG-REMOVE][D-TERM-GHOSTTY]
+if [ -e "$HOME/.local/share/applications/typora.desktop" ]; then
+  rm -f "$HOME/.local/share/applications/typora.desktop"
+  elephant_changed=1
+fi
+# Omarchy migration 1763558828 created this user-owned override while Alacritty
+# was installed; pacman cannot remove it with the package.
+if ! pacman -Qq alacritty >/dev/null 2>&1 &&
+  [ -e "$HOME/.local/share/applications/Alacritty.desktop" ]; then
+  rm -f "$HOME/.local/share/applications/Alacritty.desktop"
+  elephant_changed=1
+fi
 
 # Reproduce omarchy's curated Zoom webapp (dropped by Remove Preinstalled, not
 # restored on update): call omarchy's own installer with webapps.sh's exact args,
@@ -511,8 +522,9 @@ if [ "$waybar_changed" -eq 1 ]; then
 fi
 unset waybar_changed
 
-# elephant reads websearch.toml at service start; restart on real content
-# change so the walker picker picks up the new entries. [D-PKG-REMOVE]
+# Elephant reads its inputs at service start; restart on real content or
+# launcher changes so Walker reflects the converged application set.
+# [D-PKG-REMOVE][D-TERM-GHOSTTY]
 if [ "$elephant_changed" -eq 1 ]; then
   if have omarchy-restart-walker; then
     omarchy-restart-walker
