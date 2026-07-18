@@ -1,0 +1,29 @@
+# Omarchy builtins to remove; processed by `install` via `omarchy pkg drop`.
+# Audit ~/.local/share/omarchy/ before adding (see decisions.html#D-PKG-REMOVE). [D-PKG-REMOVE]
+
+# bash/aliases guards `cd` with `command -v` — coreutil fallback kicks in.
+zoxide
+
+# Omitted (omarchy uses them unguarded): libqalculate (elephant-calc) and
+# inxi (omarchy-debug). Re-add to this list only after patching those.
+dust
+lazygit
+plocate
+tldr
+
+# ruby ↔ rubygems mutual dep — both must be in the same pacman -Rns transaction.
+dotnet-runtime-9.0
+mariadb-libs
+ruby
+rubygems
+tobi-try
+
+# User-removed browsers (not omarchy builtins, so no ~/.local/share/omarchy/
+# audit applies). Brave Origin is the sole browser. [D-PKG-REMOVE]
+chromium
+zen-browser-bin
+
+# Replaced by ghostty as the default terminal; install sets the default before
+# this drop. Base-package/reinstall caveat: decisions.html#D-TERM-GHOSTTY.
+# [D-TERM-GHOSTTY]
+alacritty

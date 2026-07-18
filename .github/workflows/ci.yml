@@ -1,0 +1,45 @@
+name: CI
+
+# CI delegates to Makefile so file lists and checks stay single-sourced. [D-CI]
+# Pinned shell tools keep Ubuntu runners aligned with local Omarchy installs.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: make ci
+    runs-on: ubuntu-latest
+    env:
+      SHELLCHECK_VERSION: v0.11.0 # matches Omarchy's extra-repo shellcheck
+      SHFMT_VERSION: v3.13.1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pinned shellcheck + shfmt
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin"
+          tmp="$(mktemp -d)"
+          curl -fsSL "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" \
+            | tar -xJ -C "$tmp"
+          mv "$tmp/shellcheck-${SHELLCHECK_VERSION}/shellcheck" "$HOME/.local/bin/shellcheck"
+          curl -fsSL "https://github.com/mvdan/sh/releases/download/${SHFMT_VERSION}/shfmt_${SHFMT_VERSION}_linux_amd64" \
+            -o "$HOME/.local/bin/shfmt"
+          chmod +x "$HOME/.local/bin/shellcheck" "$HOME/.local/bin/shfmt"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Tool versions
+        run: make tools
+
+      - name: make ci
+        run: make ci

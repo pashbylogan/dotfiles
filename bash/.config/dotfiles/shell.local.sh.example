@@ -1,0 +1,24 @@
+# Copy to shell.local.sh (gitignored, stow-symlinked) for personal, machine-local
+# shell additions. Sourced AFTER shell.sh by the ~/.bashrc managed block, so
+# anything here wins. Put device-specific aliases, functions, keybinds, and
+# secrets (project IDs, device serials) here. Do NOT redirect install paths
+# (UV_*, PATH, vendored path.*.inc): Omarchy installs tools natively on PATH. [D-SECRETS-LOCAL]
+# shellcheck shell=bash
+
+# alias vimrc='nvim ~/.config/nvim/'
+
+# Launch tmux-sessionizer on Ctrl-F (overrides readline forward-char):
+# case $- in
+#   *i*) bind -x '"\C-f": tmux-sessionizer' ;;
+# esac
+
+# Device-specific function, e.g. a VPN toggle keyed to your wireguard interface:
+# vpns() { ...; }
+
+# Secrets / project IDs stay out of git, e.g. a Vertex-backed CLI wrapper:
+# _claude_run() {
+#   export CLAUDE_CODE_USE_VERTEX=1 CLOUD_ML_REGION=us-east5
+#   export ANTHROPIC_VERTEX_PROJECT_ID=your-gcp-project-id
+#   command claude "$@"
+# }
+# alias claude='_claude_run'

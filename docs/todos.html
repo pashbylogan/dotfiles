@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>To-Dos — Omarchy Dotfiles</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <nav class="topnav">
+      <a class="brand" href="index.html"
+        ><span class="dot"></span> Omarchy Dotfiles</a
+      >
+      <a class="nav" href="index.html">Home</a>
+      <a class="nav" href="architecture.html">Architecture</a>
+      <a class="nav" href="decisions.html">Decisions</a>
+      <a class="nav" href="findings.html">Findings</a>
+      <a class="nav" href="todos.html" aria-current="page">To-Dos</a>
+      <a class="nav" href="traceability.html">Trace</a>
+      <a class="nav" href="augmentation-approach.html">Design Note</a>
+    </nav>
+
+    <div class="container">
+      <p class="eyebrow">Status &amp; Future Work</p>
+      <h1>To-Dos</h1>
+      <p class="lead">Living checklist. Updated as implementation proceeds.</p>
+
+      <h2>Implementation progress</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Phase</th>
+            <th>Work</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>0</td>
+            <td>
+              Restructure repo: drop X11/replaced packages (i3, i3status, picom,
+              ghostty, desktops, nvim, zsh); <code>git mv</code> bin →
+              <code>bin/.local/bin</code>; keep tmux + ssh; rewrite
+              <code>.gitignore</code> + README.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td>
+              Idempotent <code>install</code> (<code>upsert_block</code> +
+              <code>stow -R --no-folding</code>); <code>bash/shell.sh</code> +
+              <code>shell.local.sh.example</code>; <code>ssh/config</code> +
+              <code>config.local.example</code>; <code>packages.txt</code>; tmux
+              clipboard → <code>wl-copy</code>.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>
+              Authored <code>hypr/.config/dotfiles/hypr.conf</code> (caps→ctrl +
+              workspace rules) + <code>hypr.local.conf.example</code>; install
+              sources it last. (Optional one-time
+              <code>omarchy refresh config hypr/input.conf</code> to dedupe —
+              see deferred.)
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>
+              nvim <code>&lt;leader&gt;y</code> maps via managed block; README
+              quick-start (Remove Preinstalled → <code>./install</code> + manual
+              update/cleanup).
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>docs</td>
+            <td>
+              HTML knowledge base + traceability (<code>registry.json</code>,
+              <code>traceability.html</code>, <code>D-*</code>/<code>F-*</code>
+              anchors + code tokens).
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>verify</td>
+            <td>
+              Live <code>./install</code> verified: idempotent &amp;
+              byte-stable; symlinks correct; caps→ctrl active with no
+              <code>hyprctl configerrors</code>; shell additions load without
+              clobbering Omarchy builtins; ssh target <code>0600</code>; nvim
+              keymap valid; tmux <code>wl-copy</code>.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>review</td>
+            <td>
+              A <code>/code-review</code> pass hardened
+              <code>install</code> (awk-failure &amp; duplicate-marker guards so
+              re-runs can never duplicate/eat a block; reload-failure warning;
+              grep-impl-robust <code>configerrors</code> check) and
+              <code>shell.sh</code> (restored <code>wta</code>, hardened
+              <code>cdwt</code>); README cleanup notes the old
+              <code>~/.local/scripts</code>. Known limitation:
+              <code>stow -R</code> aborts loudly (no corruption) if a stow
+              target pre-exists as a real file beyond
+              <code>~/.ssh/config</code>.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>minimize</td>
+            <td>
+              Line-by-line dotfile audit. Cut from <code>shell.sh</code>: the
+              editor block (Omarchy already exports <code>EDITOR=nvim</code> via
+              <code>uwsm/default</code> + <code>SUDO_EDITOR</code> via
+              <code>bash/envs</code> — confirmed live), the
+              <code>vimrc</code> alias, the pnpm block, and dead
+              <code>go</code
+              >/<code>zig</code>/<code>hugo</code>/<code>heroku</code>/<code>opencode</code>/<code
+                >dbmate</code
+              >
+              PATH/aliases. GCP/gcloud, VPN, and uv/python were kept as
+              <strong>guarded <code>~/apps</code> fallbacks</strong>, then fully
+              cut on 2026-05-31: <code>uv</code> is native on PATH, gcloud now
+              installs via
+              <code>packages.aur.txt</code> (<code>google-cloud-cli</code>), and
+              the GCP/VPN helpers moved to gitignored
+              <code>shell.local.sh</code>. <code>hypr.conf</code> /
+              <code>tmux.conf</code> / <code>ssh/config</code> were already
+              minimal (no Omarchy overlap).
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>omarchy-fit</td>
+            <td>
+              Subagent audit vs official omarchy methods.
+              <strong>Bug fixed:</strong> tmux was shadowed (omarchy ships
+              <code>~/.config/tmux/tmux.conf</code>, which tmux prefers over
+              <code>~/.tmux.conf</code>) — now loaded via a
+              <code>source-file</code> overlay
+              (<code>~/.config/tmux/local.conf</code>) that
+              <em>inherits</em> omarchy's good defaults (tmux-256color, mouse,
+              50k history, themed status bar, M-/C-M- nav) and overrides only
+              our deltas; reload-path bug fixed. Removed the global
+              <code>ssh</code> TERM alias (omarchy fixes ssh flakiness via MTU
+              probing, not TERM). Dropped redundant
+              <code>kb_layout</code> (omarchy auto-detects). Shell aliases
+              confirmed all additive; <code>~/.bashrc</code> is the only
+              sanctioned shell seam. Kept editing
+              bashrc/hyprland.conf/keymaps.lua/tmux.conf in place (sanctioned
+              seams); no post-update hook (manual re-run, per minimalism).
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>hardening</td>
+            <td>
+              Second <code>/code-review</code> pass. <code>install</code>:
+              <code>upsert_block</code> matches markers WHOLE-LINE (a stray line
+              containing the marker text can't trigger block deletion); stale
+              <code>~/.tmux.conf</code> removal only deletes links resolving
+              into the repo; <code>packages.txt</code> parsing strips inline
+              comments/whitespace; ssh-chmod made set -e-safe.
+              <code>bin/</code>: <code>tmux-sessionizer</code>/<code>dev</code>
+              search <code>~/Projects</code> (was lowercase — broke the
+              sessionizer), <code>createVenv</code>
+              <code>setuptools</code> typo, removed broken
+              <code>brew-update</code> (bad shebang + Homebrew). Docs:
+              propagated the tmux path rename and recomputed
+              <code>registry.json</code> <code>appears_in</code> for
+              token-accuracy.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>ci</td>
+            <td>
+              GitHub Actions (<code>.github/workflows/ci.yml</code>), two
+              parallel jobs. A root <code>Makefile</code> is the single source
+              of truth for the checks (file sets + commands); CI invokes the
+              same targets, so <code>make ci</code> runs exactly what CI runs
+              and <code>make fmt</code> auto-fixes.
+              <strong>shell:</strong> pinned <code>shellcheck</code> (v0.11.0,
+              Omarchy's <code>extra</code>-repo version) lints
+              <code>install</code> + <code>bin/.local/bin/*</code> + the sourced
+              <code>shell.sh</code>/<code>shell.local.sh.example</code> (which
+              carry a <code>shell=bash</code> directive), and pinned
+              <code>shfmt</code> (v3.13.1, <code>-i 2 -ci</code>) enforces
+              formatting. <strong>docs:</strong>
+              <code>.github/scripts/check_docs.py</code> (stdlib only) verifies
+              <code>registry.json</code> ↔ HTML anchors ↔ code paths (existence
+              + the <code>[ID]</code> grep token), that every internal link/nav
+              entry resolves, and that <code>appears_in</code> is accurate;
+              pinned <code>prettier@3.8.3</code> checks HTML + JSON formatting.
+              All shell + docs files reformatted clean to pass on first run.
+              Rationale: <a href="decisions.html#D-CI">D-CI</a>.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>gaps</td>
+            <td>
+              Zero window gaps (owner backlog) — resolved with
+              <strong>no repo change</strong>. Omarchy's native toggle (<code
+                >SUPER+SHIFT+Backspace</code
+              >
+              → <code>omarchy-hyprland-toggle window-no-gaps</code>) already
+              does it and <strong>persists across reboots</strong> by writing a
+              state file under <code>~/.local/state/omarchy/toggles/</code> that
+              <code>hyprland.conf</code> re-sources every launch. Deliberately
+              <em>not</em> set in the owned <code>hypr.conf</code> overlay: that
+              fragment is sourced last, so a <code>general {}</code> block there
+              would override and disable the toggle. Omarchy-native + minimal
+              wins over a tracked overlay here.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>apps</td>
+            <td>
+              Essential workflow apps + ansible-branch CLI tools (owner backlog
+              items 6 + 7). Added <code>packages.aur.txt</code> handling to
+              <code>install</code> (parallel to <code>packages.txt</code>;
+              processed via <code>omarchy pkg aur add</code>). Audit of
+              <code>ansible-bootstrap-and-convergence</code>: it's a Fedora/Sway
+              bootstrap, most of its plumbing is already in Omarchy's base, and
+              it declares no GUI apps. Each candidate then audited against
+              Omarchy's install menu (<code>omarchy-install-*</code>),
+              <code>omarchy-base.packages</code>, and
+              <code>install/packaging/webapps.sh</code>; three corrections
+              followed, later extended by the Slack/Spotify/Obsidian channel
+              audit (<a href="findings.html#F-APP-CHANNELS">F-APP-CHANNELS</a>):
+              <ul>
+                <li>
+                  <code>uv</code> — installed by <code>./install</code> via
+                  <code>omarchy install dev-env python</code> (Astral's
+                  installer + Python via mise), guarded by
+                  <code>have uv</code> so re-runs are no-ops.
+                </li>
+                <li>
+                  Spotify — use AUR <code>spotify</code> (matches
+                  <code>omarchy-base.packages</code>), not extra
+                  <code>spotify-launcher</code>.
+                </li>
+                <li>
+                  Obsidian — keep official-repo <code>obsidian</code>; Omarchy
+                  migrates away from <code>obsidian-bin</code>, moves launch
+                  flags into <code>~/.config/obsidian/user-flags.conf</code>,
+                  and has an Obsidian theme hook.
+                </li>
+                <li>
+                  Discord — keep native <code>discord</code> (extra) for full
+                  voice/screen-share; omarchy's default is a webapp via
+                  <code>webapps.sh</code> but the webapp limits voice.
+                </li>
+                <li>
+                  Slack — keep native <code>slack-desktop</code> as a local AUR
+                  choice because Omarchy has no Slack default; use Google Chrome
+                  as the huddles/screen-share fallback and avoid adding
+                  <code>libappindicator</code> unless the already-working tray
+                  behavior regresses.
+                </li>
+                <li>
+                  Claude Code — keep the AUR package, but refresh it via
+                  <code>yay -S --needed aur/claude-code</code> because Omarchy's
+                  same-name sync package hides it from generic
+                  <code>yay -Sua</code>.
+                </li>
+              </ul>
+              Final lists:
+              <code>packages.txt</code> = <code>git-delta</code>,
+              <code>wireguard-tools</code>, <code>obsidian</code> (a base
+              package removed by Remove-Preinstalled), <code>discord</code>;
+              <code>packages.aur.txt</code> = <code>slack-desktop</code>,
+              <code>spotify</code>, <code>jetbrains-toolbox</code> (JetBrains'
+              own installer is the most stable channel for IntelliJ Ultimate).
+              Re-run <code>./install</code> to apply.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>reconcile</td>
+            <td>
+              Hardened apply + added a verify gate, in response to a candid
+              critique of apply/update separation:
+              <ul>
+                <li>
+                  <strong>Dev-env reconciliation:</strong>
+                  <code>./install</code> now actively replaces the main off-path
+                  install vector (pacman) for the tools this repo owns. The
+                  <code>ensure_dev_env_tool</code> helper:
+                  <code>omarchy pkg drop $tool</code> when pacman owns it, then
+                  <code>omarchy install dev-env &lt;kind&gt;</code> if the tool
+                  isn't on PATH. No path pinning — omarchy lands uv/go wherever
+                  the underlying tool defaults today (Astral
+                  <code>~/.local/bin/uv</code>; mise
+                  <code>~/.local/share/mise/shims/go</code>) and we trust
+                  <code>command -v</code> to find it, so the reconciliation
+                  survives upstream path changes.
+                </li>
+                <li>
+                  <strong>XDG user dirs folded in:</strong> resolves the
+                  deferred "old install's XDG tweak" item.
+                  <code>./install</code> collapses <code>DOCUMENTS</code> and
+                  <code>MUSIC</code> to <code>$HOME</code> via
+                  <code>xdg-user-dirs-update</code> and hand-manages the
+                  non-standard <code>XDG_PROJECTS_DIR=$HOME/Projects</code>
+                  (templates/public/desktop are already collapsed by Omarchy).
+                </li>
+                <li>
+                  <strong><code>make verify</code></strong> — new read-only
+                  health check (<code>.github/scripts/verify.sh</code>): hyprctl
+                  configerrors, every managed block present (four at the time
+                  this row was written; now five with the waybar style.css block
+                  added), stow links resolve into the repo, dev-env tools on
+                  PATH and not owned by pacman, XDG state matches. Also runs at
+                  the tail of <code>make update</code>, so post-update drift
+                  surfaces immediately.
+                </li>
+                <li>
+                  <strong>Latest-at-bootstrap caveat documented</strong> —
+                  README notes that <code>omarchy install dev-env</code>
+                  pulls latest at install time, so a fresh bootstrap on
+                  different days may yield different Python/uv/go versions;
+                  <code>make update</code> is the deliberate bumper for
+                  self-managed tool updates.
+                </li>
+              </ul>
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>review-2</td>
+            <td>
+              Third <code>/code-review</code> pass on the apply/update/verify
+              surface. Fixes:
+              <ul>
+                <li>
+                  <code>install</code> — graceful
+                  <code>omarchy pkg drop</code> (warn on dep-conflict refusal
+                  instead of aborting via <code>set -e</code>);
+                  <code>have xdg-user-dirs-update</code> guard with
+                  omarchy-pkg-add fallback; refuse to write a stub
+                  <code>user-dirs.dirs</code> when the tool silently no-ops
+                  (e.g. <code>enabled=False</code>) — surface the skip honestly;
+                  CRLF defense for package-list parsing (<code>tr -d '\r'</code
+                  >).
+                </li>
+                <li>
+                  <code>Makefile :: update</code> /
+                  <code>update-firmware</code> — each update channel may now
+                  fail with a visible WARN, and firmware/self-managed updates
+                  are split from package updates because their prompts and
+                  reboot outcomes differ.
+                </li>
+                <li>
+                  <code>verify.sh</code> — detects dangling stow symlinks (the
+                  target-exists check <code>readlink -f</code> alone didn't
+                  catch); <code>check_tool</code> reports at most one failure
+                  per drifted tool; <code>check_xdg</code> accepts both
+                  trailing-slash and slashless XDG forms (xdg-user-dirs version
+                  drift); <code>pretty()</code> anchored to a path boundary.
+                </li>
+              </ul>
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>waybar</td>
+            <td>
+              Personal waybar deltas split across two coupled overlays: jq
+              filters in <code>waybar/deltas.jq</code> for
+              <code>config.jsonc</code> (applied by <code>install</code>'s
+              <code>apply_jq_deltas</code> helper) and a managed block in
+              <code>style.css</code> (via the existing
+              <code>upsert_block</code> helper) for the matching CSS. waybar
+              restarts only when content actually changed (hash-compare around
+              both files) and the restart polls <code>pgrep -x waybar</code> to
+              verify the process came back. New decision / finding pair
+              documents the pattern and the omarchy mutation surface that makes
+              a delta overlay safer than either a fork or a direct edit:
+              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>,
+              <a href="findings.html#F-WAYBAR-MIGRATIONS">F-WAYBAR-MIGRATIONS</a
+              >. Initial deltas: drop the 1-5
+              <code>persistent-workspaces</code> pin so workspaces grow
+              i3-style; add an icon-only <code>memory</code> module (glyph
+              <code></code> nf-fa-bars, after cpu, on a 5 s interval) with
+              used/total/% in <code>tooltip-format</code> on hover; extend
+              omarchy's <code>#cpu, #battery, ...</code> CSS selector to include
+              <code>#memory</code> so the new module renders with matching
+              margins. The jq filter is defensive: refuses non-object roots,
+              merges the memory module instead of replacing it, and checks all
+              modules-* groups before inserting so a future omarchy reshuffle
+              can't produce duplicates. Battery-audited: zero added wake events
+              at the design level (verbose 1 s clock tick considered and
+              deliberately rejected because it would prevent deep C-states).
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>tray</td>
+            <td>
+              Waybar system tray icons — resolved with Omarchy's existing
+              <code>tray</code> module nested in
+              <code>group/tray-expander</code>. Native apps (Discord and local
+              <code>slack-desktop</code>) register tray icons through their own
+              app behavior, so no <code>waybar/deltas.jq</code> insertion or
+              Slack tray dependency was needed. The one repo-owned fix was the
+              right-click tray menu hover state: Omarchy's GTK reset flattened
+              <code>menuitem:hover</code>, so
+              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>
+              now carries a higher-specificity rule in the managed waybar CSS
+              block. The proposed force-quit keybind was dropped at the owner's
+              request.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>toolchain</td>
+            <td>
+              Caught a non-omarchy-native dev-tool install:
+              <code>shfmt</code> was deposited by <code>go install</code> into
+              mise's go install dir
+              (<code>~/.local/share/mise/installs/go/&lt;ver&gt;/bin</code>),
+              which mise does NOT shim. It worked in the user's interactive bash
+              (where <code>mise activate</code> dynamically PATH-injects that
+              dir) but was invisible to non-interactive shells — forcing a
+              manual PATH prepend for every agent/CI-style <code>make ci</code>.
+              Fix: removed via <code>rm</code> (Go has no first-class
+              <code>uninstall</code> — issue #49500); installed via
+              <code>omarchy pkg add shfmt</code> at <code>/usr/bin/shfmt</code>;
+              both <code>shellcheck</code> and <code>shfmt</code> now tracked in
+              <code>packages.txt</code> so <code>./install</code> ensures both.
+              <code>make tools</code> hints updated to point at
+              <code>./install</code> first.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>pkg-remove</td>
+            <td>
+              Subtractive baseline curation via
+              <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a>, three
+              coupled mechanisms:
+              <ul>
+                <li>
+                  <code>packages.remove.txt</code> populated with 10 drops
+                  (zoxide, dust, lazygit, plocate, tldr, dotnet-runtime-9.0,
+                  mariadb-libs, ruby + rubygems paired, tobi-try);
+                  audit-verified vs omarchy bin grep + pacman reverse-deps. Kept
+                  inxi (omarchy-debug uses it unguarded) and libqalculate
+                  (elephant-calc requires it). btop (keybound) and eza (backs
+                  the <code>ls</code> alias) are no longer dropped — both are
+                  omarchy base packages wired into omarchy, so removing them
+                  broke that wiring. Fresh installs keep them; a machine that
+                  ran the earlier drop reinstalls once via
+                  <code>omarchy pkg add btop eza</code>
+                  (<code>pkg drop</code> is one-way).
+                </li>
+                <li>
+                  <code>elephant/.config/elephant/websearch.toml</code>
+                  stowed — DuckDuckGo replaces elephant's compiled-in Google in
+                  walker's picker, with prestow_backup + hash-compare +
+                  <code>omarchy-restart-walker</code> hook for live convergence.
+                </li>
+                <li>
+                  Stale-launcher cleanup —
+                  <code>rm -f ~/.local/share/applications/typora.desktop</code>
+                  in install (the package is gone post Remove Preinstalled but
+                  the user-dir launcher wasn't).
+                </li>
+              </ul>
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Deferred decisions (resolve at implementation)</h2>
+      <ul class="clean">
+        <li>
+          Exact workspace app→number mapping and live window classes — verify
+          with <code>hyprctl clients</code>. Browser default is no longer part
+          of this open item; Brave Origin is converged by
+          <code>./install</code>.
+        </li>
+        <li>
+          Which <code>.zsh_profile</code> aliases survive the bash port (final
+          dedupe vs. Omarchy defaults).
+        </li>
+        <li>
+          Exact repo path the gitignored local files land in (folded vs.
+          unfolded stow dir) — verify and adjust <code>.gitignore</code>.
+        </li>
+      </ul>
+
+      <h2>Future work</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Trigger</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Hyprland
+              <code>.conf</code> → Lua port
+            </td>
+            <td>When Omarchy ships Lua config on stable</td>
+            <td>
+              Port <code>hypr.conf</code> → a small Lua module; swap the single
+              integration line to <code>require("dotfiles.hypr")</code>. One
+              module + one line. See
+              <a href="findings.html#F-LUA">Findings → Lua</a>.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Retire Brave Origin
+              stable bridge
+            </td>
+            <td>
+              A released Omarchy version maps <code>brave-origin</code> install
+              and default commands to stable (tracking
+              <a href="https://github.com/basecamp/omarchy/pull/6021"
+                >basecamp/omarchy#6021</a
+              >)
+            </td>
+            <td>
+              Remove the
+              <a href="decisions.html#D-BROWSER-DEFAULT">D-BROWSER-DEFAULT</a>
+              compatibility path that installs
+              <code>brave-origin-bin</code> through
+              <code>omarchy pkg aur add</code>, sets
+              <code>brave-origin.desktop</code>, and stows the
+              <code>theme-set.d/brave-origin-stable</code> hook. Return to
+              <code>omarchy install browser brave-origin</code> and
+              <code>omarchy default browser brave-origin</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Post-update
+              integrity hook
+            </td>
+            <td>
+              If a refresh is observed stripping integration blocks in practice
+            </td>
+            <td>
+              A <code>~/.config/omarchy/hooks/post-update.d/</code> hook that
+              <em>checks</em> the <code>source =</code> line / bashrc block are
+              present and reports a recovery action (<code>./install</code>).
+              Must not auto-rewrite Omarchy config.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Terminal config
+            </td>
+            <td>If a genuine ghostty config delta emerges</td>
+            <td>
+              Terminal <em>choice</em> is now made — ghostty is the default and
+              Alacritty's package and migration-created Walker launcher are
+              removed (<a href="decisions.html#D-TERM-GHOSTTY">D-TERM-GHOSTTY</a
+              >) — but no config is owned yet; still on Omarchy's seeded
+              ghostty.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Custom theme /
+              branding
+            </td>
+            <td>
+              If the owner wants a personalized theme or about/screensaver
+              branding
+            </td>
+            <td>
+              Use <code>~/.config/omarchy/themes/</code> and
+              <code>~/.config/omarchy/branding/</code> — official extension
+              points.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> AppImage
+              application pattern
+            </td>
+            <td>
+              When a needed desktop app has no supported Omarchy, official-repo,
+              AUR, or Flatpak route
+            </td>
+            <td>
+              Treat an AppImage as an explicit application decision, not a
+              hand-managed <code>.desktop</code> file. Prefer native-AUR
+              <code>gearlever</code> for integration only: it owns the menu
+              entry and icon, while normal AUR updates maintain Gear Lever
+              itself. Keep the image unextracted unless the candidate is proven
+              compatible with extraction, then evaluate its updater before
+              enabling any second updater:
+              <ul>
+                <li>
+                  Check for vendor self-updating, standard AppImage
+                  <code>.upd_info</code>, and the expected update trigger.
+                  Preserve a normal <code>APPIMAGE</code> launch environment
+                  when the vendor updater needs it.
+                </li>
+                <li>
+                  Do not assume Gear Lever can provide background updates. The
+                  installed Omarchy portal backends do not expose the XDG
+                  Background portal, and its background setting checks/notifies
+                  rather than silently installing updates.
+                </li>
+                <li>
+                  Avoid a generic automatic-update/extraction manager when it
+                  would duplicate a working vendor updater. AppImageLauncher v3
+                  remains beta and appimaged is deprecated; AppManager needs a
+                  separate candidate-specific evaluation.
+                </li>
+                <li>
+                  Record vendor provenance, update behavior, desktop launch
+                  flags, and security review before adoption. If accepted, add
+                  <code>gearlever</code> to <code>packages.aur.txt</code> and
+                  document the resulting managed behavior through the normal
+                  decision/finding flow.
+                </li>
+              </ul>
+              Initial candidate: Traycer Desktop. Its current official AppImage
+              has no standard <code>.upd_info</code>, but its Electron updater
+              checks on launch/resume and requires a user-confirmed download and
+              restart. Its vendor desktop entry uses <code>--no-sandbox</code>;
+              review that risk and the vendor updater-credential exposure before
+              installation (no credential is recorded in this repo). Sources:
+              <a href="https://docs.traycer.ai/install">Traycer install</a>,
+              <a href="https://github.com/mijorus/gearlever">Gear Lever</a>,
+              <a href="https://www.electron.build/docs/features/auto-update/"
+                >electron-builder updates</a
+              >, and
+              <a
+                href="https://docs.appimage.org/packaging-guide/optional/updates.html"
+                >AppImage updates</a
+              >.
+            </td>
+          </tr>
+          <tr>
+            <td colspan="3" style="padding-top: 1rem">
+              <strong>Owner watchlist</strong>:
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Watch app theming
+            </td>
+            <td>Watch item</td>
+            <td>
+              Keep an eye on whether themeable apps follow the system theme
+              cleanly. Possible future surface: omarchy's
+              <code>theme-set</code> hook plus per-app files in
+              <code>~/.config/omarchy/current/theme/</code>. If this becomes
+              real work, revisit <code>aether</code> (omarchy's color-extracting
+              theming app, dropped by Remove Preinstalled) and
+              <code>zoom</code> (AUR; re-add and verify GTK/system theme
+              behavior).
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="badge badge-future">future</span> Walker config
+              deltas
+            </td>
+            <td>When walker tweaks accumulate</td>
+            <td>
+              Track personal walker tweaks via a TOML-delta mechanism (parallel
+              to <code>waybar/deltas.jq</code>) instead of forking
+              <code>~/.config/walker/config.toml</code> — omarchy heavily
+              migrates that file (9 migration scripts). Known deltas to land
+              when the infrastructure exists:
+              <ul>
+                <li>
+                  Restore upstream walker's vim navigation bindings (omarchy
+                  seed strips them):
+                  <code>next = ["Down", "ctrl j"]</code> /
+                  <code>previous = ["Up", "ctrl k"]</code> under
+                  <code>[keybinds]</code>. Verified upstream default per
+                  <a href="https://walkerlauncher.com/docs/keybindings"
+                    >walker docs</a
+                  >.
+                </li>
+                <li>
+                  Optional: add <code>calc</code> to
+                  <code>[providers].default</code> so calc results show in the
+                  picker without the <code>=</code> prefix.
+                </li>
+              </ul>
+              Easiest path: small Python tool using stdlib
+              <code>tomllib</code> (already an install-time dep via
+              <code>check_docs.py</code>) that merges a fragment file into the
+              live config, plus a restart hook mirroring the elephant restart we
+              added for <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a>.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout note">
+        <span class="label">Maintenance note for agents</span>
+        Keep this page and the others current as the code evolves. When a phase
+        completes, flip its badge to
+        <span class="badge badge-done">done</span>; when a future item lands,
+        move it into the progress table and record the "why" in
+        <a href="decisions.html">Decisions</a>.
+      </div>
+    </div>
+
+    <footer>
+      Omarchy dotfiles knowledge base · <a href="index.html">Home</a>
+    </footer>
+  </body>
+</html>

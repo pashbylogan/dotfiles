@@ -1,0 +1,6 @@
+# Keep device-specific Hyprland input out of git; ./install sources this file only
+# after it exists. [D-MOUSE-ACCEL][D-SECRETS-LOCAL]
+# device {
+#   name = <name-from-hyprctl-devices>
+#   sensitivity = 0.6
+# }

@@ -1,0 +1,381 @@
+#!/usr/bin/env bash
+# Read-only package residue audit for after pacman/AUR removals. [D-PKG-REMOVE]
+
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: pkg-residue [options] <package>
+
+Find likely leftover files for a pacman/AUR package after removal.
+The scan is read-only: it never deletes files.
+
+Options:
+  -p, --pattern TERM     Add an extra case-insensitive filename/path term.
+  -r, --root PATH        Add a scan root. Defaults to /, $HOME, and /var.
+      --include-owned    Also show package-owned paths when the package is still installed.
+      --fail-on-match    Exit 2 when likely residue is found.
+  -h, --help            Show this help.
+
+Examples:
+  pkg-residue telegram-desktop
+  pkg-residue telegram-desktop -p org.telegram.desktop -p web.telegram.org
+  sudo pkg-residue slack-desktop --fail-on-match
+EOF
+}
+
+die() {
+  printf 'pkg-residue: %s\n' "$*" >&2
+  exit 1
+}
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+PKG=''
+INCLUDE_OWNED=0
+FAIL_ON_MATCH=0
+ROOTS=()
+TERMS=()
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -p | --pattern)
+      [ "$#" -ge 2 ] || die "$1 needs a value"
+      TERMS+=("$2")
+      shift 2
+      ;;
+    --pattern=*)
+      TERMS+=("${1#*=}")
+      shift
+      ;;
+    -r | --root)
+      [ "$#" -ge 2 ] || die "$1 needs a value"
+      ROOTS+=("$2")
+      shift 2
+      ;;
+    --root=*)
+      ROOTS+=("${1#*=}")
+      shift
+      ;;
+    --include-owned)
+      INCLUDE_OWNED=1
+      shift
+      ;;
+    --fail-on-match)
+      FAIL_ON_MATCH=1
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      die "unknown option: $1"
+      ;;
+    *)
+      [ -z "$PKG" ] || die "only one package can be audited at a time"
+      PKG="$1"
+      shift
+      ;;
+  esac
+done
+
+[ -n "$PKG" ] || {
+  usage >&2
+  exit 2
+}
+
+tmpdir="$(mktemp -d)"
+trap 'rm -rf "$tmpdir"' EXIT
+
+owned="$tmpdir/owned"
+matches="$tmpdir/matches"
+residue="$tmpdir/residue"
+candidate_residue="$tmpdir/candidate-residue"
+archives="$tmpdir/archives"
+: >"$owned"
+: >"$matches"
+: >"$residue"
+: >"$candidate_residue"
+: >"$archives"
+declare -A TARGET_OWNED=()
+
+lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
+
+add_term() {
+  local term
+  term="$(lower "$1")"
+  term="${term#"${term%%[![:space:]]*}"}"
+  term="${term%"${term##*[![:space:]]}"}"
+  [ "${#term}" -ge 3 ] || return 0
+  case "$term" in
+    app | aur | beta | bin | browser | cli | data | dev | desktop | electron | git | gtk | origin | original | qt | stable)
+      return 0
+      ;;
+  esac
+  TERMS+=("$term")
+}
+
+add_package_terms() {
+  local base part
+  base="$(lower "$PKG")"
+  add_term "$base"
+  add_term "${base//-/}"
+  add_term "${base//_/}"
+  add_term "${base//./}"
+
+  for suffix in -bin -git -appimage -electron -desktop -client -app; do
+    if [[ "$base" == *"$suffix" ]]; then
+      add_term "${base%"$suffix"}"
+    fi
+  done
+
+  while IFS= read -r part; do
+    add_term "$part"
+  done < <(printf '%s\n' "$base" | tr '._+-' '\n')
+}
+
+read_installed_paths() {
+  local status
+  if status="$(pacman -Q "$PKG" 2>/dev/null)"; then
+    pacman -Qlq "$PKG" 2>/dev/null | sed -e 's#//*#/#g' -e 's#/$##' >>"$owned"
+    printf '%s\n' "$status"
+  else
+    printf 'not installed'
+  fi
+}
+
+read_cached_archive_paths() {
+  local latest
+  find /var/cache/pacman/pkg -maxdepth 1 -type f -name "$PKG-*.pkg.tar*" ! -name '*.sig' -print 2>/dev/null |
+    sort -V >"$archives" || true
+  [ -s "$archives" ] || return 0
+  have bsdtar || return 0
+  latest="$(tail -n 1 "$archives")"
+  bsdtar -tf "$latest" 2>/dev/null |
+    sed -e 's#^\./##' -e '/^\.\(BUILDINFO\|MTREE\|PKGINFO\)$/d' -e 's#/$##' -e 's#^#/#' >>"$owned" || true
+}
+
+add_terms_from_owned_paths() {
+  local path base
+  [ -s "$owned" ] || return 0
+  while IFS= read -r path; do
+    case "$path" in
+      */applications/*.desktop)
+        base="${path##*/}"
+        add_term "${base%.desktop}"
+        ;;
+      */dbus-1/services/*.service)
+        base="${path##*/}"
+        add_term "${base%.service}"
+        ;;
+      */icons/*/apps/*)
+        base="${path##*/}"
+        base="${base%.*}"
+        add_term "$base"
+        ;;
+      */metainfo/*.xml)
+        base="${path##*/}"
+        add_term "${base%.metainfo.xml}"
+        ;;
+    esac
+  done <"$owned"
+}
+
+unique_terms() {
+  local term
+  : >"$tmpdir/terms"
+  for term in "${TERMS[@]}"; do
+    add_term "$term"
+  done
+  printf '%s\n' "${TERMS[@]}" | awk '!seen[$0]++' >"$tmpdir/terms"
+  mapfile -t TERMS <"$tmpdir/terms"
+}
+
+default_roots() {
+  ROOTS=(/ "$HOME" /var)
+}
+
+unique_roots() {
+  local root
+  : >"$tmpdir/roots"
+  for root in "${ROOTS[@]}"; do
+    [ -e "$root" ] || continue
+    printf '%s\n' "$root"
+  done | awk '!seen[$0]++' >"$tmpdir/roots"
+  mapfile -t ROOTS <"$tmpdir/roots"
+}
+
+scan_root() {
+  local root="$1"
+  local mode="${2:-all}"
+  local name_expr=()
+  local prune_expr=(
+    -path /dev -o
+    -path /proc -o
+    -path /run -o
+    -path /sys -o
+    -path /tmp
+  )
+  local term
+
+  for term in "${TERMS[@]}"; do
+    [ "${#name_expr[@]}" -eq 0 ] || name_expr+=(-o)
+    name_expr+=(-iname "*$term*")
+  done
+
+  if [ "$mode" = dirs ]; then
+    find "$root" -xdev -type d \
+      \( "${prune_expr[@]}" \) -prune -o \
+      \( "${name_expr[@]}" \) -print 2>/dev/null || true
+  else
+    find "$root" -xdev \
+      \( "${prune_expr[@]}" \) -prune -o \
+      \( "${name_expr[@]}" \) -print 2>/dev/null || true
+  fi
+}
+
+scan_root_files_rg() {
+  local root="$1"
+  local rg_args=(
+    --files
+    --hidden
+    --no-ignore
+    --one-file-system
+  )
+  local term
+
+  for term in "${TERMS[@]}"; do
+    rg_args+=(--iglob "*$term*")
+  done
+
+  rg_args+=(
+    --glob '!/dev/**'
+    --glob '!dev/**'
+    --glob '!/proc/**'
+    --glob '!proc/**'
+    --glob '!/run/**'
+    --glob '!run/**'
+    --glob '!/sys/**'
+    --glob '!sys/**'
+    --glob '!/tmp/**'
+    --glob '!tmp/**'
+  )
+
+  rg "${rg_args[@]}" "$root" 2>/dev/null || true
+}
+
+filter_unowned() {
+  if have rg; then
+    rg -F -x -v -f "$owned" "$matches" >"$candidate_residue" || true
+  else
+    grep -Fxv -f "$owned" "$matches" >"$candidate_residue" || true
+  fi
+}
+
+index_target_owned() {
+  local path
+  [ -s "$owned" ] || return 0
+  while IFS= read -r path; do
+    TARGET_OWNED["$path"]=1
+  done <"$owned"
+}
+
+filter_pacman_owned() {
+  local path
+  while IFS= read -r path; do
+    if [ "$INCLUDE_OWNED" -eq 1 ] && [ -n "${TARGET_OWNED[$path]+x}" ]; then
+      printf '%s\n' "$path"
+      continue
+    fi
+    case "$path" in
+      /etc/* | /opt/* | /usr/* | /var/*)
+        pacman -Qqo "$path" >/dev/null 2>&1 && continue
+        ;;
+    esac
+    printf '%s\n' "$path"
+  done <"$candidate_residue" >"$residue"
+}
+
+print_paths() {
+  local title="$1" file="$2"
+  [ -s "$file" ] || return 0
+  printf '\n%s\n' "$title"
+  sed 's/^/  /' "$file"
+}
+
+package_status="$(read_installed_paths)"
+read_cached_archive_paths
+sort -u "$owned" -o "$owned"
+index_target_owned
+
+add_package_terms
+add_terms_from_owned_paths
+unique_terms
+[ "${#TERMS[@]}" -gt 0 ] || die "no useful search terms derived; add one with --pattern"
+
+[ "${#ROOTS[@]}" -gt 0 ] || default_roots
+unique_roots
+
+printf 'Package: %s\n' "$PKG"
+printf 'Status:  %s\n' "$package_status"
+if [ -s "$archives" ]; then
+  printf 'Cache:   %s cached package archive(s)\n' "$(wc -l <"$archives")"
+fi
+printf 'Terms:   %s\n' "${TERMS[*]}"
+printf 'Roots:   %s\n' "${ROOTS[*]}"
+if [ "$EUID" -ne 0 ]; then
+  printf 'Note:    run with sudo to include protected paths that your user cannot read.\n'
+fi
+
+for root in "${ROOTS[@]}"; do
+  if have rg; then
+    scan_root_files_rg "$root" >>"$matches"
+    scan_root "$root" dirs >>"$matches"
+  else
+    scan_root "$root" >>"$matches"
+  fi
+done
+sort -u "$matches" -o "$matches"
+
+if [ "$INCLUDE_OWNED" -eq 1 ] || [ ! -s "$owned" ]; then
+  cp "$matches" "$candidate_residue"
+else
+  filter_unowned
+fi
+filter_pacman_owned
+
+if [ -s "$owned" ]; then
+  if [ "$INCLUDE_OWNED" -eq 1 ]; then
+    print_paths "Known package-owned paths:" "$owned"
+  else
+    printf '\nKnown package-owned paths: %s hidden (use --include-owned to print them)\n' "$(wc -l <"$owned")"
+  fi
+fi
+
+if [ ! -s "$residue" ]; then
+  printf '\nLikely residue: none found\n'
+  exit 0
+fi
+
+printf '\nLikely residue:\n'
+awk '
+  /^\/home\// { user[++u]=$0; next }
+  /^\/var\/cache\/pacman\/pkg\// { cache[++c]=$0; next }
+  /^\/etc\// || /^\/opt\// || /^\/usr\/local\// || /^\/var\// { sys[++s]=$0; next }
+  { other[++o]=$0 }
+  END {
+    if (u) { print "  User state:"; for (i=1; i<=u; i++) print "    " user[i] }
+    if (s) { print "  System state:"; for (i=1; i<=s; i++) print "    " sys[i] }
+    if (cache) { print "  Package cache:"; for (i=1; i<=c; i++) print "    " cache[i] }
+    if (o) { print "  Other:"; for (i=1; i<=o; i++) print "    " other[i] }
+  }
+' "$residue"
+
+if [ "$FAIL_ON_MATCH" -eq 1 ]; then
+  exit 2
+fi

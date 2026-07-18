@@ -1,0 +1,6 @@
+# [D-CLAUDE-CONFIG] settings.jq is a jq-delta build input that install reads in
+# place (apply_jq_deltas onto ~/.claude/settings.json), not a dotfile. Without
+# this, stow symlinks it to ~/settings.jq because it sits at the package root.
+# Stow replaces its default ignore list when this file exists; the package holds
+# nothing else a default pattern would have guarded. See docs/decisions.html#D-CLAUDE-CONFIG.
+settings\.jq

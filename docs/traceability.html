@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Traceability — Omarchy Dotfiles</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <nav class="topnav">
+      <a class="brand" href="index.html"
+        ><span class="dot"></span> Omarchy Dotfiles</a
+      >
+      <a class="nav" href="index.html">Home</a>
+      <a class="nav" href="architecture.html">Architecture</a>
+      <a class="nav" href="decisions.html">Decisions</a>
+      <a class="nav" href="findings.html">Findings</a>
+      <a class="nav" href="todos.html">To-Dos</a>
+      <a class="nav" href="traceability.html" aria-current="page">Trace</a>
+      <a class="nav" href="augmentation-approach.html">Design Note</a>
+    </nav>
+
+    <div class="container">
+      <p class="eyebrow">Traceability</p>
+      <h1>Change-impact index</h1>
+      <p class="lead">
+        Every design decision (<code>D-*</code>) and research finding
+        (<code>F-*</code>) has a stable, grep-able ID. This page mirrors
+        <a href="registry.json">registry.json</a> (the machine-readable source
+        of truth) so a human or agent can see, at a glance,
+        <em>where each idea lives and what it governs</em>.
+      </p>
+
+      <div class="callout key">
+        <span class="label">How to use this when something changes</span>
+        <ol style="margin: 0.3rem 0 0">
+          <li>
+            <strong>Grep the ID</strong> across the repo (e.g.
+            <code>grep -rn D-DELTA-STORAGE</code>) — it appears in docs, in
+            <code>registry.json</code>, and as a
+            <code>[D-DELTA-STORAGE]</code> token in the governing code's
+            comments.
+          </li>
+          <li>
+            Or open <a href="registry.json">registry.json</a> and read the
+            entry's <code>code_paths</code> + <code>appears_in</code> — that is
+            the authoritative "update these places" list.
+          </li>
+          <li>
+            Update the canonical doc section, every listed doc/code touchpoint,
+            and the registry entry itself.
+          </li>
+        </ol>
+      </div>
+
+      <h2>Decisions</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Decision</th>
+            <th>Canonical</th>
+            <th>Governs (code)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>D-ENGINE</code></td>
+            <td>Shell + Omarchy CLI + stow; no Ansible/convergence engine</td>
+            <td><a href="decisions.html#D-ENGINE">decisions</a></td>
+            <td><code>install</code></td>
+          </tr>
+          <tr>
+            <td><code>D-SCRIPTS-MINIMAL</code></td>
+            <td>
+              Only <code>install</code> converges the machine; package updates
+              and cleanup audits are explicit operator actions
+            </td>
+            <td><a href="decisions.html#D-SCRIPTS-MINIMAL">decisions</a></td>
+            <td><code>install</code>, <code>README.md</code></td>
+          </tr>
+          <tr>
+            <td><code>D-DELTA-STORAGE</code></td>
+            <td>Own fragments + managed block; never symlink Omarchy files</td>
+            <td>
+              <a href="architecture.html#D-DELTA-STORAGE">architecture</a>
+            </td>
+            <td>
+              <code>install</code>, <code>hypr/.config/dotfiles/hypr.conf</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-IDEMPOTENT</code></td>
+            <td>
+              <code>install</code> idempotent (upsert_block + stow -R + pkg
+              --needed)
+            </td>
+            <td><a href="architecture.html#D-IDEMPOTENT">architecture</a></td>
+            <td><code>install</code></td>
+          </tr>
+          <tr>
+            <td><code>D-CI</code></td>
+            <td>
+              Makefile = single source of truth for repo ops (CI gates +
+              <code>make update</code> for packages and self-managed tools,
+              opt-in <code>make update-firmware</code>, and
+              <code>make verify</code>); CI invokes it
+            </td>
+            <td><a href="decisions.html#D-CI">decisions</a></td>
+            <td>
+              <code>Makefile</code>, <code>.github/workflows/ci.yml</code>,
+              <code>.github/scripts/check_docs.py</code>,
+              <code>.github/scripts/verify.sh</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-DEV-ENV</code></td>
+            <td>
+              uv/go owned by <code>omarchy install dev-env</code>; install
+              reconciles pacman copies
+            </td>
+            <td><a href="decisions.html#D-DEV-ENV">decisions</a></td>
+            <td><code>install</code></td>
+          </tr>
+          <tr>
+            <td><code>D-SHELL-BASH</code></td>
+            <td>Bash login shell; no chsh</td>
+            <td><a href="decisions.html#D-SHELL-BASH">decisions</a></td>
+            <td><code>bash/.config/dotfiles/shell.sh</code></td>
+          </tr>
+          <tr>
+            <td><code>D-SHELL-SEAM</code></td>
+            <td>Aliases via <code>~/.bashrc</code> managed block at EOF</td>
+            <td><a href="decisions.html#D-SHELL-SEAM">decisions</a></td>
+            <td>
+              <code>install</code>, <code>bash/.config/dotfiles/shell.sh</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-SECRETS-LOCAL</code></td>
+            <td>Secrets/host-specific in gitignored <code>*.local</code></td>
+            <td><a href="decisions.html#D-SECRETS-LOCAL">decisions</a></td>
+            <td><code>*.local.*.example</code>, <code>.gitignore</code></td>
+          </tr>
+          <tr>
+            <td><code>D-CARRY-SET</code></td>
+            <td>What we carry vs. drop</td>
+            <td><a href="decisions.html#D-CARRY-SET">decisions</a></td>
+            <td>
+              <code>shell.sh</code>, <code>ssh/config</code>,
+              <code>bin/.local/bin</code>,
+              <code>tmux/.config/tmux/local.conf</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-TMUX-KEEP</code></td>
+            <td>Keep tmux; clipboard → <code>wl-copy</code></td>
+            <td><a href="decisions.html#D-TMUX-KEEP">decisions</a></td>
+            <td>
+              <code>tmux/.config/tmux/local.conf</code>, <code>install</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-NVIM-KEYMAPS</code></td>
+            <td>
+              nvim keymaps/options in a tracked nvim.lua fragment, loaded by a
+              dofile managed block; don't stow the nvim tree
+            </td>
+            <td><a href="decisions.html#D-NVIM-KEYMAPS">decisions</a></td>
+            <td>
+              <code>install</code>, <code>nvim/.config/dotfiles/nvim.lua</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-CAPS-CTRL</code></td>
+            <td>caps→ctrl in owned fragment</td>
+            <td><a href="decisions.html#D-CAPS-CTRL">decisions</a></td>
+            <td><code>hypr.conf</code>, <code>install</code></td>
+          </tr>
+          <tr>
+            <td><code>D-WORKSPACE-RULES</code></td>
+            <td>Workspace app-assignments in fragment</td>
+            <td><a href="decisions.html#D-WORKSPACE-RULES">decisions</a></td>
+            <td><code>hypr.conf</code></td>
+          </tr>
+          <tr>
+            <td><code>D-SLACK-HUDDLE-FLOAT</code></td>
+            <td>
+              Float the Slack huddle (match <code>title</code>=Huddle) while the
+              main Slack window stays tiled
+            </td>
+            <td>
+              <a href="decisions.html#D-SLACK-HUDDLE-FLOAT">decisions</a>
+            </td>
+            <td><code>hypr/.config/dotfiles/hypr.conf</code></td>
+          </tr>
+          <tr>
+            <td><code>D-SCREENSHOT-FALLBACK</code></td>
+            <td>
+              <code>SUPER+SHIFT+S</code> screenshot fallback while
+              <code>PRINT</code> emits no Linux input event
+            </td>
+            <td>
+              <a href="decisions.html#D-SCREENSHOT-FALLBACK">decisions</a>
+            </td>
+            <td><code>hypr/.config/dotfiles/hypr.conf</code></td>
+          </tr>
+          <tr>
+            <td><code>D-KEYBIND-OVERRIDES</code></td>
+            <td>Personal keybinding overrides and conflict notes</td>
+            <td>
+              <a href="decisions.html#D-KEYBIND-OVERRIDES">decisions</a>
+            </td>
+            <td><code>hypr/.config/dotfiles/hypr.conf</code></td>
+          </tr>
+          <tr>
+            <td><code>D-MOUSE-ACCEL</code></td>
+            <td>MX Master accel in <code>hypr.local.conf</code></td>
+            <td><a href="decisions.html#D-MOUSE-ACCEL">decisions</a></td>
+            <td><code>hypr.local.conf.example</code></td>
+          </tr>
+          <tr>
+            <td><code>D-HJKL-DECLINED</code></td>
+            <td>Declined hjkl focus</td>
+            <td><a href="decisions.html#D-HJKL-DECLINED">decisions</a></td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><code>D-LOOKNFEEL</code></td>
+            <td>
+              Always-on compact look in the owned fragment — slim gaps, a
+              re-stated <code>border_size = 2</code> so the
+              <code>window-no-gaps</code> toggle keeps gaps off without killing
+              borders, global <code>rounding = 8</code>, frosted terminal
+              opacity/blur with theme-owned colors, and
+              <code>focus_on_activate = false</code> so apps can't steal focus
+              or yank the workspace
+            </td>
+            <td><a href="decisions.html#D-LOOKNFEEL">decisions</a></td>
+            <td>
+              <code>hypr/.config/dotfiles/hypr.conf</code>,
+              <code>.github/scripts/verify.sh</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-WAYBAR-DELTAS</code></td>
+            <td>
+              Personal waybar deltas (jq filters + style.css managed block);
+              install applies them idempotently — includes an urgent-workspace
+              highlight (#workspaces button.urgent)
+            </td>
+            <td><a href="decisions.html#D-WAYBAR-DELTAS">decisions</a></td>
+            <td><code>install</code>, <code>waybar/deltas.jq</code></td>
+          </tr>
+          <tr>
+            <td><code>D-TERM-GHOSTTY</code></td>
+            <td>
+              Ghostty is the default terminal (guarded
+              <code>omarchy install terminal ghostty</code> before the drop);
+              Alacritty removed via <code>packages.remove.txt</code>, including
+              its migration-created user launcher so Walker cannot index an
+              orphan
+            </td>
+            <td><a href="decisions.html#D-TERM-GHOSTTY">decisions</a></td>
+            <td>
+              <code>install</code>, <code>packages.remove.txt</code>,
+              <code>.github/scripts/verify.sh</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-STARSHIP-VENV</code></td>
+            <td>
+              Show the active Python venv name in the prompt via a
+              <code>$VIRTUAL_ENV</code>-keyed <code>[custom.venv]</code> module:
+              in-place <code>format</code>-key edit + appended managed block
+            </td>
+            <td><a href="decisions.html#D-STARSHIP-VENV">decisions</a></td>
+            <td>
+              <code>install</code>, <code>.github/scripts/verify.sh</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-CLAUDE-CONFIG</code></td>
+            <td>
+              Consolidate Claude Code custom config: stow
+              <code>statusline-command.sh</code>, jq-delta
+              <code>settings.json</code> (Claude rewrites it), pin the default
+              model via <code>.env.ANTHROPIC_MODEL</code> in the settings
+              overlay (not the UI-owned top-level model key), exclude all
+              secrets/state/cache
+            </td>
+            <td><a href="decisions.html#D-CLAUDE-CONFIG">decisions</a></td>
+            <td>
+              <code>install</code>, <code>claude/settings.jq</code>,
+              <code>claude/.stow-local-ignore</code>,
+              <code>claude/.claude/statusline-command.sh</code>,
+              <code>.github/scripts/verify.sh</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-BASELINE</code></td>
+            <td>
+              Baseline = post-Remove-Preinstalled; bindings.conf untracked
+            </td>
+            <td><a href="decisions.html#D-BASELINE">decisions</a></td>
+            <td><code>README.md</code></td>
+          </tr>
+          <tr>
+            <td><code>D-PKG-REMOVE</code></td>
+            <td>
+              Package/app and operator-tool curation: pacman additions,
+              restores, and drops; elephant websearch override; stale launcher
+              cleanup; and read-only residue audit
+            </td>
+            <td><a href="decisions.html#D-PKG-REMOVE">decisions</a></td>
+            <td>
+              <code>install</code>, <code>packages.txt</code>,
+              <code>packages.remove.txt</code>, <code>README.md</code>,
+              <code>elephant/.config/elephant/websearch.toml</code>,
+              <code>bin/.local/bin/pkg-residue</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-WEBAPP</code></td>
+            <td>
+              Reproduce omarchy-curated webapp launchers idempotently via
+              <code>omarchy webapp install</code> (Zoom) with exact
+              <code>webapps.sh</code> args + icon re-seed + desktop-DB refresh;
+              <code>verify.sh</code> health-checks the launcher
+            </td>
+            <td><a href="decisions.html#D-WEBAPP">decisions</a></td>
+            <td>
+              <code>install</code>, <code>.github/scripts/verify.sh</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-BROWSER-DEFAULT</code></td>
+            <td>
+              Stable Brave Origin is the default browser via Omarchy package,
+              theming, and hook surfaces until Omarchy's browser commands map
+              <code>brave-origin</code> to stable
+            </td>
+            <td><a href="decisions.html#D-BROWSER-DEFAULT">decisions</a></td>
+            <td>
+              <code>install</code>, <code>.github/scripts/verify.sh</code>,
+              <code
+                >omarchy/.config/omarchy/hooks/theme-set.d/brave-origin-stable</code
+              >
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-MONITORS</code></td>
+            <td>
+              Known external monitor layouts in the hypr overlay: home dual Acer
+              dock at native <code>2560×1440@144</code> with scale
+              <code>1.333333</code>, and work Dell U2719DC at native
+              <code>2560×1440@59.95</code> with scale <code>1.25</code>; eDP-1
+              deliberately not overlayed so omarchy's lid switch +
+              internal-monitor-disable toggle keep control; GDK_SCALE
+              intentionally untouched
+            </td>
+            <td><a href="decisions.html#D-MONITORS">decisions</a></td>
+            <td>
+              <code>hypr/.config/dotfiles/hypr.conf</code>,
+              <code>install</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-KINESIS-REMAP</code></td>
+            <td>
+              Kinesis Adv360 SmartSet profile-1 thumb remap: SUPER on both
+              bottom thumb keys, Alt → inner-right key, Home → Tab, and Calc →
+              F14 bound by keycode 192 to the clipboard manager
+            </td>
+            <td><a href="decisions.html#D-KINESIS-REMAP">decisions</a></td>
+            <td>
+              <code>kinesis/README.md</code>,
+              <code>hypr/.config/dotfiles/hypr.conf</code>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Findings</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Finding</th>
+            <th>Canonical</th>
+            <th>Drives</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>F-HYPR-SEAM</code></td>
+            <td>hyprland.conf sourcing order (later wins)</td>
+            <td><a href="findings.html#F-HYPR-SEAM">findings</a></td>
+            <td>
+              <code>D-DELTA-STORAGE</code>, <code>D-CAPS-CTRL</code>,
+              <code>D-LOOKNFEEL</code>, <code>D-MONITORS</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>F-REFRESH-WRITETHROUGH</code></td>
+            <td>refresh backs up but cp writes through symlinks</td>
+            <td><a href="findings.html#F-REFRESH-WRITETHROUGH">findings</a></td>
+            <td><code>D-DELTA-STORAGE</code></td>
+          </tr>
+          <tr>
+            <td><code>F-LUA</code></td>
+            <td>dev branch already on Lua Hyprland config</td>
+            <td><a href="findings.html#F-LUA">findings</a></td>
+            <td><code>D-DELTA-STORAGE</code>, <code>D-MONITORS</code></td>
+          </tr>
+          <tr>
+            <td><code>F-BASH-CHAIN</code></td>
+            <td>bash chain; user section at EOF; known omarchy aliases</td>
+            <td><a href="findings.html#F-BASH-CHAIN">findings</a></td>
+            <td><code>D-SHELL-SEAM</code></td>
+          </tr>
+          <tr>
+            <td><code>F-NVIM-OWNED</code></td>
+            <td>omarchy-nvim-setup overwrites nvim tree</td>
+            <td><a href="findings.html#F-NVIM-OWNED">findings</a></td>
+            <td><code>D-NVIM-KEYMAPS</code></td>
+          </tr>
+          <tr>
+            <td><code>F-BASELINE</code></td>
+            <td>Remove Preinstalled explains trimmed bindings.conf</td>
+            <td><a href="findings.html#F-BASELINE">findings</a></td>
+            <td><code>D-BASELINE</code></td>
+          </tr>
+          <tr>
+            <td><code>F-APP-CHANNELS</code></td>
+            <td>
+              App package/webapp channel choices are audited Omarchy-native
+              first: Brave Origin uses stable AUR with Omarchy package, theming,
+              and hook surfaces until Omarchy's browser commands catch up,
+              Spotify follows Omarchy's AUR package, Obsidian follows official
+              <code>extra</code> with Omarchy flags/theme hooks, Slack stays
+              native AUR with Chrome as huddles fallback, and Claude Code is
+              force-installed from the AUR via
+              <code>yay -S --needed aur/claude-code</code> because Omarchy
+              publishes a stale same-name package its foreign-only
+              <code>yay -Sua</code> step skips
+            </td>
+            <td><a href="findings.html#F-APP-CHANNELS">findings</a></td>
+            <td>
+              <code>D-PKG-REMOVE</code>, <code>D-WEBAPP</code>,
+              <code>D-BROWSER-DEFAULT</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>F-CLI</code></td>
+            <td>
+              Omarchy CLI surface, including package, browser default caveat,
+              refresh, theme/font, update, and dev-env commands
+            </td>
+            <td><a href="findings.html#F-CLI">findings</a></td>
+            <td><code>D-ENGINE</code>, <code>D-BROWSER-DEFAULT</code></td>
+          </tr>
+          <tr>
+            <td><code>F-MALWARE-SCANNER</code></td>
+            <td>
+              ClamAV is the repo-managed on-demand scanner from Arch
+              <code>extra</code>; signature refreshes and scans remain explicit,
+              with no background daemon
+            </td>
+            <td><a href="findings.html#F-MALWARE-SCANNER">findings</a></td>
+            <td><code>D-PKG-REMOVE</code>, <code>D-SCRIPTS-MINIMAL</code></td>
+          </tr>
+          <tr>
+            <td><code>F-SHELL-RESEARCH</code></td>
+            <td>zsh vs bash → stay on bash</td>
+            <td><a href="findings.html#F-SHELL-RESEARCH">findings</a></td>
+            <td><code>D-SHELL-BASH</code></td>
+          </tr>
+          <tr>
+            <td><code>F-TMUX-XDG</code></td>
+            <td>
+              tmux prefers omarchy's XDG tmux.conf, shadowing ~/.tmux.conf
+            </td>
+            <td><a href="findings.html#F-TMUX-XDG">findings</a></td>
+            <td><code>D-TMUX-KEEP</code></td>
+          </tr>
+          <tr>
+            <td><code>F-WAYBAR-MIGRATIONS</code></td>
+            <td>
+              Waybar config drifts via wholesale <code>refresh-waybar</code> AND
+              surgical sed migrations; manual's "won't be overwritten" claim is
+              inaccurate
+            </td>
+            <td><a href="findings.html#F-WAYBAR-MIGRATIONS">findings</a></td>
+            <td><code>D-WAYBAR-DELTAS</code></td>
+          </tr>
+          <tr>
+            <td><code>F-AGENT-GUIDANCE</code></td>
+            <td>
+              AGENTS.md canonical + <code>CLAUDE.md</code> one-line bridge so
+              every harness sees the same instructions
+            </td>
+            <td><a href="findings.html#F-AGENT-GUIDANCE">findings</a></td>
+            <td><code>D-CI</code></td>
+          </tr>
+          <tr>
+            <td><code>F-MONITOR-RULE-APPLY</code></td>
+            <td>
+              Hyprland re-applies <code>monitor =</code> rules on hot-plug;
+              <code>desc:</code> is a prefix match (excluding portname);
+              empty-<code>output</code> is fallback-only
+            </td>
+            <td><a href="findings.html#F-MONITOR-RULE-APPLY">findings</a></td>
+            <td><code>D-MONITORS</code></td>
+          </tr>
+          <tr>
+            <td><code>F-MONITOR-SCALE-PERSIST</code></td>
+            <td>
+              Omarchy's <code>Super + /</code> scale cycle auto-persists only
+              when <code>monitors.conf</code> matches the single-wildcard shape;
+              multi-monitor <code>desc:</code> layouts must persist scale in the
+              user's overlay
+            </td>
+            <td>
+              <a href="findings.html#F-MONITOR-SCALE-PERSIST">findings</a>
+            </td>
+            <td><code>D-MONITORS</code></td>
+          </tr>
+          <tr>
+            <td><code>F-SSH-AGENT</code></td>
+            <td>
+              Omarchy ships <code>ssh-agent.socket</code> disabled and never
+              exports <code>SSH_AUTH_SOCK</code>; overlay adds one UWSM
+              <code>env.d</code> export and pairs with a one-time
+              <code>systemctl --user enable</code>, plus
+              <code>AddKeysToAgent yes</code> for once-per-session passphrase
+            </td>
+            <td><a href="findings.html#F-SSH-AGENT">findings</a></td>
+            <td><code>D-CARRY-SET</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="meta">
+        Source of truth: <a href="registry.json">registry.json</a>. If you
+        add/rename an ID, update the registry, this table, the canonical doc
+        anchor, and the <code>[ID]</code> tokens in code.
+      </p>
+    </div>
+
+    <footer>
+      Omarchy dotfiles knowledge base · <a href="index.html">Home</a>
+    </footer>
+  </body>
+</html>

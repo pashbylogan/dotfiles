@@ -1,0 +1,511 @@
+{
+  "version": 1,
+  "purpose": "Authoritative cross-reference index for this repo's design decisions and research findings. Each entry has a stable, grep-able ID. The ID appears (1) as an HTML anchor in its canonical doc page, (2) as a [ID] token in code comments at every governed path, and (3) here. To find every place affected by a change: grep the ID across the repo, OR read this entry's `code_paths` + `appears_in`.",
+  "conventions": {
+    "decision_id": "D-<SLUG> — a design/architecture choice",
+    "finding_id": "F-<SLUG> — a verified fact about how Omarchy behaves",
+    "code_token": "Comments in code reference IDs as [D-SLUG] / [F-SLUG] so grep finds both docs and code.",
+    "on_change": "When a decision changes: update its canonical doc section, every doc in `appears_in`, every file in `code_paths`, and this registry entry (incl. `related`)."
+  },
+  "decisions": [
+    {
+      "id": "D-ENGINE",
+      "title": "Lightweight shell + Omarchy CLI + stow; no Ansible, no convergence engine",
+      "canonical": "decisions.html#D-ENGINE",
+      "appears_in": ["augmentation-approach.html"],
+      "code_paths": ["install"],
+      "related": ["D-SCRIPTS-MINIMAL", "D-DELTA-STORAGE"]
+    },
+    {
+      "id": "D-SCRIPTS-MINIMAL",
+      "title": "One convergence script (install); updates and cleanup audits are explicit operator actions",
+      "canonical": "decisions.html#D-SCRIPTS-MINIMAL",
+      "appears_in": [
+        "README.md",
+        "augmentation-approach.html",
+        "findings.html"
+      ],
+      "code_paths": ["install", "README.md"],
+      "related": [
+        "D-ENGINE",
+        "F-CLI",
+        "D-CI",
+        "D-PKG-REMOVE",
+        "F-SSH-AGENT",
+        "F-MALWARE-SCANNER"
+      ]
+    },
+    {
+      "id": "D-DELTA-STORAGE",
+      "title": "Own thin fragments + single managed integration block; never symlink Omarchy-owned files",
+      "canonical": "architecture.html#D-DELTA-STORAGE",
+      "appears_in": ["augmentation-approach.html", "decisions.html"],
+      "code_paths": ["install", "hypr/.config/dotfiles/hypr.conf"],
+      "related": [
+        "F-REFRESH-WRITETHROUGH",
+        "F-LUA",
+        "F-HYPR-SEAM",
+        "D-IDEMPOTENT",
+        "D-WAYBAR-DELTAS",
+        "D-LOOKNFEEL",
+        "D-MONITORS",
+        "D-PKG-REMOVE"
+      ]
+    },
+    {
+      "id": "D-IDEMPOTENT",
+      "title": "install must be idempotent (upsert_block + stow -R + pkg --needed)",
+      "canonical": "architecture.html#D-IDEMPOTENT",
+      "appears_in": ["README.md"],
+      "code_paths": ["install"],
+      "related": [
+        "D-DELTA-STORAGE",
+        "D-SHELL-SEAM",
+        "D-NVIM-KEYMAPS",
+        "D-WAYBAR-DELTAS",
+        "D-PKG-REMOVE"
+      ]
+    },
+    {
+      "id": "D-CI",
+      "title": "Makefile is the single source of truth for repo operations (CI gates + `update` for packages and self-managed tools, opt-in `update-firmware`, and `verify` live health check); CI invokes it",
+      "canonical": "decisions.html#D-CI",
+      "appears_in": ["architecture.html", "todos.html"],
+      "code_paths": [
+        "Makefile",
+        ".github/workflows/ci.yml",
+        ".github/scripts/check_docs.py",
+        ".github/scripts/verify.sh"
+      ],
+      "related": ["D-SCRIPTS-MINIMAL", "D-IDEMPOTENT", "D-DEV-ENV"]
+    },
+    {
+      "id": "D-DEV-ENV",
+      "title": "uv and go are owned by omarchy's `install dev-env` path; `./install` actively drops pacman copies and reconciles to the dev-env install",
+      "canonical": "decisions.html#D-DEV-ENV",
+      "appears_in": ["findings.html"],
+      "code_paths": ["install"],
+      "related": ["D-SCRIPTS-MINIMAL", "D-IDEMPOTENT", "F-CLI"]
+    },
+    {
+      "id": "D-SHELL-BASH",
+      "title": "Bash login shell (Omarchy default); no chsh to zsh",
+      "canonical": "decisions.html#D-SHELL-BASH",
+      "appears_in": [],
+      "code_paths": ["bash/.config/dotfiles/shell.sh"],
+      "related": ["D-SHELL-SEAM", "F-BASH-CHAIN", "F-SHELL-RESEARCH"]
+    },
+    {
+      "id": "D-SHELL-SEAM",
+      "title": "Aliases ported into shell.sh, sourced via ~/.bashrc managed block at EOF (ours win)",
+      "canonical": "decisions.html#D-SHELL-SEAM",
+      "appears_in": [],
+      "code_paths": ["install", "bash/.config/dotfiles/shell.sh"],
+      "related": ["D-SHELL-BASH", "D-SECRETS-LOCAL", "F-BASH-CHAIN"]
+    },
+    {
+      "id": "D-SECRETS-LOCAL",
+      "title": "Secrets/host-specific values in gitignored *.local files",
+      "canonical": "decisions.html#D-SECRETS-LOCAL",
+      "appears_in": ["README.md"],
+      "code_paths": [
+        "bash/.config/dotfiles/shell.local.sh.example",
+        "ssh/.ssh/config.local.example",
+        "hypr/.config/dotfiles/hypr.local.conf.example",
+        ".gitignore"
+      ],
+      "related": ["D-SHELL-SEAM", "D-MOUSE-ACCEL"]
+    },
+    {
+      "id": "D-CARRY-SET",
+      "title": "Carry ssh/bin/aliases/tmux/hypr-fragment/nvim-keymaps; drop i3/i3status/picom/ghostty/desktops/nvim-tree",
+      "canonical": "decisions.html#D-CARRY-SET",
+      "appears_in": [],
+      "code_paths": [
+        "bash/.config/dotfiles/shell.sh",
+        "ssh/.ssh/config",
+        "bin/.local/bin",
+        "tmux/.config/tmux/local.conf"
+      ],
+      "related": ["D-TMUX-KEEP", "D-NVIM-KEYMAPS"]
+    },
+    {
+      "id": "D-TMUX-KEEP",
+      "title": "Keep tmux (real customization); port clipboard xclip -> wl-copy for Wayland",
+      "canonical": "decisions.html#D-TMUX-KEEP",
+      "appears_in": ["augmentation-approach.html"],
+      "code_paths": ["tmux/.config/tmux/local.conf", "install"],
+      "related": ["D-CARRY-SET", "F-TMUX-XDG"]
+    },
+    {
+      "id": "D-NVIM-KEYMAPS",
+      "title": "nvim keymaps/options in a tracked ~/.config/dotfiles/nvim.lua fragment, loaded by a one-line dofile managed block in Omarchy's keymaps.lua; do NOT stow the nvim tree",
+      "canonical": "decisions.html#D-NVIM-KEYMAPS",
+      "appears_in": [],
+      "code_paths": ["install", "nvim/.config/dotfiles/nvim.lua"],
+      "related": ["F-NVIM-OWNED", "D-DELTA-STORAGE"]
+    },
+    {
+      "id": "D-CAPS-CTRL",
+      "title": "caps->ctrl remap lives in the owned hypr fragment (sourced last), not Omarchy's input.conf",
+      "canonical": "decisions.html#D-CAPS-CTRL",
+      "appears_in": [],
+      "code_paths": ["hypr/.config/dotfiles/hypr.conf", "install"],
+      "related": ["D-DELTA-STORAGE", "F-HYPR-SEAM", "D-KINESIS-REMAP"]
+    },
+    {
+      "id": "D-WORKSPACE-RULES",
+      "title": "Workspace app-assignments as windowrules in the hypr fragment",
+      "canonical": "decisions.html#D-WORKSPACE-RULES",
+      "appears_in": [],
+      "code_paths": ["hypr/.config/dotfiles/hypr.conf"],
+      "related": ["D-CAPS-CTRL"]
+    },
+    {
+      "id": "D-SLACK-HUDDLE-FLOAT",
+      "title": "Float the Slack huddle window (matched on title) while the main Slack window stays tiled",
+      "canonical": "decisions.html#D-SLACK-HUDDLE-FLOAT",
+      "appears_in": [],
+      "code_paths": ["hypr/.config/dotfiles/hypr.conf"],
+      "related": ["D-WORKSPACE-RULES", "D-LOOKNFEEL", "F-HYPR-SEAM"]
+    },
+    {
+      "id": "D-SCREENSHOT-FALLBACK",
+      "title": "SUPER+SHIFT+S screenshot fallback while the keyboard PRINT key emits no Linux input event",
+      "canonical": "decisions.html#D-SCREENSHOT-FALLBACK",
+      "appears_in": [],
+      "code_paths": ["hypr/.config/dotfiles/hypr.conf"],
+      "related": ["D-DELTA-STORAGE", "F-HYPR-SEAM"]
+    },
+    {
+      "id": "D-KEYBIND-OVERRIDES",
+      "title": "Personal keybinding overrides live in the owned Hyprland fragment with conflict notes",
+      "canonical": "decisions.html#D-KEYBIND-OVERRIDES",
+      "appears_in": [],
+      "code_paths": ["hypr/.config/dotfiles/hypr.conf"],
+      "related": [
+        "D-DELTA-STORAGE",
+        "D-BASELINE",
+        "F-HYPR-SEAM",
+        "D-KINESIS-REMAP"
+      ]
+    },
+    {
+      "id": "D-MOUSE-ACCEL",
+      "title": "External MX Master mouse accel in gitignored hypr.local.conf (device-specific)",
+      "canonical": "decisions.html#D-MOUSE-ACCEL",
+      "appears_in": [],
+      "code_paths": ["hypr/.config/dotfiles/hypr.local.conf.example"],
+      "related": ["D-SECRETS-LOCAL", "D-WORKSPACE-RULES"]
+    },
+    {
+      "id": "D-LOOKNFEEL",
+      "title": "Hyprland looknfeel deltas in the owned fragment (always-on compact look): slim window gaps, pin border_size = 2 past the window-no-gaps toggle, round all corners at omarchy's recommended radius, use theme-preserving terminal blur/opacity, and disable focus_on_activate so apps can't steal focus or yank the workspace",
+      "canonical": "decisions.html#D-LOOKNFEEL",
+      "appears_in": ["findings.html"],
+      "code_paths": [
+        "hypr/.config/dotfiles/hypr.conf",
+        ".github/scripts/verify.sh"
+      ],
+      "related": ["D-DELTA-STORAGE", "F-HYPR-SEAM"]
+    },
+    {
+      "id": "D-HJKL-DECLINED",
+      "title": "Declined vim hjkl window focus (keep Omarchy SUPER+arrows; preserve SUPER+J/L)",
+      "canonical": "decisions.html#D-HJKL-DECLINED",
+      "appears_in": [],
+      "code_paths": [],
+      "related": ["D-WORKSPACE-RULES"]
+    },
+    {
+      "id": "D-WAYBAR-DELTAS",
+      "title": "Personal waybar deltas as composed jq filters in waybar/deltas.jq, applied idempotently by install (apply_jq_deltas helper); restart waybar only when content changes",
+      "canonical": "decisions.html#D-WAYBAR-DELTAS",
+      "appears_in": ["architecture.html", "findings.html", "todos.html"],
+      "code_paths": ["install", "waybar/deltas.jq"],
+      "related": ["D-DELTA-STORAGE", "F-WAYBAR-MIGRATIONS", "D-IDEMPOTENT"]
+    },
+    {
+      "id": "D-TERM-GHOSTTY",
+      "title": "Ghostty is the default terminal, Alacritty removed: install runs a guarded `omarchy install terminal ghostty` (rewrites xdg-terminals.list, installs, seeds ~/.config/ghostty) BEFORE dropping Alacritty via packages.remove.txt, so the default is never a removed terminal; guard keys on omarchy-default-terminal (first line of the list), not merely ghostty-installed, to stay idempotent; after package removal, delete Omarchy migration 1763558828's user-owned ~/.local/share/applications/Alacritty.desktop and restart Elephant/Walker on change because pacman cannot remove that launcher; verify checks the default, package absence, and launcher absence; Alacritty is an omarchy base package with no reverse deps and `omarchy update` never resurrects it (only manual omarchy-reinstall-pkgs does); no terminal config is carried (Omarchy seeds ghostty) and ghostty's default right-click is a context menu, not paste, so no mouse overlay is needed (retired the former D-ALACRITTY-MOUSE)",
+      "canonical": "decisions.html#D-TERM-GHOSTTY",
+      "appears_in": ["todos.html"],
+      "code_paths": [
+        "install",
+        "packages.remove.txt",
+        ".github/scripts/verify.sh"
+      ],
+      "related": ["D-PKG-REMOVE", "D-IDEMPOTENT", "D-CARRY-SET", "F-CLI"]
+    },
+    {
+      "id": "D-STARSHIP-VENV",
+      "title": "Show the active Python venv name in the prompt via a $VIRTUAL_ENV-keyed [custom.venv] module; hybrid delta = in-place format-key edit + appended managed block, not stowed (like D-WAYBAR-DELTAS)",
+      "canonical": "decisions.html#D-STARSHIP-VENV",
+      "appears_in": [],
+      "code_paths": ["install", ".github/scripts/verify.sh"],
+      "related": [
+        "D-DELTA-STORAGE",
+        "D-WAYBAR-DELTAS",
+        "D-IDEMPOTENT",
+        "F-REFRESH-WRITETHROUGH"
+      ]
+    },
+    {
+      "id": "D-CLAUDE-CONFIG",
+      "title": "Consolidate Claude Code custom config: stow statusline-command.sh, jq-delta settings.json (Claude rewrites it), pin the default model via .env.ANTHROPIC_MODEL in the settings overlay (not the UI-owned top-level model key), exclude all secrets/state/cache",
+      "canonical": "decisions.html#D-CLAUDE-CONFIG",
+      "appears_in": [],
+      "code_paths": [
+        "install",
+        "claude/settings.jq",
+        "claude/.stow-local-ignore",
+        "claude/.claude/statusline-command.sh",
+        ".github/scripts/verify.sh"
+      ],
+      "related": [
+        "D-WAYBAR-DELTAS",
+        "D-IDEMPOTENT",
+        "D-DELTA-STORAGE",
+        "D-SECRETS-LOCAL"
+      ]
+    },
+    {
+      "id": "D-BASELINE",
+      "title": "Reference baseline = Omarchy after 'Remove Preinstalled'; bindings.conf left untracked",
+      "canonical": "decisions.html#D-BASELINE",
+      "appears_in": ["README.md"],
+      "code_paths": ["README.md"],
+      "related": ["F-BASELINE"]
+    },
+    {
+      "id": "D-PKG-REMOVE",
+      "title": "Package/app and operator-tool curation: packages.txt restores and adds, packages.remove.txt drops, app-picker cleanup, and residue audit",
+      "canonical": "decisions.html#D-PKG-REMOVE",
+      "appears_in": [
+        "README.md",
+        "architecture.html",
+        "findings.html",
+        "todos.html"
+      ],
+      "code_paths": [
+        "install",
+        "packages.txt",
+        "packages.remove.txt",
+        "README.md",
+        "elephant/.config/elephant/websearch.toml",
+        "bin/.local/bin/pkg-residue"
+      ],
+      "related": [
+        "D-IDEMPOTENT",
+        "D-SCRIPTS-MINIMAL",
+        "D-DELTA-STORAGE",
+        "F-CLI",
+        "F-APP-CHANNELS",
+        "F-MALWARE-SCANNER"
+      ]
+    },
+    {
+      "id": "D-WEBAPP",
+      "title": "Reproduce omarchy-curated webapp launchers idempotently",
+      "canonical": "decisions.html#D-WEBAPP",
+      "appears_in": [],
+      "code_paths": ["install", ".github/scripts/verify.sh"],
+      "related": ["D-PKG-REMOVE", "D-IDEMPOTENT", "D-SCRIPTS-MINIMAL", "F-CLI"]
+    },
+    {
+      "id": "D-BROWSER-DEFAULT",
+      "title": "Stable Brave Origin is the default browser via Omarchy package, theming, and hook surfaces until Omarchy's browser commands map brave-origin to stable",
+      "canonical": "decisions.html#D-BROWSER-DEFAULT",
+      "appears_in": ["README.md", "findings.html", "todos.html"],
+      "code_paths": [
+        "install",
+        ".github/scripts/verify.sh",
+        "omarchy/.config/omarchy/hooks/theme-set.d/brave-origin-stable"
+      ],
+      "related": [
+        "D-IDEMPOTENT",
+        "D-SCRIPTS-MINIMAL",
+        "F-APP-CHANNELS",
+        "F-CLI"
+      ]
+    },
+    {
+      "id": "D-MONITORS",
+      "title": "Known external monitor layouts as desc:-matched monitor= rules in the hypr overlay: home dual-Acer dock at native 2560×1440@144 with scale 1.333333, work Dell U2719DC at native 2560×1440@59.95 with scale 1.25; eDP-1 stays governed by Omarchy's lid switch + internal-monitor-disable toggle (no overlay line); GDK_SCALE intentionally untouched; install restarts waybar when reload changes monitor topology",
+      "canonical": "decisions.html#D-MONITORS",
+      "appears_in": ["findings.html"],
+      "code_paths": ["hypr/.config/dotfiles/hypr.conf", "install"],
+      "related": [
+        "D-DELTA-STORAGE",
+        "F-HYPR-SEAM",
+        "F-MONITOR-RULE-APPLY",
+        "F-MONITOR-SCALE-PERSIST",
+        "F-LUA",
+        "D-CAPS-CTRL",
+        "D-LOOKNFEEL"
+      ]
+    },
+    {
+      "id": "D-KINESIS-REMAP",
+      "title": "Kinesis Advantage360 SmartSet profile-1 thumb remap: SUPER on both bottom thumb keys (END/PGDN) for either-hand chording, Alt moved to the inner-right key (RWIN), Home->Tab, Calc->F14 bound by keycode 192 to the clipboard; Caps left as-is; layout backed up in kinesis/",
+      "canonical": "decisions.html#D-KINESIS-REMAP",
+      "appears_in": [],
+      "code_paths": ["kinesis/README.md", "hypr/.config/dotfiles/hypr.conf"],
+      "related": ["D-KEYBIND-OVERRIDES", "D-CAPS-CTRL"]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-HYPR-SEAM",
+      "title": "hyprland.conf sources defaults -> user override files -> theme -> toggles; later wins",
+      "canonical": "findings.html#F-HYPR-SEAM",
+      "appears_in": ["decisions.html"],
+      "code_paths": ["hypr/.config/dotfiles/hypr.conf", "install"],
+      "related": ["D-DELTA-STORAGE", "D-CAPS-CTRL", "D-LOOKNFEEL"]
+    },
+    {
+      "id": "F-REFRESH-WRITETHROUGH",
+      "title": "omarchy refresh backs up but cp -f writes THROUGH symlinks, mutating tracked files",
+      "canonical": "findings.html#F-REFRESH-WRITETHROUGH",
+      "appears_in": ["augmentation-approach.html", "decisions.html"],
+      "code_paths": [],
+      "related": ["D-DELTA-STORAGE", "F-WAYBAR-MIGRATIONS"]
+    },
+    {
+      "id": "F-LUA",
+      "title": "Omarchy dev branch already migrated Hyprland config to Lua",
+      "canonical": "findings.html#F-LUA",
+      "appears_in": [
+        "augmentation-approach.html",
+        "decisions.html",
+        "todos.html"
+      ],
+      "code_paths": [],
+      "related": ["D-DELTA-STORAGE"]
+    },
+    {
+      "id": "F-BASH-CHAIN",
+      "title": "bash chain; ~/.bashrc sources Omarchy default then user section at EOF; known omarchy aliases",
+      "canonical": "findings.html#F-BASH-CHAIN",
+      "appears_in": ["decisions.html"],
+      "code_paths": ["bash/.config/dotfiles/shell.sh", "install"],
+      "related": ["D-SHELL-SEAM", "D-SHELL-BASH"]
+    },
+    {
+      "id": "F-NVIM-OWNED",
+      "title": "omarchy-nvim-setup cp -r replaces ~/.config/nvim; keymaps.lua is the user-extension file",
+      "canonical": "findings.html#F-NVIM-OWNED",
+      "appears_in": ["decisions.html"],
+      "code_paths": ["install"],
+      "related": ["D-NVIM-KEYMAPS"]
+    },
+    {
+      "id": "F-BASELINE",
+      "title": "Remove Preinstalled explains the trimmed bindings.conf (intentional, not drift)",
+      "canonical": "findings.html#F-BASELINE",
+      "appears_in": ["README.md", "decisions.html", "index.html"],
+      "code_paths": ["README.md"],
+      "related": ["D-BASELINE"]
+    },
+    {
+      "id": "F-APP-CHANNELS",
+      "title": "App package/webapp/browser channel choices are audited Omarchy-native first: Brave Origin uses stable AUR with Omarchy package, theming, and hook surfaces until Omarchy's browser commands catch up, Spotify follows Omarchy's AUR package, Obsidian follows official extra with Omarchy flags/theme hooks, Slack stays native AUR with Chrome as huddles fallback, Claude Code is force-installed from the AUR via `yay -S --needed aur/claude-code` in both install and make update because Omarchy publishes a stale same-name package that its foreign-only `yay -Sua` step skips, and Google Cloud tooling stays on AUR gcloud with the GKE auth plugin as a version-locked split package while kubectl moves to the official extra repo",
+      "canonical": "findings.html#F-APP-CHANNELS",
+      "appears_in": ["README.md", "decisions.html", "todos.html"],
+      "code_paths": [
+        "install",
+        "Makefile",
+        "packages.txt",
+        "packages.aur.txt",
+        "omarchy/.config/omarchy/hooks/theme-set.d/brave-origin-stable"
+      ],
+      "related": ["D-PKG-REMOVE", "D-WEBAPP", "D-BROWSER-DEFAULT", "F-BASELINE"]
+    },
+    {
+      "id": "F-CLI",
+      "title": "Omarchy CLI surface (pkg add/aur/drop, browser install/default caveat, refresh config, theme/font, update -y)",
+      "canonical": "findings.html#F-CLI",
+      "appears_in": ["README.md"],
+      "code_paths": ["install"],
+      "related": [
+        "D-ENGINE",
+        "D-SCRIPTS-MINIMAL",
+        "D-PKG-REMOVE",
+        "D-BROWSER-DEFAULT"
+      ]
+    },
+    {
+      "id": "F-MALWARE-SCANNER",
+      "title": "ClamAV is the repo-managed on-demand malware scanner from Arch extra; signatures and scans are explicit operator actions, with no background daemon enabled",
+      "canonical": "findings.html#F-MALWARE-SCANNER",
+      "appears_in": ["README.md", "decisions.html"],
+      "code_paths": ["packages.txt", "README.md"],
+      "related": ["D-PKG-REMOVE", "D-SCRIPTS-MINIMAL", "F-CLI"]
+    },
+    {
+      "id": "F-SHELL-RESEARCH",
+      "title": "zsh vs bash on Omarchy: stay on bash (chsh->zsh breaks session; bash already has starship/zoxide/fzf/mise)",
+      "canonical": "findings.html#F-SHELL-RESEARCH",
+      "appears_in": ["decisions.html"],
+      "code_paths": [],
+      "related": ["D-SHELL-BASH"]
+    },
+    {
+      "id": "F-TMUX-XDG",
+      "title": "tmux prefers omarchy's ~/.config/tmux/tmux.conf (XDG) over ~/.tmux.conf, shadowing it; we overlay via source-file and inherit omarchy's good tmux defaults",
+      "canonical": "findings.html#F-TMUX-XDG",
+      "appears_in": [],
+      "code_paths": ["tmux/.config/tmux/local.conf", "install"],
+      "related": ["D-TMUX-KEEP"]
+    },
+    {
+      "id": "F-WAYBAR-MIGRATIONS",
+      "title": "Omarchy mutates ~/.config/waybar/config.jsonc via two patterns: wholesale refresh-waybar overwrites AND surgical sed-style migrations; the manual's 'will not be overwritten' claim is inaccurate for waybar",
+      "canonical": "findings.html#F-WAYBAR-MIGRATIONS",
+      "appears_in": ["architecture.html", "decisions.html", "todos.html"],
+      "code_paths": ["install", "waybar/deltas.jq"],
+      "related": ["D-WAYBAR-DELTAS", "F-REFRESH-WRITETHROUGH"]
+    },
+    {
+      "id": "F-AGENT-GUIDANCE",
+      "title": "AGENTS.md is the canonical agent-guidance file; CLAUDE.md is a one-line `@AGENTS.md` bridge so every harness reads the same instructions",
+      "canonical": "findings.html#F-AGENT-GUIDANCE",
+      "appears_in": [],
+      "code_paths": ["AGENTS.md", ".github/scripts/check_docs.py"],
+      "related": ["D-CI"]
+    },
+    {
+      "id": "F-MONITOR-RULE-APPLY",
+      "title": "Hyprland matches `monitor =` rules at startup AND on hot-plug; `desc:` is a documented prefix match (excluding the trailing portname); empty-`output` is a fallback only when no other rule matches",
+      "canonical": "findings.html#F-MONITOR-RULE-APPLY",
+      "appears_in": ["decisions.html"],
+      "code_paths": [],
+      "related": ["D-MONITORS", "F-HYPR-SEAM", "F-LUA"]
+    },
+    {
+      "id": "F-MONITOR-SCALE-PERSIST",
+      "title": "Omarchy's `omarchy-hyprland-monitor-scaling-cycle` (Super+/) auto-persists scale to monitors.conf only when the file matches a single `monitor=,preferred,auto,N` wildcard; multi-monitor desc:-rule layouts must persist scale by editing the user's overlay directly",
+      "canonical": "findings.html#F-MONITOR-SCALE-PERSIST",
+      "appears_in": ["decisions.html"],
+      "code_paths": [],
+      "related": [
+        "D-MONITORS",
+        "F-MONITOR-RULE-APPLY",
+        "F-REFRESH-WRITETHROUGH"
+      ]
+    },
+    {
+      "id": "F-SSH-AGENT",
+      "title": "Omarchy ships ssh-agent.socket disabled and never exports SSH_AUTH_SOCK; overlay adds a guarded UWSM env.d export for Omarchy-launched apps and terminals (honors pre-existing SSH_AUTH_SOCK, skips when XDG_RUNTIME_DIR unset), pairs with a one-time `systemctl --user enable` per machine, uses `AddKeysToAgent yes` so the passphrase prompt is once per session, and is verified by `make verify`",
+      "canonical": "findings.html#F-SSH-AGENT",
+      "appears_in": ["README.md"],
+      "code_paths": [
+        "install",
+        "uwsm/.config/uwsm/env.d/dotfiles.sh",
+        "ssh/.ssh/config",
+        ".github/scripts/verify.sh"
+      ],
+      "related": ["D-CARRY-SET", "D-SCRIPTS-MINIMAL"]
+    }
+  ]
+}

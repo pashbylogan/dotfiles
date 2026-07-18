@@ -1,0 +1,1313 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Decisions — Omarchy Dotfiles</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <nav class="topnav">
+      <a class="brand" href="index.html"
+        ><span class="dot"></span> Omarchy Dotfiles</a
+      >
+      <a class="nav" href="index.html">Home</a>
+      <a class="nav" href="architecture.html">Architecture</a>
+      <a class="nav" href="decisions.html" aria-current="page">Decisions</a>
+      <a class="nav" href="findings.html">Findings</a>
+      <a class="nav" href="todos.html">To-Dos</a>
+      <a class="nav" href="traceability.html">Trace</a>
+      <a class="nav" href="augmentation-approach.html">Design Note</a>
+    </nav>
+
+    <div class="container">
+      <p class="eyebrow">Decision Log</p>
+      <h1>Decisions &amp; rationale</h1>
+      <p class="lead">
+        Every load-bearing choice, with the reason it was made. Each has a
+        stable ID (see <a href="traceability.html">Trace</a>); the
+        <code class="meta">D-ID</code> tags below are grep targets.
+      </p>
+
+      <h2>Core architecture</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Choice</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="D-ENGINE">
+            <td><code class="meta">D-ENGINE</code> Convergence engine</td>
+            <td>
+              <strong>Lightweight shell + Omarchy CLI + stow.</strong> No
+              Ansible, no <code>dot-apply/check/update/cleanup</code> engine.
+            </td>
+            <td>
+              Omarchy already does install/seed/migrate/update. A convergence
+              framework would re-implement that and accrue code that must
+              survive upstream churn.
+            </td>
+          </tr>
+          <tr id="D-SCRIPTS-MINIMAL">
+            <td><code class="meta">D-SCRIPTS-MINIMAL</code> Scripts</td>
+            <td>
+              <strong>One convergence script: <code>install</code>.</strong>
+              User commands may be stowed under <code>bin/.local/bin</code>, but
+              package updates and cleanup remain explicit operator actions.
+            </td>
+            <td>
+              Owner chose pure-minimal. Updates run via
+              <code>make update</code> / <code>omarchy update -y</code>; package
+              cleanup uses <code>packages.remove.txt</code> plus read-only
+              audits such as <code>pkg-residue</code>, not an automatic cleanup
+              engine.
+            </td>
+          </tr>
+          <tr id="D-DELTA-STORAGE">
+            <td><code class="meta">D-DELTA-STORAGE</code> Delta storage</td>
+            <td>
+              <strong
+                >Own thin fragments + single managed integration block.</strong
+              >
+              Never symlink Omarchy-owned files. (Full detail:
+              <a href="architecture.html#D-DELTA-STORAGE">Architecture</a>.)
+            </td>
+            <td>
+              Omarchy <code>cp</code>-resets write through symlinks (<a
+                href="findings.html#F-REFRESH-WRITETHROUGH"
+                >F-REFRESH-WRITETHROUGH</a
+              >); owning whole files freezes them and breaks on the coming Lua
+              move (<a href="findings.html#F-LUA">F-LUA</a>).
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Repo hygiene &amp; CI</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Choice</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="D-CI">
+            <td><code class="meta">D-CI</code> Makefile = ops interface</td>
+            <td>
+              A root <code>Makefile</code> is the
+              <strong>single source of truth</strong> for repo operations.
+              GitHub Actions (<code>.github/workflows/ci.yml</code>) invokes the
+              same targets, so <code>make ci</code> == CI. Targets:
+              <ul>
+                <li>
+                  <code>make ci</code> — gates: <code>shellcheck</code> +
+                  <code>shfmt</code> (<code>-i 2 -ci</code>) on the shell set,
+                  pinned <code>prettier</code> on docs HTML/JSON, an
+                  empty-object smoke-check of every
+                  <code>waybar/*.jq</code> filter (so jq syntax/behavior bugs
+                  surface here rather than at <code>./install</code> time), and
+                  <code>.github/scripts/check_docs.py</code> for docs integrity.
+                  <code>make fmt</code> auto-fixes.
+                </li>
+                <li>
+                  <code>make update</code> — the frequent, low-risk channel:
+                  <code>omarchy update -y</code> (pacman + AUR + omarchy
+                  migrations), then the package-like self-managed tools (<code
+                    >uv self update</code
+                  >, then <code>mise upgrade</code> + <code>mise prune</code>),
+                  then <code>make verify</code>. Every step is warn-on-failure
+                  so a non-zero exit (reboot decline/request, package-manager
+                  interruption, etc.) stays visible.
+                  <code>mise upgrade</code> honors the specs in
+                  <code>~/.config/mise/config.toml</code> —
+                  <code>latest</code> resolves to the newest
+                  <em>stable</em> release (prereleases and nightlies are
+                  excluded unless a spec explicitly asks for one) and exact pins
+                  are left untouched — and omits <code>--bump</code> so the
+                  config is never rewritten; <code>mise prune</code> then
+                  reclaims superseded or orphaned versions.
+                </li>
+                <li>
+                  <code>make update-firmware</code> — firmware only:
+                  <code>omarchy update firmware</code> (fwupd). It is the lone
+                  opt-in channel because firmware alone — unlike packages or the
+                  self-managed tools folded into <code>make update</code> — has
+                  device-specific prompts and reboot/power-cycle outcomes.
+                </li>
+                <li>
+                  <code>make verify</code> — read-only live health check
+                  (<code>.github/scripts/verify.sh</code>): hyprctl
+                  configerrors, all six managed blocks present (bashrc, hypr,
+                  keymaps, tmux, waybar style.css, starship-venv), terminal
+                  convergence (Ghostty default plus no Alacritty package or user
+                  launcher;
+                  <a href="decisions.html#D-TERM-GHOSTTY">D-TERM-GHOSTTY</a>),
+                  stow links resolve into the repo (including the
+                  <code>uwsm/env.d</code> SSH-agent fragment and dangling
+                  detection), dev-env tools on PATH and not pacman-owned, XDG
+                  state, and the default-tracking override comparison
+                  (border_size = 2 vs omarchy's looknfeel.conf default — see
+                  <a href="decisions.html#D-LOOKNFEEL">D-LOOKNFEEL</a>).
+                </li>
+                <li>
+                  <code>make pkg-residue PACKAGE=&lt;name&gt;</code> — wrapper
+                  around the stowed <code>pkg-residue</code> command for
+                  read-only package-leftover audits.
+                </li>
+              </ul>
+              Tooling is Omarchy-native and version-pinned.
+            </td>
+            <td>
+              One interface for humans and agents; CI calling the Makefile means
+              the two can't drift. The docs checker turns the traceability
+              discipline (registry ↔ anchors ↔ <code>[ID]</code> code tokens,
+              links, <code>appears_in</code>) into an enforced invariant rather
+              than a convention. The Makefile is <em>dev/ops tooling</em>; the
+              lone <em>runtime</em> script is still <code>install</code> (<a
+                href="decisions.html#D-SCRIPTS-MINIMAL"
+                >D-SCRIPTS-MINIMAL</a
+              >).
+            </td>
+          </tr>
+          <tr id="D-DEV-ENV">
+            <td><code class="meta">D-DEV-ENV</code> dev-env reconcile</td>
+            <td>
+              <code>uv</code> and <code>go</code> are owned by Omarchy's
+              <code>omarchy install dev-env &lt;kind&gt;</code> path, not by
+              pacman/AUR or hand-rolled installers. <code>./install</code>'s
+              <code>ensure_dev_env_tool</code> helper actively reconciles: if
+              pacman owns the tool, <code>omarchy pkg drop</code> it (graceful
+              on dep-conflict refusal); if not on PATH, install via
+              <code>omarchy install dev-env</code>. No path pinning — omarchy
+              lands each tool wherever the underlying installer defaults today
+              (Astral's <code>~/.local/bin/uv</code>; mise's
+              <code>~/.local/share/mise/shims/go</code>) and
+              <code>command -v</code> finds it.
+            </td>
+            <td>
+              The user's rule:
+              <em
+                >if a tool is installed in a way the repo doesn't declare, it
+                should get replaced</em
+              >. Reconciling on <code>./install</code> enforces that for the
+              main drift vector (pacman) while staying robust to upstream path
+              changes.
+              <strong>Latest-at-bootstrap caveat:</strong>
+              <code>omarchy install dev-env</code> pulls latest at the time it
+              runs (mise <code>@latest</code>, Astral installer), so a fresh
+              bootstrap on different days may yield different versions;
+              <code>make update</code> is the deliberate bumper for self-managed
+              tool updates (<code>uv self update</code> +
+              <code>mise upgrade</code>/<code>prune</code>, stable-only).
+            </td>
+          </tr>
+          <tr id="D-PKG-REMOVE">
+            <td>
+              <code class="meta">D-PKG-REMOVE</code> Baseline package/app
+              curation
+            </td>
+            <td>
+              <strong
+                >Package and launcher curation mechanisms that converge the
+                post–Remove-Preinstalled baseline.</strong
+              >
+              <ul>
+                <li>
+                  <code>packages.txt</code> / <code>packages.aur.txt</code> —
+                  additive package restores and extras, processed through
+                  <code>omarchy pkg add</code> /
+                  <code>omarchy pkg aur add</code>. This includes restoring
+                  selected Omarchy defaults after <em>Remove Preinstalled</em>,
+                  such as pacman-managed <code>opencode</code>. App channel
+                  choices follow the Omarchy-native audit in
+                  <a href="findings.html#F-APP-CHANNELS">F-APP-CHANNELS</a>:
+                  <code>obsidian</code> stays in the official repo,
+                  <code>spotify</code> stays on Omarchy's AUR path, and
+                  <code>slack-desktop</code> is an intentional local AUR choice
+                  because Omarchy has no Slack package, webapp, binding, or
+                  migration. <code>claude-code</code> is force-installed from
+                  the AUR via
+                  <code>yay -S --needed aur/claude-code</code> because Omarchy
+                  publishes a stale same-name package that hides it from generic
+                  <code>yay -Sua</code>. Operator CLI utilities use the same
+                  official-repository path: <code>nmap</code> comes from Arch
+                  <code>extra</code> through <code>packages.txt</code>. Security
+                  tooling follows
+                  <a href="findings.html#F-MALWARE-SCANNER">F-MALWARE-SCANNER</a
+                  >: <code>clamav</code> comes from Arch
+                  <code>extra</code> through <code>packages.txt</code>, while
+                  signature refreshes and scans remain explicit operator actions
+                  with no background daemon enabled.
+                </li>
+                <li>
+                  <code>packages.remove.txt</code> — symmetric subtractive
+                  partner to <code>packages.txt</code> /
+                  <code>packages.aur.txt</code>, processed via
+                  <code>omarchy pkg drop</code> after both add steps so a name
+                  in both files resolves to "removed". Wrapped in
+                  warn-and-continue because <code>pacman -Rns</code> can refuse
+                  on reverse-dep conflicts. Empty list → no-op; already-absent
+                  names → no-op at the omarchy CLI layer.
+                  <strong>Scope:</strong> pacman-tracked only (official-repo +
+                  AUR). Web apps are not pacman packages; remove those with
+                  <code>omarchy webapp remove</code>.
+                </li>
+                <li>
+                  <code>elephant/.config/elephant/websearch.toml</code> — stowed
+                  override of elephant's compiled-in default web-search entry
+                  (Google). Walker's app picker queries elephant; the TOML
+                  override is the elephant-generated, elephant-doc'd way to set
+                  custom engines. Defaults to DuckDuckGo here.
+                </li>
+                <li>
+                  Stale-launcher cleanup in <code>install</code> — explicit
+                  <code>rm -f</code> for known orphan
+                  <code>~/.local/share/applications/*.desktop</code> files whose
+                  underlying package is gone but the user-dir launcher remained
+                  (pacman <code>-Rns</code> only removes files the package
+                  installed, not user-state files copied there later).
+                </li>
+                <li>
+                  <code>bin/.local/bin/pkg-residue</code> — read-only audit for
+                  package leftovers after removal. It derives search terms from
+                  the package name and any known pacman/cache file list, uses
+                  <code>rg --files</code> as the fast path for file matches,
+                  uses <code>find -type d</code> for directory matches, filters
+                  paths owned by pacman, and reports likely residual user state,
+                  system state, and package cache entries without deleting
+                  anything.
+                </li>
+              </ul>
+            </td>
+            <td>
+              The repo's overlay surface was previously additive-only for
+              packages and silent on user-state under
+              <code>~/.local/share/applications/</code> and
+              <code>~/.config/elephant/</code>. The "Deeper package cleanup"
+              backlog wanted a way to express "drop this omarchy default"
+              without depending on the one-shot
+              <em>Remove Preinstalled</em> menu (per
+              <a href="decisions.html#D-BASELINE">D-BASELINE</a>, that menu
+              action is the documented manual prerequisite, not a substitute for
+              ongoing curation). The same package surface can also restore an
+              upstream default when the current durable Omarchy path is still
+              desirable: <code>opencode</code> stays a pacman package, and
+              <code>install</code> uses <code>omarchy refresh config</code> only
+              to seed a missing <code>opencode.json</code> instead of vendoring
+              it here. One token, several mechanisms — because they share the
+              same intent (curate the baseline) but live on different surfaces
+              (pacman db, stowed config, user-state launchers).
+              <strong>Audit rule:</strong> before adding a name to
+              <code>packages.remove.txt</code>, grep
+              <code>~/.local/share/omarchy/</code> for usage — omarchy wires
+              some "builtins" into keybindings or shell init (e.g.
+              <code>zoxide</code> → <code>cd</code> alias, <code>fzf</code> →
+              keybindings, <code>btop</code> → <code>SUPER+CTRL+T</code>).
+              Removing one of those silently breaks omarchy commands, so clean
+              up the matching wiring in our overlay in the same change (e.g. an
+              <code>unbind</code> in <code>hypr.conf</code> for a keybound tool
+              — which is exactly why <code>btop</code> and <code>eza</code> are
+              <em>not</em> dropped: btop is keybound and eza backs the
+              <code>ls</code> alias).
+            </td>
+          </tr>
+          <tr id="D-WEBAPP">
+            <td>
+              <code class="meta">D-WEBAPP</code> Reproduce curated webapp
+              launchers
+            </td>
+            <td>
+              <code>install</code> re-creates the omarchy webapp launchers we
+              rely on by calling omarchy's own
+              <code>omarchy webapp install</code> with the
+              <strong
+                >exact arguments from omarchy's <code>webapps.sh</code></strong
+              >
+              — currently just <strong>Zoom</strong> (<code
+                >app.zoom.us/wc/home</code
+              >
+              + <code>omarchy-webapp-handler-zoom</code> +
+              <code>zoommtg://</code>/<code>zoomus://</code> scheme handlers).
+              Idempotent: the installer rewrites the <code>.desktop</code> on
+              every run; we re-copy omarchy's own <code>Zoom.png</code> into
+              <code>~/.local/share/applications/icons/</code> (omarchy's
+              <code>icons.sh</code> seeds it at first install) and refresh the
+              desktop database so the <code>zoommtg://</code> handler registers.
+              Removal stays on omarchy's surface too:
+              <code>omarchy webapp remove Zoom</code>.
+            </td>
+            <td>
+              omarchy installs its curated webapps only at first install —
+              <code>webapps.sh</code> doesn't re-run on
+              <code>omarchy update</code>, and
+              <a href="decisions.html#D-BASELINE">Remove Preinstalled</a> / a
+              fresh machine drop them. Calling omarchy's installer rather than
+              hand-writing a <code>.desktop</code> keeps the launcher
+              byte-identical to upstream and inherits the protocol handler. Zoom
+              is the webapp, not the AUR native client: on Wayland the native
+              client's screen-share is unreliable (black screen / crash on
+              re-share), while the Chromium PWA shares screen through the
+              browser's portal — the mirror image of <code>discord</code>, where
+              the native client wins for global push-to-talk + desktop-audio
+              share. Slack is not reproduced as an Omarchy webapp: unlike Zoom,
+              Omarchy does not ship one, and Slack's Linux huddle support is
+              documented for the desktop app and Google Chrome. Keep native
+              <code>slack-desktop</code> as the daily client; fall back to
+              Chrome only if huddles/screen sharing regress.
+            </td>
+          </tr>
+          <tr id="D-BROWSER-DEFAULT">
+            <td><code class="meta">D-BROWSER-DEFAULT</code> Default browser</td>
+            <td>
+              <strong
+                >Stable Brave Origin is the converged default browser.</strong
+              >
+              Until a released Omarchy version maps its Brave Origin
+              install/default commands to stable, <code>install</code> uses
+              Omarchy's package and theming surfaces directly:
+              <code>omarchy pkg aur add brave-origin-bin</code>, Omarchy's
+              shared Brave policy directory,
+              <code>~/.config/brave-origin-flags.conf</code>, and
+              <code>omarchy-theme-set-browser</code>. It then sets XDG's browser
+              and web MIME defaults to <code>brave-origin.desktop</code> and
+              drops the old <code>brave-origin-beta-bin</code> package.
+            </td>
+            <td>
+              Omarchy's current browser installer/default wrappers still map
+              <code>brave-origin</code> to
+              <code>brave-origin-beta-bin</code> and
+              <code>brave-origin-beta.desktop</code>. Brave now documents
+              <code>brave-origin-bin</code> as the release Arch package, and
+              upstream Omarchy PR
+              <a href="https://github.com/basecamp/omarchy/pull/6021">#6021</a>
+              tracks the same migration. This repo keeps the transition as close
+              to native as possible by reusing Omarchy's package manager,
+              Chromium extension flag, Brave policy theming, and
+              <code>theme-set</code> hook surface. Once a released Omarchy
+              version maps <code>brave-origin</code> to stable, remove the
+              compatibility code and return to
+              <code>omarchy install browser brave-origin</code> /
+              <code>omarchy default browser brave-origin</code>.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Shell</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Choice</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="D-SHELL-BASH">
+            <td><code class="meta">D-SHELL-BASH</code> Login shell</td>
+            <td>
+              <strong>bash</strong> (Omarchy default). No <code>chsh</code> to
+              zsh.
+            </td>
+            <td>
+              Omarchy's boot/session/helpers assume bash; <code>chsh</code>→zsh
+              is a documented footgun (<a href="findings.html#F-SHELL-RESEARCH"
+                >F-SHELL-RESEARCH</a
+              >). Omarchy's bash already wires starship/zoxide/fzf/mise, so
+              zsh's marginal gain is small.
+            </td>
+          </tr>
+          <tr id="D-SHELL-SEAM">
+            <td><code class="meta">D-SHELL-SEAM</code> Aliases/functions</td>
+            <td>
+              Ported into <code>~/.config/dotfiles/shell.sh</code>, sourced via
+              the <code>~/.bashrc</code> managed block (at EOF, so ours win).
+            </td>
+            <td>
+              <code>~/.bashrc</code> is owner-owned and "not overwritten on
+              updates" (<a href="findings.html#F-BASH-CHAIN">F-BASH-CHAIN</a>).
+              Aliases Omarchy already defines (<code>t</code>, <code>g</code>,
+              <code>gcm</code>, <code>gcam</code>, <code>n</code>,
+              <code>cd</code>/zoxide, <code>ls</code>/eza) are dropped in favor
+              of Omarchy's.
+            </td>
+          </tr>
+          <tr id="D-SECRETS-LOCAL">
+            <td>
+              <code class="meta">D-SECRETS-LOCAL</code> Secrets/host-specific
+            </td>
+            <td>
+              Gitignored <code>shell.local.sh</code> holds personal and
+              device-specific aliases, functions, and keybinds (Vertex project
+              IDs, device serials, the Ctrl-F sessionizer bind, VPN/GCP helpers)
+              — never install-path redirects, since Omarchy installs tools (uv,
+              gcloud, …) natively on PATH.
+            </td>
+            <td>Keep the shared repo generic and secret-free.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="D-CARRY-SET">
+        What we carry vs. drop <code class="meta">D-CARRY-SET</code>
+      </h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Status</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ssh config</td>
+            <td><span class="badge badge-done">carry</span></td>
+            <td>
+              Real config; Host entries → gitignored <code>config.local</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>bin/ commands</td>
+            <td><span class="badge badge-done">carry</span></td>
+            <td>Personal tools → <code>~/.local/bin</code> (on PATH).</td>
+          </tr>
+          <tr>
+            <td>shell aliases/functions</td>
+            <td><span class="badge badge-done">carry</span></td>
+            <td>Ported to bash, deduped vs. Omarchy.</td>
+          </tr>
+          <tr id="D-TMUX-KEEP">
+            <td><code class="meta">D-TMUX-KEEP</code> tmux config</td>
+            <td><span class="badge badge-done">carry</span></td>
+            <td>
+              Genuinely customized (C-a prefix, vi copy-mode, sessionizer bind;
+              clipboard <code>xclip</code>→<code>wl-copy</code>). Omarchy ships
+              <code>~/.config/tmux/tmux.conf</code>, which tmux
+              <strong>prefers over <code>~/.tmux.conf</code></strong> (so the
+              old stow target was silently shadowed). Now stowed to
+              <code>~/.config/tmux/local.conf</code> and
+              <code>source-file</code>'d last from omarchy's tmux.conf so our
+              settings win.
+            </td>
+          </tr>
+          <tr>
+            <td>Hyprland deltas</td>
+            <td><span class="badge badge-done">carry</span></td>
+            <td>Owned fragment: caps→ctrl + workspace rules.</td>
+          </tr>
+          <tr id="D-NVIM-KEYMAPS">
+            <td><code class="meta">D-NVIM-KEYMAPS</code> nvim keymaps</td>
+            <td><span class="badge badge-done">carry</span></td>
+            <td>
+              Personal keymaps + options live in a tracked Lua fragment
+              (<code>~/.config/dotfiles/nvim.lua</code>) loaded by a one-line
+              <code>dofile</code> managed block in Omarchy's
+              <code>keymaps.lua</code> — the fragment sits in our own namespace,
+              not the cp-reset nvim tree (<a href="findings.html#F-NVIM-OWNED"
+                >F-NVIM-OWNED</a
+              >). Maps that clash with LazyVim which-key groups
+              (<code>&lt;leader&gt;f/s/d/x</code>) are omitted.
+            </td>
+          </tr>
+          <tr>
+            <td>i3 / i3status / picom</td>
+            <td><span class="badge badge-drop">drop</span></td>
+            <td>X11; replaced by Omarchy's Hyprland stack.</td>
+          </tr>
+          <tr>
+            <td>ghostty</td>
+            <td><span class="badge badge-drop">drop</span></td>
+            <td>
+              The old i3-era ghostty <em>config</em> is not carried — Omarchy
+              seeds it. The terminal <em>choice</em> is now made though: ghostty
+              is the default (<a href="decisions.html#D-TERM-GHOSTTY"
+                >D-TERM-GHOSTTY</a
+              >), still on Omarchy's seeded config, no overlay.
+            </td>
+          </tr>
+          <tr>
+            <td>desktop entries</td>
+            <td><span class="badge badge-drop">drop</span></td>
+            <td>"Use omarchy for anything in the desktop" (owner).</td>
+          </tr>
+          <tr>
+            <td>nvim config tree</td>
+            <td><span class="badge badge-drop">drop</span></td>
+            <td>
+              Omarchy owns/overwrites it via <code>omarchy-nvim-setup</code>.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Hyprland deltas (i3 "spirit", confirmed item-by-item)</h2>
+      <p>
+        Most i3 customizations were already done or native on Omarchy
+        (key-repeat, touchpad scroll, thin borders, move-ws-to-monitor,
+        volume/brightness/screenshot/lock keys, launcher, wallpaper). Only three
+        were genuine:
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Delta</th>
+            <th>Status</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="D-CAPS-CTRL">
+            <td><code class="meta">D-CAPS-CTRL</code> caps lock → control</td>
+            <td><span class="badge badge-done">in (fragment)</span></td>
+            <td>
+              Moved off Omarchy's seeded <code>input.conf</code> into the owned
+              fragment, sourced last.
+            </td>
+          </tr>
+          <tr id="D-WORKSPACE-RULES">
+            <td>
+              <code class="meta">D-WORKSPACE-RULES</code> Workspace
+              app-assignments
+            </td>
+            <td><span class="badge badge-done">in</span></td>
+            <td>
+              <code>windowrule = workspace N</code> (terminal→1, Brave Origin→2,
+              Slack+Obsidian→3, IntelliJ→5, Spotify→10). Verify classes via
+              <code>hyprctl clients</code>.
+            </td>
+          </tr>
+          <tr id="D-SLACK-HUDDLE-FLOAT">
+            <td>
+              <code class="meta">D-SLACK-HUDDLE-FLOAT</code> Float Slack huddle,
+              tile the main window
+            </td>
+            <td><span class="badge badge-done">in (fragment)</span></td>
+            <td>
+              <code
+                >windowrule = float on, match:class slack, match:title
+                Huddle</code
+              >. Every Slack window shares <code>class=slack</code>, so the rule
+              keys on title. <code>float</code> is a static rule, so Hyprland
+              matches it against <code>initialTitle</code> — the huddle window's
+              is <code>Slack - Huddle Preview</code> while the main window's is
+              just <code>Slack</code>, so only the huddle floats. Match the bare
+              word <code>Huddle</code> (no colon — a <code>:</code> breaks
+              Hyprland's RE2 regex). Verify titles via
+              <code>hyprctl clients</code>.
+            </td>
+          </tr>
+          <tr id="D-SCREENSHOT-FALLBACK">
+            <td>
+              <code class="meta">D-SCREENSHOT-FALLBACK</code> Screenshot
+              fallback
+            </td>
+            <td><span class="badge badge-done">in (fragment)</span></td>
+            <td>
+              <code>SUPER+SHIFT+S</code> invokes
+              <code>omarchy-capture-screenshot</code> while the keyboard's
+              physical <code>PRINT</code> key emits no Linux input event.
+              Omarchy's stock <code>PRINT</code> binding stays intact; the
+              fallback uses a live-conflict-checked key and remains easy to
+              remove when firmware/profile behavior is fixed.
+            </td>
+          </tr>
+          <tr id="D-MOUSE-ACCEL">
+            <td>
+              <code class="meta">D-MOUSE-ACCEL</code> External MX Master mouse
+              accel
+            </td>
+            <td><span class="badge badge-done">in (local)</span></td>
+            <td>Device-specific → gitignored <code>hypr.local.conf</code>.</td>
+          </tr>
+          <tr id="D-HJKL-DECLINED">
+            <td>
+              <code class="meta">D-HJKL-DECLINED</code> vim
+              <code>hjkl</code> window focus
+            </td>
+            <td><span class="badge badge-drop">declined</span></td>
+            <td>
+              Would require unbinding Omarchy's
+              <code>SUPER+J</code>/<code>SUPER+L</code>. Keep Omarchy's
+              <code>SUPER+arrows</code>.
+            </td>
+          </tr>
+          <tr id="D-LOOKNFEEL">
+            <td><code class="meta">D-LOOKNFEEL</code> Looknfeel deltas</td>
+            <td><span class="badge badge-done">in (fragment)</span></td>
+            <td>
+              An always-on "compact look" of overlay-sourced-last deltas to
+              omarchy's looknfeel chain: (1)
+              <code>general { gaps_in = 2; gaps_out = 4 }</code> — slim but
+              present gaps (omarchy's defaults are
+              <code>5</code>/<code>10</code>); (2)
+              <code>general { border_size = 2 }</code> so the
+              <code>window-no-gaps</code> toggle keeps killing gaps without also
+              killing borders — this is the single line in any overlay that
+              re-states an omarchy default value (<code>border_size = 2</code>
+              in <code>looknfeel.conf</code>) because that downstream toggle
+              would otherwise zero it, so <code>make verify</code> compares the
+              two and fails loudly if omarchy ever moves their default; (3)
+              <code>decoration { rounding = 8 }</code> — every corner rounds at
+              omarchy's documented radius (the commented
+              <code>rounding = 8</code> hint in its <code>looknfeel.conf</code>
+              template, and the same radius omarchy applies to popups via
+              <code>rounding 8, match:tag pop</code> in
+              <code>default/hypr/apps/system.conf</code>); (4)
+              <code>decoration { blur { size = 8; brightness = 0.72 } }</code>
+              plus
+              <code>windowrule = opacity 0.86 0.78, match:tag terminal</code>
+              so terminals get a mild frosted-glass effect without hard-coding
+              terminal colors or breaking omarchy theme swaps; (5)
+              <code>misc { focus_on_activate = false }</code> so an app's
+              activation request (chat message, browser opening a link, a
+              finished build) only marks the window urgent instead of stealing
+              focus and jumping you to its workspace — omarchy sets this
+              <code>true</code> in
+              <code>default/hypr/looknfeel.conf</code> whereas Hyprland's own
+              default is <code>false</code>, so this inverts an omarchy
+              non-default rather than re-stating a default (no
+              <code>make verify</code> guard needed, unlike
+              <code>border_size</code>). Because the fragment is sourced
+              <em>after</em> both omarchy's defaults and the
+              <code>window-no-gaps</code> toggle in hyprland.conf's source
+              chain, these values win regardless of toggle state — editing
+              <code>~/.config/hypr/looknfeel.conf</code> wouldn't, since it
+              loads <em>before</em> the toggle. See
+              <a href="findings.html#F-HYPR-SEAM">F-HYPR-SEAM</a> for the full
+              ordering.
+            </td>
+          </tr>
+          <tr id="D-MONITORS">
+            <td>
+              <code class="meta">D-MONITORS</code> Known external monitor
+              layouts
+            </td>
+            <td><span class="badge badge-done">in (fragment)</span></td>
+            <td>
+              Three <code>monitor =</code> lines in the overlay encode known
+              external displays. The home dock layout is:
+              <strong>DP-5 (Acer XV272U) primary at <code>0x0</code></strong
+              >,
+              <strong
+                >DP-4 (Acer XV272U V) secondary at <code>1920x0</code></strong
+              >, both at native <code>2560×1440 @ 144 Hz</code> and compositor
+              scale <code>1.333333</code> (effective logical
+              <code>1920×1080</code> per panel — the secondary's position is in
+              <em>scaled</em> pixels, hence <code>1920x0</code> rather than
+              <code>2560x0</code>; see
+              <a href="findings.html#F-MONITOR-SCALE-PERSIST"
+                >F-MONITOR-SCALE-PERSIST</a
+              >
+              for why we set scale in the overlay rather than via the
+              <code>Super + /</code> cycle). The work monitor is
+              <strong
+                >DP-1 (Dell U2719DC) at <code>0x0</code>, native
+                <code>2560×1440 @ 59.95 Hz</code>, compositor scale
+                <code>1.25</code></strong
+              >; its EDID advertises no higher-refresh native mode, so this rule
+              favors the best-quality native resolution over lower resolution 75
+              Hz fallbacks. All are matched by full
+              <code>desc:</code> identifier (description string up to but not
+              including the trailing portname, per the Hyprland wiki — see
+              <a href="findings.html#F-MONITOR-RULE-APPLY"
+                >F-MONITOR-RULE-APPLY</a
+              >) so cable-swaps between DP ports don't change the layout. The
+              full serial tail is load-bearing because both Acer descriptions
+              share the <code>Acer Technologies XV272U</code> prefix — a panel
+              swap (same model, new EDID serial) silently falls through to the
+              omarchy wildcard, so update the <code>desc:</code> string when
+              that happens. No hot-plug script: Hyprland re-applies
+              <code>monitor =</code> rules on every monitor connect, which is
+              the same matcher behavior that makes omarchy's seeded fallback
+              <code>monitor=,preferred,auto,auto</code> work; the
+              omarchy-shipped <code>omarchy-hyprland-monitor-watch</code>
+              already covers removal recovery. No
+              <code>workspace = N, monitor:…</code> pins — on a
+              <em>fresh session</em>, Hyprland assigns workspace 1 to the
+              leftmost monitor by position (DP-5 at <code>0x0</code>), which is
+              what "primary" means here (Hyprland has no xrandr-style primary
+              concept). One nuance: when these rules first land via
+              <code>hyprctl reload</code> on a running session, the existing
+              workspace→monitor bindings are preserved — workspace 1 stays on
+              whichever monitor it was on, and fully migrates only on next fresh
+              login (or move it now with
+              <code>hyprctl dispatch movecurrentworkspacetomonitor DP-5</code>).
+              <strong>Install restarts waybar on topology change</strong>:
+              <code>install</code>'s validation block snapshots
+              <code>hyprctl monitors</code> around the post-stow
+              <code>hyprctl reload</code> (extracting
+              name/position/mode/disabled per output) and, if the snapshot diff
+              is non-empty, invokes <code>omarchy-restart-waybar</code> with the
+              same poll-and-confirm pattern as the waybar-overlay restart.
+              Waybar's per-output bars don't always survive a layout flip; this
+              is the integration step that makes a fresh
+              <code>./install</code> after a <code>monitor =</code> edit reach a
+              fully-rendered desktop without a manual restart.
+              <strong>eDP-1 is deliberately not in the overlay</strong>:
+              omarchy's lid-switch handler at
+              <code>default/hypr/bindings/utilities.conf</code> calls
+              <code>omarchy-hyprland-monitor-internal off/on</code>, which
+              writes <code>monitor=eDP-1,disable</code> to
+              <code
+                >~/.local/state/omarchy/toggles/hypr/internal-monitor-disable.conf</code
+              >. Our overlay loads <em>after</em> the toggles (<a
+                href="findings.html#F-HYPR-SEAM"
+                >F-HYPR-SEAM</a
+              >), so an explicit eDP-1 rule here would silently beat the toggle.
+              The wildcard <code>monitor=,preferred,auto,auto</code> already
+              activates eDP-1 at its only supported mode (<code
+                >1920×1200 @ 120 Hz</code
+              >) when the toggle isn't present. Same load-order pattern as
+              <a href="decisions.html#D-LOOKNFEEL">D-LOOKNFEEL</a> but inverted:
+              silence to let the downstream toggle win, instead of re-stating to
+              beat it. <strong>GDK_SCALE intentionally untouched</strong>:
+              omarchy seeds <code>env = GDK_SCALE,2</code> in
+              <code>monitors.conf</code> (right for the laptop's 13"/2.8K
+              panel). <code>GDK_SCALE</code> is process-global on Wayland —
+              there is no per-monitor GTK scaling without per-app launchers — so
+              dropping it to <code>1</code> for the 1440p externals would shrink
+              GTK apps on eDP-1. The compositor scale in our
+              <code>monitor =</code> lines is the in-scope correctness step; the
+              GTK-oversize trade on the externals is acceptable until per-app
+              launchers become worth it. <strong>Forward risk</strong>: when
+              omarchy ships the Lua hyprland config (<a
+                href="findings.html#F-LUA"
+                >F-LUA</a
+              >), these lines become <code>hl.monitor({…})</code> calls; the
+              design is unaffected.
+            </td>
+          </tr>
+          <tr id="D-KINESIS-REMAP">
+            <td>
+              <code class="meta">D-KINESIS-REMAP</code> Kinesis Adv360 SmartSet
+              thumb remap
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+            <td>
+              Profile-1 thumb cluster reworked for Omarchy's SUPER-centric
+              binds:
+              <code>SUPER</code> on both bottom thumb keys
+              (<code>[end]&gt;[lwin]</code>, <code>[pgdn]&gt;[rwin]</code>) for
+              either-hand chording; <code>Alt</code> moved to the freed
+              inner-right key (<code>[rwin]&gt;[ralt]</code>);
+              <code>Home</code>→<code>Tab</code> (<code>[home]&gt;[tab]</code>)
+              so <code>SUPER/ALT+Tab</code> are thumb gestures; and
+              <code>Calc</code>→F14 (<code>[pgup]&gt;[f14]</code>) bound by
+              keycode (<code>code:192</code>, since F13+ keysyms map unreliably
+              through xkb) to the clipboard manager. <code>Caps</code> left
+              as-is; Delete stays on the <code>fn</code> layer. Layout backed up
+              at <code>kinesis/layout1.txt</code>.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Waybar deltas</h2>
+      <p>
+        Waybar's config sits in <code>~/.config/waybar/config.jsonc</code>, an
+        omarchy-seeded file that the live system mutates two different ways (<a
+          href="findings.html#F-WAYBAR-MIGRATIONS"
+          >F-WAYBAR-MIGRATIONS</a
+        >). Omarchy's manual recommends direct edits and treats periodic
+        <code>.bak</code> restores as the recovery story; this repo applies
+        <a href="architecture.html#D-DELTA-STORAGE">D-DELTA-STORAGE</a> to JSON
+        instead: own thin deltas, re-apply them every <code>./install</code>,
+        restart only on real change.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Choice</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="D-WAYBAR-DELTAS">
+            <td>
+              <code class="meta">D-WAYBAR-DELTAS</code> Waybar overlay shape
+            </td>
+            <td>
+              <strong
+                >Two coupled overlays: <code>waybar/deltas.jq</code> holds
+                personal <code>config.jsonc</code> deltas as composed jq
+                filters; a managed block in <code>style.css</code> (via the
+                existing <code>upsert_block</code> helper) carries the matching
+                CSS rules.</strong
+              >
+              <code>install</code>'s <code>apply_jq_deltas</code> applies the jq
+              filters idempotently; the style block is re-anchored at EOF the
+              same way as the bashrc/hyprland/tmux/keymaps blocks. waybar is
+              only restarted when content actually changed (hash-compare around
+              both files), and the restart waits-and-polls
+              <code>pgrep -x waybar</code> to verify the process actually came
+              back. Initial deltas: drop the 1-5
+              <code>persistent-workspaces</code> pin so workspaces grow on
+              demand (i3-style), add an icon-only <code>memory</code> module on
+              the same 5 s nominal interval as cpu (with used/total/% in
+              <code>tooltip-format</code> on hover), and extend omarchy's
+              <code>#cpu, #battery, ...</code> CSS spacing rule to include
+              <code>#memory</code> so the new module renders with the same
+              margins as its neighbors.
+              <strong>Urgent workspaces:</strong> omarchy ships no urgent
+              styling, and its <code>#workspaces button { all: initial }</code>
+              reset means a workspace flagged urgent shows nothing — so with
+              <a href="decisions.html#D-LOOKNFEEL">focus_on_activate off</a> a
+              window requesting attention would be invisible. The block adds a
+              <code>#workspaces button.urgent label</code> rule that recolors
+              the workspace digit to a muted red <code>#a55555</code> — the same
+              attention accent the bar already uses for its
+              screen-record/idle/notify-silence indicators — reproducing i3's
+              number-color cue. It targets the <code>label</code> node because
+              omarchy's global <code>* { color: @foreground }</code> paints the
+              digit directly, overriding a button-only color rule. The color is
+              a literal for the same reason as the tray accent below — waybar
+              CSS only receives
+              <code>@foreground</code>/<code>@background</code>, never the
+              theme's per-theme accent.
+              <strong>Spacing rationale:</strong> omarchy ships an asymmetric
+              right side — <code>#custom-expand-icon</code> has
+              <code>margin-right: 18 px</code>, <code>#bluetooth</code> 17 px,
+              <code>#tray</code> 16 px, <code>#network</code> 13 px, while
+              <code>#cpu</code>/<code>#battery</code>/<code>#pulseaudio</code>
+              share <code>margin: 0 7.5 px</code> and <code>#memory</code>
+              gets no rule at all. We flatten every right-side module to
+              <code>margin: 0 4 px</code> on each side (equidistant ~8 px gaps,
+              snug but not pinched). The override wins via CSS's later-rule-wins
+              ordering — our managed block sits at EOF of
+              <code>style.css</code>, after omarchy's per-module rules.
+              <strong>Tray menu hover:</strong> the same block also restores the
+              right-click tray (dbusmenu) context-menu hover highlight.
+              omarchy's <code>* { background-color: @background }</code> reset
+              loads at GTK <em>application</em> priority, beating the theme's
+              <code>menuitem:hover</code> by priority rather than specificity —
+              so hovered rows never highlighted. Worse, that reset paints an
+              opaque <code>@background</code> box on <em>every</em> node,
+              including each menuitem's label, so a row-level highlight would
+              only show at the edges with a dark box behind the text. The fix is
+              two same-sheet rules that win by specificity: clear the box on the
+              menuitem content nodes
+              (<code>label</code>/<code>arrow</code>/<code>check</code>/<code
+                >radio</code
+              >
+              → <code>background-color: transparent</code>), then tint the
+              hovered row with
+              <code>alpha(@theme_selected_bg_color, 0.4)</code>. The tint —
+              rather than a solid fill with a foreground/background flip — keeps
+              the menu's dark base so the unchanged light text stays readable;
+              the label-color override a solid highlight would need doesn't take
+              in GTK3's menu nodes (the text rendered invisible).
+              <code>@theme_selected_bg_color</code> is GTK's built-in selection
+              accent (always defined), so it gives a distinct hue without
+              hardcoding. omarchy exposes only <code>@foreground</code>/<code
+                >@background</code
+              >
+              to waybar CSS and keeps its per-theme accent (<code>#7aa2f7</code>
+              for Tokyo Night) in <code>colors.toml</code>, which GTK CSS can't
+              read — matching the accent per-theme would need a separate
+              <code>theme-set</code> hook bridge, out of scope for a tray
+              highlight.
+            </td>
+            <td>
+              Forking the whole file would silently drop every future surgical
+              migration (<a href="findings.html#F-WAYBAR-MIGRATIONS"
+                >F-WAYBAR-MIGRATIONS</a
+              >); direct edits would be wiped on the next
+              <code>omarchy-refresh-waybar</code> and only recoverable through a
+              <code>.bak</code> diff. Owning <em>only the deltas</em>
+              survives both mutation patterns: refresh overwrites get re-patched
+              on next install, surgical migrations either pre-date our filter or
+              touch keys our filter doesn't (the memory module uses a merge
+              pattern so future upstream keys survive). Each delta was
+              battery-audited: memory uses the same 5 s nominal interval as cpu
+              — waybar runs per-module timers independently so this isn't strict
+              coalescing, but it's the cheapest practical cadence. A verbose 1 s
+              clock tick was considered and deliberately rejected because it
+              would prevent deep C-states.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Terminal (Ghostty default)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Choice</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="D-TERM-GHOSTTY">
+            <td>
+              <code class="meta">D-TERM-GHOSTTY</code> Ghostty is the default
+              terminal; Alacritty removed
+            </td>
+            <td>
+              <strong
+                ><code>install</code> runs a guarded
+                <code>omarchy install terminal ghostty</code> and adds
+                <code>alacritty</code> to
+                <code>packages.remove.txt</code>.</strong
+              >
+              The omarchy CLI is the whole mechanism: it installs the package,
+              seeds <code>~/.config/ghostty</code> when missing, and rewrites
+              <code>~/.config/xdg-terminals.list</code> — whose first entry is
+              the sole definition of the default terminal (Super+Return goes
+              through <code>xdg-terminal-exec</code>). The install step runs
+              <strong>before</strong> the package drop so the list never points
+              at an already-removed terminal, and its guard keys on
+              <code>omarchy-default-terminal</code> (the first list entry), not
+              merely "ghostty installed", so re-runs are idempotent. After the
+              package drop, install also removes Omarchy migration
+              <code>1763558828</code>'s user-owned
+              <code>~/.local/share/applications/Alacritty.desktop</code> and
+              restarts Elephant/Walker when that launcher existed; pacman does
+              not own or remove the override. No terminal config is carried —
+              Omarchy seeds ghostty, and ghostty's default right-click is a
+              context menu (not paste), so the former Alacritty right-click
+              no-op overlay was retired rather than ported.
+            </td>
+            <td>
+              <strong
+                >Letting the omarchy CLI own the desktop-entry id and the list
+                is the delta-only, omarchy-native path</strong
+              >
+              (<a href="architecture.html#D-DELTA-STORAGE">D-DELTA-STORAGE</a>);
+              hand-writing <code>xdg-terminals.list</code> would pin an
+              omarchy-owned detail (<code>com.mitchellh.ghostty.desktop</code>).
+              Removal uses the existing
+              <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a> mechanism
+              because leaving an explicitly-unwanted package installed isn't
+              "respecting defaults". The pre-removal audit confirmed Alacritty
+              is safe to drop: <code>Required By: None</code>,
+              <code>omarchy-launch-screensaver</code> dispatches on the actual
+              default terminal (it has a ghostty branch), and every other
+              omarchy script naming <code>alacritty.toml</code> is guarded by an
+              <code>[[ -f ]]</code> test so it no-ops when the file is gone.
+              <strong>One known loose end, accepted deliberately:</strong>
+              stock omarchy waybar binds the CPU module's right-click to
+              <code>alacritty</code> in <code>config.jsonc</code>; after removal
+              that one right-click launches nothing. Fixing it would mean the
+              repo owning all of waybar's <code>config.jsonc</code> and silently
+              pinning every upstream change — a far worse trade than a dead
+              right-click on one module, so it is left as-is. The one durability
+              caveat: <code>omarchy-reinstall-pkgs</code> (a manual recovery
+              flow, never <code>omarchy update</code>) reinstalls base packages
+              including Alacritty; the package and migration-created launcher
+              cleanup are idempotent, so re-running
+              <code>./install</code> re-drops both.
+              <code>make verify</code> checks the default, package, and user
+              launcher so this residue cannot pass unnoticed again.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Prompt (Starship) deltas</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Choice</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="D-STARSHIP-VENV">
+            <td>
+              <code class="meta">D-STARSHIP-VENV</code> Show the active Python
+              venv name in the prompt
+            </td>
+            <td>
+              <strong
+                >A <code>[custom.venv]</code> module keyed on
+                <code>$VIRTUAL_ENV</code> prints just the active venv's name
+                (e.g. <code>(.venv)</code>) — and nothing when no venv is
+                active, in any directory.</strong
+              >
+              Omarchy seeds a stripped
+              <code
+                >format =
+                "[$directory$git_branch$git_status]($style)$character"</code
+              >. <code>install</code> inserts <code>${custom.venv}</code> before
+              <code>$character</code> (in-place, grep-guarded) and appends the
+              module table as a standard <code>upsert_block</code> managed block
+              that runs <code>basename "$VIRTUAL_ENV"</code> <code>when</code>
+              <code>$VIRTUAL_ENV</code> is set, styled
+              <code>italic yellow</code>. <code>verify.sh</code> greps the
+              <code>${custom.venv}</code> format reference and
+              <code>check_block</code>s the module.
+            </td>
+            <td>
+              <strong
+                >A <code>$VIRTUAL_ENV</code>-keyed custom module, not starship's
+                native <code>python</code> module.</strong
+              >
+              The <code>python</code> module is starship's <em>default</em> venv
+              display, but it only renders inside a detected Python-project
+              directory and bundles <code>via 🐍 &lt;version&gt;</code>; the
+              goal here is just the venv name, shown whenever a venv is active
+              regardless of directory — exactly what a custom module on
+              <code>$VIRTUAL_ENV</code> expresses. Storage is a
+              <strong>hybrid in-place delta</strong>: the format reference must
+              edit Omarchy's scalar <code>format</code> key — starship has no
+              <code>include</code> and TOML can't merge two
+              <code>format</code>s.
+              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>
+              sidesteps that wall with structured jq, but a
+              <code>format</code> reference has no append or merge option, so
+              this is a deliberate text-level <code>sed</code> — the repo's one
+              in-place text edit. The module <em>table</em>, by contrast, is
+              append-only and rides the standard managed block.
+              <strong>Not stowed</strong>:
+              <code>~/.config/starship.toml</code> is seeded once (an Omarchy
+              migration <code>cp</code>s the default only
+              <code>if omarchy-cmd-missing starship</code>), is never
+              auto-refreshed, and only the <em>manual</em>
+              <code>omarchy refresh config starship.toml</code> rewrites it —
+              its <code>cp&nbsp;-f</code> would write <em>through</em> a stow
+              symlink (<a href="findings.html#F-REFRESH-WRITETHROUGH"
+                >F-REFRESH-WRITETHROUGH</a
+              >), and owning the whole file would restate and freeze Omarchy's
+              seeded defaults, against the deltas-only rule (<a
+                href="architecture.html#D-DELTA-STORAGE"
+                >D-DELTA-STORAGE</a
+              >).
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Claude Code config</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Choice</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="D-CLAUDE-CONFIG">
+            <td>
+              <code class="meta">D-CLAUDE-CONFIG</code> Track Claude Code's
+              custom config
+            </td>
+            <td>
+              <strong
+                >Consolidate the two genuine custom-config artifacts under
+                <code>~/.claude</code>, split by how Claude Code treats
+                them.</strong
+              >
+              <code>statusline-command.sh</code> (a self-contained, theme-aware
+              prompt script Claude never rewrites) is
+              <strong>stowed</strong> via a new <code>claude</code> package,
+              like <a href="decisions.html#D-TMUX-KEEP">tmux/local.conf</a>.
+              <code>settings.json</code> is instead applied as an idempotent
+              <strong>jq delta</strong> (<code>claude/settings.jq</code> +
+              <code>apply_jq_deltas</code>) that <code>install</code> overlays
+              onto the live file, seeding <code>{}</code> first so a
+              pre-first-run box still converges. Because that filter is a build
+              input read in place — not a dotfile — a
+              <code>claude/.stow-local-ignore</code> keeps stow from symlinking
+              it into <code>$HOME</code> (it sits at the package root, so it
+              would otherwise land at <code>~/settings.jq</code>). The default
+              model is pinned as <code>.env.ANTHROPIC_MODEL = "opus"</code> in
+              the same overlay — not a top-level <code>model</code> key: the
+              <code>/model</code> picker owns and rewrites
+              <code>model</code> (selecting <em>Default</em> even clears it), so
+              a pinned value drifts on every switch, but it never touches
+              <code>.env</code>, so the overlay stays a no-op. Claude Code
+              applies its settings <code>env</code> block to the session
+              (verified: it selects the model), so this sets the startup default
+              while <code>/model</code> still switches at runtime.
+              <code>verify.sh</code> link-checks the script and confirms the
+              settings overlay landed (which covers the env pin).
+            </td>
+            <td>
+              <strong>Tool-rewritten JSON gets a delta, not a symlink.</strong>
+              Claude Code rewrites <code>settings.json</code> itself (via
+              <code>/config</code>), so stowing it risks the same write-through
+              / rename-detach failure that keeps Omarchy-owned files off
+              symlinks (<a href="findings.html#F-REFRESH-WRITETHROUGH"
+                >F-REFRESH-WRITETHROUGH</a
+              >); asserting only our keys via jq preserves anything Claude adds
+              and re-converges every run — the same trade as
+              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>. The
+              repo therefore never contains <code>settings.json</code>, only the
+              filter, so no credential or machine state can leak. Everything
+              else under <code>~/.claude</code> is secrets/state/cache
+              (<code>.credentials.json</code>, <code>~/.claude.json</code>,
+              <code>projects/</code> transcripts + auto memory, history, caches,
+              sessions) and is deliberately excluded — nothing there is tracked.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="D-BASELINE">
+        Baseline &amp; bindings.conf <code class="meta">D-BASELINE</code>
+      </h2>
+      <div class="callout note">
+        <span class="label"
+          >Reference baseline = "Omarchy after Remove Preinstalled"</span
+        >
+        The owner's first step was running <strong>Remove Preinstalled</strong>,
+        which stripped bundled apps and their launcher bindings (<a
+          href="findings.html#F-BASELINE"
+          >F-BASELINE</a
+        >). So the trimmed <code>~/.config/hypr/bindings.conf</code> is
+        <em>intentional, not drift</em>. We leave it Omarchy-owned and
+        untracked; we do not restore it to vanilla stock. Reproduction recipe:
+        install → Remove Preinstalled → <code>./install</code>.
+      </div>
+
+      <h2 id="D-KEYBIND-OVERRIDES">
+        Keybinding overrides <code class="meta">D-KEYBIND-OVERRIDES</code>
+      </h2>
+      <div class="callout decision">
+        <span class="label">Track every personal keybind override here</span>
+        Personal keybinds live in the owned Hyprland fragment that is sourced
+        last, not in Omarchy-owned default files. Each override must record the
+        desired chord, the prior binding or conflict audit, and the chosen
+        resolution so future keyboard-layout changes can extend the same table.
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Chord</th>
+            <th>Action</th>
+            <th>Prior binding / conflict audit</th>
+            <th>Resolution</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>SUPER+D</code></td>
+            <td>Open Omarchy menu via <code>omarchy-menu</code></td>
+            <td>
+              Not active in the live post-Remove-Preinstalled
+              <code>bindings.conf</code>. Stock Omarchy app bindings use
+              <code>SUPER+D</code> for Lazy Docker, so the overlay treats that
+              as a possible future conflict.
+            </td>
+            <td>
+              Unbind both <code>SUPER+ALT+SPACE</code> (old menu trigger) and
+              <code>SUPER+D</code>, then bind <code>SUPER+D</code> to the menu.
+              No Lazy Docker replacement is needed unless that workflow becomes
+              important again.
+            </td>
+          </tr>
+          <tr>
+            <td><code>SUPER+I</code></td>
+            <td>Show keybindings via <code>omarchy-menu-keybindings</code></td>
+            <td>
+              No active or checked Omarchy app-default conflict.
+              <code>SUPER+K</code> previously showed keybindings, but
+              <code>K</code> is needed for vim-directional focus.
+              <code>SUPER+?</code> was rejected because full Omarchy app
+              defaults use <code>SUPER+SHIFT+SLASH</code> for Passwords.
+            </td>
+            <td>
+              Unbind <code>SUPER+I</code>, bind it to keybindings help, and
+              reuse <code>SUPER+K</code> for focus up.
+            </td>
+          </tr>
+          <tr>
+            <td><code>SUPER+E</code></td>
+            <td>
+              Toggle workspace layout via
+              <code>omarchy-hyprland-workspace-layout-toggle</code>
+            </td>
+            <td>
+              No active or checked Omarchy app-default conflict.
+              <code>SUPER+L</code> previously toggled workspace layout, but
+              <code>L</code> is needed for vim-directional focus. Full Omarchy
+              app defaults use <code>SUPER+SHIFT+E</code> for Email, not this
+              exact chord.
+            </td>
+            <td>
+              Unbind <code>SUPER+E</code>, bind it to the layout toggle, and
+              reuse <code>SUPER+L</code> for focus right.
+            </td>
+          </tr>
+          <tr>
+            <td><code>SUPER+H</code></td>
+            <td>Focus left</td>
+            <td>No active or checked Omarchy app-default conflict.</td>
+            <td>Unbind <code>SUPER+H</code>, then bind it to focus left.</td>
+          </tr>
+          <tr>
+            <td><code>SUPER+J</code></td>
+            <td>Focus down</td>
+            <td>
+              Conflicted with Omarchy's toggle-split bind. The old i3 config
+              used this chord for focus down, and toggle-split is not currently
+              important enough to preserve.
+            </td>
+            <td>
+              Unbind <code>SUPER+J</code>, then bind it to focus down. Add a new
+              split bind later only if that workflow becomes important.
+            </td>
+          </tr>
+          <tr>
+            <td><code>SUPER+K</code></td>
+            <td>Focus up</td>
+            <td>
+              Conflicted with Omarchy's keybindings-help bind, which moved to
+              <code>SUPER+I</code>.
+            </td>
+            <td>Unbind <code>SUPER+K</code>, then bind it to focus up.</td>
+          </tr>
+          <tr>
+            <td><code>SUPER+L</code></td>
+            <td>Focus right</td>
+            <td>
+              Conflicted with Omarchy's workspace-layout toggle, which moved to
+              <code>SUPER+E</code>.
+            </td>
+            <td>Unbind <code>SUPER+L</code>, then bind it to focus right.</td>
+          </tr>
+          <tr>
+            <td><code>SUPER+SHIFT+H/J/K/L</code></td>
+            <td>Swap active window left/down/up/right</td>
+            <td>
+              No active or checked Omarchy app-default conflict for these exact
+              chords. They copy the old i3 directional move muscle memory while
+              keeping Omarchy's arrow-key swap binds available as fallbacks.
+            </td>
+            <td>
+              Unbind each exact chord, then bind the four directions to
+              Hyprland's <code>swapwindow</code> dispatcher.
+            </td>
+          </tr>
+          <tr>
+            <td><code>SUPER+SHIFT+PERIOD</code></td>
+            <td>Move current workspace to next monitor</td>
+            <td>
+              No active or checked Omarchy app-default conflict. This mirrors
+              the old i3 <code>Mod+Ctrl+&gt;</code> workflow without requiring a
+              second thumb-cluster modifier.
+            </td>
+            <td>
+              Unbind <code>SUPER+SHIFT+PERIOD</code>, then bind it to
+              <code>movecurrentworkspacetomonitor, +1</code>.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer>
+      Omarchy dotfiles knowledge base · <a href="index.html">Home</a>
+    </footer>
+  </body>
+</html>

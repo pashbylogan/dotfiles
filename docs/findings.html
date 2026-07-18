@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Findings — Omarchy Dotfiles</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <nav class="topnav">
+      <a class="brand" href="index.html"
+        ><span class="dot"></span> Omarchy Dotfiles</a
+      >
+      <a class="nav" href="index.html">Home</a>
+      <a class="nav" href="architecture.html">Architecture</a>
+      <a class="nav" href="decisions.html">Decisions</a>
+      <a class="nav" href="findings.html" aria-current="page">Findings</a>
+      <a class="nav" href="todos.html">To-Dos</a>
+      <a class="nav" href="traceability.html">Trace</a>
+      <a class="nav" href="augmentation-approach.html">Design Note</a>
+    </nav>
+
+    <div class="container">
+      <p class="eyebrow">Research Findings</p>
+      <h1>How Omarchy actually behaves</h1>
+      <p class="lead">
+        Verified by reading the live system (<code>omarchy 3.8.2</code>),
+        Omarchy's source/manual, and selected agent-tool documentation. These
+        facts justify the <a href="architecture.html">architecture</a>. Each
+        finding has a stable ID (see <a href="traceability.html">Trace</a>).
+      </p>
+
+      <h2 id="F-HYPR-SEAM">
+        Hyprland config is a sourcing seam <code class="meta">F-HYPR-SEAM</code>
+      </h2>
+      <p>
+        <code>~/.config/hypr/hyprland.conf</code> is a seeded, owner-owned file
+        that <code>source</code>s, in order (verified against the live machine
+        and omarchy's shipped seed at
+        <code>~/.local/share/omarchy/config/hypr/hyprland.conf</code>):
+      </p>
+      <ol>
+        <li>
+          Omarchy defaults in
+          <code>~/.local/share/omarchy/default/hypr/*</code> —
+          <em>never edit these</em>;
+        </li>
+        <li>
+          the active theme:
+          <code>~/.config/omarchy/current/theme/hyprland.conf</code>;
+        </li>
+        <li>
+          the user override files: <code>monitors.conf</code>,
+          <code>input.conf</code>, <code>bindings.conf</code>,
+          <code>looknfeel.conf</code>, <code>autostart.conf</code>;
+        </li>
+        <li><code>~/.local/state/omarchy/toggles/hypr/*.conf</code>.</li>
+      </ol>
+      <p>
+        Later sources win. Our fragment is added <em>after</em> all of these
+        (managed block at EOF of <code>hyprland.conf</code>), so it overrides
+        cleanly. The toggles-before-fragment ordering is the load-order trap
+        behind two opposite-direction deltas: in
+        <a href="decisions.html#D-LOOKNFEEL">D-LOOKNFEEL</a> we re-state
+        <code>border_size = 2</code> in the fragment to beat the
+        <code>window-no-gaps</code> toggle, while in
+        <a href="decisions.html#D-MONITORS">D-MONITORS</a> we deliberately stay
+        silent on eDP-1 so the <code>internal-monitor-disable.conf</code> toggle
+        retains control.
+      </p>
+
+      <h2 id="F-REFRESH-WRITETHROUGH">
+        Refresh / reset writes can mutate tracked files
+        <code class="meta">F-REFRESH-WRITETHROUGH</code>
+      </h2>
+      <ul class="clean">
+        <li>
+          <code>omarchy-refresh-config</code> <strong>does</strong> create
+          timestamped backups before overwriting.
+        </li>
+        <li>
+          But it copies defaults with <code>cp&nbsp;-f</code> — if the
+          destination is a symlink into git, the copy writes
+          <em>through</em> the symlink and mutates the tracked source. This is
+          the real reason we never symlink Omarchy-owned files.
+        </li>
+        <li>
+          <code>omarchy refresh hyprland</code> resets the whole set of hypr
+          user files at once — so a single added <code>source =</code> line is
+          the smallest, most recoverable integration surface.
+        </li>
+      </ul>
+
+      <h2 id="F-LUA">
+        Hyprland is migrating to Lua (already on <code>dev</code>)
+        <code class="meta">F-LUA</code>
+      </h2>
+      <div class="callout warn">
+        <span class="label">Forward risk</span>
+        Omarchy's <code>dev</code>-branch
+        <code>omarchy-refresh-hyprland</code> refreshes
+        <code>hyprland.lua</code>, <code>bindings.lua</code>,
+        <code>input.lua</code>, <code>looknfeel.lua</code>,
+        <code>monitors.lua</code>, <code>autostart.lua</code>,
+        <code>.luarc.json</code>. The installed system is still
+        <code>.conf</code>, but the transition is real and close. A large
+        <code>.conf</code>-capturing layer would have a looming expiry — which
+        is why this repo owns only a small fragment + one integration line.
+      </div>
+
+      <h2 id="F-BASH-CHAIN">
+        The bash chain <code class="meta">F-BASH-CHAIN</code>
+      </h2>
+      <p>
+        Login flow: <code>/etc/profile</code> → <code>~/.bash_profile</code> →
+        <code>~/.bashrc</code> →
+        <code>~/.local/share/omarchy/default/bash/rc</code>. The default bash
+        already wires <strong>starship</strong>, <strong>zoxide</strong>,
+        <strong>fzf</strong>, <strong>mise</strong>, <code>eza</code>/<code
+          >bat</code
+        >
+        aliases, completions, and a functions library. The owner-owned
+        <code>~/.bashrc</code> sources the Omarchy default and leaves a user
+        section at <strong>EOF</strong> — so our managed block lands there and
+        wins conflicts.
+      </p>
+      <p>
+        Aliases/functions Omarchy already defines (so we defer to them, or
+        override only intentionally): <code>ls</code>/<code>lt</code> (eza),
+        <code>cd</code>/<code>zd</code> (zoxide), <code>t</code> (tmux),
+        <code>g</code>/<code>gcm</code>/<code>gcam</code>/<code>gcad</code>,
+        <code>n()</code> (nvim), <code>ga</code>/<code>gd</code> (worktrees),
+        <code>tdl</code>/<code>tdlm</code>/<code>tsl</code> (tmux layouts),
+        <code>fip</code>/<code>dip</code>/<code>lip</code> (ssh forwarding),
+        transcoding helpers.
+      </p>
+      <p>
+        The manual confirms: <code>~/.bashrc</code> "will not be overwritten on
+        updates" — the safe seam for shell customization.
+      </p>
+
+      <h2 id="F-NVIM-OWNED">
+        Neovim is fully Omarchy-owned <code class="meta">F-NVIM-OWNED</code>
+      </h2>
+      <p>
+        <code>omarchy-nvim-setup</code> does
+        <code>cp&nbsp;-r .../config ~/.config/nvim</code> — it
+        <strong>replaces the entire nvim tree</strong> (backing up first via
+        <code>mv</code>, behind a <code>gum confirm</code>). The file
+        <code>~/.config/nvim/lua/config/keymaps.lua</code> already exists as the
+        LazyVim user-extension point ("Add any additional keymaps here").
+        Therefore we do not stow into <code>~/.config/nvim</code>; instead
+        <code>install</code> upserts a managed block into that
+        <code>keymaps.lua</code>. It survives routine
+        <code>omarchy update</code> (only the deliberate, confirm-gated setup
+        re-copies nvim); re-run <code>./install</code> after such a reset.
+      </p>
+
+      <h2 id="F-BASELINE">
+        Baseline: "Omarchy after Remove Preinstalled"
+        <code class="meta">F-BASELINE</code>
+      </h2>
+      <p>
+        The owner's first post-install step was
+        <strong>Remove Preinstalled</strong> (omarchy menu), which removed
+        bundled apps (Spotify, Obsidian, Signal, Typora, 1Password, lazydocker,
+        the webapps, …). That is why the live
+        <code>~/.config/hypr/bindings.conf</code> lacks their launcher bindings,
+        whereas vanilla Omarchy ships ~20 of them. This divergence is
+        <strong>intentional</strong>. The repo's reference baseline is the
+        post-Remove-Preinstalled state, and <code>bindings.conf</code> is left
+        Omarchy-owned and untracked.
+      </p>
+
+      <h2 id="F-APP-CHANNELS">
+        App channels: Omarchy-native first
+        <code class="meta">F-APP-CHANNELS</code>
+      </h2>
+      <p>
+        App curation starts with Omarchy's own code and docs, then checks
+        upstream app support and Arch packaging. On this machine that yields
+        four current channel outcomes: <code>brave-origin</code> uses a
+        temporary stable-channel compatibility overlay (<a
+          href="decisions.html#D-BROWSER-DEFAULT"
+          >D-BROWSER-DEFAULT</a
+        >) because Omarchy's current native browser installer/default path still
+        targets <code>brave-origin-beta-bin</code> while Brave documents, and
+        the AUR exposes, stable <code>brave-origin-bin</code>. The overlay still
+        reuses Omarchy's package, flags, policy, theming, and hook surfaces;
+        <code>spotify</code> stays on the AUR package because Omarchy lists
+        <code>spotify</code> in <code>omarchy-base.packages</code> and binds
+        Music to <code>omarchy-launch-or-focus spotify</code>;
+        <code>obsidian</code> stays in Arch <code>extra</code> because Omarchy
+        lists <code>obsidian</code>, migrated <code>obsidian-bin</code> to
+        <code>obsidian</code>, moved its launch flags into
+        <code>~/.config/obsidian/user-flags.conf</code>, and themes Obsidian
+        vaults; <code>slack-desktop</code> stays as a local AUR choice because
+        Omarchy has no Slack package, webapp, binding, or migration.
+      </p>
+      <p>
+        The Slack exception is deliberately narrow. Native Slack provides the
+        installed app identity and <code>slack://</code> handler, and the local
+        tray already works without adding <code>libappindicator</code>. Slack's
+        Linux docs call the desktop app beta, support Ubuntu/RHEL directly, and
+        list huddles on desktop plus Google Chrome on Linux. So the durable
+        baseline is native <code>slack-desktop</code>, with Slack in Google
+        Chrome as the huddles/screen-share fallback if the native app regresses.
+        Do not install or remove anything for these three apps unless that local
+        behavior changes.
+      </p>
+      <p>
+        Google Cloud tooling follows the same audit. <code>gcloud</code> stays
+        on the AUR <code>google-cloud-cli</code> package, but that install is
+        managed by an external package manager, so
+        <code>gcloud components install</code> is disabled and cannot add the
+        GKE auth plugin in place. Rather than switch to Google's
+        <code>curl | bash</code> installer — which bypasses pacman, self-manages
+        PATH, updates outside <code>omarchy update</code>, and would conflict
+        with the AUR package — the plugin comes from
+        <code>google-cloud-cli-component-gke-gcloud-auth-plugin</code>, a split
+        of the same <code>google-cloud-cli</code> base, so it is version-locked
+        and updated by the same path. It ships only the
+        <code>gke-gcloud-auth-plugin</code> binary on <code>/usr/bin</code>,
+        which is what kubectl &ge;1.26 invokes by name through PATH.
+        <code>kubectl</code> itself moves to the official Arch
+        <code>extra</code> package (off mise) so both binaries resolve via
+        <code>/usr/bin</code> in every shell, including non-interactive ones
+        where <code>mise activate</code> is not loaded — the same reasoning that
+        pins the dev toolchain to pacman.
+      </p>
+      <p>
+        Claude Desktop follows the same audit. Anthropic ships an official Linux
+        build, but only as a Debian/Ubuntu <code>.deb</code> from a GPG-signed
+        apt repo with no self-updater, and Arch has no native consumer of that
+        repo. The community AUR packages first repackaged the
+        <em>Windows</em> MSIX/exe; once they caught up to the official Linux
+        <code>.deb</code>, <code>claude-desktop</code> became the durable choice
+        because it installs Anthropic's <code>.deb</code>
+        <strong>verbatim</strong> — its committed checksum matches the signed
+        <code>InRelease</code> — and rides <code>omarchy update</code>'s
+        <code>yay -Sua</code> like the other AUR apps, rather than a
+        self-managed rebuild. Cowork's sandbox is an app-managed QEMU/KVM
+        microVM, so <code>qemu-base</code> and <code>edk2-ovmf</code> are added
+        to <code>packages.txt</code> to enable it by default; every other
+        feature dependency (the Hyprland portal, <code>gnome-keyring</code>,
+        <code>libayatana-appindicator</code>, <code>gvfs</code>) is already part
+        of the Omarchy baseline.
+      </p>
+      <p>
+        Claude Code (the CLI) follows the same audit, with a twist. It ships in
+        <em>both</em> the Omarchy repo — pinned and slow to move (it sat on
+        <code>2.1.179</code> for weeks) — and the AUR, where an automated
+        pipeline tracks upstream within hours and checksum-pins Anthropic's
+        official binary. Anthropic's <code>curl | bash</code> native installer
+        is rejected for the same reason as gcloud's: it bypasses pacman,
+        self-manages PATH, and updates outside <code>omarchy update</code>. The
+        twist is the shared package name: a bare
+        <code>claude-code</code> resolves to the pinned repo build, and once the
+        AUR build is installed, pacman classifies it as native because the same
+        name exists in the Omarchy sync database. Omarchy's
+        <code>yay -Sua</code> step upgrades only foreign packages, so it never
+        sees later AUR releases. <code>install</code> and
+        <code>make update</code> therefore both run
+        <code>yay -S --needed --cleanafter aur/claude-code</code> — the same
+        <code>aur/</code>-prefixed form Omarchy's own installer uses: the prefix
+        forces the current AUR build past the repo pin,
+        <code>--needed</code> makes it a no-op until the AUR moves ahead, and
+        <code>--cleanafter</code>
+        drops the build tree. No bespoke update script is needed; yay already
+        does the clone, version compare, and build.
+      </p>
+
+      <h2 id="F-MALWARE-SCANNER">
+        Malware scanning: ClamAV on demand
+        <code class="meta">F-MALWARE-SCANNER</code>
+      </h2>
+      <p>
+        As of July 2026, the installed Omarchy source and its public repository
+        do not prescribe or bundle a malware scanner. Arch packages
+        <code>clamav</code> in the official <code>extra</code> repository, and
+        the ArchWiki identifies it as one of the few actively developed Linux
+        anti-malware options. Cisco's own documentation is narrower: ClamAV is a
+        file scanner, not a traditional endpoint-security suite, although it can
+        detect malware in ELF files, archives, HTML, PDFs, Office documents, and
+        other formats.
+      </p>
+      <p>
+        The durable choice is therefore the official-repository package through
+        <code>packages.txt</code> and <code>omarchy pkg add</code>, used as a
+        second-opinion incident-response tool. Signature refreshes and scans are
+        explicit operator actions; <code>clamd</code>,
+        <code>clamav-clamonacc</code>, and their services remain disabled. Scan
+        results are reviewed without <code>--remove</code> because a signature
+        match needs context and can be a false positive. A clean result
+        complements process, persistence, permission, download, and network
+        checks rather than proving that compromise never occurred.
+      </p>
+
+      <h2 id="F-CLI">
+        Omarchy CLI surface (idempotent, preferred over re-implementing)
+        <code class="meta">F-CLI</code>
+      </h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Command</th>
+            <th>Does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>omarchy pkg add &lt;pkgs&gt;</code></td>
+            <td>
+              <code>pacman -S --needed</code>; no-op if present.
+              <code>omarchy pkg aur add</code> for AUR (yay).
+            </td>
+          </tr>
+          <tr>
+            <td><code>omarchy pkg drop &lt;pkgs&gt;</code></td>
+            <td>
+              <code>pacman -Rns</code>, installed-only. Drives
+              <a href="decisions.html#D-PKG-REMOVE">D-PKG-REMOVE</a>'s
+              declarative <code>packages.remove.txt</code> surface.
+            </td>
+          </tr>
+          <tr>
+            <td><code>omarchy refresh config &lt;path&gt;</code></td>
+            <td>
+              reset one <code>~/.config</code> file to default (backs up when a
+              destination exists; otherwise seeds the missing file).
+            </td>
+          </tr>
+          <tr>
+            <td><code>omarchy theme/font &lt;...&gt;</code></td>
+            <td>theme/font management (set only if different).</td>
+          </tr>
+          <tr>
+            <td><code>omarchy update -y</code></td>
+            <td>
+              full update: pulls Omarchy, <code>pacman -Syu</code>, migrations,
+              AUR. Skips the initial confirm/menu — but
+              <em>may still prompt</em> (gum) for required restart/reboot
+              handling.
+            </td>
+          </tr>
+          <tr>
+            <td><code>omarchy update firmware</code></td>
+            <td>
+              firmware via <code>fwupdmgr refresh --force</code> +
+              <code>sudo fwupdmgr update</code>. Separate invocation —
+              <strong>not</strong> chained from <code>omarchy update -y</code>.
+            </td>
+          </tr>
+          <tr>
+            <td><code>omarchy install dev-env &lt;kind&gt;</code></td>
+            <td>
+              Canonical install path for language tools. Today
+              <code>python</code> installs Python via
+              <code>mise use --global python@latest</code> then drops uv via
+              Astral's installer; <code>go</code> uses
+              <code>mise use --global go@latest</code>. Pulls latest at the
+              moment it runs (no version pin) — see
+              <a href="decisions.html#D-DEV-ENV">D-DEV-ENV</a>.
+            </td>
+          </tr>
+          <tr>
+            <td><code>omarchy install browser &lt;kind&gt;</code></td>
+            <td>
+              Canonical install path for supported browsers. For
+              <code>brave-origin</code>, current Omarchy installs
+              <code>brave-origin-beta-bin</code>. Until upstream PR
+              <a href="https://github.com/basecamp/omarchy/pull/6021">#6021</a>
+              or equivalent ships, this repo mirrors the script's policy/flags
+              steps against stable <code>brave-origin-bin</code> instead of
+              calling the wrapper.
+            </td>
+          </tr>
+          <tr>
+            <td><code>omarchy default browser &lt;kind&gt;</code></td>
+            <td>
+              Sets XDG's default web browser and the
+              <code>http</code>/<code>https</code>/<code>text/html</code> MIME
+              handlers. Current Omarchy still maps <code>brave-origin</code> to
+              <code>brave-origin-beta.desktop</code>, so this repo sets the
+              stable <code>brave-origin.desktop</code>
+              handlers directly until the upstream mapping changes.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="F-SHELL-RESEARCH">
+        Shell research (zsh vs. bash) <code class="meta">F-SHELL-RESEARCH</code>
+      </h2>
+      <p>
+        Keeping zsh would buy mainly inline autosuggestions + syntax
+        highlighting + zsh completion/globbing — narrow, since Omarchy's bash
+        already provides starship/zoxide/fzf/mise. Against that,
+        <code>chsh</code>→zsh breaks Omarchy's bash-dependent
+        boot/session/helpers (env not loaded in the Hyprland session; reported
+        black-screen cases). Conclusion: stay on bash; layer aliases via the
+        <code>~/.bashrc</code> seam.
+      </p>
+
+      <h2 id="F-TMUX-XDG">
+        tmux prefers <code>~/.config/tmux/tmux.conf</code> over
+        <code>~/.tmux.conf</code> <code class="meta">F-TMUX-XDG</code>
+      </h2>
+      <p>
+        Omarchy ships a full <code>~/.config/tmux/tmux.conf</code> (themed
+        status bar, <code>tmux-256color</code> + <code>*:RGB</code> truecolor,
+        <code>mouse on</code>, 50k history, <code>set-clipboard</code>,
+        <code>extended-keys</code>, <code>M-&lt;n&gt;</code>/<code
+          >M-arrow</code
+        >
+        window nav, <code>C-M-arrow</code> pane nav). tmux loads the XDG path in
+        preference to <code>~/.tmux.conf</code>, so a stowed
+        <code>~/.tmux.conf</code> is silently
+        <strong>shadowed and never read</strong>. We therefore stow our config
+        to <code>~/.config/tmux/local.conf</code> and
+        <code>source-file</code> it LAST from omarchy's tmux.conf (managed
+        block) — overriding only our intentional deltas (C-a prefix,
+        vi-copy→wl-copy, hjkl nav, sessionizer) while inheriting omarchy's good
+        defaults. Related: omarchy fixes ssh flakiness via MTU probing
+        (<code>install/config/ssh-flakiness.sh</code>), not TERM, so a global
+        <code>TERM=xterm-256color</code> ssh alias is unnecessary and was
+        removed.
+      </p>
+
+      <h2 id="F-WAYBAR-MIGRATIONS">
+        Waybar config drifts via two omarchy patterns
+        <code class="meta">F-WAYBAR-MIGRATIONS</code>
+      </h2>
+      <p>
+        The omarchy
+        <a href="https://learn.omacom.io/2/the-omarchy-manual/65/dotfiles"
+          >Dotfiles</a
+        >
+        page claims files in <code>~/.config</code> "will not be overwritten on
+        updates" — but the
+        <a href="https://learn.omacom.io/2/the-omarchy-manual/102/common-tweaks"
+          >Common tweaks</a
+        >
+        page quietly admits "it might occasionally be necessary for system
+        updates to restore certain configs to their original condition" and
+        instructs the user to find their old version in a
+        <code>.bak</code> file. For waybar the second claim is the accurate one:
+        <code>~/.config/waybar/config.jsonc</code> is mutated by omarchy updates
+        two distinct ways.
+      </p>
+      <ol>
+        <li>
+          <strong>Wholesale overwrite</strong> via
+          <code>omarchy-refresh-waybar</code> (a thin wrapper around
+          <code>omarchy-refresh-config waybar/config.jsonc</code>), which backs
+          up the user file as <code>config.jsonc.bak.&lt;epoch&gt;</code> and
+          then <code>cp -f</code>s the upstream default over it. Invoked from
+          migrations such as <code>1751887718.sh</code>,
+          <code>1752725616.sh</code>, and <code>1753495989.sh</code>.
+        </li>
+        <li>
+          <strong>Surgical <code>sed -i</code> edits</strong> against the live
+          user file, guarded by <code>grep</code> idempotency checks. Examples:
+          <code>1763409505.sh</code> inserts <code>"10": "0"</code>;
+          <code>1764067068.sh</code> adds the bluetooth-off icon;
+          <code>1771602647.sh</code> injects the notification-silencing
+          indicator.
+        </li>
+      </ol>
+      <p>
+        These coexist on purpose: <code>refresh-waybar</code> handles structural
+        changes; surgical migrations add single keys without disturbing personal
+        edits to the rest of the file. The implication for this repo is that
+        <strong
+          >forking the whole <code>config.jsonc</code> would silently drop every
+          future surgical migration</strong
+        >
+        (we'd never see the new keys upstream adds), while leaving the file
+        unmanaged means a periodic
+        <code>refresh-waybar</code> erases personal edits. The resolution lives
+        in <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>: own
+        only the deltas as jq filters, applied idempotently on every
+        <code>./install</code>.
+      </p>
+
+      <h2 id="F-AGENT-GUIDANCE">
+        Agent instruction files should be concise and concrete
+        <code class="meta">F-AGENT-GUIDANCE</code>
+      </h2>
+      <p>
+        <code>AGENTS.md</code> is the most universal repo-root name for shared
+        coding-agent guidance: the AGENTS.md project describes it as a
+        predictable "README for agents" and lists common sections such as setup,
+        testing, code style, and security. Claude Code now documents
+        <code>AGENTS.md</code> interoperability explicitly: Claude itself reads
+        <code>CLAUDE.md</code>, but a project can make Claude consume the shared
+        guidance by importing <code>@AGENTS.md</code> from
+        <code>CLAUDE.md</code>. Aider similarly recommends putting coding
+        conventions in a small markdown file and loading it read-only.
+      </p>
+      <p>
+        The writing guidance is consistent across current toolchains: keep the
+        file lean because it consumes model context, use specific/verifiable
+        instructions instead of vague "best practices", put exact commands near
+        the top, and treat the file as advisory guidance rather than a hard
+        policy layer. This repo's <code>AGENTS.md</code> therefore records only
+        frequently relevant commands, boundaries, traceability rules, and the
+        comment conventions; durable explanations and source-backed rationale
+        stay in <code>docs/</code>.
+      </p>
+      <p>
+        <strong>Harness coverage.</strong> As of May 2026,
+        <code>AGENTS.md</code> at repo root is read natively by Codex, opencode,
+        crush, Cursor, GitHub Copilot's coding agent, Windsurf, Cline,
+        Continue.dev, JetBrains Junie, Sourcegraph Amp, Devin, Kilo Code, and
+        Zed (with caveats). The only harness in our mix that does NOT yet
+        auto-load <code>AGENTS.md</code> is Claude Code (tracked in
+        <a href="https://github.com/anthropics/claude-code/issues/34235"
+          >anthropics/claude-code#34235</a
+        >). Bridge: a one-line <code>CLAUDE.md</code> containing
+        <code>@AGENTS.md</code> — Claude Code's <code>@file</code> import pulls
+        the canonical file into every session, and Anthropic's auto-memory
+        writes land in the small bridge file rather than mutating
+        <code>AGENTS.md</code>. The bridge is enforced by
+        <code>.github/scripts/check_docs.py</code> check #11, which also guards
+        the 32 KiB Codex cap on AGENTS.md content.
+      </p>
+      <p>
+        <strong>What we deliberately don't add.</strong> Legacy harness-specific
+        files (<code>.rules</code>, <code>.cursorrules</code>,
+        <code>.windsurfrules</code>, <code>.clinerules</code>,
+        <code>.github/copilot-instructions.md</code>, <code>AGENT.md</code>) are
+        not created at repo root: Zed's "first-match wins" precedence ranks
+        several of these above <code>AGENTS.md</code> and would shadow it,
+        opencode reads only the first matching file per category, and most
+        harnesses that read both end up loading duplicated content. The
+        canonical-plus-bridge pattern keeps the root clean and the source of
+        truth singular.
+      </p>
+
+      <h2 id="F-MONITOR-RULE-APPLY">
+        Hyprland <code>monitor =</code> rules re-apply on hot-plug;
+        <code>desc:</code> is a prefix match; empty-<code>output</code> is a
+        fallback
+        <code class="meta">F-MONITOR-RULE-APPLY</code>
+      </h2>
+      <p>
+        Three facts from the Hyprland monitors documentation constrain
+        <a href="decisions.html#D-MONITORS">D-MONITORS</a>:
+      </p>
+      <ul class="clean">
+        <li>
+          <strong
+            ><code>desc:</code> matches a prefix of the description.</strong
+          >
+          The wiki: "the description value up to, but not including the portname
+          can be used as the output field with a <code>desc:</code> prefix."
+          When two connected monitors share a prefix (the two Acer XV272U
+          variants on this dock do), the rule must extend the prefix until it's
+          unique. The repo uses the full description string (including the
+          EDID-reported serial tail) in both the overlay and the docs, so the
+          rule reads as "this exact unit" rather than relying on a shortest
+          accident.
+        </li>
+        <li>
+          <strong>Empty-<code>output</code> rules are fallback-only.</strong>
+          Wiki: "Leaving the output empty will define a fallback rule to use
+          when no other rules match." So omarchy's seeded
+          <code>monitor=,preferred,auto,auto</code> in
+          <code>~/.config/hypr/monitors.conf</code> is outranked by every
+          specific <code>desc:</code> or name-matched rule — no need to edit
+          <code>monitors.conf</code> to add specific rules.
+        </li>
+        <li>
+          <strong>The matcher fires on hot-plug, not only at startup.</strong>
+          The "quickly plugging in random monitors" recommendation in the wiki
+          is precisely a hot-plug pattern — the fallback rule is described as
+          applying "when not specified", which by the same mechanism makes any
+          specific <code>monitor =</code> rule auto-apply when a matching
+          monitor is later connected. That delivers the
+          <a href="decisions.html#D-MONITORS">D-MONITORS</a> requirement of
+          "reloaded every time the laptop is plugged into these displays" with
+          zero script: omarchy's <code>omarchy-hyprland-monitor-watch</code>
+          handles the removal-recovery half; Hyprland's built-in matcher handles
+          the connect half.
+        </li>
+      </ul>
+      <p>
+        Both the current Hyprland wiki and the archived 0.54 wiki page agree on
+        these semantics — see the Sources list. The current page renders Lua
+        examples (Hyprland is migrating to Lua, see
+        <a href="findings.html#F-LUA">F-LUA</a>); the 0.54 page is closer to the
+        <code>.conf</code>/hyprlang dialect omarchy 3.x still ships, but the
+        matcher contract is identical.
+      </p>
+
+      <h2 id="F-MONITOR-SCALE-PERSIST">
+        Omarchy's <code>Super + /</code> scale cycle auto-persists only the
+        single-wildcard <code>monitors.conf</code> shape
+        <code class="meta">F-MONITOR-SCALE-PERSIST</code>
+      </h2>
+      <p>
+        The omarchy manual recommends editing
+        <code>~/.config/hypr/monitors.conf</code> to set persistent monitor
+        scale, and the runtime cycle keybind <code>Super + /</code> (script
+        <code>omarchy-hyprland-monitor-scaling-cycle</code>) walks
+        <code>1 → 1.25 → 1.6 → 2 → 3 → 4</code> via
+        <code>hyprctl keyword monitor …</code>. The script also writes the new
+        scale through to <code>monitors.conf</code> so it survives reboot — but
+        only when <code>monitors.conf</code> contains exactly one
+        <code>monitor=</code> line and that line matches the regex
+        <code>^monitor=,preferred,auto,</code> (the omarchy-seeded wildcard).
+      </p>
+      <p>
+        For a multi-monitor layout matched by <code>desc:</code> rules — as
+        <a href="decisions.html#D-MONITORS">D-MONITORS</a> uses — the
+        auto-persist branch is skipped, so the runtime
+        <code>Super + /</code> change reverts at the next reload. The
+        omarchy-native persistence path in that case is the same one the rest of
+        this repo already uses: own the <code>monitor =</code> deltas in our
+        last-sourced overlay (<a href="findings.html#F-HYPR-SEAM">F-HYPR-SEAM</a
+        >), which also stays safe from
+        <code>omarchy refresh hyprland</code>
+        (<a href="findings.html#F-REFRESH-WRITETHROUGH"
+          >F-REFRESH-WRITETHROUGH</a
+        >). The wiki tool
+        <a href="https://github.com/basecamp/omarchy/discussions/4282"
+          >hyprmon</a
+        >
+        helps with positioning but has the same persistence gap, and third-party
+        <code>hyprdynamicmonitors</code> would fill it but is not bundled.
+      </p>
+
+      <h2 id="F-SSH-AGENT">
+        Omarchy ships ssh-agent dormant <code class="meta">F-SSH-AGENT</code>
+      </h2>
+      <p>
+        OpenSSH installs <code>ssh-agent.socket</code> as a systemd user unit at
+        <code>/usr/lib/systemd/user/ssh-agent.socket</code>, but the unit ships
+        <strong>disabled</strong> and Omarchy's shell init never exports
+        <code>SSH_AUTH_SOCK</code>. A fresh box that runs
+        <code>ssh-add</code> therefore gets "Could not open a connection to your
+        authentication agent." GUI apps launched through
+        <code>uwsm-app</code> have the same problem unless the socket is
+        published through UWSM's environment loading path; otherwise Obsidian
+        Git operations fall back to repeated askpass prompts. Two one-time costs
+        make the socket usable for the Omarchy desktop session: a per-machine
+        <code>systemctl --user enable --now ssh-agent.socket</code> (manual per
+        <a href="decisions.html#D-SCRIPTS-MINIMAL">D-SCRIPTS-MINIMAL</a>) plus a
+        guarded <code>SSH_AUTH_SOCK</code> export in the stowed
+        <code>~/.config/uwsm/env.d/dotfiles.sh</code> fragment. UWSM reads that
+        fragment when the graphical session starts, so Obsidian and
+        Omarchy-launched terminals pick it up on the next Omarchy login.
+      </p>
+      <p>
+        Socket activation means the agent process is <em>lazy-spawned</em> on
+        first connection to the socket, not at boot — so a fresh session starts
+        with no keys cached, and they stay uncached across reboots unless
+        something re-adds them. The matching <code>~/.ssh/config</code> delta
+        (<code>AddKeysToAgent yes</code> under <code>Host *</code>) reduces this
+        to one passphrase prompt per session without pulling in
+        <code>gnome-keyring</code>, <code>keychain</code>, or
+        <code>pam_ssh</code>. Omarchy's official docs are silent on SSH key
+        management, so this is an upstream-Arch convention bolted on as a small
+        delta rather than an Omarchy-blessed flow.
+      </p>
+      <p>
+        The <code>uwsm</code> export is guarded — it only fires when
+        <code>SSH_AUTH_SOCK</code> is unset <em>and</em>
+        <code>XDG_RUNTIME_DIR</code> is set. The first guard preserves a
+        pre-existing agent path (forwarded <code>ssh -A</code> sockets,
+        1Password's <code>~/.1password/agent.sock</code>,
+        <code>gcr-ssh-agent.socket</code> publishing
+        <code>$XDG_RUNTIME_DIR/gcr/ssh</code>, <code>gpg-agent</code> with SSH
+        emulation) instead of silently overriding it; the second makes the
+        fragment inert if UWSM ever evaluates it before the runtime directory is
+        available.
+      </p>
+
+      <h2>Sources</h2>
+      <ul class="clean">
+        <li>
+          <a href="https://code.claude.com/docs/en/desktop-linux"
+            >Claude Desktop on Linux (beta) — official apt repo, no
+            self-updater, beta feature list</a
+          >
+        </li>
+        <li>
+          <a href="https://aur.archlinux.org/packages/claude-desktop"
+            >AUR — claude-desktop (installs Anthropic's official Linux .deb
+            verbatim)</a
+          >
+        </li>
+        <li>
+          <a href="https://github.com/Vladimir-csp/uwsm"
+            >UWSM — environment files and app launch environment</a
+          >
+        </li>
+        <li>
+          <a href="https://wiki.hypr.land/Configuring/Environment-variables/"
+            >Hyprland Wiki — environment variables with UWSM</a
+          >
+        </li>
+        <li>
+          <a href="https://man.openbsd.org/OpenBSD-7.8/ssh_config.5"
+            >OpenSSH ssh_config — AddKeysToAgent</a
+          >
+        </li>
+        <li>
+          <a href="https://agents.md/"
+            >AGENTS.md — a simple, open format for guiding coding agents</a
+          >
+        </li>
+        <li>
+          <a href="https://code.claude.com/docs/en/memory"
+            >Claude Code docs — How Claude remembers your project</a
+          >
+        </li>
+        <li>
+          <a href="https://aider.chat/docs/usage/conventions.html"
+            >Aider docs — Specifying coding conventions</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://codex-best-practices-d67bea.pages.oit.duke.edu/best-practices/agents.html"
+            >Codex Starter Best Practices — AGENTS.md</a
+          >
+        </li>
+        <li>
+          <a href="https://github.com/anthropics/claude-code/issues/34235"
+            >anthropics/claude-code#34235 — native AGENTS.md support
+            (tracking)</a
+          >
+        </li>
+        <li>
+          <a href="https://opencode.ai/docs/rules/"
+            >opencode — Rules (AGENTS.md / CLAUDE.md discovery)</a
+          >
+        </li>
+        <li>
+          <a href="https://github.com/charmbracelet/crush/discussions/912"
+            >charmbracelet/crush — AGENTS.md as default init target (v0.18.0)</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://github.blog/changelog/2025-08-28-copilot-coding-agent-now-supports-agents-md-custom-instructions/"
+            >GitHub Copilot coding agent — AGENTS.md support changelog</a
+          >
+        </li>
+        <li>
+          <a href="https://docs.windsurf.com/windsurf/cascade/agents-md"
+            >Windsurf — AGENTS.md discovery</a
+          >
+        </li>
+        <li>
+          <a href="https://zed.dev/docs/ai/rules"
+            >Zed — AI Rules precedence (first-match wins)</a
+          >
+        </li>
+        <li>
+          <a href="https://learn.omacom.io/2/the-omarchy-manual/65/dotfiles"
+            >Omarchy manual — Dotfiles</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://learn.omacom.io/2/the-omarchy-manual/102/common-tweaks"
+            >Omarchy manual — Common tweaks (waybar examples)</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://raw.githubusercontent.com/basecamp/omarchy/master/bin/omarchy-refresh-config"
+            >omarchy-refresh-config (wholesale config restore)</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://raw.githubusercontent.com/basecamp/omarchy/dev/bin/omarchy-refresh-hyprland"
+            >omarchy-refresh-hyprland (dev, Lua)</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://raw.githubusercontent.com/basecamp/omarchy/dev/config/hypr/hyprland.lua"
+            >hyprland.lua (dev)</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://quinn.io/blog/2025/12-18-zsh-on-omarchy-without-breaking-anything"
+            >Zsh on Omarchy without breaking anything</a
+          >
+        </li>
+        <li>
+          <a href="https://github.com/basecamp/omarchy/discussions/2495"
+            >Changing shell to zsh/fish (discussion #2495)</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://www.reddit.com/r/omarchy/comments/1qixx2x/are_omarchy_updates_still_overwriting_user_configs/"
+            >r/omarchy — updates overwriting user configs</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://www.reddit.com/r/omarchy/comments/1p7n88v/managing_dot_files_with_updates/"
+            >r/omarchy — managing dotfiles with updates</a
+          >
+        </li>
+        <li>
+          <a href="https://greg.molnar.io/blog/customizing-omarchy/"
+            >Greg Molnar — Customizing Omarchy</a
+          >
+        </li>
+        <li>
+          <a href="https://wiki.hypr.land/Configuring/Basics/Monitors/"
+            >Hyprland wiki — Monitors (current; Lua dialect)</a
+          >
+        </li>
+        <li>
+          <a href="https://wiki.hypr.land/0.54.0/Configuring/Monitors/"
+            >Hyprland wiki — Monitors (0.54, hyprlang/.conf dialect)</a
+          >
+        </li>
+        <li>
+          <a href="https://learn.omacom.io/2/the-omarchy-manual/86/monitors"
+            >Omarchy manual — Monitors (scaling recipes, Super + / cycle)</a
+          >
+        </li>
+        <li>
+          <a href="https://github.com/basecamp/omarchy/discussions/4282"
+            >basecamp/omarchy discussion #4282 — Hyprmon (persistence gap for
+            multi-monitor)</a
+          >
+        </li>
+        <li>
+          <a href="https://github.com/basecamp/omarchy/pull/5304"
+            >basecamp/omarchy PR #5304 — Brave Origin initially only had
+            beta/nightly AUR releases</a
+          >
+        </li>
+        <li>
+          <a href="https://github.com/basecamp/omarchy/pull/6021"
+            >basecamp/omarchy PR #6021 — proposed stable Brave Origin
+            migration</a
+          >
+        </li>
+        <li>
+          <a href="https://brave.com/origin/linux/"
+            >Brave Origin Linux install — release Arch package</a
+          >
+        </li>
+        <li>
+          <a href="https://slack.com/hc/en-us/articles/212924728"
+            >Slack Help — Download Slack for Linux (beta)</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://slack.com/intl/en-gb/help/articles/4402059015315-Use-huddles-in-Slack-Use-huddles-in-Slack"
+            >Slack Help — Use huddles in Slack</a
+          >
+        </li>
+        <li>
+          <a href="https://slack.com/hc/en-us/articles/115003538426"
+            >Slack Help — Troubleshoot audio and video issues</a
+          >
+        </li>
+        <li>
+          <a href="https://www.spotify.com/do/download/linux"
+            >Spotify — Linux downloads and support note</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://archlinux.org/packages/extra/x86_64/spotify-launcher/"
+            >Arch Linux — spotify-launcher</a
+          >
+        </li>
+        <li>
+          <a href="https://help.obsidian.md/install"
+            >Obsidian Help — Download and install Obsidian</a
+          >
+        </li>
+        <li>
+          <a href="https://archlinux.org/packages/extra/x86_64/obsidian/"
+            >Arch Linux — obsidian</a
+          >
+        </li>
+        <li>
+          <a href="https://github.com/basecamp/omarchy"
+            >Omarchy source — no bundled malware-scanner integration</a
+          >
+        </li>
+        <li>
+          <a href="https://archlinux.org/packages/extra/x86_64/clamav/"
+            >Arch Linux — clamav</a
+          >
+        </li>
+        <li>
+          <a href="https://wiki.archlinux.org/title/ClamAV"
+            >ArchWiki — ClamAV installation and on-demand scanning</a
+          >
+        </li>
+        <li>
+          <a href="https://docs.clamav.net/Introduction.html"
+            >ClamAV documentation — capabilities and endpoint-suite scope</a
+          >
+        </li>
+      </ul>
+    </div>
+
+    <footer>
+      Omarchy dotfiles knowledge base · <a href="index.html">Home</a>
+    </footer>
+  </body>
+</html>

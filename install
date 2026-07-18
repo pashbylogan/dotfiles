@@ -1,18 +1,575 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
+# Minimal Omarchy overlay installer; docs/index.html carries the design context. [D-SCRIPTS-MINIMAL]
+# Keep runtime behavior idempotent and limited to repo-owned seams. [D-IDEMPOTENT]
 
-if [[ -z $STOW_FOLDERS ]]; then
-    STOW_FOLDERS="ssh,nvim,tmux,zsh,bin,desktops,i3,i3status,ghostty,picom"
+set -euo pipefail
+
+# ── bootstrap ────────────────────────────────────────────────────────────────
+REPO="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+cd "$REPO"
+
+# Shared palette + managed-block marker contract; single source of truth in lib/style.sh.
+# shellcheck source=lib/style.sh
+. "$REPO/lib/style.sh"
+step() { printf '\n%s── %s ──%s\n' "$BOLD" "$*" "$NC"; }
+info() { printf '%sℹ%s %s\n' "$CYAN" "$NC" "$*"; }
+success() { printf '%s✔%s %s\n' "$GREEN" "$NC" "$*"; }
+warn() { printf '%s⚠%s %s\n' "$YELLOW" "$NC" "$*"; }
+die() {
+  printf '%s✖%s %s\n' "$RED" "$NC" "$*" >&2
+  exit 1
+}
+
+# ── helpers ──────────────────────────────────────────────────────────────────
+# Re-anchor managed blocks at EOF because load order decides precedence.
+# Body comes from stdin. [D-DELTA-STORAGE][D-IDEMPOTENT]
+upsert_block() {
+  local file="$1" name="$2" copen="$3" cclose="${4:-}" begin end body
+  begin="$(managed_marker begin "$name" "$copen" "$cclose")"
+  end="$(managed_marker end "$name" "$copen" "$cclose")"
+  body="$(cat)"
+  if [ ! -f "$file" ]; then
+    warn "skip managed block — missing $file"
+    return 0
+  fi
+  # Unbalanced markers could make awk eat user content, so refuse to edit.
+  # Whole-line marker matching prevents accidental substring-triggered deletion.
+  if grep -qxF -- "$begin" "$file"; then
+    grep -qxF -- "$end" "$file" || die "begin marker without end marker in $file — refusing to edit"
+    local _nb
+    _nb=$(grep -cxF -- "$begin" "$file")
+    [ "$_nb" -gt 1 ] && die "duplicate begin marker ($_nb) in $file — refusing to edit"
+  fi
+  # Trim trailing blanks for byte-stable re-runs; abort before appending if awk
+  # fails because it is non-final in the redirection pipeline. [D-IDEMPOTENT]
+  if ! awk -v b="$begin" -v e="$end" '
+    $0==b{s=1}
+    !s{ buf[++n]=$0 }
+    s&&$0==e{s=0}
+    END{ while (n>0 && buf[n] ~ /^[[:space:]]*$/) n--; for(i=1;i<=n;i++) print buf[i] }
+  ' "$file" >"$file.dotfiles.tmp"; then
+    rm -f "$file.dotfiles.tmp"
+    die "failed to rewrite $file (awk error) — left it untouched"
+  fi
+  mv "$file.dotfiles.tmp" "$file"
+  printf '\n%s\n%s\n%s\n' "$begin" "$body" "$end" >>"$file"
+  info "managed block updated in ${file/#$HOME/\~}"
+}
+
+# Idempotent jq overlay for omarchy-owned JSON; returns 0 only on content change.
+# cp -f follows symlinks + preserves mode, matching omarchy-refresh-config.
+# [D-WAYBAR-DELTAS][F-WAYBAR-MIGRATIONS]
+apply_jq_deltas() {
+  local target="$1" filter="$2" label="${3:-jq deltas}" new tmp target_clean
+  if [ ! -f "$target" ]; then
+    warn "skip $label — missing $target"
+    return 1
+  fi
+  # Surface jq's actual diagnostic (parse error, type error, bad path) instead
+  # of swallowing it; debugging a failed filter requires that context.
+  if ! new=$(jq -f "$filter" "$target"); then
+    die "$label: jq filter failed on $filter against $target (see error above)"
+  fi
+  # Both $() captures strip trailing newlines, so comparing them is tolerant
+  # of whether the source file ends with 0, 1, or more terminal newlines.
+  target_clean=$(<"$target")
+  if [ "$new" = "$target_clean" ]; then
+    return 1
+  fi
+  tmp="$target.dotfiles.tmp"
+  if ! printf '%s\n' "$new" >"$tmp"; then
+    rm -f "$tmp"
+    die "$label: failed to stage $tmp (disk full? permission denied?)"
+  fi
+  if ! cp -f "$tmp" "$target"; then
+    rm -f "$tmp"
+    die "$label: failed to install $target from $tmp"
+  fi
+  rm -f "$tmp"
+  info "$label applied to ${target/#$HOME/\~}"
+  return 0
+}
+
+# Back up foreign files/symlinks once so stow can manage the path safely.
+# Targets already symlinked into the repo are left alone (stow -R is a no-op).
+prestow_backup() {
+  local t dest bak
+  for t in "$@"; do
+    [ -e "$t" ] || [ -L "$t" ] || continue
+    if [ -L "$t" ]; then
+      dest="$(readlink -f "$t" 2>/dev/null || true)"
+      case "$dest" in "$REPO"/*) continue ;; esac
+    fi
+    bak="$t.pre-stow.$(date +%Y%m%d%H%M%S)"
+    warn "backing up existing ${t/#$HOME/\~} -> ${bak/#$HOME/\~}"
+    mv "$t" "$bak"
+  done
+}
+
+# `omarchy-restart-waybar` exits 0 as soon as setsid forks even if waybar
+# then dies; poll until the process actually shows up.
+restart_waybar_polled() {
+  omarchy-restart-waybar
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    pgrep -x waybar >/dev/null 2>&1 && break
+    sleep 0.1
+  done
+  if pgrep -x waybar >/dev/null 2>&1; then
+    success "waybar restarted"
+  else
+    warn "waybar did not relaunch — check journalctl --user -t waybar"
+  fi
+}
+
+# Topology snapshot includes scale so a single-monitor scale toggle still trips
+# downstream diffs; empty on failure = downstream no-op. [D-MONITORS]
+snapshot_monitor_topology() {
+  hyprctl monitors -j 2>/dev/null |
+    jq -c '[.[]|{name,x,y,width,height,refreshRate,scale,disabled}]' 2>/dev/null || true
+}
+
+# ── prerequisites ────────────────────────────────────────────────────────────
+# Omarchy CLI is preferred over re-implementing package logic [F-CLI][D-ENGINE].
+step "Prerequisites"
+if have stow; then
+  success "stow present"
+else
+  have omarchy || die "Omarchy CLI not found — this repo targets Omarchy. Install stow manually: sudo pacman -S stow"
+  info "installing stow via omarchy"
+  omarchy pkg add stow
 fi
 
-if [[ -z $DOTFILES ]]; then
-    DOTFILES=$HOME/projects/dotfiles
+# jq is required by apply_jq_deltas. Ships in omarchy-base, but reconcile in
+# case it was pruned (Remove Preinstalled) or never installed.
+if have jq; then
+  success "jq present"
+else
+  have omarchy || die "jq required by apply_jq_deltas but Omarchy CLI not found. Install jq manually: sudo pacman -S jq"
+  info "installing jq via omarchy"
+  omarchy pkg add jq
 fi
 
-pushd $DOTFILES
-for folder in $(echo $STOW_FOLDERS | sed "s/,/ /g")
-do
-    echo "stow $folder"
-    stow -t $HOME -D $folder
-    stow -t $HOME $folder
+# `tr -d '\r'` strips CRLF endings introduced by a Windows editor — without it,
+# sed/grep would emit package names with a trailing CR that breaks pacman/yay.
+parse_pkg_file() {
+  tr -d '\r' <"$1" | sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | grep -v '^$' || true
+}
+
+desktop_file_exists() {
+  local desktop_id="$1"
+  [ -f "$HOME/.local/share/applications/$desktop_id" ] ||
+    [ -f "$HOME/.nix-profile/share/applications/$desktop_id" ] ||
+    [ -f "/usr/share/applications/$desktop_id" ]
+}
+
+if [ -f packages.txt ]; then
+  mapfile -t PKGS < <(parse_pkg_file packages.txt)
+  if [ "${#PKGS[@]}" -gt 0 ]; then
+    info "installing extras: ${PKGS[*]}"
+    omarchy pkg add "${PKGS[@]}"
+  fi
+fi
+
+if [ -f packages.aur.txt ]; then
+  mapfile -t AUR_PKGS < <(parse_pkg_file packages.aur.txt)
+  if [ "${#AUR_PKGS[@]}" -gt 0 ]; then
+    info "installing AUR extras: ${AUR_PKGS[*]}"
+    omarchy pkg aur add "${AUR_PKGS[@]}"
+  fi
+fi
+
+# Force the current AUR build over the pinned same-name repo package; --needed
+# no-ops once current, so `make update` reruns this to keep it fresh. [F-APP-CHANNELS]
+info "installing/updating claude-code from AUR (omarchy repo build is pinned)"
+if ! yay -S --noconfirm --needed --cleanafter aur/claude-code; then
+  warn "  claude-code AUR install/update failed (AUR unavailable?); continuing"
+fi
+
+# Ghostty is the default terminal, set BEFORE the alacritty drop below so the
+# list never points at a removed terminal; guard on the actual default (not just
+# "ghostty installed") to stay idempotent. omarchy-install-terminal is fail-open
+# — it swallows a failed package install and exits 0 without rewriting the list
+# — so re-assert afterward and abort before the drop, else a transient failure
+# breaks the default. Base-package/reinstall caveat: decisions.html#D-TERM-GHOSTTY.
+# [D-TERM-GHOSTTY]
+if [ "$(omarchy-default-terminal)" != "ghostty" ]; then
+  info "setting ghostty as the default terminal"
+  omarchy install terminal ghostty
+  [ "$(omarchy-default-terminal)" = "ghostty" ] ||
+    die "ghostty did not become the default (install failed?) — not removing alacritty; re-run ./install"
+fi
+
+if [ -f packages.remove.txt ]; then
+  mapfile -t REMOVE_PKGS < <(parse_pkg_file packages.remove.txt)
+  if [ "${#REMOVE_PKGS[@]}" -gt 0 ]; then
+    info "removing omarchy builtins: ${REMOVE_PKGS[*]}"
+    # pacman -Rns refuses reverse-dep conflicts; warn instead of abort. [D-PKG-REMOVE]
+    if ! omarchy pkg drop "${REMOVE_PKGS[@]}"; then
+      warn "  one or more removes refused (reverse-dep conflict?); continuing"
+    fi
+  fi
+fi
+
+# Use Omarchy's package manager, theming helper, and hook surface while its
+# browser/default wrappers still target Brave Origin Beta.
+# [D-BROWSER-DEFAULT][F-APP-CHANNELS]
+step "Browser default"
+BRAVE_ORIGIN_PKG="brave-origin-bin"
+BRAVE_ORIGIN_BETA_PKG="brave-origin-beta-bin"
+BRAVE_ORIGIN_DESKTOP="brave-origin.desktop"
+BRAVE_ORIGIN_FLAGS="$HOME/.config/brave-origin-flags.conf"
+if desktop_file_exists "$BRAVE_ORIGIN_DESKTOP"; then
+  success "Brave Origin desktop entry present"
+else
+  info "installing stable Brave Origin via 'omarchy pkg aur add $BRAVE_ORIGIN_PKG'"
+  omarchy pkg aur add "$BRAVE_ORIGIN_PKG"
+fi
+
+# Mirror Omarchy's channel-neutral Brave Origin setup against the stable
+# package: policy directory, flags file, and theme refresh.
+sudo mkdir -p /etc/brave/policies/managed
+sudo chmod a+rw /etc/brave/policies/managed
+mkdir -p "$HOME/.config"
+printf '%s\n' "--load-extension=$HOME/.local/share/omarchy/default/chromium/extensions/copy-url" >"$BRAVE_ORIGIN_FLAGS"
+if have omarchy-theme-set-browser; then
+  omarchy-theme-set-browser
+fi
+
+current_browser="$(xdg-settings get default-web-browser 2>/dev/null || true)"
+if [ "$current_browser" = "$BRAVE_ORIGIN_DESKTOP" ]; then
+  success "Brave Origin is the default browser"
+else
+  info "setting Brave Origin as the default browser"
+  xdg-settings set default-web-browser "$BRAVE_ORIGIN_DESKTOP"
+  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" x-scheme-handler/http
+  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" x-scheme-handler/https
+  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" x-scheme-handler/chrome
+  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" text/html
+  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" application/x-extension-htm
+  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" application/x-extension-html
+  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" application/x-extension-shtml
+  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" application/xhtml+xml
+  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" application/x-extension-xhtml
+  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" application/x-extension-xht
+fi
+MIMEAPPS="$HOME/.config/mimeapps.list"
+if [ -f "$MIMEAPPS" ]; then
+  sed -i '/brave-origin-beta\.desktop/d' "$MIMEAPPS"
+fi
+
+if pacman -Qq "$BRAVE_ORIGIN_BETA_PKG" >/dev/null 2>&1; then
+  info "dropping Brave Origin Beta after stable default is configured"
+  if ! omarchy pkg drop "$BRAVE_ORIGIN_BETA_PKG"; then
+    warn "  could not drop $BRAVE_ORIGIN_BETA_PKG; continuing"
+  fi
+fi
+rm -f "$HOME/.config/brave-origin-beta-flags.conf"
+unset BRAVE_ORIGIN_PKG BRAVE_ORIGIN_BETA_PKG BRAVE_ORIGIN_DESKTOP BRAVE_ORIGIN_FLAGS MIMEAPPS current_browser
+
+# Package reconciliation above restores OpenCode; its config stays Omarchy-owned
+# and is seeded only when absent so re-runs preserve local edits. [D-PKG-REMOVE][F-CLI]
+OPENCODE_CONFIG="$HOME/.config/opencode/opencode.json"
+if [ ! -f "$OPENCODE_CONFIG" ]; then
+  info "seeding OpenCode config from Omarchy default"
+  omarchy refresh config opencode/opencode.json
+fi
+unset OPENCODE_CONFIG
+
+# Prefer Omarchy's dev-env channel for uv/go so PATH ownership stays consistent.
+# [D-DEV-ENV][F-CLI][D-IDEMPOTENT]
+ensure_dev_env_tool() {
+  local tool="$1" kind="$2"
+  if pacman -Qq "$tool" >/dev/null 2>&1; then
+    info "dropping pacman copy of $tool (omarchy dev-env is canonical for this tool)"
+    # Package removal can fail on reverse dependencies; keep reconciliation
+    # best-effort rather than aborting unrelated installer work.
+    if ! omarchy pkg drop "$tool"; then
+      warn "  could not drop pacman $tool (likely a reverse dependency); leaving it in place"
+    fi
+  fi
+  if ! have "$tool"; then
+    info "installing $tool via 'omarchy install dev-env $kind'"
+    omarchy install dev-env "$kind"
+  fi
+}
+
+ensure_dev_env_tool uv python
+ensure_dev_env_tool go go
+
+# ── XDG user dirs ────────────────────────────────────────────────────────────
+# Collapse unused Documents/Music and add XDG_PROJECTS_DIR for local scripts. [F-CLI]
+step "XDG user dirs"
+# Bootstrap missing xdg-user-dirs so stripped installs still reach stow/blocks.
+if ! have xdg-user-dirs-update; then
+  info "installing xdg-user-dirs via omarchy"
+  omarchy pkg add xdg-user-dirs
+fi
+mkdir -p "$HOME/Projects"
+xdg-user-dirs-update --set DOCUMENTS "$HOME"
+xdg-user-dirs-update --set MUSIC "$HOME"
+xdg_dirs="$HOME/.config/user-dirs.dirs"
+# user-dirs.dirs stores literal $HOME values, matching xdg-user-dirs-update.
+# shellcheck disable=SC2016
+projects_line='XDG_PROJECTS_DIR="$HOME/Projects"'
+if [ -f "$xdg_dirs" ]; then
+  if ! grep -qxF -- "$projects_line" "$xdg_dirs"; then
+    sed -i '/^XDG_PROJECTS_DIR=/d' "$xdg_dirs"
+    printf '%s\n' "$projects_line" >>"$xdg_dirs"
+  fi
+  success "XDG dirs reconciled (Documents/Music -> \$HOME; Projects=\~/Projects)"
+else
+  # A tool no-op here would leave only XDG_PROJECTS_DIR in a new stub, hiding the
+  # missing spec keys; surface the drift instead.
+  warn "skipped XDG reconcile — $xdg_dirs not present (xdg-user-dirs-update silently no-op'd; check /etc/xdg/user-dirs.conf)"
+fi
+
+# ── stow repo-owned files ────────────────────────────────────────────────────
+# Stow only repo-owned namespaces; Omarchy-owned files get managed blocks. [D-DELTA-STORAGE]
+step "Stow"
+prestow_backup "$HOME/.ssh/config"
+# Hash before/after stow so we restart elephant only on a real content
+# change (elephant reads websearch.toml at service start, no auto-reload).
+ELEPHANT_WEBSEARCH="$HOME/.config/elephant/websearch.toml"
+elephant_pre_hash=$(sha256sum "$ELEPHANT_WEBSEARCH" 2>/dev/null | cut -d' ' -f1 || true)
+prestow_backup "$ELEPHANT_WEBSEARCH"
+# UWSM env.d is stowed because Omarchy-launched apps inherit that session env. [F-SSH-AGENT]
+prestow_backup "$HOME/.config/uwsm/env.d/dotfiles.sh"
+# Claude Code statusline is a pure user script (Claude never rewrites it), so it
+# stows; settings.json is tool-rewritten and rides a jq delta instead. [D-CLAUDE-CONFIG]
+prestow_backup "$HOME/.claude/statusline-command.sh"
+# Remove only our obsolete ~/.tmux.conf symlink; tmux now loads through Omarchy's
+# XDG config path so the overlay is not shadowed.
+if [ -L "$HOME/.tmux.conf" ]; then
+  _t="$(readlink -f "$HOME/.tmux.conf" 2>/dev/null || true)"
+  # Never delete foreign or unresolvable links.
+  case "$_t" in "$REPO"/*) rm -f "$HOME/.tmux.conf" ;; esac
+  unset _t
+fi
+STOW_PKGS=(bash ssh bin hypr tmux elephant nvim uwsm omarchy claude)
+stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
+success "stowed: ${STOW_PKGS[*]}"
+
+elephant_post_hash=$(sha256sum "$ELEPHANT_WEBSEARCH" 2>/dev/null | cut -d' ' -f1 || true)
+elephant_changed=0
+[ "$elephant_pre_hash" != "$elephant_post_hash" ] && elephant_changed=1
+unset elephant_pre_hash elephant_post_hash ELEPHANT_WEBSEARCH
+
+# Stale launcher orphans (.desktop files left behind after the package was
+# stripped). Track real removals so elephant drops them from Walker immediately.
+# [D-PKG-REMOVE][D-TERM-GHOSTTY]
+if [ -e "$HOME/.local/share/applications/typora.desktop" ]; then
+  rm -f "$HOME/.local/share/applications/typora.desktop"
+  elephant_changed=1
+fi
+# Omarchy migration 1763558828 created this user-owned override while Alacritty
+# was installed; pacman cannot remove it with the package.
+if ! pacman -Qq alacritty >/dev/null 2>&1 &&
+  [ -e "$HOME/.local/share/applications/Alacritty.desktop" ]; then
+  rm -f "$HOME/.local/share/applications/Alacritty.desktop"
+  elephant_changed=1
+fi
+
+# Reproduce omarchy's curated Zoom webapp (dropped by Remove Preinstalled, not
+# restored on update): call omarchy's own installer with webapps.sh's exact args,
+# re-seed the icon, and refresh the desktop DB so zoommtg:// registers. [D-WEBAPP]
+ZOOM_ICON_DIR="$HOME/.local/share/applications/icons"
+ZOOM_ICON_SRC="$HOME/.local/share/omarchy/applications/icons/Zoom.png"
+# Best-effort (|| true): a missing source or unwritable dir must not abort install.
+if [ -f "$ZOOM_ICON_SRC" ]; then
+  mkdir -p "$ZOOM_ICON_DIR" || true
+  cp -f "$ZOOM_ICON_SRC" "$ZOOM_ICON_DIR/Zoom.png" || true
+fi
+omarchy webapp install "Zoom" https://app.zoom.us/wc/home Zoom.png \
+  "omarchy-webapp-handler-zoom %u" "x-scheme-handler/zoommtg;x-scheme-handler/zoomus" ||
+  warn "omarchy webapp install Zoom failed — re-run ./install to retry"
+if have update-desktop-database; then
+  update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+fi
+
+# ssh ignores overly-open config paths; harden the dir + every config file.
+[ -d "$HOME/.ssh" ] && chmod 700 "$HOME/.ssh" 2>/dev/null || true
+for f in config config.local; do
+  [ -e "$HOME/.ssh/$f" ] && chmod 600 "$HOME/.ssh/$f" 2>/dev/null || true
 done
-popd
+
+# ── integration blocks ───────────────────────────────────────────────────────
+step "Integration"
+
+# Source shell additions last so personal aliases win. [D-SHELL-SEAM][F-BASH-CHAIN]
+upsert_block "$HOME/.bashrc" shell '#' <<'EOF'
+# [D-SHELL-SEAM] personal shell additions — see docs/decisions.html#D-SHELL-SEAM
+[ -f ~/.config/dotfiles/shell.sh ] && . ~/.config/dotfiles/shell.sh
+[ -f ~/.config/dotfiles/shell.local.sh ] && . ~/.config/dotfiles/shell.local.sh
+EOF
+
+# Source the Hypr overlay last so repo-owned deltas win. [D-CAPS-CTRL][F-HYPR-SEAM]
+HYPR_CONF="$HOME/.config/hypr/hyprland.conf"
+hypr_body="# [D-DELTA-STORAGE] personal Hyprland overlay, sourced last — docs/architecture.html#D-DELTA-STORAGE
+source = ~/.config/dotfiles/hypr.conf"
+# Hyprland errors on missing source files.
+if [ -f "$HOME/.config/dotfiles/hypr.local.conf" ]; then
+  hypr_body+=$'\n'"source = ~/.config/dotfiles/hypr.local.conf"
+fi
+printf '%s\n' "$hypr_body" | upsert_block "$HYPR_CONF" hypr '#'
+
+# Load our tracked nvim fragment via Omarchy's keymaps.lua, not the cp-reset tree. [D-NVIM-KEYMAPS][F-NVIM-OWNED]
+upsert_block "$HOME/.config/nvim/lua/config/keymaps.lua" keymaps '--' <<'EOF'
+-- [D-NVIM-KEYMAPS] load the tracked fragment — see docs/decisions.html#D-NVIM-KEYMAPS
+-- Skip silently if absent (e.g. pre-stow); surface real load/exec errors instead
+-- of swallowing them, so a typo in the fragment doesn't degrade nvim in silence.
+local f = vim.fn.expand("~/.config/dotfiles/nvim.lua")
+local ok, err = pcall(dofile, f)
+if not ok and vim.fn.filereadable(f) == 1 then
+  vim.notify("dotfiles nvim.lua: " .. err, vim.log.levels.ERROR)
+end
+EOF
+
+# Source via Omarchy's preferred XDG tmux config so our deltas win. [D-TMUX-KEEP][F-TMUX-XDG]
+upsert_block "$HOME/.config/tmux/tmux.conf" tmux '#' <<'EOF'
+# [D-TMUX-KEEP] personal tmux overlay — see docs/decisions.html#D-TMUX-KEEP
+source-file ~/.config/tmux/local.conf
+EOF
+
+# Show the active venv's name in the prompt via a $VIRTUAL_ENV-keyed custom
+# module. starship.toml is seed-once + never auto-refreshed, so editing in place
+# is safe; the format scalar can't take a merged delta, so reference the module
+# there with sed, then define the module table via a managed block. Full
+# rationale: docs/decisions.html#D-STARSHIP-VENV. [D-STARSHIP-VENV]
+STARSHIP_TOML="$HOME/.config/starship.toml"
+if [ ! -f "$STARSHIP_TOML" ]; then
+  warn "skip starship venv delta — missing ${STARSHIP_TOML/#$HOME/\~}"
+else
+  # ${custom.venv} / $character are literal starship tokens for grep + sed, not
+  # shell expansions; silence SC2016 across the in-place reference edit below.
+  # shellcheck disable=SC2016
+  if grep -qF '${custom.venv}' "$STARSHIP_TOML"; then
+    : # already references the module (idempotent)
+  elif grep -qF '$character' "$STARSHIP_TOML"; then
+    sed -i 's/\$character/${custom.venv}$character/' "$STARSHIP_TOML"
+    info "starship: referenced \${custom.venv} before \$character"
+  else
+    warn "starship: no \$character anchor in ${STARSHIP_TOML/#$HOME/\~} — left untouched"
+  fi
+  # Define the module: print the venv name only, nothing when $VIRTUAL_ENV unset.
+  upsert_block "$STARSHIP_TOML" starship-venv '#' <<'EOF'
+# [D-STARSHIP-VENV] active venv name — see docs/decisions.html#D-STARSHIP-VENV
+[custom.venv]
+command = 'basename "$VIRTUAL_ENV"'
+when = 'test -n "$VIRTUAL_ENV"'
+format = '[\($output\)]($style) '
+style = 'italic yellow'
+EOF
+fi
+unset STARSHIP_TOML
+
+# Apply both waybar overlays (config.jsonc via jq, style.css via managed block);
+# restart only on real content change. [D-WAYBAR-DELTAS][F-WAYBAR-MIGRATIONS]
+waybar_changed=0
+
+if apply_jq_deltas "$HOME/.config/waybar/config.jsonc" "$REPO/waybar/deltas.jq" "waybar deltas"; then
+  waybar_changed=1
+fi
+
+# Hash-compare around the style block because upsert_block always rewrites;
+# only a real content change should restart waybar.
+WAYBAR_STYLE="$HOME/.config/waybar/style.css"
+if [ -f "$WAYBAR_STYLE" ]; then
+  pre_hash=$(sha256sum "$WAYBAR_STYLE" | cut -d' ' -f1)
+  upsert_block "$WAYBAR_STYLE" waybar '/*' ' */' <<'EOF'
+/* [D-WAYBAR-DELTAS] Keep the personal #memory module spaced like its
+ * right-side neighbors; full rationale lives in docs/decisions.html#D-WAYBAR-DELTAS. */
+#memory,
+#custom-expand-icon,
+#tray,
+#bluetooth,
+#network,
+#cpu,
+#battery,
+#pulseaudio {
+  min-width: 12px;
+  margin: 0 4px;
+}
+/* The `*{background-color}` reset boxes every menu node; clear the box on the
+ * content nodes, then tint the hovered row. docs/decisions.html#D-WAYBAR-DELTAS */
+menu menuitem label,
+menu menuitem arrow,
+menu menuitem check,
+menu menuitem radio {
+  background-color: transparent;
+}
+menu menuitem:hover {
+  background-color: alpha(@theme_selected_bg_color, 0.4);
+}
+/* [D-WAYBAR-DELTAS] No urgent styling ships with omarchy; recolor the urgent
+ * workspace label (the global `*{color}` beats a button-only rule). docs/decisions.html#D-WAYBAR-DELTAS */
+#workspaces button.urgent label {
+  color: #a55555;
+}
+EOF
+  post_hash=$(sha256sum "$WAYBAR_STYLE" | cut -d' ' -f1)
+  [ "$pre_hash" != "$post_hash" ] && waybar_changed=1
+fi
+unset pre_hash post_hash WAYBAR_STYLE
+
+if [ "$waybar_changed" -eq 1 ]; then
+  if [ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+    info "waybar overlay updated; restart skipped (no live Hyprland session)"
+  elif ! have omarchy-restart-waybar; then
+    warn "waybar overlay updated; omarchy-restart-waybar not on PATH — restart manually"
+  else
+    restart_waybar_polled
+  fi
+fi
+unset waybar_changed
+
+# Elephant reads its inputs at service start; restart on real content or
+# launcher changes so Walker reflects the converged application set.
+# [D-PKG-REMOVE][D-TERM-GHOSTTY]
+if [ "$elephant_changed" -eq 1 ]; then
+  if have omarchy-restart-walker; then
+    omarchy-restart-walker
+    success "elephant/walker restarted"
+  else
+    warn "elephant overlay updated; omarchy-restart-walker not on PATH — restart manually"
+  fi
+fi
+unset elephant_changed
+
+# Overlay our Claude Code settings idempotently. Claude rewrites settings.json
+# itself (via /config), so we assert only our keys via jq — preserving any keys
+# Claude adds — instead of stowing the file. Seed {} first because apply_jq_deltas
+# warns + skips on a missing target (pre-first-run machine). [D-CLAUDE-CONFIG]
+mkdir -p "$HOME/.claude"
+[ -f "$HOME/.claude/settings.json" ] || printf '{}\n' >"$HOME/.claude/settings.json"
+# `|| true`: apply_jq_deltas returns 1 on "no change" under set -e; a real jq
+# error still dies inside the helper.
+apply_jq_deltas "$HOME/.claude/settings.json" "$REPO/claude/settings.jq" "claude settings" || true
+
+# ── validation ───────────────────────────────────────────────────────────────
+if have hyprctl && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+  step "Validate Hyprland"
+  monitors_pre=$(snapshot_monitor_topology)
+  if hyprctl reload >/dev/null 2>&1; then success "hyprctl reload ok"; else warn "hyprctl reload failed"; fi
+  errs="$(hyprctl configerrors 2>/dev/null || true)"
+  # Clean when output is empty/whitespace or contains "no error". Don't rely on
+  # `grep -v` exit status over empty input (varies across grep implementations).
+  if [ -z "${errs//[[:space:]]/}" ] || printf '%s' "$errs" | grep -qiF 'no error'; then
+    success "no Hyprland config errors"
+  else
+    warn "hyprctl reported config issues:"
+    printf '%s\n' "$errs"
+  fi
+  monitors_post=$(snapshot_monitor_topology)
+  if [ -n "$monitors_pre" ] && [ "$monitors_pre" != "$monitors_post" ]; then
+    if ! have omarchy-restart-waybar; then
+      warn "monitor topology changed; omarchy-restart-waybar not on PATH — restart manually"
+    else
+      info "monitor topology changed; restarting waybar"
+      restart_waybar_polled
+    fi
+  fi
+  unset monitors_pre monitors_post
+fi
+
+step "Done"
+success "Overlay installed. Open a new shell (or 'exec bash') to load shell changes."
