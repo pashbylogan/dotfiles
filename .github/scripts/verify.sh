@@ -32,7 +32,12 @@ pretty() {
 # ── Hyprland config ──────────────────────────────────────────────────────────
 if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && have hyprctl; then
   errs="$(hyprctl configerrors 2>&1 || true)"
-  if [ -z "${errs//[[:space:]]/}" ] || printf '%s' "$errs" | grep -qiF 'no error'; then
+  # A stale HYPRLAND_INSTANCE_SIGNATURE (shell predates a Hyprland restart) makes
+  # hyprctl fail to reach the socket; that's an unreachable session, not a config
+  # error, so skip rather than flag it as one.
+  if printf '%s' "$errs" | grep -qiF "couldn't connect"; then
+    skip "hyprctl (stale instance signature — re-login or 'hyprctl reload')"
+  elif [ -z "${errs//[[:space:]]/}" ] || printf '%s' "$errs" | grep -qiF 'no error'; then
     pass "hyprctl: no config errors"
   else
     miss "hyprctl: config errors — run 'hyprctl configerrors'"
