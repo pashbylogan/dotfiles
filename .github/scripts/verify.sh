@@ -152,6 +152,18 @@ else
 fi
 unset CLAUDE_SETTINGS
 
+# OpenCode's config is Omarchy-seeded and user-editable; install asserts only
+# global built-in LSP enablement through a jq delta. [D-OPENCODE-LSP][F-OPENCODE-LSP]
+OPENCODE_SETTINGS="$HOME/.config/opencode/opencode.json"
+if [ ! -f "$OPENCODE_SETTINGS" ]; then
+  miss "$(pretty "$OPENCODE_SETTINGS") missing — re-run ./install"
+elif [ "$(jq -f "$REPO/opencode/settings.jq" "$OPENCODE_SETTINGS" 2>/dev/null)" = "$(cat "$OPENCODE_SETTINGS")" ]; then
+  pass "OpenCode built-in LSP servers enabled globally"
+else
+  miss "OpenCode LSP setting drifted — re-run ./install"
+fi
+unset OPENCODE_SETTINGS
+
 # ── browser default ──────────────────────────────────────────────────────────
 # install uses Omarchy's package, theming, and hook surfaces until Omarchy's
 # browser commands map brave-origin to stable. [D-BROWSER-DEFAULT]

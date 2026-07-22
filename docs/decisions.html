@@ -108,9 +108,9 @@
                   <code>make ci</code> — gates: <code>shellcheck</code> +
                   <code>shfmt</code> (<code>-i 2 -ci</code>) on the shell set,
                   pinned <code>prettier</code> on docs HTML/JSON, an
-                  empty-object smoke-check of every
-                  <code>waybar/*.jq</code> filter (so jq syntax/behavior bugs
-                  surface here rather than at <code>./install</code> time), and
+                  empty-object smoke-check of every tracked jq delta (so jq
+                  syntax/behavior bugs surface here rather than at
+                  <code>./install</code> time), and
                   <code>.github/scripts/check_docs.py</code> for docs integrity.
                   <code>make fmt</code> auto-fixes.
                 </li>
@@ -204,6 +204,33 @@
               <code>make update</code> is the deliberate bumper for self-managed
               tool updates (<code>uv self update</code> +
               <code>mise upgrade</code>/<code>prune</code>, stable-only).
+            </td>
+          </tr>
+          <tr id="D-OPENCODE-LSP">
+            <td>
+              <code class="meta">D-OPENCODE-LSP</code> Global OpenCode LSP
+            </td>
+            <td>
+              Keep Omarchy's seeded
+              <code>~/.config/opencode/opencode.json</code>, then use
+              <code>opencode/settings.jq</code> to assert only
+              <code>"lsp": true</code>. This enables every built-in server
+              globally while preserving Omarchy defaults and unrelated user
+              keys. Do not install a blanket system LSP bundle: OpenCode lazily
+              starts matching servers and auto-installs many of them; runtimes
+              and project-coupled servers remain with their projects or
+              Omarchy's <code>install dev-env</code> path.
+            </td>
+            <td>
+              OpenCode's current behavior is applicability-based, not a quality
+              ranking: it starts all enabled servers whose extension,
+              root-marker, and executable requirements match an opened file. A
+              global setting applies from every launch directory, but cannot
+              promise one objectively “best” server in every folder: project
+              config may override global config, root discovery is bounded by
+              the OpenCode instance/worktree, and missing SDKs or project
+              dependencies can prevent a match. See
+              <a href="findings.html#F-OPENCODE-LSP">F-OPENCODE-LSP</a>.
             </td>
           </tr>
           <tr id="D-PKG-REMOVE">

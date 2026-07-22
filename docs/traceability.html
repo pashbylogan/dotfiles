@@ -298,6 +298,19 @@
             </td>
           </tr>
           <tr>
+            <td><code>D-OPENCODE-LSP</code></td>
+            <td>
+              Enable all built-in OpenCode LSP servers globally through a narrow
+              jq delta over Omarchy's seeded user config; keep server selection
+              lazy and project-aware
+            </td>
+            <td><a href="decisions.html#D-OPENCODE-LSP">decisions</a></td>
+            <td>
+              <code>install</code>, <code>opencode/settings.jq</code>,
+              <code>.github/scripts/verify.sh</code>
+            </td>
+          </tr>
+          <tr>
             <td><code>D-BASELINE</code></td>
             <td>
               Baseline = post-Remove-Preinstalled; bindings.conf untracked
@@ -469,6 +482,16 @@
             </td>
             <td><a href="findings.html#F-MALWARE-SCANNER">findings</a></td>
             <td><code>D-PKG-REMOVE</code>, <code>D-SCRIPTS-MINIMAL</code></td>
+          </tr>
+          <tr>
+            <td><code>F-OPENCODE-LSP</code></td>
+            <td>
+              LSP is opt-in and lazy; extensions, bounded roots, dependencies,
+              and SDKs determine applicability, and all matching servers run
+              rather than one ranked “best” server
+            </td>
+            <td><a href="findings.html#F-OPENCODE-LSP">findings</a></td>
+            <td><code>D-OPENCODE-LSP</code>, <code>D-DEV-ENV</code></td>
           </tr>
           <tr>
             <td><code>F-SHELL-RESEARCH</code></td>

@@ -25,7 +25,7 @@ POSIX_FILES := $(wildcard uwsm/.config/uwsm/env.d/*.sh)
 SHELL_FILES := $(BASH_FILES) $(POSIX_FILES)
 PRETTIER_GLOBS := docs/*.html docs/registry.json
 DOCS_CHECK     := .github/scripts/check_docs.py
-JQ_FILTERS     := $(wildcard waybar/*.jq) $(wildcard claude/*.jq)
+JQ_FILTERS     := $(wildcard waybar/*.jq) $(wildcard claude/*.jq) $(wildcard opencode/*.jq)
 
 # ── output styling ───────────────────────────────────────────────────────────
 # Mirror the shell palette (lib/style.sh: ── headers ──, ℹ info, ⚠ warn) so `make`

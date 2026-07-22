@@ -389,6 +389,34 @@
         </tbody>
       </table>
 
+      <h2 id="F-OPENCODE-LSP">
+        OpenCode LSP dispatch is global but project-aware
+        <code class="meta">F-OPENCODE-LSP</code>
+      </h2>
+      <p>
+        Verified against OpenCode <code>1.18.4</code> and its official LSP docs
+        on 22 July 2026. LSP is disabled when the config key is omitted; global
+        <code>"lsp": true</code> enables all built-ins. When OpenCode opens a
+        file, it checks that file's extension against every enabled server and
+        lazily starts each applicable server whose root and runtime requirements
+        are met. Many servers are downloaded automatically unless
+        <code>OPENCODE_DISABLE_LSP_DOWNLOAD=true</code>; others require a
+        project dependency or language SDK, such as project-local TypeScript,
+        Go, Java, Rust Analyzer, or Deno.
+      </p>
+      <p>
+        “Best” does not mean ranked selection in OpenCode. Its runtime
+        dispatches to all matching servers and combines their results, so a
+        JavaScript file may involve TypeScript plus applicable ESLint, Biome, or
+        Oxlint servers. Root-marker searches stop at the OpenCode instance
+        directory, and files must belong to that directory or its Git worktree.
+        Therefore the global setting works regardless of which repository starts
+        OpenCode, but the launch directory, project config, root markers,
+        installed SDKs, and project dependencies still determine which servers
+        can run. Starting at the intended repository root remains the reliable
+        Omarchy workflow.
+      </p>
+
       <h2 id="F-SHELL-RESEARCH">
         Shell research (zsh vs. bash) <code class="meta">F-SHELL-RESEARCH</code>
       </h2>
@@ -679,6 +707,32 @@
 
       <h2>Sources</h2>
       <ul class="clean">
+        <li>
+          <a href="https://opencode.ai/docs/lsp/"
+            >OpenCode LSP docs — built-ins, requirements, lazy matching, and
+            global enablement</a
+          >
+        </li>
+        <li>
+          <a href="https://opencode.ai/config.json"
+            >OpenCode config schema — <code>lsp</code> boolean/object
+            contract</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://github.com/anomalyco/opencode/blob/v1.18.4/packages/opencode/src/lsp/lsp.ts"
+            >OpenCode 1.18.4 LSP runtime — extension matching and dispatch to
+            all applicable clients</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://github.com/anomalyco/opencode/blob/v1.18.4/packages/opencode/src/lsp/server.ts"
+            >OpenCode 1.18.4 built-in servers — root detection and executable
+            requirements</a
+          >
+        </li>
         <li>
           <a href="https://code.claude.com/docs/en/desktop-linux"
             >Claude Desktop on Linux (beta) — official apt repo, no

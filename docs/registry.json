@@ -88,6 +88,23 @@
       "related": ["D-SCRIPTS-MINIMAL", "D-IDEMPOTENT", "F-CLI"]
     },
     {
+      "id": "D-OPENCODE-LSP",
+      "title": "Enable OpenCode's built-in LSP dispatch globally through a narrow jq delta over Omarchy's seeded user config; rely on project-aware lazy matching rather than a blanket system LSP bundle",
+      "canonical": "decisions.html#D-OPENCODE-LSP",
+      "appears_in": [],
+      "code_paths": [
+        "install",
+        "opencode/settings.jq",
+        ".github/scripts/verify.sh"
+      ],
+      "related": [
+        "D-DEV-ENV",
+        "D-IDEMPOTENT",
+        "D-DELTA-STORAGE",
+        "F-OPENCODE-LSP"
+      ]
+    },
+    {
       "id": "D-SHELL-BASH",
       "title": "Bash login shell (Omarchy default); no chsh to zsh",
       "canonical": "decisions.html#D-SHELL-BASH",
@@ -433,6 +450,18 @@
         "D-PKG-REMOVE",
         "D-BROWSER-DEFAULT"
       ]
+    },
+    {
+      "id": "F-OPENCODE-LSP",
+      "title": "OpenCode LSP is opt-in and lazy: global `lsp: true` enables built-ins, opened-file extensions and bounded project roots determine applicability, all matching servers run rather than one ranked best server, and some require project dependencies or SDKs",
+      "canonical": "findings.html#F-OPENCODE-LSP",
+      "appears_in": ["decisions.html"],
+      "code_paths": [
+        "install",
+        "opencode/settings.jq",
+        ".github/scripts/verify.sh"
+      ],
+      "related": ["D-OPENCODE-LSP", "D-DEV-ENV"]
     },
     {
       "id": "F-MALWARE-SCANNER",

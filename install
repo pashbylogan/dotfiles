@@ -267,12 +267,14 @@ rm -f "$HOME/.config/brave-origin-beta-flags.conf"
 unset BRAVE_ORIGIN_PKG BRAVE_ORIGIN_BETA_PKG BRAVE_ORIGIN_DESKTOP BRAVE_ORIGIN_FLAGS MIMEAPPS current_browser
 
 # Package reconciliation above restores OpenCode; its config stays Omarchy-owned
-# and is seeded only when absent so re-runs preserve local edits. [D-PKG-REMOVE][F-CLI]
+# and is seeded only when absent. Assert LSP enablement as a narrow jq delta so
+# Omarchy and user-owned keys survive. [D-PKG-REMOVE][D-OPENCODE-LSP][F-OPENCODE-LSP]
 OPENCODE_CONFIG="$HOME/.config/opencode/opencode.json"
 if [ ! -f "$OPENCODE_CONFIG" ]; then
   info "seeding OpenCode config from Omarchy default"
   omarchy refresh config opencode/opencode.json
 fi
+apply_jq_deltas "$OPENCODE_CONFIG" "$REPO/opencode/settings.jq" "OpenCode settings" || true
 unset OPENCODE_CONFIG
 
 # Prefer Omarchy's dev-env channel for uv/go so PATH ownership stays consistent.
