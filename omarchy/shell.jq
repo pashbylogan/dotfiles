@@ -1,18 +1,20 @@
 # Personal Quickshell layout delta. The installer supplies Quattro's normalized
 # shell.json shape before evaluating this filter.
-# [D-WAYBAR-DELTAS][D-DELTA-STORAGE]
+# [D-QUICKSHELL-DELTAS][D-DELTA-STORAGE]
 
-def replace_workspace:
-  if .id == "omarchy.workspaces" then .id = "pashbyl.workspaces" else . end;
+def is_workspace:
+  .id == "omarchy.workspaces" or .id == "pashbyl.workspaces";
 
-.bar.layout.left |= map(replace_workspace)
-| .bar.layout.center |= map(replace_workspace)
-| .bar.layout.right |= map(replace_workspace)
-| if ([.bar.layout.left[], .bar.layout.center[], .bar.layout.right[]]
-      | map(.id) | index("pashbyl.workspaces")) == null
-  then .bar.layout.left += [{ "id": "pashbyl.workspaces" }]
-  else .
-  end
+(.bar.layout.left | map(select(is_workspace | not))) as $left
+| ($left | map(.id) | index("omarchy.menu")) as $menu
+| .bar.layout.left = (
+    if $menu == null
+    then [{ "id": "pashbyl.workspaces" }] + $left
+    else $left[:$menu + 1] + [{ "id": "pashbyl.workspaces" }] + $left[$menu + 1:]
+    end
+  )
+| .bar.layout.center |= map(select(is_workspace | not))
+| .bar.layout.right |= map(select(is_workspace | not))
 | .bar.layout.left |= map(select(.id != "dotfiles.memory"))
 | .bar.layout.center |= map(select(.id != "dotfiles.memory"))
 | .bar.layout.right |= map(select(.id != "dotfiles.memory"))

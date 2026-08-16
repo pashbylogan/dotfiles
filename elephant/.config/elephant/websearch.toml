@@ -1,5 +1,0 @@
-# DuckDuckGo replaces elephant's compiled-in Google default. [D-PKG-REMOVE]
-[[entries]]
-default = true
-name = "DuckDuckGo"
-url = "https://duckduckgo.com/?q=%TERM%"

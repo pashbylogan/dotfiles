@@ -162,7 +162,8 @@ Refuses to start while `pacman -Qdtq` reports orphans, avoiding Omarchy's
 pseudo-TTY orphan prompt (especially the one-time post-Elephant
 `libqalculate` case). Then runs `omarchy update -y`, which owns package,
 migration, and mise-backed agent updates, followed by `uv self update` because
-uv remains outside mise and `make verify`. [F-CLI]
+uv remains outside mise and `make verify`. Update failures are warned so the
+remaining channels and read-only verification still run. [F-CLI]
 
 ```sh
 make update-firmware

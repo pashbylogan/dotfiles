@@ -249,21 +249,33 @@
             </td>
           </tr>
           <tr>
-            <td><code>D-WAYBAR-DELTAS</code></td>
+            <td><code>D-QUICKSHELL-DELTAS</code></td>
             <td>
-              Historical slug: Quickshell workspace plugin, memory command,
-              shell.toml override, and mutable shell.json delta
+              Supported Quickshell workspace plugin, memory command, shell.toml
+              override, and duplicate-repairing mutable shell.json delta
             </td>
+            <td>
+              <a href="decisions.html#D-QUICKSHELL-DELTAS">decisions</a>
+            </td>
+            <td>
+              <code>install</code>, <code>.github/scripts/verify.sh</code>,
+              <code>omarchy/shell.jq</code>, and the tracked Quickshell
+              extension files
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-WAYBAR-DELTAS</code></td>
+            <td>Historical v3 Waybar JSON/CSS overlay, retired by Quattro</td>
             <td><a href="decisions.html#D-WAYBAR-DELTAS">decisions</a></td>
-            <td><code>install</code>, <code>omarchy/shell.jq</code></td>
+            <td>retired implementation (documentation only)</td>
           </tr>
           <tr>
             <td><code>D-TERM-GHOSTTY</code></td>
             <td>
-              Ghostty is the default terminal (guarded
-              <code>omarchy install terminal ghostty</code> before the drop);
-              Alacritty removed via <code>packages.remove.txt</code>, including
-              its migration-created user launcher
+              Ghostty is installed and selected through independently guarded
+              official flows before Alacritty is removed via
+              <code>packages.remove.txt</code>, including its migration-created
+              user launcher
             </td>
             <td><a href="decisions.html#D-TERM-GHOSTTY">decisions</a></td>
             <td>
@@ -511,7 +523,10 @@
               plugins and mutable shell.json
             </td>
             <td><a href="findings.html#F-WAYBAR-MIGRATIONS">findings</a></td>
-            <td><code>D-WAYBAR-DELTAS</code></td>
+            <td>
+              <code>D-WAYBAR-DELTAS</code>,
+              <code>D-QUICKSHELL-DELTAS</code>
+            </td>
           </tr>
           <tr>
             <td><code>F-AGENT-GUIDANCE</code></td>

@@ -20,6 +20,12 @@ fi
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
+# Package manifests accept comments, whitespace, blank lines, and CRLF. Keep
+# install and verification on the same parser so desired state cannot drift.
+parse_pkg_file() {
+  tr -d '\r' <"$1" | sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | grep -v '^$' || true
+}
+
 # Begin/end sentinel for a managed block. install writes these and verify.sh
 # greps for them (whole-line), so the `>>> dotfiles managed (NAME) >>>` contract
 # lives here once. $1=begin|end  $2=name  $3=comment-open  $4=comment-close(opt).

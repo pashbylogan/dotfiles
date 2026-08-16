@@ -108,8 +108,9 @@
                   <code>make ci</code> — gates: <code>shellcheck</code> +
                   <code>shfmt</code> (<code>-i 2 -ci</code>) on the shell set,
                   pinned <code>prettier</code> on docs HTML/JSON, an
-                  empty-object smoke-check of every tracked jq delta (so jq
-                  syntax/behavior bugs surface here rather than at
+                  empty-object smoke-check of every tracked jq delta plus a
+                  duplicate-repair/fixed-point fixture for the Quickshell layout
+                  (so jq syntax and convergence bugs surface here rather than at
                   <code>./install</code> time), and
                   <code>.github/scripts/check_docs.py</code> for docs integrity.
                   <code>make fmt</code> auto-fixes.
@@ -121,9 +122,10 @@
                   <code>uv self update</code> because uv remains outside mise,
                   then <code>make verify</code>. It first refuses while
                   <code>pacman -Qdtq</code> reports orphans, avoiding the
-                  updater's pseudo-TTY prompt after Elephant retirement. A
-                  failed main update is strict and stops the wrapper before a
-                  misleading verification pass.
+                  updater's pseudo-TTY prompt after Elephant retirement.
+                  Non-zero Omarchy or uv update exits are warned, then the
+                  wrapper continues through the remaining channel and read-only
+                  verification so independent drift is still reported.
                 </li>
                 <li>
                   <code>make update-firmware</code> — firmware only:
@@ -295,7 +297,11 @@
               explicit, so the deny-list is durable desired state rather than a
               one-time cleanup. <code>install</code> seeds a missing mutable
               OpenCode config only to apply the user's LSP delta; Quattro still
-              owns the OpenCode binary through its mise wrapper.
+              owns the OpenCode binary through its mise wrapper. The installer
+              removes legacy <code>opencode</code>/<code>claude-code</code>
+              pacman packages only when an interrupted or manual transition
+              leaves them behind; this mirrors Quattro's upgrade cleanup and
+              does not alter its mise wrappers or user config.
               <strong>Audit rule:</strong> before adding a name to
               <code>packages.remove.txt</code>, grep
               <code>/usr/share/omarchy/</code> for usage — Omarchy wires some
@@ -329,11 +335,13 @@
               <strong
                 >Stable Brave Origin is the converged default browser.</strong
               >
-              <code>install</code> uses
-              <code>omarchy install browser brave-origin</code> and
-              <code>omarchy default browser brave-origin</code>, verifies the
-              resulting state, then asserts the additional HTML and scheme MIME
-              handlers that <code>xdg-settings</code> does not cover.
+              <code>install</code> calls
+              <code>omarchy install browser brave-origin</code> only when the
+              package is absent and
+              <code>omarchy default browser brave-origin</code> only when the
+              selected default differs. It verifies the resulting state, then
+              asserts the additional HTML and scheme MIME handlers that
+              <code>xdg-settings</code> does not cover.
             </td>
             <td>
               Quattro natively maps Brave Origin to stable, owns its flags,
@@ -785,15 +793,35 @@
           </tr>
         </thead>
         <tbody>
-          <tr id="D-WAYBAR-DELTAS">
+          <tr id="D-QUICKSHELL-DELTAS">
             <td>
-              <code class="meta">D-WAYBAR-DELTAS</code> Quickshell overlay shape
+              <code class="meta">D-QUICKSHELL-DELTAS</code> Quickshell overlay
+              shape
             </td>
             <td>
-              <strong>Current Quattro shape:</strong> Stow the user-owned
+              Stow the supported user-owned
               <code>pashbyl.workspaces</code> plugin, memory command, and
-              <code>shell.toml</code>; keep <code>shell.json</code> mutable and
-              converge only layout IDs/order with <code>omarchy/shell.jq</code>.
+              <code>shell.toml</code>. Keep <code>shell.json</code> mutable and
+              converge only module IDs and ordering with
+              <code>omarchy/shell.jq</code> through the official
+              <code>omarchy-shell-config</code> normalize/commit helpers. The
+              filter removes every stock or personal workspace entry before
+              inserting exactly one personal entry after the menu, so upstream
+              re-additions and interrupted runs converge to the same state.
+            </td>
+            <td>
+              Quattro documents plugins as the supported widget seam, while
+              <code>shell.json</code> has no deep-merge facility and is replaced
+              by the upgrade. A narrow, fixed-point jq delta preserves upstream
+              modules and repairs duplicates without forking Omarchy's shell.
+            </td>
+          </tr>
+          <tr id="D-WAYBAR-DELTAS">
+            <td>
+              <code class="meta">D-WAYBAR-DELTAS</code> Historical Waybar
+              overlay
+            </td>
+            <td>
               <strong>Retired v3 implementation details:</strong>
               <strong
                 >Two coupled overlays: <code>waybar/deltas.jq</code> holds
@@ -913,8 +941,9 @@
             </td>
             <td>
               <strong
-                ><code>install</code> runs a guarded
-                <code>omarchy install terminal ghostty</code> and adds
+                ><code>install</code> installs Ghostty only when its package is
+                absent, selects it with <code>omarchy default terminal</code>
+                only when the default differs, and adds
                 <code>alacritty</code> to
                 <code>packages.remove.txt</code>.</strong
               >
@@ -924,11 +953,12 @@
               the sole definition of the default terminal (Super+Return goes
               through <code>xdg-terminal-exec</code>). The install step runs
               <strong>before</strong> the package drop so the list never points
-              at an already-removed terminal, and its guard keys on
-              <code>omarchy-default-terminal</code> (the first list entry), not
-              merely "ghostty installed", so re-runs are idempotent. After the
-              package drop, install also removes Omarchy migration
-              <code>1763558828</code>'s user-owned
+              at an already-removed terminal. Separate package and default
+              guards make re-runs idempotent while still repairing either half
+              of the state independently. The commands' notification tails are
+              fail-open; a following read-only default assertion is the safety
+              gate. After the package drop, install also removes Omarchy
+              migration <code>1763558828</code>'s user-owned
               <code>~/.local/share/applications/Alacritty.desktop</code> when it
               exists; pacman does not own or remove the override. No terminal
               config is carried — Omarchy seeds ghostty, and ghostty's default
@@ -1014,7 +1044,9 @@
               edit Omarchy's scalar <code>format</code> key — starship has no
               <code>include</code> and TOML can't merge two
               <code>format</code>s.
-              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>
+              <a href="decisions.html#D-QUICKSHELL-DELTAS"
+                >D-QUICKSHELL-DELTAS</a
+              >
               sidesteps that wall with structured jq, but a
               <code>format</code> reference has no append or merge option, so
               this is a deliberate text-level <code>sed</code> — the repo's one
@@ -1099,13 +1131,15 @@
                 >F-REFRESH-WRITETHROUGH</a
               >); asserting only our keys via jq preserves anything Claude adds
               and re-converges every run — the same trade as
-              <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>. The
-              repo therefore never contains <code>settings.json</code>, only the
-              filter, so no credential or machine state can leak. Everything
-              else under <code>~/.claude</code> is secrets/state/cache
-              (<code>.credentials.json</code>, <code>~/.claude.json</code>,
-              <code>projects/</code> transcripts + auto memory, history, caches,
-              sessions) and is deliberately excluded — nothing there is tracked.
+              <a href="decisions.html#D-QUICKSHELL-DELTAS"
+                >D-QUICKSHELL-DELTAS</a
+              >. The repo therefore never contains <code>settings.json</code>,
+              only the filter, so no credential or machine state can leak.
+              Everything else under <code>~/.claude</code> is
+              secrets/state/cache (<code>.credentials.json</code>,
+              <code>~/.claude.json</code>, <code>projects/</code> transcripts +
+              auto memory, history, caches, sessions) and is deliberately
+              excluded — nothing there is tracked.
             </td>
           </tr>
         </tbody>

@@ -47,7 +47,15 @@ check_block "$HOME/.bashrc" shell '#'
 check_block "$HOME/.config/hypr/hyprland.lua" hypr '--'
 check_block "$HOME/.config/nvim/lua/config/keymaps.lua" keymaps '--'
 check_block "$HOME/.config/tmux/tmux.conf" tmux '#'
-check_block "$HOME/.config/starship.toml" starship-venv '#'
+
+legacy_hypr_begin="$(managed_marker begin hypr '#')"
+if grep -qxF -- "$legacy_hypr_begin" "$HOME/.config/hypr/hyprland.conf" 2>/dev/null ||
+  grep -qxF -- 'source = ~/.config/dotfiles/hypr.conf' "$HOME/.config/hypr/hyprland.conf" 2>/dev/null; then
+  miss "legacy Hyprland source seam remains — re-run ./install"
+else
+  pass "legacy Hyprland source seam absent"
+fi
+unset legacy_hypr_begin
 
 check_link() {
   local link="$1" resolved
@@ -76,6 +84,18 @@ check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json"
 check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
 check_link "$HOME/.config/omarchy/bar/scripts/memory-status"
 check_link "$HOME/.config/omarchy/shell.toml"
+
+for legacy_link in \
+  "$HOME/.config/dotfiles/hypr.conf" \
+  "$HOME/.config/elephant/websearch.toml" \
+  "$HOME/.config/omarchy/hooks/theme-set.d/brave-origin-stable"; do
+  if [ -e "$legacy_link" ] || [ -L "$legacy_link" ]; then
+    miss "retired repo path remains: $(pretty "$legacy_link")"
+  else
+    pass "retired repo path absent: $(pretty "$legacy_link")"
+  fi
+done
+unset legacy_link
 
 # The hypr.* namespace is purged by Quattro on reload; dotfiles.* is not.
 # Verify both the module name and the optional-module binding. [F-HYPR-SEAM]
@@ -161,9 +181,11 @@ else
 fi
 
 # Quickshell uses an official plugin seam; shell.json remains mutable and must
-# already be a fixed point under the repo delta. [D-WAYBAR-DELTAS]
+# already be a fixed point under the repo delta. [D-QUICKSHELL-DELTAS]
 SHELL_JSON="$HOME/.config/omarchy/shell.json"
-if [ ! -f "$SHELL_JSON" ]; then
+if ! have omarchy-shell-config; then
+  miss "omarchy-shell-config missing — Quattro shell helpers are unavailable"
+elif [ ! -f "$SHELL_JSON" ]; then
   miss "$(pretty "$SHELL_JSON") missing — re-run ./install"
 else
   # shellcheck source=/usr/bin/omarchy-shell-config disable=SC1090,SC1091
@@ -211,7 +233,7 @@ if grep -qxF 'active = "#a55555"' "$HOME/.config/omarchy/shell.toml" 2>/dev/null
 else
   miss "Quickshell urgent/active color override drifted"
 fi
-if omarchy-shell shell ping >/dev/null 2>&1; then
+if have omarchy-shell && omarchy-shell shell ping >/dev/null 2>&1; then
   pass "Quickshell IPC responds"
 else
   skip "Quickshell IPC (shell not running in this session)"
@@ -303,8 +325,10 @@ check_mode "$HOME/.ssh/config" 600
 [ ! -e "$HOME/.ssh/config.local" ] || check_mode "$HOME/.ssh/config.local" 600
 if state="$(systemctl --user is-enabled ssh-agent.socket 2>/dev/null)"; then
   pass "ssh-agent.socket $state"
+elif [ -z "${state:-}" ]; then
+  skip "ssh-agent.socket (systemd user manager not reachable)"
 else
-  miss "ssh-agent.socket ${state:-unreachable}"
+  miss "ssh-agent.socket $state"
 fi
 if [ -f "$HOME/.config/uwsm/env.d/99-omarchy-upgrade-env" ]; then
   miss "99-omarchy-upgrade-env remains — audit precedence and remove it"
@@ -350,7 +374,10 @@ check_xdg XDG_PROJECTS_DIR '$HOME/Projects'
 # [D-STARSHIP-VENV]
 STARSHIP_TOML="$HOME/.config/starship.toml"
 # shellcheck disable=SC2016
-if grep -qF '${custom.venv}' "$STARSHIP_TOML" 2>/dev/null; then
+if [ ! -f "$STARSHIP_TOML" ]; then
+  skip "starship venv overlay ($(pretty "$STARSHIP_TOML") not present)"
+elif grep -qF '${custom.venv}' "$STARSHIP_TOML"; then
+  check_block "$STARSHIP_TOML" starship-venv '#'
   pass "starship format references the venv module"
 else
   miss "starship venv reference missing"
@@ -363,7 +390,7 @@ while IFS= read -r unwanted; do
   if pacman -Qq "$unwanted" >/dev/null 2>&1; then
     miss "unwanted package remains: $unwanted"
   fi
-done < <(sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' "$REPO/packages.remove.txt" | grep -v '^$')
+done < <(parse_pkg_file "$REPO/packages.remove.txt")
 unset unwanted
 
 for retained_pkg in omacalc obsidian; do

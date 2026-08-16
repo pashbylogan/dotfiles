@@ -56,6 +56,34 @@ upsert_block() {
   info "managed block updated in ${file/#$HOME/\~}"
 }
 
+# Remove an obsolete managed block without touching the surrounding mutable
+# file. This is the one-way v3 Hyprland source-to-Lua migration. [D-IDEMPOTENT]
+remove_block() {
+  local file="$1" name="$2" copen="$3" cclose="${4:-}" begin end begins ends begin_line end_line
+  [ -f "$file" ] || return 0
+  begin="$(managed_marker begin "$name" "$copen" "$cclose")"
+  end="$(managed_marker end "$name" "$copen" "$cclose")"
+  begins=$(grep -cxF -- "$begin" "$file" || true)
+  ends=$(grep -cxF -- "$end" "$file" || true)
+  [ "$begins" -eq 0 ] && [ "$ends" -eq 0 ] && return 0
+  [ "$begins" -eq 1 ] && [ "$ends" -eq 1 ] ||
+    die "unbalanced or duplicate managed block in $file — refusing to edit"
+  begin_line=$(grep -nF -- "$begin" "$file" | cut -d: -f1)
+  end_line=$(grep -nF -- "$end" "$file" | cut -d: -f1)
+  [ "$begin_line" -lt "$end_line" ] ||
+    die "managed block markers are reversed in $file — refusing to edit"
+  if ! awk -v b="$begin" -v e="$end" '
+    $0==b{s=1; next}
+    s&&$0==e{s=0; next}
+    !s{print}
+  ' "$file" >"$file.dotfiles.tmp"; then
+    rm -f "$file.dotfiles.tmp"
+    die "failed to remove managed block from $file — left it untouched"
+  fi
+  mv "$file.dotfiles.tmp" "$file"
+  info "obsolete managed block removed from ${file/#$HOME/\~}"
+}
+
 # Idempotent jq overlay for tool-owned JSON; returns 0 only on content change.
 # cp -f preserves the target mode while keeping mutable state out of Stow.
 # [D-IDEMPOTENT][D-DELTA-STORAGE]
@@ -106,6 +134,21 @@ prestow_backup() {
   done
 }
 
+# Retired Stow packages are no longer in STOW_PKGS, so clean up only their
+# exact symlinks when they still resolve into this checkout. [D-IDEMPOTENT]
+remove_legacy_repo_link() {
+  local link="$1" target resolved
+  [ -L "$link" ] || return 0
+  target="$(readlink "$link")"
+  resolved="$(realpath -m -- "$(dirname "$link")/$target")"
+  case "$resolved" in
+    "$REPO"/*)
+      unlink "$link"
+      info "retired repo link removed: ${link/#$HOME/\~}"
+      ;;
+  esac
+}
+
 # ── prerequisites ────────────────────────────────────────────────────────────
 # Omarchy CLI is preferred over re-implementing package logic [F-CLI][D-ENGINE].
 step "Prerequisites"
@@ -128,12 +171,6 @@ else
   omarchy pkg add jq
 fi
 
-# `tr -d '\r'` strips CRLF endings introduced by a Windows editor — without it,
-# sed/grep would emit package names with a trailing CR that breaks pacman/yay.
-parse_pkg_file() {
-  tr -d '\r' <"$1" | sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | grep -v '^$' || true
-}
-
 if [ -f packages.txt ]; then
   mapfile -t PKGS < <(parse_pkg_file packages.txt)
   if [ "${#PKGS[@]}" -gt 0 ]; then
@@ -155,8 +192,12 @@ fi
 # state before any browser package removal. [D-BROWSER-DEFAULT][F-APP-CHANNELS]
 step "Browser and terminal defaults"
 BRAVE_ORIGIN_DESKTOP="brave-origin.desktop"
-omarchy install browser brave-origin
-omarchy default browser brave-origin || true
+if ! pacman -Qq brave-origin-bin >/dev/null 2>&1; then
+  omarchy install browser brave-origin
+fi
+if [ "$(omarchy default browser 2>/dev/null)" != "brave-origin" ]; then
+  omarchy default browser brave-origin || true
+fi
 [ "$(omarchy default browser)" = "brave-origin" ] ||
   die "Brave Origin did not become the default — not removing Chromium"
 
@@ -178,11 +219,16 @@ for mime_type in "${BRAVE_MIME_TYPES[@]}"; do
 done
 success "Brave Origin is the default browser"
 
-# Installing a supported terminal also writes xdg-terminals.list; a second
-# default-terminal call would be redundant. The installer is fail-open, so the
-# following assertion is the real safety gate before Alacritty is dropped.
+# Installing a supported terminal writes xdg-terminals.list. When Ghostty is
+# already installed but not selected, use the official default flow instead.
+# Both commands can fail in their notification tail, so assert final state.
 # [D-TERM-GHOSTTY]
-omarchy install terminal ghostty
+if ! pacman -Qq ghostty >/dev/null 2>&1; then
+  omarchy install terminal ghostty || true
+fi
+if [ "$(omarchy default terminal 2>/dev/null)" != "ghostty" ]; then
+  omarchy default terminal ghostty || true
+fi
 [ "$(omarchy default terminal)" = "ghostty" ] ||
   die "Ghostty did not become the default — not removing Alacritty"
 success "Ghostty is the default terminal"
@@ -198,6 +244,19 @@ if [ -f packages.remove.txt ]; then
     fi
   fi
 fi
+
+# Quattro's upgrade normally retires these pacman packages before installing
+# its mise wrappers. Reconcile interrupted/manual upgrades without touching the
+# wrappers or their user config.
+LEGACY_AGENT_PKGS=()
+for legacy_agent_pkg in opencode claude-code; do
+  pacman -Qq "$legacy_agent_pkg" >/dev/null 2>&1 && LEGACY_AGENT_PKGS+=("$legacy_agent_pkg")
+done
+if [ "${#LEGACY_AGENT_PKGS[@]}" -gt 0 ]; then
+  info "dropping retired agent packages: ${LEGACY_AGENT_PKGS[*]}"
+  omarchy pkg drop "${LEGACY_AGENT_PKGS[@]}"
+fi
+unset LEGACY_AGENT_PKGS legacy_agent_pkg
 
 # Quattro owns the lazy OpenCode launcher; seed only its mutable user config,
 # then assert the personal LSP delta. [D-OPENCODE-LSP][F-OPENCODE-LSP]
@@ -260,6 +319,13 @@ fi
 # ── stow repo-owned files ────────────────────────────────────────────────────
 # Stow only repo-owned namespaces; Omarchy-owned files get managed blocks. [D-DELTA-STORAGE]
 step "Stow"
+# The v3 seam sources files this branch retires. Remove it before cleaning its
+# links so hyprland.conf cannot retain a dangling source directive.
+remove_block "$HOME/.config/hypr/hyprland.conf" hypr '#'
+remove_legacy_repo_link "$HOME/.config/dotfiles/hypr.conf"
+remove_legacy_repo_link "$HOME/.config/dotfiles/hypr.local.conf.example"
+remove_legacy_repo_link "$HOME/.config/elephant/websearch.toml"
+remove_legacy_repo_link "$HOME/.config/omarchy/hooks/theme-set.d/brave-origin-stable"
 prestow_backup "$HOME/.ssh/config"
 # UWSM env.d is stowed because Omarchy-launched apps inherit that session env. [F-SSH-AGENT]
 prestow_backup "$HOME/.config/uwsm/env.d/dotfiles.sh"
@@ -267,7 +333,9 @@ prestow_backup "$HOME/.config/uwsm/env.d/dotfiles.sh"
 # stows; settings.json is tool-rewritten and rides a jq delta instead. [D-CLAUDE-CONFIG]
 prestow_backup "$HOME/.claude/statusline-command.sh"
 prestow_backup "$HOME/.config/hypr/dotfiles.lua"
-prestow_backup "$HOME/.config/omarchy/plugins/pashbyl.workspaces"
+prestow_backup \
+  "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json" \
+  "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
 prestow_backup "$HOME/.config/omarchy/bar/scripts/memory-status"
 prestow_backup "$HOME/.config/omarchy/shell.toml"
 STOW_PKGS=(bash ssh bin hypr tmux nvim uwsm omarchy claude)
@@ -365,8 +433,7 @@ unset STARSHIP_TOML
 # Quattro's shell.json is mutable and canonical once customized. Source its
 # official helper for stock fallback, normalization, atomic commit, and reload;
 # Stow owns only the plugin, command, and shell.toml override.
-# Historical ID retained for trace continuity; Quattro replaces Waybar here.
-# [D-WAYBAR-DELTAS][D-IDEMPOTENT]
+# [D-QUICKSHELL-DELTAS][D-IDEMPOTENT]
 SHELL_CONFIG_HELPER="$(command -v omarchy-shell-config)"
 # shellcheck source=/usr/bin/omarchy-shell-config disable=SC1090,SC1091
 . "$SHELL_CONFIG_HELPER"
@@ -377,7 +444,7 @@ shell_delta="$(<"$REPO/omarchy/shell.jq")"
 shell_program="$NORMALIZE | $shell_delta"
 shell_new="$(jq -S -e "$shell_program" "$shell_source")" ||
   die "Quickshell config delta failed"
-shell_current="$(cat "$CONFIG_FILE" 2>/dev/null || true)"
+shell_current="$(jq -S -e . "$CONFIG_FILE" 2>/dev/null || true)"
 
 omarchy-shell shell rescanPlugins >/dev/null 2>&1 || true
 if [ "$shell_new" != "$shell_current" ]; then

@@ -4,6 +4,7 @@ import Quickshell.Hyprland
 import qs.Commons
 import qs.Ui
 
+// Supported user plugin cloned from omarchy.workspaces. [D-QUICKSHELL-DELTAS]
 BarWidget {
   id: root
   moduleName: "pashbyl.workspaces"
@@ -33,7 +34,7 @@ BarWidget {
 
   function focusWorkspace(id) {
     if (!root.bar) return
-    root.bar.run("hyprctl dispatch " + Util.shellQuote("hl.dsp.focus({ workspace = \"" + id + "\" })"))
+    root.bar.run("hyprctl dispatch workspace " + id)
   }
 
   readonly property real trailingGap: root.vertical ? 0 : Style.spaceReal(1.5)

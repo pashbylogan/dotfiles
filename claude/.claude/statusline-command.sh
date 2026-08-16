@@ -28,9 +28,15 @@ input=$(cat)
 declare -A pal
 if command -v omarchy-theme-color >/dev/null 2>&1; then
   while IFS=$'\t' read -r key value; do
-    [[ $value =~ ^#[0-9a-fA-F]{6}$ ]] && pal["$key"]="${value#\#}"
+    if [[ $value =~ ^#([0-9a-fA-F]{3})$ ]]; then
+      short=${BASH_REMATCH[1]}
+      pal["$key"]="${short:0:1}${short:0:1}${short:1:1}${short:1:1}${short:2:1}${short:2:1}"
+    elif [[ $value =~ ^#([0-9a-fA-F]{6})([0-9a-fA-F]{2})?$ ]]; then
+      pal["$key"]="${BASH_REMATCH[1]}"
+    fi
   done < <(omarchy-theme-color --all 2>/dev/null)
 fi
+unset short
 
 esc=$'\033'
 # Map a palette key to a truecolor SGR built from real ESC bytes. $1 = palette

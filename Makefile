@@ -58,6 +58,11 @@ ci: ## Run the full gate: shellcheck + shfmt + prettier + jq filter parse + docs
 	@# minimal normalized object is also a valid fixture for the other filters.
 	@for f in $(JQ_FILTERS); do echo '{"bar":{"layout":{"left":[],"center":[],"right":[]}}}' | jq -f "$$f" >/dev/null || { echo "jq filter failed: $$f"; exit 1; }; done
 	@if [ -n "$(JQ_FILTERS)" ]; then echo "jq filters parse + smoke pass: $(JQ_FILTERS)"; fi
+	@fixture='{"bar":{"layout":{"left":[{"id":"omarchy.menu"},{"id":"omarchy.workspaces"},{"id":"pashbyl.workspaces"}],"center":[{"id":"omarchy.workspaces"}],"right":[{"id":"pashbyl.workspaces"},{"id":"omarchy.power"}]}}}'; \
+	first="$$(printf '%s\n' "$$fixture" | jq -S -f omarchy/shell.jq)"; \
+	second="$$(printf '%s\n' "$$first" | jq -S -f omarchy/shell.jq)"; \
+	test "$$first" = "$$second" && printf '%s\n' "$$first" | jq -e '[.bar.layout.left[],.bar.layout.center[],.bar.layout.right[]] | (map(select(.id == "pashbyl.workspaces")) | length) == 1 and (map(select(.id == "omarchy.workspaces")) | length) == 0' >/dev/null
+	@echo "Quickshell jq duplicate-repair + fixed-point pass"
 	python3 $(DOCS_CHECK)
 	@echo "OK - all checks passed"
 
@@ -88,11 +93,11 @@ update: ## Packages + Omarchy migrations + uv, then `make verify`
 	fi
 	@printf "\n$(BOLD)── Packages & Omarchy migrations ──$(NC)\n"
 	@printf "$(CYAN)$$ omarchy update -y$(NC)\n"
-	@omarchy update -y
+	@omarchy update -y || printf "$(YELLOW)⚠$(NC) 'omarchy update -y' returned non-zero; continuing to uv and verification.\n"
 	@printf "\n$(BOLD)── uv self-update ──$(NC)\n"
 	@if command -v uv >/dev/null 2>&1; then \
 		printf "$(CYAN)$$ uv self update$(NC)\n"; \
-		uv self update; \
+		uv self update || printf "$(YELLOW)⚠$(NC) 'uv self update' returned non-zero; continuing to verification.\n"; \
 	else \
 		printf "$(CYAN)ℹ$(NC) uv not found on PATH — skipped.\n"; \
 	fi
