@@ -200,7 +200,7 @@
     },
     {
       "id": "D-KEYBIND-OVERRIDES",
-      "title": "Personal keybindings are preserved in the reloadable Hypr Lua module; unbind only real Quattro conflicts",
+      "title": "Personal keybindings are preserved in the reloadable Hypr Lua module; SUPER+SPACE opens Apps and only real Quattro conflicts are unbound",
       "canonical": "decisions.html#D-KEYBIND-OVERRIDES",
       "appears_in": [],
       "code_paths": ["hypr/.config/hypr/dotfiles.lua"],

@@ -67,12 +67,14 @@ o.window(
 -- Keep the personal HJKL mapping even where Quattro chose other actions.
 -- [D-HJKL-DECLINED]
 -- Only unbind real Quattro conflicts before restoring the personal mapping.
--- SUPER+J/K/L were toggle-split/keybindings/layout, SUPER+SHIFT+S was Maps,
--- and SUPER+ALT+SPACE was the Apps menu. [D-KEYBIND-OVERRIDES]
+-- SUPER+J/K/L were toggle-split/keybindings/layout, SUPER+SPACE was the root
+-- menu, SUPER+SHIFT+S was Maps, and SUPER+ALT+SPACE was the Apps menu.
+-- [D-KEYBIND-OVERRIDES]
 for _, keys in ipairs({
   "SUPER + J",
   "SUPER + K",
   "SUPER + L",
+  "SUPER + SPACE",
   "SUPER + SHIFT + S",
   "SUPER + ALT + SPACE",
 }) do
@@ -80,6 +82,7 @@ for _, keys in ipairs({
 end
 
 o.bind("SUPER + D", "Omarchy menu", "omarchy-menu toggle")
+o.bind("SUPER + SPACE", "Apps menu", "omarchy-menu toggle apps")
 o.bind("SUPER + I", "Show keybindings", "omarchy-menu-keybindings")
 o.bind("SUPER + E", "Toggle workspace layout", "omarchy-hyprland-workspace-layout-toggle")
 

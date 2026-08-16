@@ -110,6 +110,7 @@ unset HYPR_MAIN
 
 HYPR_MODULE="$HOME/.config/hypr/dotfiles.lua"
 if grep -qF 'opacity = "0.86 override 0.78 override"' "$HYPR_MODULE" 2>/dev/null &&
+  grep -qF 'o.bind("SUPER + SPACE", "Apps menu"' "$HYPR_MODULE" 2>/dev/null &&
   grep -qF 'o.bind("SUPER + H", "Focus on left window"' "$HYPR_MODULE" 2>/dev/null &&
   grep -qF '"SUPER + SHIFT + S"' "$HYPR_MODULE" 2>/dev/null &&
   grep -qF '"SUPER + ALT + SPACE"' "$HYPR_MODULE" 2>/dev/null; then
