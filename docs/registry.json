@@ -322,7 +322,7 @@
     },
     {
       "id": "D-WEBAPP",
-      "title": "Quattro-owned web apps are curated through a persistent launcher deny-list and the native remove command",
+      "title": "Quattro-owned web apps are curated through a persistent launcher deny-list and the native remove command; the retained set is derived from the packaged set minus that deny-list",
       "canonical": "decisions.html#D-WEBAPP",
       "appears_in": ["README.md"],
       "code_paths": [

@@ -403,6 +403,7 @@ unset unwanted_webapp
 
 # Compare against Quattro's packaged copy rather than restating its Exec line,
 # so an upstream URL change is not read as local drift. [D-WEBAPP]
+mapfile -t RETAINED_WEBAPPS < <(retained_webapps)
 for retained_webapp in "${RETAINED_WEBAPPS[@]}"; do
   retained_user="$HOME/.local/share/applications/$retained_webapp.desktop"
   retained_stock="$OMARCHY_PATH/applications/$retained_webapp.desktop"

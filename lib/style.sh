@@ -26,10 +26,25 @@ parse_list_file() {
   tr -d '\r' <"$1" | sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | grep -v '^$' || true
 }
 
-# Stock Quattro web apps this overlay keeps. install restores them through the
-# native application refresh and verify.sh asserts them against Quattro's
-# packaged copies, from one list so desired state cannot drift. [D-WEBAPP]
-RETAINED_WEBAPPS=(Discord Zoom)
+# Stock Quattro web apps this overlay keeps: everything Quattro packages, minus
+# webapps.remove.txt. Deriving it leaves the deny-list as the only hand-maintained
+# half, so the two cannot contradict each other. Match both launcher forms Quattro
+# ships — `omarchy-launch-webapp <url>` and a dedicated `omarchy-webapp-handler-*`
+# — which is also what excludes the native launchers sharing that directory
+# (foot, imv, mpv, Docker, Disk Usage); foot especially, since it is deleted
+# elsewhere as a stale terminal launcher. Needs $REPO, so it is a function rather
+# than an array expanded at source time. [D-WEBAPP]
+retained_webapps() {
+  local denied desktop name
+  denied="$(parse_list_file "$REPO/webapps.remove.txt" 2>/dev/null || true)"
+  for desktop in "$OMARCHY_PATH"/applications/*.desktop; do
+    [ -e "$desktop" ] || continue
+    grep -qE '^Exec=omarchy-(launch-webapp|webapp-handler-)' "$desktop" || continue
+    name="${desktop##*/}"
+    name="${name%.desktop}"
+    printf '%s\n' "$denied" | grep -qxF -- "$name" || printf '%s\n' "$name"
+  done
+}
 
 # Alternate-terminal launchers Quattro's application refresh recreates from its
 # packaged set, keyed by the pacman package that owns each. A launcher is stale

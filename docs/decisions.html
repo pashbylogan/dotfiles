@@ -323,14 +323,23 @@
               <code>omarchy webapp remove</code>. Discord and Zoom remain
               packaged and refreshed by Quattro, while the separately installed
               Tailscale launcher is retained because none appears in the
-              deny-list. Either retained launcher is restored through
-              <code>omarchy refresh applications</code> when missing, before
-              removals are reapplied;
-              <code>lib/style.sh: RETAINED_WEBAPPS</code> is the one list
-              <code>install</code> and <code>verify.sh</code> share.
-              <code>verify.sh</code> <code>cmp</code>s each retained launcher
-              against Quattro's packaged copy rather than restating its
-              <code>Exec=</code> line.
+              deny-list. Retained launchers are restored through
+              <code>omarchy refresh applications</code> when missing or drifted
+              — once for all of them, since the refresh recopies the whole
+              packaged set — before removals are reapplied. The retained set is
+              not hand-maintained: <code>lib/style.sh</code>'s
+              <code>retained_webapps</code> derives it as everything Quattro
+              packages minus <code>webapps.remove.txt</code>, so the deny-list
+              is the only list anyone edits and the two cannot contradict each
+              other. It matches both launcher forms Quattro ships (<code
+                >omarchy-launch-webapp &lt;url&gt;</code
+              >
+              and a dedicated <code>omarchy-webapp-handler-*</code>), which is
+              what excludes the native launchers sharing that directory —
+              <code>foot</code> above all, since it is deleted elsewhere as a
+              stale terminal launcher. <code>verify.sh</code> <code>cmp</code>s
+              each retained launcher against Quattro's packaged copy rather than
+              restating its <code>Exec=</code> line.
             </td>
             <td>
               Quattro's broad Remove Preinstalled flow would also remove

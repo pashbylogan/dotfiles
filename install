@@ -215,6 +215,7 @@ fi
 # mise wrapper install — so run it once for all misses. It may also recopy denied
 # launchers, removed just below. [D-WEBAPP][F-APP-CHANNELS]
 missing_webapps=()
+mapfile -t RETAINED_WEBAPPS < <(retained_webapps)
 for retained_webapp in "${RETAINED_WEBAPPS[@]}"; do
   # cmp, not just -f: verify compares each launcher against Quattro's packaged
   # copy, so a drifted one must be restored here too or it never reconciles.
