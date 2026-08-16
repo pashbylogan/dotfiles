@@ -173,17 +173,25 @@ fi
 
 if [ -f packages.txt ]; then
   mapfile -t PKGS < <(parse_pkg_file packages.txt)
-  if [ "${#PKGS[@]}" -gt 0 ]; then
-    info "installing extras: ${PKGS[*]}"
-    omarchy pkg add "${PKGS[@]}"
+  MISSING_PKGS=()
+  for pkg in "${PKGS[@]}"; do
+    pacman -Qq "$pkg" >/dev/null 2>&1 || MISSING_PKGS+=("$pkg")
+  done
+  if [ "${#MISSING_PKGS[@]}" -gt 0 ]; then
+    info "installing extras: ${MISSING_PKGS[*]}"
+    omarchy pkg add "${MISSING_PKGS[@]}"
   fi
 fi
 
 if [ -f packages.aur.txt ]; then
   mapfile -t AUR_PKGS < <(parse_pkg_file packages.aur.txt)
-  if [ "${#AUR_PKGS[@]}" -gt 0 ]; then
-    info "installing AUR extras: ${AUR_PKGS[*]}"
-    omarchy pkg aur add "${AUR_PKGS[@]}"
+  MISSING_AUR_PKGS=()
+  for pkg in "${AUR_PKGS[@]}"; do
+    pacman -Qq "$pkg" >/dev/null 2>&1 || MISSING_AUR_PKGS+=("$pkg")
+  done
+  if [ "${#MISSING_AUR_PKGS[@]}" -gt 0 ]; then
+    info "installing AUR extras: ${MISSING_AUR_PKGS[*]}"
+    omarchy pkg aur add "${MISSING_AUR_PKGS[@]}"
   fi
 fi
 
@@ -236,10 +244,14 @@ unset BRAVE_MIME_TYPES BRAVE_ORIGIN_DESKTOP mime_type
 
 if [ -f packages.remove.txt ]; then
   mapfile -t REMOVE_PKGS < <(parse_pkg_file packages.remove.txt)
-  if [ "${#REMOVE_PKGS[@]}" -gt 0 ]; then
-    info "removing unwanted packages: ${REMOVE_PKGS[*]}"
+  INSTALLED_REMOVE_PKGS=()
+  for pkg in "${REMOVE_PKGS[@]}"; do
+    pacman -Qq "$pkg" >/dev/null 2>&1 && INSTALLED_REMOVE_PKGS+=("$pkg")
+  done
+  if [ "${#INSTALLED_REMOVE_PKGS[@]}" -gt 0 ]; then
+    info "removing unwanted packages: ${INSTALLED_REMOVE_PKGS[*]}"
     # pacman -Rns refuses reverse-dep conflicts; warn instead of abort. [D-PKG-REMOVE]
-    if ! omarchy pkg drop "${REMOVE_PKGS[@]}"; then
+    if ! omarchy pkg drop "${INSTALLED_REMOVE_PKGS[@]}"; then
       warn "  one or more removes refused (reverse-dep conflict?); continuing"
     fi
   fi

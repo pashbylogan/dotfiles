@@ -148,8 +148,20 @@ if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && have hyprctl; then
   }
   check_hypr_custom() {
     local option="$1" expected="$2" actual
-    actual="$(hyprctl -j getoption "$option" 2>/dev/null | jq -r '.custom // empty' 2>/dev/null)"
+    # Hyprland 0.56 reports CSS-like gaps under .css; older builds used
+    # .custom. Accept either representation while requiring every edge to
+    # match the desired scalar.
+    actual="$(hyprctl -j getoption "$option" 2>/dev/null | jq -r '.css // .custom // empty' 2>/dev/null)"
     if [ -n "$actual" ] && awk -v want="$expected" '{ for (i = 1; i <= NF; i++) if ($i != want) exit 1 }' <<<"$actual"; then
+      pass "Hyprland $option = $expected"
+    else
+      miss "Hyprland $option = ${actual:-<unreadable>}, expected $expected"
+    fi
+  }
+  check_hypr_bool() {
+    local option="$1" expected="$2" actual
+    actual="$(hyprctl -j getoption "$option" 2>/dev/null | jq -r 'if has("bool") then .bool else empty end' 2>/dev/null)"
+    if [ "$actual" = "$expected" ]; then
       pass "Hyprland $option = $expected"
     else
       miss "Hyprland $option = ${actual:-<unreadable>}, expected $expected"
@@ -169,13 +181,13 @@ if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && have hyprctl; then
   check_hypr_custom general:gaps_out 4
   check_hypr_int general:border_size 2
   check_hypr_int decoration:rounding 8
-  check_hypr_int decoration:blur:enabled 1
+  check_hypr_bool decoration:blur:enabled true
   check_hypr_int decoration:blur:size 8
   check_hypr_int decoration:blur:passes 2
   check_hypr_float decoration:blur:brightness 0.72
   check_hypr_float decoration:blur:contrast 0.75
-  check_hypr_int decoration:shadow:enabled 1
-  check_hypr_int misc:focus_on_activate 0
+  check_hypr_bool decoration:shadow:enabled true
+  check_hypr_bool misc:focus_on_activate false
 else
   skip "live Hyprland values (session unavailable)"
 fi
@@ -313,7 +325,8 @@ check_mode() {
     miss "$(pretty "$path") missing"
     return
   fi
-  actual="$(stat -c '%a' "$path" 2>/dev/null || true)"
+  # Stow-managed config paths are symlinks; SSH evaluates the target mode.
+  actual="$(stat -Lc '%a' "$path" 2>/dev/null || true)"
   if [ "$actual" = "$expected" ]; then
     pass "$(pretty "$path") mode $expected"
   else
