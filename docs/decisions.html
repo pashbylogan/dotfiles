@@ -741,12 +741,44 @@
               externals would shrink GTK apps on eDP-1. The compositor scale in
               our <code>hl.monitor</code> entries are the in-scope correctness
               step; the GTK-oversize trade on the externals is acceptable until
-              per-app launchers become worth it. <strong>Forward risk</strong>:
-              when omarchy ships the Lua hyprland config (<a
-                href="findings.html#F-LUA"
-                >F-LUA</a
-              >), these lines become <code>hl.monitor({…})</code> calls; the
-              design is unaffected.
+              per-app launchers become worth it.
+              <strong>Known upstream bug — both externals sit at 60Hz</strong>:
+              since aquamarine 0.14.0 the requested <code>@144</code> never
+              reaches the driver. Either the kernel rejects the commit (<code
+                >atomic drm request: failed to commit: No space left on
+                device</code
+              >
+              under <code>ATOMIC_ALLOW_MODESET</code>) and both outputs fall
+              back to 60, or aquamarine issues no modeset for the second output
+              at all and drops the mode silently. Each panel reaches 144 alone;
+              neither does while the other is enabled. The defect is aquamarine
+              committing connectors one at a time and giving up on the first
+              rejection: drivers that allocate display bandwidth globally refuse
+              a modeset touching one connector while the others stay pinned,
+              even though the same end state commits fine when every head is
+              modeset together.
+              <a href="https://github.com/hyprwm/aquamarine/pull/346"
+                >aquamarine PR #346</a
+              >
+              fixes exactly this by retrying with all heads restated, and was
+              merged two days after the v0.14.0 tag — so v0.14.0 is the one
+              release with the bug and without the fix.
+              <strong
+                >The config deliberately keeps <code>@144</code> on both</strong
+              >: it states the intent, the fallback is identical, and both
+              should reach 144 with no config change once a release carries the
+              fix. Not yet confirmed on Panther Lake / <code>xe</code> — every
+              reproduction upstream is i915 or NVIDIA — so if a later release
+              still yields 60Hz, add this machine to
+              <a href="https://github.com/hyprwm/aquamarine/issues/352"
+                >aquamarine #352</a
+              >. Do not chase this as a kernel, cable, or scaling problem:
+              <code>xe.enable_sagv=0</code> changed nothing, each link trains at
+              144 alone, and <code>scale = 1</code> behaves identically.
+              <strong>Forward risk</strong>: when omarchy ships the Lua hyprland
+              config (<a href="findings.html#F-LUA">F-LUA</a>), these lines
+              become <code>hl.monitor({…})</code> calls; the design is
+              unaffected.
             </td>
           </tr>
           <tr id="D-KINESIS-REMAP">
