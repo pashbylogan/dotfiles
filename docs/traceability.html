@@ -89,8 +89,7 @@
               <a href="architecture.html#D-DELTA-STORAGE">architecture</a>
             </td>
             <td>
-              <code>install</code>, <code>hypr/.config/hypr/dotfiles.lua</code>,
-              <code>omarchy/shell.jq</code>
+              <code>install</code>, <code>hypr/.config/hypr/dotfiles.lua</code>
             </td>
           </tr>
           <tr>
@@ -158,7 +157,10 @@
           </tr>
           <tr>
             <td><code>D-TMUX-KEEP</code></td>
-            <td>Keep tmux; clipboard → <code>wl-copy</code></td>
+            <td>
+              Keep tmux; C-a prefix, pane binds, sessionizer (Omarchy owns vi
+              copy-mode and OSC52 clipboard)
+            </td>
             <td><a href="decisions.html#D-TMUX-KEEP">decisions</a></td>
             <td>
               <code>tmux/.config/tmux/local.conf</code>, <code>install</code>
@@ -254,24 +256,17 @@
           <tr>
             <td><code>D-QUICKSHELL-DELTAS</code></td>
             <td>
-              Supported Quickshell workspace plugin, memory command, mutable
-              shell.toml scalar merge, and duplicate-repairing mutable
-              shell.json delta
+              Supported Quickshell workspace plugin, placed with Quattro's own
+              <code>omarchy bar</code> CLI; shell.toml and shell.json both stay
+              mutable and unwritten
             </td>
             <td>
               <a href="decisions.html#D-QUICKSHELL-DELTAS">decisions</a>
             </td>
             <td>
-              <code>install</code>, <code>.github/scripts/verify.sh</code>,
-              <code>omarchy/shell.jq</code>, and the tracked Quickshell
-              extension files
+              <code>install</code>, <code>.github/scripts/verify.sh</code>, and
+              the tracked Quickshell extension files
             </td>
-          </tr>
-          <tr>
-            <td><code>D-WAYBAR-DELTAS</code></td>
-            <td>Historical v3 Waybar JSON/CSS overlay, retired by Quattro</td>
-            <td><a href="decisions.html#D-WAYBAR-DELTAS">decisions</a></td>
-            <td>retired implementation (documentation only)</td>
           </tr>
           <tr>
             <td><code>D-TERM-GHOSTTY</code></td>
@@ -283,16 +278,17 @@
             </td>
             <td><a href="decisions.html#D-TERM-GHOSTTY">decisions</a></td>
             <td>
-              <code>install</code>, <code>packages.remove.txt</code>,
+              <code>install</code>, <code>lib/style.sh</code>,
+              <code>packages.remove.txt</code>,
               <code>.github/scripts/verify.sh</code>
             </td>
           </tr>
           <tr>
             <td><code>D-STARSHIP-VENV</code></td>
             <td>
-              Show the active Python venv name in the prompt via a
-              <code>$VIRTUAL_ENV</code>-keyed <code>[custom.venv]</code> module:
-              in-place <code>format</code>-key edit + appended managed block
+              Show the active Python venv name in the prompt via starship's
+              built-in <code>python</code> module, referenced from
+              <code>format</code> and configured in a managed block
             </td>
             <td><a href="decisions.html#D-STARSHIP-VENV">decisions</a></td>
             <td>
@@ -306,7 +302,8 @@
               <code>statusline-command.sh</code>, jq-delta
               <code>settings.json</code> (Claude rewrites it), pin the default
               model via <code>.env.ANTHROPIC_MODEL</code> in the settings
-              overlay (not the UI-owned top-level model key), exclude all
+              overlay (not the UI-owned top-level model key), opt into Quattro's
+              generated <code>custom:omarchy</code> theme, exclude all
               secrets/state/cache
             </td>
             <td><a href="decisions.html#D-CLAUDE-CONFIG">decisions</a></td>
@@ -360,8 +357,9 @@
             </td>
             <td><a href="decisions.html#D-WEBAPP">decisions</a></td>
             <td>
-              <code>install</code>, <code>webapps.remove.txt</code>,
-              <code>README.md</code>, <code>.github/scripts/verify.sh</code>
+              <code>install</code>, <code>lib/style.sh</code>,
+              <code>webapps.remove.txt</code>, <code>README.md</code>,
+              <code>.github/scripts/verify.sh</code>
             </td>
           </tr>
           <tr>
@@ -458,15 +456,6 @@
             <td><code>D-NVIM-KEYMAPS</code></td>
           </tr>
           <tr>
-            <td><code>F-BASELINE</code></td>
-            <td>
-              Historical v3 baseline; Quattro uses stock plus narrow package
-              deltas
-            </td>
-            <td><a href="findings.html#F-BASELINE">findings</a></td>
-            <td><code>D-BASELINE</code></td>
-          </tr>
-          <tr>
             <td><code>F-APP-CHANNELS</code></td>
             <td>
               App channels are Omarchy-native first: Quattro owns Brave Origin,
@@ -525,18 +514,6 @@
             <td><code>D-TMUX-KEEP</code></td>
           </tr>
           <tr>
-            <td><code>F-WAYBAR-MIGRATIONS</code></td>
-            <td>
-              Historical v3 Waybar drift; Quattro replaces it with supported
-              plugins and mutable shell.json
-            </td>
-            <td><a href="findings.html#F-WAYBAR-MIGRATIONS">findings</a></td>
-            <td>
-              <code>D-WAYBAR-DELTAS</code>,
-              <code>D-QUICKSHELL-DELTAS</code>
-            </td>
-          </tr>
-          <tr>
             <td><code>F-AGENT-GUIDANCE</code></td>
             <td>
               AGENTS.md canonical + <code>CLAUDE.md</code> one-line bridge so
@@ -559,7 +536,7 @@
             <td><code>F-MONITOR-SCALE-PERSIST</code></td>
             <td>
               Omarchy's <code>Super + /</code> scale cycle auto-persists only
-              when <code>monitors.conf</code> matches the single-wildcard shape;
+              when <code>monitors.lua</code> still carries the seeded shape;
               multi-monitor <code>desc:</code> layouts must persist scale in the
               user's overlay
             </td>

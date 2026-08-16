@@ -5,8 +5,7 @@
 # bash/aliases guards `cd` with `command -v` — coreutil fallback kicks in.
 zoxide
 
-# inxi remains because omarchy-debug uses it directly. libqalculate is audited
-# once after Elephant's retirement rather than kept in the permanent list.
+# inxi remains because omarchy-debug uses it directly.
 lazygit
 plocate
 tldr

@@ -14,20 +14,16 @@ POSIX_SHFMT_FLAGS  := -ln posix -i 2 -ci
 
 # ── file sets ────────────────────────────────────────────────────────────────
 # Include sourced fragments explicitly because shell globs won't discover them.
-OMARCHY_HOOK_FILES := $(shell find omarchy/.config/omarchy/hooks -type f 2>/dev/null)
-OMARCHY_SCRIPT_FILES := $(wildcard omarchy/.config/omarchy/bar/scripts/*)
 BASH_FILES := install lib/style.sh $(wildcard bin/.local/bin/*) \
 	bash/.config/dotfiles/shell.sh \
 	bash/.config/dotfiles/shell.local.sh.example \
 	claude/.claude/statusline-command.sh \
-	$(OMARCHY_SCRIPT_FILES) \
-	$(OMARCHY_HOOK_FILES) \
 	$(wildcard .github/scripts/*.sh)
 POSIX_FILES := $(wildcard uwsm/.config/uwsm/env.d/*.sh)
 SHELL_FILES := $(BASH_FILES) $(POSIX_FILES)
 PRETTIER_GLOBS := docs/*.html docs/registry.json
 DOCS_CHECK     := .github/scripts/check_docs.py
-JQ_FILTERS     := $(wildcard omarchy/*.jq) $(wildcard claude/*.jq) $(wildcard opencode/*.jq)
+JQ_FILTERS     := $(wildcard claude/*.jq) $(wildcard opencode/*.jq)
 
 # ── output styling ───────────────────────────────────────────────────────────
 # Mirror the shell palette (lib/style.sh: ── headers ──, ℹ info, ⚠ warn) so `make`
@@ -54,15 +50,10 @@ ci: ## Run the full gate: shellcheck + shfmt + prettier + jq filter parse + docs
 	shfmt -d $(BASH_SHFMT_FLAGS) $(BASH_FILES)
 	shfmt -d $(POSIX_SHFMT_FLAGS) $(POSIX_FILES)
 	$(PRETTIER) --check $(PRETTIER_GLOBS)
-	@# The shell filter is evaluated after Quattro's NORMALIZE helper; this
-	@# minimal normalized object is also a valid fixture for the other filters.
-	@for f in $(JQ_FILTERS); do echo '{"bar":{"layout":{"left":[],"center":[],"right":[]}}}' | jq -f "$$f" >/dev/null || { echo "jq filter failed: $$f"; exit 1; }; done
+	@# Tool-owned JSON filters must parse and be no-ops on an empty object. The
+	@# bar layout is no longer one of them — `omarchy bar` converges it natively.
+	@for f in $(JQ_FILTERS); do echo '{}' | jq -f "$$f" >/dev/null || { echo "jq filter failed: $$f"; exit 1; }; done
 	@if [ -n "$(JQ_FILTERS)" ]; then echo "jq filters parse + smoke pass: $(JQ_FILTERS)"; fi
-	@fixture='{"bar":{"layout":{"left":[{"id":"omarchy.menu"},{"id":"omarchy.workspaces"},{"id":"pashbyl.workspaces"}],"center":[{"id":"omarchy.workspaces"}],"right":[{"id":"pashbyl.workspaces"},{"id":"omarchy.power"}]}}}'; \
-	first="$$(printf '%s\n' "$$fixture" | jq -S -f omarchy/shell.jq)"; \
-	second="$$(printf '%s\n' "$$first" | jq -S -f omarchy/shell.jq)"; \
-	test "$$first" = "$$second" && printf '%s\n' "$$first" | jq -e '[.bar.layout.left[],.bar.layout.center[],.bar.layout.right[]] | (map(select(.id == "pashbyl.workspaces")) | length) == 1 and (map(select(.id == "omarchy.workspaces")) | length) == 0' >/dev/null
-	@echo "Quickshell jq duplicate-repair + fixed-point pass"
 	python3 $(DOCS_CHECK)
 	@echo "OK - all checks passed"
 

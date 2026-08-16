@@ -24,10 +24,11 @@
 # ── colors ───────────────────────────────────────────────────────────────────
 # Plain ANSI slots rather than resolved truecolor: the terminal already renders
 # 0-15 from the active Omarchy theme, so these track `omarchy theme set` for
-# free and cost no subprocess. The blue slot is the theme accent — Omarchy
-# generates both from the same hex. [D-CLAUDE-CONFIG]
+# free and cost no subprocess. Most Omarchy themes derive the accent from the
+# same hex as the blue slot, but not all (hackerman, kanagawa, lumon, retro-82
+# and white set a separate accent), so treat blue as blue. [D-CLAUDE-CONFIG]
 esc=$'\033'
-c_folder="${esc}[0;34m" # blue — the theme accent, for the path
+c_folder="${esc}[0;34m" # blue — the path
 c_branch="${esc}[0;35m" # magenta — distinct from the severity hues
 c_model="${esc}[0;36m"  # cyan
 c_low="${esc}[0;32m"    # green  — context < 50%
@@ -61,7 +62,9 @@ fi
 # and pick a severity color; LC_ALL=C keeps '.'-decimals parseable in any locale.
 have_ctx=0
 if [[ $used_pct =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
-  pct_int=$(LC_ALL=C printf '%.0f' "$used_pct")
+  # printf -v, not $(...): printf is a builtin, so a command substitution would
+  # fork a subshell on every render for nothing.
+  LC_ALL=C printf -v pct_int '%.0f' "$used_pct"
   ((pct_int < 0)) && pct_int=0
   ((pct_int > 100)) && pct_int=100
   if ((pct_int >= 80)); then

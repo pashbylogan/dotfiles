@@ -40,11 +40,7 @@
       "title": "Own thin Lua/plugin/script fragments plus managed seams; never symlink Omarchy-owned mutable files",
       "canonical": "architecture.html#D-DELTA-STORAGE",
       "appears_in": ["augmentation-approach.html", "decisions.html"],
-      "code_paths": [
-        "install",
-        "hypr/.config/hypr/dotfiles.lua",
-        "omarchy/shell.jq"
-      ],
+      "code_paths": ["install", "hypr/.config/hypr/dotfiles.lua"],
       "related": [
         "F-REFRESH-WRITETHROUGH",
         "F-LUA",
@@ -74,7 +70,7 @@
       "id": "D-CI",
       "title": "Makefile is the single source of truth for repo operations (CI gates + `update` for packages and self-managed tools, opt-in `update-firmware`, and `verify` live health check); CI invokes it",
       "canonical": "decisions.html#D-CI",
-      "appears_in": ["architecture.html", "todos.html"],
+      "appears_in": ["architecture.html"],
       "code_paths": [
         "Makefile",
         ".github/workflows/ci.yml",
@@ -152,7 +148,7 @@
     },
     {
       "id": "D-TMUX-KEEP",
-      "title": "Keep tmux (real customization); port clipboard xclip -> wl-copy for Wayland",
+      "title": "Keep tmux (real customization): C-a prefix, pane binds, and sessionizer only; Omarchy's own tmux.conf owns vi copy-mode and OSC52 clipboard",
       "canonical": "decisions.html#D-TMUX-KEEP",
       "appears_in": ["augmentation-approach.html"],
       "code_paths": ["tmux/.config/tmux/local.conf", "install"],
@@ -240,24 +236,15 @@
     },
     {
       "id": "D-QUICKSHELL-DELTAS",
-      "title": "Use a supported Quickshell workspace plugin, mutable shell.toml scalar merge, command module, and duplicate-repairing fixed-point shell.json delta",
+      "title": "Use a supported Quickshell workspace plugin, placed and converged with Quattro's own omarchy bar CLI; shell.toml and shell.json stay mutable and unwritten",
       "canonical": "decisions.html#D-QUICKSHELL-DELTAS",
       "appears_in": ["architecture.html"],
       "code_paths": [
         "install",
         ".github/scripts/verify.sh",
-        "omarchy/shell.jq",
         "omarchy/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
       ],
-      "related": ["D-DELTA-STORAGE", "D-WAYBAR-DELTAS", "D-IDEMPOTENT"]
-    },
-    {
-      "id": "D-WAYBAR-DELTAS",
-      "title": "Historical v3 Waybar JSON/CSS delta overlay, retired by Quattro",
-      "canonical": "decisions.html#D-WAYBAR-DELTAS",
-      "appears_in": ["architecture.html", "findings.html", "todos.html"],
-      "code_paths": [],
-      "related": ["D-QUICKSHELL-DELTAS", "F-WAYBAR-MIGRATIONS"]
+      "related": ["D-DELTA-STORAGE", "D-IDEMPOTENT"]
     },
     {
       "id": "D-TERM-GHOSTTY",
@@ -266,6 +253,7 @@
       "appears_in": ["todos.html"],
       "code_paths": [
         "install",
+        "lib/style.sh",
         "packages.remove.txt",
         ".github/scripts/verify.sh"
       ],
@@ -273,7 +261,7 @@
     },
     {
       "id": "D-STARSHIP-VENV",
-      "title": "Show the active Python venv name through a $VIRTUAL_ENV-keyed [custom.venv] module and managed block",
+      "title": "Show the active Python venv name through starship's built-in python module, triggered by $VIRTUAL_ENV alone",
       "canonical": "decisions.html#D-STARSHIP-VENV",
       "appears_in": [],
       "code_paths": ["install", ".github/scripts/verify.sh"],
@@ -307,20 +295,15 @@
       "id": "D-BASELINE",
       "title": "Reference baseline = stock Quattro plus explicit additive manifests and persistent package/web-app deny-lists",
       "canonical": "decisions.html#D-BASELINE",
-      "appears_in": ["README.md"],
+      "appears_in": ["README.md", "index.html"],
       "code_paths": ["README.md"],
-      "related": ["F-BASELINE"]
+      "related": []
     },
     {
       "id": "D-PKG-REMOVE",
       "title": "Package and operator-tool curation: packages.txt restores and adds, packages.remove.txt drops, app-picker cleanup, and residue audit",
       "canonical": "decisions.html#D-PKG-REMOVE",
-      "appears_in": [
-        "README.md",
-        "architecture.html",
-        "findings.html",
-        "todos.html"
-      ],
+      "appears_in": ["README.md", "architecture.html", "findings.html"],
       "code_paths": [
         "install",
         "packages.txt",
@@ -344,6 +327,7 @@
       "appears_in": ["README.md"],
       "code_paths": [
         "install",
+        "lib/style.sh",
         "webapps.remove.txt",
         "README.md",
         ".github/scripts/verify.sh"
@@ -403,7 +387,7 @@
       "canonical": "findings.html#F-REFRESH-WRITETHROUGH",
       "appears_in": ["augmentation-approach.html", "decisions.html"],
       "code_paths": [],
-      "related": ["D-DELTA-STORAGE", "F-WAYBAR-MIGRATIONS"]
+      "related": ["D-DELTA-STORAGE"]
     },
     {
       "id": "F-LUA",
@@ -434,20 +418,12 @@
       "related": ["D-NVIM-KEYMAPS"]
     },
     {
-      "id": "F-BASELINE",
-      "title": "Historical v3 Remove Preinstalled baseline; Quattro migration now uses stock defaults plus a narrow deny-list",
-      "canonical": "findings.html#F-BASELINE",
-      "appears_in": ["README.md", "decisions.html", "index.html"],
-      "code_paths": ["README.md"],
-      "related": ["D-BASELINE"]
-    },
-    {
       "id": "F-APP-CHANNELS",
       "title": "App channels are Omarchy-native first: Brave Origin, Ghostty, and Discord use Quattro flows, agents use mise wrappers, Spotify uses its sync-repo service package, and explicit extras stay in manifests",
       "canonical": "findings.html#F-APP-CHANNELS",
-      "appears_in": ["README.md", "decisions.html", "todos.html"],
+      "appears_in": ["README.md", "decisions.html"],
       "code_paths": ["install", "packages.txt", "packages.aur.txt"],
-      "related": ["D-PKG-REMOVE", "D-WEBAPP", "D-BROWSER-DEFAULT", "F-BASELINE"]
+      "related": ["D-PKG-REMOVE", "D-WEBAPP", "D-BROWSER-DEFAULT"]
     },
     {
       "id": "F-CLI",
@@ -497,18 +473,6 @@
       "appears_in": [],
       "code_paths": ["tmux/.config/tmux/local.conf", "install"],
       "related": ["D-TMUX-KEEP"]
-    },
-    {
-      "id": "F-WAYBAR-MIGRATIONS",
-      "title": "Historical v3 finding: Waybar was mutable and refresh-prone; Quattro retires it in favor of user plugins plus mutable shell.json",
-      "canonical": "findings.html#F-WAYBAR-MIGRATIONS",
-      "appears_in": ["decisions.html", "todos.html"],
-      "code_paths": [],
-      "related": [
-        "D-WAYBAR-DELTAS",
-        "D-QUICKSHELL-DELTAS",
-        "F-REFRESH-WRITETHROUGH"
-      ]
     },
     {
       "id": "F-AGENT-GUIDANCE",

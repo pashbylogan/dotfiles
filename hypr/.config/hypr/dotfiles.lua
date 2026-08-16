@@ -4,31 +4,38 @@
 
 hl.config({
   input = {
-    -- Preserve Omarchy's detected layout while replacing only its options.
-    -- [D-CAPS-CTRL]
-    kb_options = "compose:caps,ctrl:nocaps",
+    -- Replaces Omarchy's option string wholesale (kb_options is one scalar, not
+    -- a merged list) while preserving its detected layout. compose:caps and
+    -- shift:both_capslock_cancel are dropped on purpose — they only matter if
+    -- Caps Lock stays Caps Lock. This also drops the grp:alts_toggle Omarchy
+    -- appends when XKBLAYOUT is non-Latin; harmless here (us), but it would cost
+    -- the Left+Right Alt layout switch on such a machine. [D-CAPS-CTRL]
+    kb_options = "ctrl:nocaps",
   },
 
   general = {
+    -- Hyprland 0.56.2 defaults 5/20; Omarchy sets 5/10.
     gaps_in = 2,
     gaps_out = 4,
-    -- Restated so the stock no-gaps toggle cannot leave borders disabled.
+    -- The one deliberate restatement of an Omarchy default. This module loads
+    -- after default.hypr.toggles, so window-no-gaps (which zeroes gaps, border
+    -- and rounding) loses to every key we set. Omitting border_size would let
+    -- that one through and leave the toggle half-applied: our gaps and rounding
+    -- with no borders. [D-LOOKNFEEL][F-HYPR-SEAM]
     border_size = 2,
   },
 
   decoration = {
     rounding = 8,
-    -- Quattro disables both effects by default; spell out the effective v3
-    -- values so the appearance does not depend on upstream defaults.
+    -- Quattro disables both effects, so `enabled` is the delta. Every other key
+    -- here differs from Hyprland 0.56.2's own default; the ones that matched it
+    -- (shadow render_power/color, blur size) are deliberately absent.
     shadow = {
       enabled = true,
       range = 2,
-      render_power = 3,
-      color = "rgba(1a1a1aee)",
     },
     blur = {
       enabled = true,
-      size = 8,
       passes = 2,
       special = true,
       brightness = 0.72,
@@ -61,7 +68,9 @@ o.window(
 -- [D-LOOKNFEEL]
 o.window(
   "(Alacritty|kitty|com.mitchellh.ghostty|foot|org\\.codeberg\\.dnkl\\.foot|wezterm)",
-  { opacity = "0.86 override 0.78 override" }
+  -- No `override`: it only stops the decoration:*_opacity globals multiplying in,
+  -- and Quattro sets none of them (all three are Hyprland's default 1).
+  { opacity = "0.86 0.78" }
 )
 
 -- Keep the personal HJKL mapping even where Quattro chose other actions.

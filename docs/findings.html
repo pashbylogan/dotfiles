@@ -149,20 +149,6 @@
         <code>omarchy-nvim-refresh</code> or a full config reinstall.
       </p>
 
-      <h2 id="F-BASELINE">
-        Baseline history: v3 Remove Preinstalled, Quattro stock plus deltas
-        <code class="meta">F-BASELINE</code>
-      </h2>
-      <p>
-        On v3 the owner used <strong>Remove Preinstalled</strong>, which
-        explains historical trimmed bindings and app state. Quattro changes the
-        tradeoff: the broad flow also removes retained native apps, OmaCalc, and
-        lazy mise agent wrappers. The current baseline is stock Quattro plus
-        explicit additive manifests and <code>packages.remove.txt</code>;
-        Omarchy-owned bindings remain untracked and only deliberate personal
-        chords are overridden in Lua.
-      </p>
-
       <h2 id="F-APP-CHANNELS">
         App channels: Omarchy-native first
         <code class="meta">F-APP-CHANNELS</code>
@@ -421,75 +407,13 @@
         <strong>shadowed and never read</strong>. We therefore stow our config
         to <code>~/.config/tmux/local.conf</code> and
         <code>source-file</code> it LAST from omarchy's tmux.conf (managed
-        block) — overriding only our intentional deltas (C-a prefix,
-        vi-copy→wl-copy, hjkl nav, sessionizer) while inheriting omarchy's good
-        defaults. Related: omarchy fixes ssh flakiness via MTU probing
+        block) — overriding only our intentional deltas (C-a prefix, hjkl nav,
+        pane splits, sessionizer) while inheriting omarchy's good defaults,
+        including vi copy-mode and its OSC52 clipboard. Related: omarchy fixes
+        ssh flakiness via MTU probing
         (<code>install/config/ssh-flakiness.sh</code>), not TERM, so a global
         <code>TERM=xterm-256color</code> ssh alias is unnecessary and was
         removed.
-      </p>
-
-      <h2 id="F-WAYBAR-MIGRATIONS">
-        Historical Waybar drift and its Quickshell replacement
-        <code class="meta">F-WAYBAR-MIGRATIONS</code>
-      </h2>
-      <p>
-        This finding explains the retired v3 design. Quattro removes Waybar,
-        Walker, and Elephant and replaces them with <code>omarchy-shell</code>.
-        Current user extension points are plugins, scripts, and
-        <code>shell.toml</code>; the shell rewrites <code>shell.toml</code> for
-        settings such as font size, so the repo merges its single color key
-        instead of stowing it. Mutable <code>shell.json</code> is edited with
-        the sourceable <code>omarchy-shell-config</code> helper. Historically,
-        the omarchy
-        <a href="https://learn.omacom.io/2/the-omarchy-manual/65/dotfiles"
-          >Dotfiles</a
-        >
-        page claims files in <code>~/.config</code> "will not be overwritten on
-        updates" — but the
-        <a href="https://learn.omacom.io/2/the-omarchy-manual/102/common-tweaks"
-          >Common tweaks</a
-        >
-        page quietly admits "it might occasionally be necessary for system
-        updates to restore certain configs to their original condition" and
-        instructs the user to find their old version in a
-        <code>.bak</code> file. For waybar the second claim is the accurate one:
-        <code>~/.config/waybar/config.jsonc</code> is mutated by omarchy updates
-        two distinct ways.
-      </p>
-      <ol>
-        <li>
-          <strong>Wholesale overwrite</strong> via
-          <code>omarchy-refresh-waybar</code> (a thin wrapper around
-          <code>omarchy-refresh-config waybar/config.jsonc</code>), which backs
-          up the user file as <code>config.jsonc.bak.&lt;epoch&gt;</code> and
-          then <code>cp -f</code>s the upstream default over it. Invoked from
-          migrations such as <code>1751887718.sh</code>,
-          <code>1752725616.sh</code>, and <code>1753495989.sh</code>.
-        </li>
-        <li>
-          <strong>Surgical <code>sed -i</code> edits</strong> against the live
-          user file, guarded by <code>grep</code> idempotency checks. Examples:
-          <code>1763409505.sh</code> inserts <code>"10": "0"</code>;
-          <code>1764067068.sh</code> adds the bluetooth-off icon;
-          <code>1771602647.sh</code> injects the notification-silencing
-          indicator.
-        </li>
-      </ol>
-      <p>
-        These coexist on purpose: <code>refresh-waybar</code> handles structural
-        changes; surgical migrations add single keys without disturbing personal
-        edits to the rest of the file. The implication for this repo is that
-        <strong
-          >forking the whole <code>config.jsonc</code> would silently drop every
-          future surgical migration</strong
-        >
-        (we'd never see the new keys upstream adds), while leaving the file
-        unmanaged means a periodic
-        <code>refresh-waybar</code> erases personal edits. The resolution lives
-        in <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>. The
-        same delta-only principle now applies to <code>shell.json</code>, while
-        actual widget behavior lives in the supported plugin surface.
       </p>
 
       <h2 id="F-AGENT-GUIDANCE">
@@ -576,9 +500,9 @@
           Wiki: "Leaving the output empty will define a fallback rule to use
           when no other rules match." So omarchy's seeded
           <code>monitor=,preferred,auto,auto</code> in
-          <code>~/.config/hypr/monitors.conf</code> is outranked by every
+          <code>~/.config/hypr/monitors.lua</code> is outranked by every
           specific <code>desc:</code> or name-matched rule — no need to edit
-          <code>monitors.conf</code> to add specific rules.
+          <code>monitors.lua</code> to add specific rules.
         </li>
         <li>
           <strong>The matcher fires on hot-plug, not only at startup.</strong>
@@ -605,20 +529,21 @@
 
       <h2 id="F-MONITOR-SCALE-PERSIST">
         Omarchy's <code>Super + /</code> scale cycle auto-persists only the
-        single-wildcard <code>monitors.conf</code> shape
+        seeded <code>monitors.lua</code> shape
         <code class="meta">F-MONITOR-SCALE-PERSIST</code>
       </h2>
       <p>
-        The omarchy manual recommends editing
-        <code>~/.config/hypr/monitors.conf</code> to set persistent monitor
-        scale, and the runtime cycle keybind <code>Super + /</code> (script
-        <code>omarchy-hyprland-monitor-scaling-cycle</code>) walks
-        <code>1 → 1.25 → 1.6 → 2 → 3 → 4</code> via
-        <code>hyprctl keyword monitor …</code>. The script also writes the new
-        scale through to <code>monitors.conf</code> so it survives reboot — but
-        only when <code>monitors.conf</code> contains exactly one
-        <code>monitor=</code> line and that line matches the regex
-        <code>^monitor=,preferred,auto,</code> (the omarchy-seeded wildcard).
+        Omarchy persists monitor scale through
+        <code>omarchy-hyprland-monitor-scaling</code>, which applies the new
+        scale at runtime with <code>hyprctl eval</code> and then writes it back
+        to <code>~/.config/hypr/monitors.lua</code> — but only while that file
+        still carries Omarchy's seeded shape, matched literally as
+        <code>^local omarchy_monitor_scale = </code> or the
+        <code
+          >hl.monitor({ output = "", mode = "preferred", position = "auto",
+          scale = … })</code
+        >
+        catch-all. It rewrites <code>GDK_SCALE</code> at the same time.
       </p>
       <p>
         For a multi-monitor layout matched by <code>desc:</code> rules — as

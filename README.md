@@ -22,7 +22,7 @@ represents. Each numbered step is necessary in order.
 2. **Keep the stock Quattro baseline.** Do not run the broad Remove
    Preinstalled flow: Quattro owns retained apps, OmaCalc, and its lazy agent
    wrappers. `packages.remove.txt` and `webapps.remove.txt` are the explicit
-   persistent deny-lists applied by this repo. [D-BASELINE][D-WEBAPP][F-BASELINE]
+   persistent deny-lists applied by this repo. [D-BASELINE][D-WEBAPP]
 
 ### SSH + GitHub
 
@@ -159,8 +159,7 @@ make update
 ```
 
 Refuses to start while `pacman -Qdtq` reports orphans, avoiding Omarchy's
-pseudo-TTY orphan prompt (especially the one-time post-Elephant
-`libqalculate` case). Then runs `omarchy update -y`, which owns package,
+pseudo-TTY orphan prompt. Then runs `omarchy update -y`, which owns package,
 migration, and mise-backed agent updates, followed by `uv self update` because
 uv remains outside mise and `make verify`. Update failures are warned so the
 remaining channels and read-only verification still run. [F-CLI]

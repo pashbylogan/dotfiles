@@ -26,6 +26,20 @@ parse_list_file() {
   tr -d '\r' <"$1" | sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | grep -v '^$' || true
 }
 
+# Stock Quattro web apps this overlay keeps. install restores them through the
+# native application refresh and verify.sh asserts them against Quattro's
+# packaged copies, from one list so desired state cannot drift. [D-WEBAPP]
+RETAINED_WEBAPPS=(Discord Zoom)
+
+# Alternate-terminal launchers Quattro's application refresh recreates from its
+# packaged set, keyed by the pacman package that owns each. A launcher is stale
+# only once its package is gone, so install removes and verify.sh asserts under
+# the same condition, from one list. [D-TERM-GHOSTTY]
+declare -A STALE_TERMINAL_LAUNCHERS=(
+  [alacritty]=Alacritty.desktop
+  [foot]=foot.desktop
+)
+
 # xdg-settings asserts only the primary handler, so install sets and verify.sh
 # checks these associations explicitly — from one list, so they cannot drift.
 # [D-BROWSER-DEFAULT]
@@ -41,6 +55,17 @@ BRAVE_MIME_TYPES=(
   application/x-extension-xhtml
   application/x-extension-xht
 )
+
+# Omarchy's install root, defaulted the way its own env-bootstrap defaults it,
+# so install and verify.sh resolve packaged files identically.
+: "${OMARCHY_PATH:=/usr/share/omarchy}"
+
+# Claude Code's config root, resolved the way omarchy-theme-set-claude resolves
+# it — hardcoding $HOME/.claude would make install warn and verify fail on a
+# machine where CLAUDE_CONFIG_DIR points elsewhere. [D-CLAUDE-CONFIG]
+CLAUDE_CONFIG_HOME="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+CLAUDE_SETTINGS_FILE="$CLAUDE_CONFIG_HOME/settings.json"
+CLAUDE_THEME_FILE="$CLAUDE_CONFIG_HOME/themes/omarchy.json"
 
 # Begin/end sentinel for a managed block. install writes these and verify.sh
 # greps for them (whole-line), so the `>>> dotfiles managed (NAME) >>>` contract

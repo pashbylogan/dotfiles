@@ -108,9 +108,8 @@
                   <code>make ci</code> — gates: <code>shellcheck</code> +
                   <code>shfmt</code> (<code>-i 2 -ci</code>) on the shell set,
                   pinned <code>prettier</code> on docs HTML/JSON, an
-                  empty-object smoke-check of every tracked jq delta plus a
-                  duplicate-repair/fixed-point fixture for the Quickshell layout
-                  (so jq syntax and convergence bugs surface here rather than at
+                  empty-object smoke-check of every tracked jq delta (so jq
+                  syntax errors surface here rather than at
                   <code>./install</code> time), and
                   <code>.github/scripts/check_docs.py</code> for docs integrity.
                   <code>make fmt</code> auto-fixes.
@@ -122,10 +121,10 @@
                   <code>uv self update</code> because uv remains outside mise,
                   then <code>make verify</code>. It first refuses while
                   <code>pacman -Qdtq</code> reports orphans, avoiding the
-                  updater's pseudo-TTY prompt after Elephant retirement.
-                  Non-zero Omarchy or uv update exits are warned, then the
-                  wrapper continues through the remaining channel and read-only
-                  verification so independent drift is still reported.
+                  updater's pseudo-TTY prompt. Non-zero Omarchy or uv update
+                  exits are warned, then the wrapper continues through the
+                  remaining channel and read-only verification so independent
+                  drift is still reported.
                 </li>
                 <li>
                   <code>make update-firmware</code> — firmware only:
@@ -138,7 +137,7 @@
                   <code>make verify</code> — read-only live health check
                   (<code>.github/scripts/verify.sh</code>): hyprctl
                   configerrors, the five managed seams (bashrc, Hypr Lua,
-                  keymaps, tmux, starship), Quickshell plugin/layout/command
+                  keymaps, tmux, starship), Quickshell plugin and bar-layout
                   checks, terminal and browser convergence,
                   <a href="decisions.html#D-TERM-GHOSTTY">D-TERM-GHOSTTY</a>),
                   stow links resolve into the repo (including the
@@ -297,11 +296,7 @@
               explicit, so the deny-list is durable desired state rather than a
               one-time cleanup. <code>install</code> seeds a missing mutable
               OpenCode config only to apply the user's LSP delta; Quattro still
-              owns the OpenCode binary through its mise wrapper. The installer
-              removes legacy <code>opencode</code>/<code>claude-code</code>
-              pacman packages only when an interrupted or manual transition
-              leaves them behind; this mirrors Quattro's upgrade cleanup and
-              does not alter its mise wrappers or user config.
+              owns the OpenCode binary through its mise wrapper.
               <strong>Audit rule:</strong> before adding a name to
               <code>packages.remove.txt</code>, grep
               <code>/usr/share/omarchy/</code> for usage — Omarchy wires some
@@ -328,9 +323,14 @@
               <code>omarchy webapp remove</code>. Discord and Zoom remain
               packaged and refreshed by Quattro, while the separately installed
               Tailscale launcher is retained because none appears in the
-              deny-list. A missing Discord launcher is restored through
-              <code>omarchy refresh applications</code> before removals are
-              reapplied.
+              deny-list. Either retained launcher is restored through
+              <code>omarchy refresh applications</code> when missing, before
+              removals are reapplied;
+              <code>lib/style.sh: RETAINED_WEBAPPS</code> is the one list
+              <code>install</code> and <code>verify.sh</code> share.
+              <code>verify.sh</code> <code>cmp</code>s each retained launcher
+              against Quattro's packaged copy rather than restating its
+              <code>Exec=</code> line.
             </td>
             <td>
               Quattro's broad Remove Preinstalled flow would also remove
@@ -338,7 +338,9 @@
               launchers. Its application refresh can recopy stock desktop files,
               so a small persistent delta is required. Calling the supported
               remover preserves Quattro's ownership of launcher and icon cleanup
-              instead of restating or editing packaged files.
+              instead of restating or editing packaged files — which is also why
+              the retained-launcher check compares against the packaged file
+              instead of pinning an upstream URL.
             </td>
           </tr>
           <tr id="D-BROWSER-DEFAULT">
@@ -616,50 +618,34 @@
             <td><code class="meta">D-LOOKNFEEL</code> Looknfeel deltas</td>
             <td><span class="badge badge-done">in (fragment)</span></td>
             <td>
-              An always-on "compact look" in the reloadable personal Lua module:
-              (1)
-              <code>general { gaps_in = 2; gaps_out = 4 }</code> — slim but
-              present gaps (omarchy's defaults are
-              <code>5</code>/<code>10</code>); (2)
-              <code>general { border_size = 2 }</code> so the
-              <code>window-no-gaps</code> toggle keeps killing gaps without also
-              killing borders — this is the single line in any overlay that
-              re-states an omarchy default value (<code>border_size = 2</code>
-              in <code>looknfeel.conf</code>) because that downstream toggle
-              would otherwise zero it, so <code>make verify</code> compares the
-              two and fails loudly if omarchy ever moves their default; (3)
-              <code>decoration { rounding = 8 }</code> — every corner rounds at
-              omarchy's documented radius (the commented
-              <code>rounding = 8</code> hint in its <code>looknfeel.conf</code>
-              template, and the same radius omarchy applies to popups via
-              <code>rounding 8, match:tag pop</code> in
-              <code>default/hypr/apps/system.conf</code>); (4)
-              <code
-                >decoration { blur { enabled = true; size = 8; passes = 2;
-                brightness = 0.72; contrast = 0.75 } }</code
+              <strong
+                >An always-on "compact look" in the reloadable personal Lua
+                module.</strong
               >
-              plus explicit shadow enablement because Quattro disables both
-              effects by default, and plus a narrow terminal-class opacity rule
-              at <code>0.86/0.78</code>
-              so terminals get a mild frosted-glass effect without hard-coding
-              terminal colors or breaking omarchy theme swaps; (5)
-              <code>misc { focus_on_activate = false }</code> so an app's
-              activation request (chat message, browser opening a link, a
-              finished build) only marks the window urgent instead of stealing
-              focus and jumping you to its workspace — omarchy sets this
-              <code>true</code> in
-              <code>default/hypr/looknfeel.conf</code> whereas Hyprland's own
-              default is <code>false</code>, so this inverts an omarchy
-              non-default rather than re-stating a default (no
-              <code>make verify</code> guard needed, unlike
-              <code>border_size</code>). Because the fragment is sourced
-              <em>after</em> both omarchy's defaults and the
-              <code>window-no-gaps</code> toggle in hyprland.conf's source
-              chain, these values win regardless of toggle state — editing
-              <code>~/.config/hypr/looknfeel.conf</code> wouldn't, since it
-              loads <em>before</em> the toggle. See
-              <a href="findings.html#F-HYPR-SEAM">F-HYPR-SEAM</a> for the full
-              ordering.
+              (1) <code>general { gaps_in = 2; gaps_out = 4 }</code> — slim but
+              present gaps (Omarchy's defaults are 5/10, Hyprland's own are
+              5/20). (2) <code>general { border_size = 2 }</code> — the one
+              deliberate restatement of an Omarchy default in any overlay. This
+              module loads after <code>default.hypr.toggles</code>, so
+              <code>window-no-gaps</code> (which zeroes gaps, border and
+              rounding) loses to every key stated here; omitting
+              <code>border_size</code> would let that one through and leave the
+              toggle half-applied — our gaps and rounding with no borders. See
+              <a href="findings.html#F-HYPR-SEAM">F-HYPR-SEAM</a>. (3)
+              <code>decoration { rounding = 8 }</code> — Hyprland defaults to 0;
+              this is also the radius Omarchy applies to popups via
+              <code>o.window({ tag = "pop" }, { rounding = 8 })</code>. (4)
+              <code>decoration { shadow, blur }</code> — Quattro disables both,
+              so <code>enabled = true</code> is the delta; only the sub-values
+              that differ from Hyprland 0.56.2's own defaults are stated (<code
+                >shadow.range 2</code
+              >, <code>blur.passes 2</code>, <code>blur.special</code>,
+              <code>blur.brightness 0.72</code>,
+              <code>blur.contrast 0.75</code>), and the ones that matched it are
+              deliberately absent. (5) a narrow terminal-class opacity rule at
+              <code>0.86 0.78</code>, without <code>override</code> — that
+              keyword only stops the <code>decoration:*_opacity</code> globals
+              multiplying in, and Quattro sets none of them.
             </td>
           </tr>
           <tr id="D-MONITORS">
@@ -735,16 +721,19 @@
               <a href="decisions.html#D-LOOKNFEEL">D-LOOKNFEEL</a> but inverted:
               silence to let the downstream toggle win, instead of re-stating to
               beat it. <strong>GDK_SCALE intentionally untouched</strong>:
-              omarchy seeds <code>env = GDK_SCALE,2</code> in
-              <code>monitors.conf</code> (right for the laptop's 13"/2.8K
-              panel). <code>GDK_SCALE</code> is process-global on Wayland —
-              there is no per-monitor GTK scaling without per-app launchers — so
-              dropping it to <code>1</code> for the 1440p externals would shrink
-              GTK apps on eDP-1. The compositor scale in our
-              <code>monitor =</code> lines is the in-scope correctness step; the
-              GTK-oversize trade on the externals is acceptable until per-app
-              launchers become worth it. <strong>Forward risk</strong>: when
-              omarchy ships the Lua hyprland config (<a
+              Quattro seeds <code>hl.env("GDK_SCALE", …)</code> from a
+              <code>local omarchy_gdk_scale</code> in
+              <code>monitors.lua</code> (stock 2, right for the laptop's
+              13"/2.8K panel), which
+              <code>omarchy-hyprland-monitor-scaling</code> rewrites alongside
+              the monitor scale. <code>GDK_SCALE</code> is process-global on
+              Wayland — there is no per-monitor GTK scaling without per-app
+              launchers — so dropping it to <code>1</code> for the 1440p
+              externals would shrink GTK apps on eDP-1. The compositor scale in
+              our <code>hl.monitor</code> entries are the in-scope correctness
+              step; the GTK-oversize trade on the externals is acceptable until
+              per-app launchers become worth it. <strong>Forward risk</strong>:
+              when omarchy ships the Lua hyprland config (<a
                 href="findings.html#F-LUA"
                 >F-LUA</a
               >), these lines become <code>hl.monitor({…})</code> calls; the
@@ -776,27 +765,13 @@
         </tbody>
       </table>
 
-      <h2>Quickshell deltas (historical Waybar ID)</h2>
+      <h2>Quickshell deltas</h2>
       <p>
-        Quattro retires Waybar, Walker, and Elephant. The current overlay uses a
-        supported Quickshell plugin for dynamic workspaces, a command module for
-        memory, a scalar delta in mutable <code>shell.toml</code> for the exact
-        urgent/active color, and a narrow <code>shell.json</code> delta applied
-        through <code>omarchy-shell-config</code>. The stable ID below is kept
-        for trace continuity. The remaining v3 detail is historical context
-        only.
-      </p>
-      <p>
-        Historically, Waybar's config sat in
-        <code>~/.config/waybar/config.jsonc</code>, an omarchy-seeded file that
-        the live system mutates two different ways (<a
-          href="findings.html#F-WAYBAR-MIGRATIONS"
-          >F-WAYBAR-MIGRATIONS</a
-        >). Omarchy's manual recommends direct edits and treats periodic
-        <code>.bak</code> restores as the recovery story; this repo applies
-        <a href="architecture.html#D-DELTA-STORAGE">D-DELTA-STORAGE</a> to JSON
-        instead: own thin deltas, re-apply them every <code>./install</code>,
-        restart only on real change.
+        The overlay carries one supported Quickshell plugin for dynamic
+        workspaces, placed with Quattro's own <code>omarchy bar</code> CLI. Both
+        <code>shell.toml</code> and <code>shell.json</code> stay mutable and
+        user-owned; the repo writes nothing into <code>shell.toml</code>, so bar
+        colors follow the active theme.
       </p>
       <table>
         <thead>
@@ -815,127 +790,27 @@
             <td>
               Stow the supported user-owned
               <code>pashbyl.workspaces</code> plugin. Keep
-              <code>shell.toml</code> mutable because shell settings rewrite it;
-              merge only <code>bar.active</code>. Keep <code>shell.json</code>
-              mutable and converge only module IDs and ordering with
-              <code>omarchy/shell.jq</code> through the official
-              <code>omarchy-shell-config</code> normalize/commit helpers. The
-              filter removes every stock or personal workspace entry before
-              inserting exactly one personal entry after the menu, so upstream
-              re-additions and interrupted runs converge to the same state.
+              <code>shell.toml</code> mutable and set nothing in it: pinning
+              <code>bar.active</code> would override every theme's red with
+              Quickshell's own <code>#a55555</code> fallback. Keep
+              <code>shell.json</code>
+              mutable and converge module IDs and ordering with Quattro's own
+              <code>omarchy bar</code> / <code>omarchy plugin</code> CLI, which
+              sources the same
+              <code>omarchy-shell-config</code> normalize/commit helpers a
+              hand-written jq filter used to reimplement.
+              <code>plugin disable</code> clears the stock workspaces module,
+              which an Omarchy update can re-place, and
+              <code>bar put</code> places the personal clone after the menu
+              without moving an already-placed one, so upstream re-additions and
+              interrupted runs converge to the same state.
             </td>
             <td>
-              Quattro documents plugins as the supported widget seam, while
-              <code>shell.json</code> has no deep-merge facility and is replaced
-              by the upgrade. Quickshell atomically replaces the user
-              <code>shell.toml</code> when settings change, so a merge avoids a
-              broken Stow link and preserves those settings. Narrow fixed-point
-              deltas preserve upstream state without forking Omarchy's shell.
-            </td>
-          </tr>
-          <tr id="D-WAYBAR-DELTAS">
-            <td>
-              <code class="meta">D-WAYBAR-DELTAS</code> Historical Waybar
-              overlay
-            </td>
-            <td>
-              <strong>Retired v3 implementation details:</strong>
-              <strong
-                >Two coupled overlays: <code>waybar/deltas.jq</code> holds
-                personal <code>config.jsonc</code> deltas as composed jq
-                filters; a managed block in <code>style.css</code> (via the
-                existing <code>upsert_block</code> helper) carries the matching
-                CSS rules.</strong
-              >
-              <code>install</code>'s <code>apply_jq_deltas</code> applies the jq
-              filters idempotently; the style block is re-anchored at EOF the
-              same way as the bashrc/hyprland/tmux/keymaps blocks. waybar is
-              only restarted when content actually changed (hash-compare around
-              both files), and the restart waits-and-polls
-              <code>pgrep -x waybar</code> to verify the process actually came
-              back. Initial deltas: drop the 1-5
-              <code>persistent-workspaces</code> pin so workspaces grow on
-              demand (i3-style), add an icon-only <code>memory</code> module on
-              the same 5 s nominal interval as cpu (with used/total/% in
-              <code>tooltip-format</code> on hover), and extend omarchy's
-              <code>#cpu, #battery, ...</code> CSS spacing rule to include
-              <code>#memory</code> so the new module renders with the same
-              margins as its neighbors.
-              <strong>Urgent workspaces:</strong> omarchy ships no urgent
-              styling, and its <code>#workspaces button { all: initial }</code>
-              reset means a workspace flagged urgent shows nothing — so with
-              <a href="decisions.html#D-LOOKNFEEL">focus_on_activate off</a> a
-              window requesting attention would be invisible. The block adds a
-              <code>#workspaces button.urgent label</code> rule that recolors
-              the workspace digit to a muted red <code>#a55555</code> — the same
-              attention accent the bar already uses for its
-              screen-record/idle/notify-silence indicators — reproducing i3's
-              number-color cue. It targets the <code>label</code> node because
-              omarchy's global <code>* { color: @foreground }</code> paints the
-              digit directly, overriding a button-only color rule. The color is
-              a literal for the same reason as the tray accent below — waybar
-              CSS only receives
-              <code>@foreground</code>/<code>@background</code>, never the
-              theme's per-theme accent.
-              <strong>Spacing rationale:</strong> omarchy ships an asymmetric
-              right side — <code>#custom-expand-icon</code> has
-              <code>margin-right: 18 px</code>, <code>#bluetooth</code> 17 px,
-              <code>#tray</code> 16 px, <code>#network</code> 13 px, while
-              <code>#cpu</code>/<code>#battery</code>/<code>#pulseaudio</code>
-              share <code>margin: 0 7.5 px</code> and <code>#memory</code>
-              gets no rule at all. We flatten every right-side module to
-              <code>margin: 0 4 px</code> on each side (equidistant ~8 px gaps,
-              snug but not pinched). The override wins via CSS's later-rule-wins
-              ordering — our managed block sits at EOF of
-              <code>style.css</code>, after omarchy's per-module rules.
-              <strong>Tray menu hover:</strong> the same block also restores the
-              right-click tray (dbusmenu) context-menu hover highlight.
-              omarchy's <code>* { background-color: @background }</code> reset
-              loads at GTK <em>application</em> priority, beating the theme's
-              <code>menuitem:hover</code> by priority rather than specificity —
-              so hovered rows never highlighted. Worse, that reset paints an
-              opaque <code>@background</code> box on <em>every</em> node,
-              including each menuitem's label, so a row-level highlight would
-              only show at the edges with a dark box behind the text. The fix is
-              two same-sheet rules that win by specificity: clear the box on the
-              menuitem content nodes
-              (<code>label</code>/<code>arrow</code>/<code>check</code>/<code
-                >radio</code
-              >
-              → <code>background-color: transparent</code>), then tint the
-              hovered row with
-              <code>alpha(@theme_selected_bg_color, 0.4)</code>. The tint —
-              rather than a solid fill with a foreground/background flip — keeps
-              the menu's dark base so the unchanged light text stays readable;
-              the label-color override a solid highlight would need doesn't take
-              in GTK3's menu nodes (the text rendered invisible).
-              <code>@theme_selected_bg_color</code> is GTK's built-in selection
-              accent (always defined), so it gives a distinct hue without
-              hardcoding. omarchy exposes only <code>@foreground</code>/<code
-                >@background</code
-              >
-              to waybar CSS and keeps its per-theme accent (<code>#7aa2f7</code>
-              for Tokyo Night) in <code>colors.toml</code>, which GTK CSS can't
-              read — matching the accent per-theme would need a separate
-              <code>theme-set</code> hook bridge, out of scope for a tray
-              highlight.
-            </td>
-            <td>
-              Forking the whole file would silently drop every future surgical
-              migration (<a href="findings.html#F-WAYBAR-MIGRATIONS"
-                >F-WAYBAR-MIGRATIONS</a
-              >); direct edits would be wiped on the next
-              <code>omarchy-refresh-waybar</code> and only recoverable through a
-              <code>.bak</code> diff. Owning <em>only the deltas</em>
-              survives both mutation patterns: refresh overwrites get re-patched
-              on next install, surgical migrations either pre-date our filter or
-              touch keys our filter doesn't (the memory module uses a merge
-              pattern so future upstream keys survive). Each delta was
-              battery-audited: memory uses the same 5 s nominal interval as cpu
-              — waybar runs per-module timers independently so this isn't strict
-              coalescing, but it's the cheapest practical cadence. A verbose 1 s
-              clock tick was considered and deliberately rejected because it
-              would prevent deep C-states.
+              Quattro documents plugins as the supported widget seam, and its
+              own <code>omarchy bar</code> CLI already owns layout convergence,
+              so the repo drives that rather than reimplementing it. Quickshell
+              atomically replaces <code>shell.toml</code> when settings change,
+              which is why it stays unstowed and unwritten.
             </td>
           </tr>
         </tbody>
@@ -977,15 +852,18 @@
               gate. After the package drop, install also removes Omarchy
               migration <code>1763558828</code>'s user-owned
               <code>~/.local/share/applications/Alacritty.desktop</code> when it
-              exists. Quattro's application refresh also copies Foot's desktop
-              file independently of the package, so install removes the
-              user-level <code>foot.desktop</code>,
-              <code>foot-server.desktop</code>, and
-              <code>footclient.desktop</code> variants whenever Foot is absent.
-              Pacman does not own or remove these user files. No terminal config
-              is carried — Omarchy seeds ghostty, and ghostty's default
-              right-click is a context menu (not paste), so the former Alacritty
-              right-click no-op overlay was retired rather than ported.
+              exists. Quattro's application refresh also copies
+              <code>foot.desktop</code> independently of the package, so install
+              removes that user-level launcher too. Both live in
+              <code>lib/style.sh: STALE_TERMINAL_LAUNCHERS</code> as
+              <code>package:launcher</code> pairs, so
+              <code>install</code> removes and <code>verify.sh</code> asserts
+              under the same package-absent guard — a launcher is legitimate
+              while its terminal is still installed. Pacman does not own or
+              remove these user files. No terminal config is carried — Omarchy
+              seeds ghostty, and ghostty's default right-click is a context menu
+              (not paste), so the former Alacritty right-click no-op overlay was
+              retired rather than ported.
             </td>
             <td>
               <strong
@@ -1032,25 +910,31 @@
             </td>
             <td>
               <strong
-                >A <code>[custom.venv]</code> module keyed on
-                <code>$VIRTUAL_ENV</code> prints just the active venv's name
-                (e.g. <code>(.venv)</code>) — and nothing when no venv is
-                active, in any directory.</strong
+                >starship's built-in <code>python</code> module prints just the
+                active venv's name (e.g. <code>(.venv)</code>) — and nothing
+                when no venv is active, in any directory.</strong
               >
-              Omarchy seeds a stripped
-              <code
-                >format =
-                "[$directory$git_branch$git_status]($style)$character"</code
-              >. <code>install</code> adds a top-level
-              <code>right_format = "${custom.venv}"</code> (inserted at line 1,
-              grep-guarded) rather than splicing Omarchy's own
-              <code>format</code> string, and appends the module table as a
-              standard <code>upsert_block</code> managed block that runs
-              <code>basename "$VIRTUAL_ENV"</code> <code>when</code>
-              <code>$VIRTUAL_ENV</code> is set, styled
-              <code>italic yellow</code>. <code>verify.sh</code> greps the
-              <code>right_format</code> reference, confirms the legacy inline
-              splice is gone, and <code>check_block</code>s the module.
+              Emptying every <code>detect_*</code> list leaves
+              <code>detect_env_vars</code> (which already defaults to
+              <code>["VIRTUAL_ENV"]</code>) as the module's only trigger, so it
+              is directory-independent; omitting <code>$version</code> from its
+              format is what keeps it from exec'ing <code>python</code>, making
+              the indicator fork-free. Omarchy seeds a stripped
+              <code>format</code>, which <code>install</code> splices
+              <code>$python</code> into before <code>$character</code>;
+              <code>right_format</code> is not used because starship's bash init
+              only renders it under ble.sh, so a reference parked there would be
+              invisible. The module table rides a standard
+              <code>upsert_block</code> managed block, styled
+              <code>italic yellow</code>. One behaviour change from the retired
+              custom module: <code>$virtualenv</code> prefers the
+              <code>prompt</code> field in the venv's
+              <code>pyvenv.cfg</code> and only falls back to the directory
+              basename, where the old <code>basename</code> call always showed
+              the directory name. <code>verify.sh</code> greps the
+              <code>$python</code> reference, fails on an unrenderable
+              <code>right_format</code>, and <code>check_block</code>s the
+              module.
             </td>
             <td>
               <strong
@@ -1120,6 +1004,18 @@
               renders it in the active Omarchy theme) is
               <strong>stowed</strong> via a new <code>claude</code> package,
               like <a href="decisions.html#D-TMUX-KEEP">tmux/local.conf</a>.
+              Claude Code itself is themed the same Omarchy-native way as foot
+              and tmux: <code>omarchy-theme-set</code> regenerates
+              <code>~/.claude/themes/omarchy.json</code> on every theme change
+              via <code>omarchy-theme-set-claude</code>, and the overlay opts in
+              with <code>.theme = "custom:omarchy"</code>.
+              <code>install</code> seeds the file by calling that same helper
+              <em>without</em> <code>--activate</code> (which would write
+              <code>.theme</code> itself and fight the jq delta). Because the
+              helper exits 0 without writing anything when the theme state was
+              never generated, <code>install</code> warns and
+              <code>verify.sh</code> checks for the theme file — a pinned
+              <code>.theme</code> with no theme file is a dangling reference.
               <code>settings.json</code> is instead applied as an idempotent
               <strong>jq delta</strong> (<code>claude/settings.jq</code> +
               <code>apply_jq_deltas</code>) that <code>install</code> overlays
@@ -1180,9 +1076,8 @@
         removes retained Quattro apps, OmaCalc, and lazy agent wrappers. Start
         from stock Quattro, apply additive manifests and the narrow package
         deny-list, and leave Omarchy-owned bindings untouched except for
-        explicit personal Lua overrides. The previous v3 baseline is retained as
-        a historical finding (<a href="findings.html#F-BASELINE">F-BASELINE</a
-        >). Reproduction recipe: install Quattro → <code>./install</code>.
+        explicit personal Lua overrides. Reproduction recipe: install Quattro →
+        <code>./install</code>.
       </div>
 
       <h2 id="D-KEYBIND-OVERRIDES">

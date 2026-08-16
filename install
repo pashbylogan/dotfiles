@@ -56,81 +56,6 @@ upsert_block() {
   info "managed block updated in ${file/#$HOME/\~}"
 }
 
-# Remove an obsolete managed block without touching the surrounding mutable
-# file. This is the one-way v3 Hyprland source-to-Lua migration. [D-IDEMPOTENT]
-remove_block() {
-  local file="$1" name="$2" copen="$3" cclose="${4:-}" begin end begins ends begin_line end_line
-  [ -f "$file" ] || return 0
-  begin="$(managed_marker begin "$name" "$copen" "$cclose")"
-  end="$(managed_marker end "$name" "$copen" "$cclose")"
-  begins=$(grep -cxF -- "$begin" "$file" || true)
-  ends=$(grep -cxF -- "$end" "$file" || true)
-  [ "$begins" -eq 0 ] && [ "$ends" -eq 0 ] && return 0
-  [ "$begins" -eq 1 ] && [ "$ends" -eq 1 ] ||
-    die "unbalanced or duplicate managed block in $file — refusing to edit"
-  begin_line=$(grep -nF -- "$begin" "$file" | cut -d: -f1)
-  end_line=$(grep -nF -- "$end" "$file" | cut -d: -f1)
-  [ "$begin_line" -lt "$end_line" ] ||
-    die "managed block markers are reversed in $file — refusing to edit"
-  if ! awk -v b="$begin" -v e="$end" '
-    $0==b{s=1; next}
-    s&&$0==e{s=0; next}
-    !s{print}
-  ' "$file" >"$file.dotfiles.tmp"; then
-    rm -f "$file.dotfiles.tmp"
-    die "failed to remove managed block from $file — left it untouched"
-  fi
-  mv "$file.dotfiles.tmp" "$file"
-  info "obsolete managed block removed from ${file/#$HOME/\~}"
-}
-
-# shell.toml is user-owned but atomically rewritten by Quickshell settings.
-# Merge one scalar without replacing unrelated runtime-owned keys.
-# [D-QUICKSHELL-DELTAS][D-IDEMPOTENT]
-upsert_toml_key() {
-  local file="$1" section="$2" key="$3" value="$4" tmp
-  mkdir -p "$(dirname "$file")"
-  [ -f "$file" ] || install -m 600 /dev/null "$file"
-  tmp="$(mktemp "${file}.dotfiles.XXXXXX")"
-  if ! awk -v section="$section" -v key="$key" -v value="$value" '
-    function header_name(line, name) {
-      name = line
-      sub(/^[[:space:]]*\[/, "", name)
-      sub(/\][[:space:]]*$/, "", name)
-      return name
-    }
-    /^[[:space:]]*\[[^]]+\][[:space:]]*$/ {
-      if (in_section && !wrote) { print key " = " value; wrote = 1 }
-      in_section = (header_name($0) == section)
-      if (in_section) section_seen = 1
-    }
-    in_section && $0 ~ "^[[:space:]]*" key "[[:space:]]*=" {
-      if (!wrote) { print key " = " value; wrote = 1 }
-      next
-    }
-    { print }
-    END {
-      if (in_section && !wrote) print key " = " value
-      if (!section_seen) {
-        if (NR > 0) print ""
-        print "[" section "]"
-        print key " = " value
-      }
-    }
-  ' "$file" >"$tmp"; then
-    rm -f "$tmp"
-    die "failed to merge $section.$key into $file"
-  fi
-  if cmp -s "$tmp" "$file"; then
-    rm -f "$tmp"
-    return 1
-  fi
-  cp -f "$tmp" "$file"
-  rm -f "$tmp"
-  info "TOML delta applied to ${file/#$HOME/\~} ($section.$key)"
-  return 0
-}
-
 # Idempotent jq overlay for tool-owned JSON; returns 0 only on content change.
 # cp -f preserves the target mode while keeping mutable state out of Stow.
 # [D-IDEMPOTENT][D-DELTA-STORAGE]
@@ -196,21 +121,6 @@ pkg_filter() {
   done
   # The loop's last test decides $? otherwise, which set -e would treat as fatal.
   return 0
-}
-
-# Retired Stow packages are no longer in STOW_PKGS, so clean up only their
-# exact symlinks when they still resolve into this checkout. [D-IDEMPOTENT]
-remove_legacy_repo_link() {
-  local link="$1" target resolved
-  [ -L "$link" ] || return 0
-  target="$(readlink "$link")"
-  resolved="$(realpath -m -- "$(dirname "$link")/$target")"
-  case "$resolved" in
-    "$REPO"/*)
-      unlink "$link"
-      info "retired repo link removed: ${link/#$HOME/\~}"
-      ;;
-  esac
 }
 
 # ── prerequisites ────────────────────────────────────────────────────────────
@@ -300,25 +210,30 @@ if [ -f packages.remove.txt ]; then
   fi
 fi
 
-# Quattro's upgrade normally retires these pacman packages before installing
-# its mise wrappers. Reconcile interrupted/manual upgrades without touching the
-# wrappers or their user config.
-mapfile -t LEGACY_AGENT_PKGS < <(pkg_filter installed opencode claude-code)
-if [ "${#LEGACY_AGENT_PKGS[@]}" -gt 0 ]; then
-  info "dropping retired agent packages: ${LEGACY_AGENT_PKGS[*]}"
-  omarchy pkg drop "${LEGACY_AGENT_PKGS[@]}"
+# Restore missing retained launchers through Quattro's application lifecycle.
+# The refresh is not per-app — it recopies the whole packaged set and reruns the
+# mise wrapper install — so run it once for all misses. It may also recopy denied
+# launchers, removed just below. [D-WEBAPP][F-APP-CHANNELS]
+missing_webapps=()
+for retained_webapp in "${RETAINED_WEBAPPS[@]}"; do
+  # cmp, not just -f: verify compares each launcher against Quattro's packaged
+  # copy, so a drifted one must be restored here too or it never reconciles.
+  cmp -s "$HOME/.local/share/applications/$retained_webapp.desktop" \
+    "$OMARCHY_PATH/applications/$retained_webapp.desktop" ||
+    missing_webapps+=("$retained_webapp")
+done
+if [ "${#missing_webapps[@]}" -gt 0 ]; then
+  info "restoring Quattro web apps: ${missing_webapps[*]}"
+  # omarchy-refresh-applications has no `set -e` and ends on
+  # update-desktop-database, so a failed copy still returns 0 — assert each
+  # launcher instead of trusting the exit status.
+  omarchy refresh applications || true
+  for retained_webapp in "${missing_webapps[@]}"; do
+    [ -f "$HOME/.local/share/applications/$retained_webapp.desktop" ] ||
+      warn "$retained_webapp web app still missing after 'omarchy refresh applications'"
+  done
 fi
-unset LEGACY_AGENT_PKGS
-
-# Restore a missing retained Discord launcher through Quattro's application
-# lifecycle; the refresh may also recopy denied launchers, removed just below.
-# [D-WEBAPP][F-APP-CHANNELS]
-DISCORD_WEBAPP="$HOME/.local/share/applications/Discord.desktop"
-if [ ! -f "$DISCORD_WEBAPP" ]; then
-  info "restoring Quattro's Discord web app"
-  omarchy refresh applications
-fi
-unset DISCORD_WEBAPP
+unset retained_webapp missing_webapps
 
 # Quattro refreshes packaged launchers into the user application directory.
 # Reapply only the explicit stock-webapp deltas through its supported remover;
@@ -395,17 +310,6 @@ fi
 # ── stow repo-owned files ────────────────────────────────────────────────────
 # Stow only repo-owned namespaces; Omarchy-owned files get managed blocks. [D-DELTA-STORAGE]
 step "Stow"
-# The v3 seam sources files this branch retires. Remove it before cleaning its
-# links so hyprland.conf cannot retain a dangling source directive.
-remove_block "$HOME/.config/hypr/hyprland.conf" hypr '#'
-remove_legacy_repo_link "$HOME/.config/dotfiles/hypr.conf"
-remove_legacy_repo_link "$HOME/.config/dotfiles/hypr.local.conf.example"
-remove_legacy_repo_link "$HOME/.config/elephant/websearch.toml"
-remove_legacy_repo_link "$HOME/.config/omarchy/hooks/theme-set.d/brave-origin-stable"
-remove_legacy_repo_link "$HOME/.config/omarchy/shell.toml"
-# Retired custom RAM widget; Quattro's power panel reports memory natively via
-# omarchy-system-stats. shell.jq drops the bar module, this drops its script.
-remove_legacy_repo_link "$HOME/.config/omarchy/bar/scripts/memory-status"
 prestow_backup "$HOME/.ssh/config"
 # UWSM env.d is stowed because Omarchy-launched apps inherit that session env. [F-SSH-AGENT]
 prestow_backup "$HOME/.config/uwsm/env.d/dotfiles.sh"
@@ -420,27 +324,17 @@ STOW_PKGS=(bash ssh bin hypr tmux nvim uwsm omarchy claude)
 stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
 success "stowed: ${STOW_PKGS[*]}"
 
-# Quickshell preserves user overrides but rewrites this file when settings such
-# as font size change. Keep it mutable and reassert only the exact urgent role.
-upsert_toml_key "$HOME/.config/omarchy/shell.toml" bar active '"#a55555"' || true
-
 # Stale user launchers survive package removal because pacman never owned them.
 # [D-PKG-REMOVE][D-TERM-GHOSTTY]
 rm -f "$HOME/.local/share/applications/typora.desktop"
-# Omarchy migration 1763558828 created this user-owned override while Alacritty
-# was installed; pacman cannot remove it with the package. Keep the package
-# guard — the launcher is legitimate while Alacritty is still installed.
-if ! pacman -Qq alacritty >/dev/null 2>&1; then
-  rm -f "$HOME/.local/share/applications/Alacritty.desktop"
-fi
-# omarchy-refresh-applications copies Foot's packaged launcher even when the
-# package is denied. Remove every user-level variant after the package drop.
-if ! pacman -Qq foot >/dev/null 2>&1; then
-  rm -f \
-    "$HOME/.local/share/applications/foot.desktop" \
-    "$HOME/.local/share/applications/foot-server.desktop" \
-    "$HOME/.local/share/applications/footclient.desktop"
-fi
+# Omarchy migration 1763558828 and omarchy-refresh-applications both write these
+# user-owned launchers, which pacman cannot remove with the package. Keep the
+# package guard — a launcher is legitimate while its terminal is installed.
+for stale_pkg in "${!STALE_TERMINAL_LAUNCHERS[@]}"; do
+  pacman -Qq "$stale_pkg" >/dev/null 2>&1 ||
+    rm -f "$HOME/.local/share/applications/${STALE_TERMINAL_LAUNCHERS[$stale_pkg]}"
+done
+unset stale_pkg
 
 # ssh ignores overly-open config paths; harden the dir + every config file.
 [ -d "$HOME/.ssh" ] && chmod 700 "$HOME/.ssh" 2>/dev/null || true
@@ -486,91 +380,86 @@ upsert_block "$HOME/.config/tmux/tmux.conf" tmux '#' <<'EOF'
 source-file ~/.config/tmux/local.conf
 EOF
 
-# Show the active venv's name in the prompt via a $VIRTUAL_ENV-keyed custom
+# Show the active venv's name in the prompt via starship's built-in python
 # module. starship.toml is seed-once + never auto-refreshed, so editing in place
 # is safe; the format scalar can't take a merged delta, so reference the module
-# there with sed, then define the module table via a managed block. Full
-# rationale: docs/decisions.html#D-STARSHIP-VENV. [D-STARSHIP-VENV]
+# there with sed, then configure it via a managed block. Full rationale:
+# docs/decisions.html#D-STARSHIP-VENV. [D-STARSHIP-VENV]
 STARSHIP_TOML="$HOME/.config/starship.toml"
 if [ ! -f "$STARSHIP_TOML" ]; then
   warn "skip starship venv delta — missing ${STARSHIP_TOML/#$HOME/\~}"
 else
-  # ${custom.venv} / $character are literal starship tokens for grep + sed, not
-  # shell expansions; silence SC2016 across the in-place edits below.
+  # Reference the module from the left prompt: starship's bash init only renders
+  # right_format under ble.sh, so a reference parked there would be invisible.
+  # $python / $character are literal starship tokens for grep and sed, not shell
+  # expansions — hence the SC2016 waiver.
   # shellcheck disable=SC2016
-  # One-way migration: the module used to be spliced into Omarchy's `format`
-  # scalar. right_format is additive, so drop the old inline reference or the
-  # venv renders twice. [D-STARSHIP-VENV]
-  if grep -qF '${custom.venv}$character' "$STARSHIP_TOML"; then
-    sed -i 's/${custom\.venv}\$character/$character/' "$STARSHIP_TOML"
-    info "starship: removed the legacy inline \${custom.venv} reference"
+  if grep -qF '$python$character' "$STARSHIP_TOML"; then
+    : # already referenced, and matches what verify.sh asserts (idempotent)
+  elif grep -qF '$character' "$STARSHIP_TOML"; then
+    sed -i 's/\$character/$python$character/' "$STARSHIP_TOML"
+    info "starship: referenced \$python before \$character"
+  else
+    warn "starship: no \$character anchor in ${STARSHIP_TOML/#$HOME/\~} — left untouched"
   fi
-  # right_format must be a root key, but upsert_block appends at EOF — which
-  # lands inside the last table. Line 1 is unambiguously top-level, and unlike
-  # the old splice this never rewrites Omarchy's own format string.
-  # shellcheck disable=SC2016
-  if ! grep -qF 'right_format' "$STARSHIP_TOML"; then
-    sed -i '1i right_format = "${custom.venv}"' "$STARSHIP_TOML"
-    info "starship: added right_format referencing \${custom.venv}"
-  fi
-  # Define the module: print the venv name only, nothing when $VIRTUAL_ENV unset.
+  # Emptying every detect_* list leaves detect_env_vars (default ["VIRTUAL_ENV"])
+  # as the module's only trigger, so it shows in any directory and nowhere else.
+  # Omitting $version from the format is what keeps it from exec'ing python.
   upsert_block "$STARSHIP_TOML" starship-venv '#' <<'EOF'
 # [D-STARSHIP-VENV] active venv name — see docs/decisions.html#D-STARSHIP-VENV
-[custom.venv]
-command = 'basename "$VIRTUAL_ENV"'
-when = 'test -n "$VIRTUAL_ENV"'
-format = '[\($output\)]($style) '
+[python]
+format = '[\($virtualenv\)]($style) '
 style = 'italic yellow'
+detect_extensions = []
+detect_files = []
+detect_folders = []
 EOF
 fi
 unset STARSHIP_TOML
 
-# Quattro's shell.json is mutable and canonical once customized. Source its
-# official helper for stock fallback, normalization, atomic commit, and reload;
-# Stow owns only the plugin and command; both shell config files stay mutable.
-# [D-QUICKSHELL-DELTAS][D-IDEMPOTENT]
-SHELL_CONFIG_HELPER="$(command -v omarchy-shell-config)"
-# shellcheck source=/usr/bin/omarchy-shell-config disable=SC1090,SC1091
-. "$SHELL_CONFIG_HELPER"
-shell_source="$(source_file)"
-jq -e 'type == "object"' "$shell_source" >/dev/null ||
-  die "Quickshell config root is not an object — refusing to replace it"
-shell_delta="$(<"$REPO/omarchy/shell.jq")"
-shell_program="$NORMALIZE | $shell_delta"
-shell_new="$(jq -S -e "$shell_program" "$shell_source")" ||
-  die "Quickshell config delta failed"
-shell_current="$(jq -S -e . "$CONFIG_FILE" 2>/dev/null || true)"
-
+# Quattro's bar CLI owns layout convergence, routing through the official
+# omarchy-shell-config normalize/commit helpers, so shell.json stays mutable and
+# Stow owns only the plugin. `plugin disable` clears a module from the layout and
+# `put` places one without moving it if already present, so the sequence is
+# idempotent. [D-QUICKSHELL-DELTAS][D-IDEMPOTENT][F-CLI]
+# Our clone must be visible in the plugin index before `put` will accept it.
 omarchy-shell shell rescanPlugins >/dev/null 2>&1 || true
-if [ "$shell_new" != "$shell_current" ]; then
-  commit "$shell_program"
-  info "Quickshell layout delta applied to ${CONFIG_FILE/#$HOME/\~}"
+# The clone supersedes stock workspaces, which an Omarchy update can re-place.
+omarchy plugin disable omarchy.workspaces >/dev/null 2>&1 || true
+# `move`, not `put`: `put` leaves an already-placed widget wherever it is, so a
+# clone dragged to another lane would fail verification with no way to reconcile.
+# Both return 0 even when they gave up: they retry for ~3s and then report
+# "omarchy-shell is not running" on stderr. Gate on the shell so a headless run
+# says so instead of claiming a convergence that did not happen.
+if ! omarchy-shell shell ping >/dev/null 2>&1; then
+  warn "omarchy-shell is not running — bar layout not converged; re-run ./install from a session"
+elif omarchy bar move pashbyl.workspaces --section left --after omarchy.menu >/dev/null 2>&1; then
+  success "Quickshell bar layout converged"
 else
-  success "Quickshell layout already converged"
-fi
-unset SHELL_CONFIG_HELPER shell_source shell_delta shell_program shell_new shell_current
-
-# The upgrade may preserve custom legacy UWSM lines in a later-sorting fragment.
-# Do not delete potentially unique state automatically; surface it for the
-# one-time migration audit. [F-SSH-AGENT]
-if [ -f "$HOME/.config/uwsm/env.d/99-omarchy-upgrade-env" ]; then
-  warn "review ~/.config/uwsm/env.d/99-omarchy-upgrade-env for duplicate or overriding exports"
+  warn "could not place pashbyl.workspaces — check 'omarchy plugin list'"
 fi
 
 # Overlay our Claude Code settings idempotently. Claude rewrites settings.json
 # itself (via /config), so we assert only our keys via jq — preserving any keys
 # Claude adds — instead of stowing the file. Seed {} first because apply_jq_deltas
 # warns + skips on a missing target (pre-first-run machine). [D-CLAUDE-CONFIG]
-mkdir -p "$HOME/.claude"
-[ -f "$HOME/.claude/settings.json" ] || printf '{}\n' >"$HOME/.claude/settings.json"
+mkdir -p "$CLAUDE_CONFIG_HOME"
+[ -f "$CLAUDE_SETTINGS_FILE" ] || printf '{}\n' >"$CLAUDE_SETTINGS_FILE"
 # settings.jq selects custom:omarchy, so the generated theme must exist first.
 # omarchy-theme-set runs this on every theme change; call it here for first
 # install and after a themes/ wipe. Without --activate it only writes the theme
 # file, leaving .theme to our jq delta. [D-CLAUDE-CONFIG]
-have omarchy-theme-set-claude && omarchy-theme-set-claude
+if have omarchy-theme-set-claude; then
+  omarchy-theme-set-claude || warn "omarchy-theme-set-claude failed — Claude theme not refreshed"
+fi
+# It exits 0 without writing anything when the theme state was never generated,
+# and the delta pins .theme regardless — so a missing file is a dangling theme
+# reference, not a cosmetic gap.
+[ -f "$CLAUDE_THEME_FILE" ] ||
+  warn "missing ${CLAUDE_THEME_FILE/#$HOME/\~} — run 'omarchy theme set <name>' to generate it"
 # `|| true`: apply_jq_deltas returns 1 on "no change" under set -e; a real jq
 # error still dies inside the helper.
-apply_jq_deltas "$HOME/.claude/settings.json" "$REPO/claude/settings.jq" "claude settings" || true
+apply_jq_deltas "$CLAUDE_SETTINGS_FILE" "$REPO/claude/settings.jq" "claude settings" || true
 
 # ── validation ───────────────────────────────────────────────────────────────
 if have hyprctl && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then

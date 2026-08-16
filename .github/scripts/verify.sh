@@ -36,7 +36,7 @@ pretty() {
   esac
 }
 
-if [ ! -d /usr/share/omarchy ]; then
+if [ ! -d "$OMARCHY_PATH" ]; then
   miss "Omarchy Quattro layout absent — upgrade before validating this branch"
   printf '\n%sverify: %d check(s) failed%s\n' "$RED" "$fails" "$NC"
   exit 1
@@ -58,15 +58,6 @@ check_block "$HOME/.bashrc" shell '#'
 check_block "$HOME/.config/hypr/hyprland.lua" hypr '--'
 check_block "$HOME/.config/nvim/lua/config/keymaps.lua" keymaps '--'
 check_block "$HOME/.config/tmux/tmux.conf" tmux '#'
-
-legacy_hypr_begin="$(managed_marker begin hypr '#')"
-if grep -qxF -- "$legacy_hypr_begin" "$HOME/.config/hypr/hyprland.conf" 2>/dev/null ||
-  grep -qxF -- 'source = ~/.config/dotfiles/hypr.conf' "$HOME/.config/hypr/hyprland.conf" 2>/dev/null; then
-  miss "legacy Hyprland source seam remains — re-run ./install"
-else
-  pass "legacy Hyprland source seam absent"
-fi
-unset legacy_hypr_begin
 
 check_link() {
   local link="$1" resolved
@@ -94,19 +85,6 @@ check_link "$HOME/.claude/statusline-command.sh"
 check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json"
 check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
 
-for legacy_link in \
-  "$HOME/.config/dotfiles/hypr.conf" \
-  "$HOME/.config/elephant/websearch.toml" \
-  "$HOME/.config/omarchy/hooks/theme-set.d/brave-origin-stable" \
-  "$HOME/.config/omarchy/bar/scripts/memory-status"; do
-  if [ -e "$legacy_link" ] || [ -L "$legacy_link" ]; then
-    miss "retired repo path remains: $(pretty "$legacy_link")"
-  else
-    pass "retired repo path absent: $(pretty "$legacy_link")"
-  fi
-done
-unset legacy_link
-
 # The hypr.* namespace is purged by Quattro on reload; dotfiles.* is not.
 # Verify both the module name and the optional-module binding. [F-HYPR-SEAM]
 HYPR_MAIN="$HOME/.config/hypr/hyprland.lua"
@@ -120,7 +98,7 @@ fi
 unset HYPR_MAIN
 
 HYPR_MODULE="$HOME/.config/hypr/dotfiles.lua"
-if grep -qF 'opacity = "0.86 override 0.78 override"' "$HYPR_MODULE" 2>/dev/null &&
+if grep -qF 'opacity = "0.86 0.78"' "$HYPR_MODULE" 2>/dev/null &&
   grep -qF 'o.bind("SUPER + SPACE", "Apps menu"' "$HYPR_MODULE" 2>/dev/null &&
   grep -qF 'o.bind("SUPER + H", "Focus on left window"' "$HYPR_MODULE" 2>/dev/null &&
   grep -qF '"SUPER + SHIFT + S"' "$HYPR_MODULE" 2>/dev/null &&
@@ -148,90 +126,86 @@ if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && have hyprctl; then
     miss "hyprctl: config errors — run 'hyprctl configerrors'"
   fi
 
-  # hyprctl -j nests each option under a type-specific key. Read it with has()
-  # rather than `//` because jq treats both false and 0 as falsy.
-  hypr_option() {
-    hyprctl -j getoption "$1" 2>/dev/null |
-      jq -r --arg k "$2" 'if has($k) then .[$k] else empty end' 2>/dev/null
-  }
-  # int and bool differ only in which key holds the value, so they share a body.
-  check_hypr_scalar() {
-    local option="$1" expected="$2" actual
-    actual="$(hypr_option "$option" "$3")"
-    if [ "$actual" = "$expected" ]; then
-      pass "Hyprland $option = $expected"
-    else
-      miss "Hyprland $option = ${actual:-<unreadable>}, expected $expected"
+  # Every value the overlay actually sets. border_size is included because the
+  # overlay deliberately restates it to beat window-no-gaps; values we merely
+  # inherit are not asserted, since ./install could not reconcile them.
+  # Ordered "option kind expected" triples — option names contain colons but no
+  # spaces, so a plain read splits them. [D-LOOKNFEEL]
+  hypr_checks=(
+    "general:gaps_in edges 2"
+    "general:gaps_out edges 4"
+    "general:border_size int 2"
+    "decoration:rounding int 8"
+    "decoration:blur:enabled bool true"
+    "decoration:blur:passes int 2"
+    "decoration:blur:brightness float 0.72"
+    "decoration:blur:contrast float 0.75"
+    "decoration:shadow:enabled bool true"
+    "misc:focus_on_activate bool false"
+  )
+  # One batched query instead of an hyprctl+jq pair per option: 11 options cost
+  # ~3ms batched against ~32ms serially, on a script `make update` runs too.
+  # Read each value with has() rather than `//` because jq treats false and 0 as
+  # falsy; gaps arrive under .css on 0.56 and .custom on older builds.
+  declare -A hypr_actual=()
+  while IFS=$'\t' read -r hypr_key hypr_val; do
+    hypr_actual["$hypr_key"]=$hypr_val
+  done < <(
+    hyprctl -j --batch "$(printf 'getoption %s;' "${hypr_checks[@]%% *}" | sed 's/;$//')" 2>/dev/null |
+      jq -rs '.[] | [.option, (
+          if has("css") then .css
+          elif has("custom") then .custom
+          elif has("int") then (.int | tostring)
+          elif has("float") then (.float | tostring)
+          elif has("bool") then (.bool | tostring)
+          else "" end)] | @tsv' 2>/dev/null
+  )
+  for hypr_spec in "${hypr_checks[@]}"; do
+    read -r hypr_option hypr_kind hypr_want <<<"$hypr_spec"
+    hypr_got="${hypr_actual[$hypr_option]:-}"
+    hypr_ok=0
+    if [ -n "$hypr_got" ]; then
+      case "$hypr_kind" in
+        # Every edge of a CSS-style gap value must equal the desired scalar.
+        edges)
+          awk -v want="$hypr_want" \
+            '{ for (i = 1; i <= NF; i++) if ($i != want) exit 1 }' <<<"$hypr_got" && hypr_ok=1
+          ;;
+        float)
+          awk -v a="$hypr_got" -v b="$hypr_want" \
+            'BEGIN { d = a - b; if (d < 0) d = -d; exit(d > 0.0001) }' && hypr_ok=1
+          ;;
+        *) [ "$hypr_got" = "$hypr_want" ] && hypr_ok=1 ;;
+      esac
     fi
-  }
-  check_hypr_int() { check_hypr_scalar "$1" "$2" int; }
-  check_hypr_bool() { check_hypr_scalar "$1" "$2" bool; }
-  check_hypr_custom() {
-    local option="$1" expected="$2" actual
-    # Hyprland 0.56 reports CSS-like gaps under .css; older builds used
-    # .custom. Accept either representation while requiring every edge to
-    # match the desired scalar.
-    actual="$(hyprctl -j getoption "$option" 2>/dev/null | jq -r '.css // .custom // empty' 2>/dev/null)"
-    if [ -n "$actual" ] && awk -v want="$expected" '{ for (i = 1; i <= NF; i++) if ($i != want) exit 1 }' <<<"$actual"; then
-      pass "Hyprland $option = $expected"
+    if [ "$hypr_ok" -eq 1 ]; then
+      pass "Hyprland $hypr_option = $hypr_want"
     else
-      miss "Hyprland $option = ${actual:-<unreadable>}, expected $expected"
+      miss "Hyprland $hypr_option = ${hypr_got:-<unreadable>}, expected $hypr_want"
     fi
-  }
-  check_hypr_float() {
-    local option="$1" expected="$2" actual
-    actual="$(hypr_option "$option" float)"
-    if [ -n "$actual" ] && awk -v actual="$actual" -v expected="$expected" 'BEGIN { d = actual - expected; if (d < 0) d = -d; exit(d > 0.0001) }'; then
-      pass "Hyprland $option = $expected"
-    else
-      miss "Hyprland $option = ${actual:-<unreadable>}, expected $expected"
-    fi
-  }
-  # These are deliberate appearance deltas, not inherited defaults. [D-LOOKNFEEL]
-  check_hypr_custom general:gaps_in 2
-  check_hypr_custom general:gaps_out 4
-  check_hypr_int general:border_size 2
-  check_hypr_int decoration:rounding 8
-  check_hypr_bool decoration:blur:enabled true
-  check_hypr_int decoration:blur:size 8
-  check_hypr_int decoration:blur:passes 2
-  check_hypr_float decoration:blur:brightness 0.72
-  check_hypr_float decoration:blur:contrast 0.75
-  check_hypr_bool decoration:shadow:enabled true
-  check_hypr_bool misc:focus_on_activate false
+  done
+  unset hypr_checks hypr_actual hypr_spec hypr_option hypr_kind hypr_want hypr_got hypr_key hypr_val hypr_ok
 else
   skip "live Hyprland values (session unavailable)"
 fi
 
-# Quickshell uses an official plugin seam; shell.json remains mutable and must
-# already be a fixed point under the repo delta. [D-QUICKSHELL-DELTAS]
+# The bar layout is converged by Quattro's `omarchy bar` CLI, which owns the
+# mechanism, so assert only the desired end state here. [D-QUICKSHELL-DELTAS]
 SHELL_JSON="$HOME/.config/omarchy/shell.json"
-if ! have omarchy-shell-config; then
-  miss "omarchy-shell-config missing — Quattro shell helpers are unavailable"
-elif [ ! -f "$SHELL_JSON" ]; then
+if [ ! -f "$SHELL_JSON" ]; then
   miss "$(pretty "$SHELL_JSON") missing — re-run ./install"
+elif jq -e '
+  [.bar.layout.left[], .bar.layout.center[], .bar.layout.right[]] as $all
+  | (.bar.layout.left | map(.id) | index("omarchy.menu")) as $menu
+  | (.bar.layout.left | map(.id) | index("pashbyl.workspaces")) as $ws
+  | (($all | map(select(.id == "pashbyl.workspaces")) | length) == 1)
+    and (($all | map(select(.id == "omarchy.workspaces")) | length) == 0)
+    and ($ws != null)
+    and ($menu == null or $ws == ($menu + 1))
+' "$SHELL_JSON" >/dev/null 2>&1; then
+  pass "workspace module placed after the menu; stock module absent"
 else
-  # shellcheck source=/usr/bin/omarchy-shell-config disable=SC1090,SC1091
-  . "$(command -v omarchy-shell-config)"
-  shell_program="$NORMALIZE | $(<"$REPO/omarchy/shell.jq")"
-  shell_expected="$(jq -S -e "$shell_program" "$SHELL_JSON" 2>/dev/null || true)"
-  shell_actual="$(jq -S -e . "$SHELL_JSON" 2>/dev/null || true)"
-  if [ -n "$shell_expected" ] && [ "$shell_expected" = "$shell_actual" ]; then
-    pass "Quickshell layout delta fully applied"
-  else
-    miss "Quickshell layout drifted — re-run ./install"
-  fi
-  # The retired RAM widget must be gone, not merely unplaced. [D-QUICKSHELL-DELTAS]
-  if jq -e '
-    [.bar.layout.left[], .bar.layout.center[], .bar.layout.right[]] as $all
-    | (($all | map(select(.id == "pashbyl.workspaces")) | length) == 1)
-      and (($all | map(select(.id == "omarchy.workspaces")) | length) == 0)
-      and (($all | map(select(.id == "dotfiles.memory")) | length) == 0)
-  ' "$SHELL_JSON" >/dev/null 2>&1; then
-    pass "workspace bar module placed, retired memory module absent"
-  else
-    miss "workspace/memory bar module placement is wrong"
-  fi
+  miss "Quickshell bar layout drifted — re-run ./install"
 fi
 if jq -e '
   .id == "pashbyl.workspaces"
@@ -248,19 +222,12 @@ if grep -qF 'root.bar.run("hyprctl dispatch " + Util.shellQuote("hl.dsp.focus' \
 else
   miss "workspace click dispatch drifted from Quattro's supported form"
 fi
-if [ -L "$HOME/.config/omarchy/shell.toml" ]; then
-  miss "Quickshell shell.toml is a symlink; keep mutable settings unstowed"
-elif grep -qxF 'active = "#a55555"' "$HOME/.config/omarchy/shell.toml" 2>/dev/null; then
-  pass "Quickshell urgent/active color override is exact"
-else
-  miss "Quickshell urgent/active color override drifted"
-fi
 if have omarchy-shell && omarchy-shell shell ping >/dev/null 2>&1; then
   pass "Quickshell IPC responds"
 else
   skip "Quickshell IPC (shell not running in this session)"
 fi
-unset SHELL_JSON shell_program shell_expected shell_actual
+unset SHELL_JSON
 
 # Official default flows own all browser/terminal integration. [D-BROWSER-DEFAULT][D-TERM-GHOSTTY]
 if [ "$(omarchy default browser 2>/dev/null)" = brave-origin ]; then
@@ -280,23 +247,23 @@ if [ "$(omarchy default terminal 2>/dev/null)" = ghostty ]; then
 else
   miss "default terminal is not Ghostty — re-run ./install"
 fi
-for stale_foot_launcher in foot.desktop foot-server.desktop footclient.desktop; do
-  if [ -e "$HOME/.local/share/applications/$stale_foot_launcher" ]; then
-    miss "stale Foot launcher remains: $stale_foot_launcher"
+# Guard on the package exactly as install does: while the terminal is installed
+# its launcher is legitimate, and flagging it would report drift ./install
+# cannot reconcile. [D-TERM-GHOSTTY]
+for stale_pkg in "${!STALE_TERMINAL_LAUNCHERS[@]}"; do
+  stale_file="${STALE_TERMINAL_LAUNCHERS[$stale_pkg]}"
+  if pkg_installed "$stale_pkg"; then
+    skip "stale $stale_file check ($stale_pkg still installed)"
+  elif [ -e "$HOME/.local/share/applications/$stale_file" ]; then
+    miss "stale terminal launcher remains: $stale_file — re-run ./install"
+  else
+    pass "stale terminal launcher absent: $stale_file"
   fi
 done
-unset stale_foot_launcher
-unset mime_type
+unset stale_pkg stale_file mime_type
 
 # Quattro owns agent installation and updates through mise wrappers; the repo
 # owns only mutable user configuration. [D-CLAUDE-CONFIG][D-OPENCODE-LSP]
-for legacy_agent_pkg in opencode claude-code; do
-  if pkg_installed "$legacy_agent_pkg"; then
-    miss "legacy $legacy_agent_pkg package installed; Quattro mise owns agents"
-  else
-    pass "legacy $legacy_agent_pkg package absent"
-  fi
-done
 if have mise; then
   pass "mise is available for Quattro agent wrappers"
 else
@@ -309,7 +276,7 @@ for agent in codex claude crush gemini copilot opencode pi omp grok; do
     miss "$agent mise wrapper missing or drifted"
   fi
 done
-unset legacy_agent_pkg agent
+unset agent
 
 check_jq_fixed_point() {
   local label="$1" target="$2" filter="$3" expected actual
@@ -326,8 +293,15 @@ check_jq_fixed_point() {
   fi
 }
 # OpenCode's global LSP delta remains tool-owned mutable state. [F-OPENCODE-LSP]
-check_jq_fixed_point "Claude" "$HOME/.claude/settings.json" "$REPO/claude/settings.jq"
+check_jq_fixed_point "Claude" "$CLAUDE_SETTINGS_FILE" "$REPO/claude/settings.jq"
 check_jq_fixed_point "OpenCode" "$HOME/.config/opencode/opencode.json" "$REPO/opencode/settings.jq"
+# settings.jq pins .theme to custom:omarchy, so the Quattro-generated theme file
+# must exist or Claude Code resolves a dangling reference. [D-CLAUDE-CONFIG]
+if [ -f "$CLAUDE_THEME_FILE" ]; then
+  pass "Claude Code Omarchy theme present"
+else
+  miss "$(pretty "$CLAUDE_THEME_FILE") missing — .theme pins custom:omarchy"
+fi
 
 # SSH silently ignores over-permissive configuration. [F-SSH-AGENT]
 check_mode() {
@@ -354,12 +328,6 @@ elif [ -z "${state:-}" ]; then
 else
   miss "ssh-agent.socket $state"
 fi
-if [ -f "$HOME/.config/uwsm/env.d/99-omarchy-upgrade-env" ]; then
-  miss "99-omarchy-upgrade-env remains — audit precedence and remove it"
-else
-  pass "temporary UWSM migration fragment absent"
-fi
-
 check_tool() {
   local tool="$1" current
   if pkg_installed "$tool"; then
@@ -400,14 +368,15 @@ STARSHIP_TOML="$HOME/.config/starship.toml"
 # shellcheck disable=SC2016
 if [ ! -f "$STARSHIP_TOML" ]; then
   skip "starship venv overlay ($(pretty "$STARSHIP_TOML") not present)"
-elif grep -qxF 'right_format = "${custom.venv}"' "$STARSHIP_TOML"; then
+elif grep -qF '$python$character' "$STARSHIP_TOML"; then
   check_block "$STARSHIP_TOML" starship-venv '#'
-  pass "starship right_format references the venv module"
-  # A half-applied migration leaves both references and renders the venv twice.
-  if grep -qF '${custom.venv}$character' "$STARSHIP_TOML"; then
-    miss "legacy inline \${custom.venv} splice remains — re-run ./install"
+  pass "starship format references the venv module"
+  # right_format is never rendered by starship's bash init unless ble.sh is
+  # attached, so a reference parked there is invisible, not merely misplaced.
+  if grep -q '^[[:space:]]*right_format[[:space:]]*=' "$STARSHIP_TOML"; then
+    miss "starship right_format is set but bash renders it only under ble.sh"
   else
-    pass "legacy inline venv splice absent"
+    pass "no unrenderable starship right_format"
   fi
 else
   miss "starship venv reference missing"
@@ -432,13 +401,22 @@ while IFS= read -r unwanted_webapp; do
 done < <(parse_list_file "$REPO/webapps.remove.txt")
 unset unwanted_webapp
 
-discord_webapp="$HOME/.local/share/applications/Discord.desktop"
-if [ -f "$discord_webapp" ] && grep -qxF 'Exec=omarchy-launch-webapp https://discord.com/channels/@me' "$discord_webapp"; then
-  pass "Discord uses Quattro's stock web app"
-else
-  miss "Discord Quattro web app missing or drifted"
-fi
-unset discord_webapp
+# Compare against Quattro's packaged copy rather than restating its Exec line,
+# so an upstream URL change is not read as local drift. [D-WEBAPP]
+for retained_webapp in "${RETAINED_WEBAPPS[@]}"; do
+  retained_user="$HOME/.local/share/applications/$retained_webapp.desktop"
+  retained_stock="$OMARCHY_PATH/applications/$retained_webapp.desktop"
+  if [ ! -f "$retained_stock" ]; then
+    skip "$retained_webapp web app (Quattro no longer packages it)"
+  elif [ ! -f "$retained_user" ]; then
+    miss "retained web app missing: $retained_webapp — re-run ./install"
+  elif cmp -s "$retained_user" "$retained_stock"; then
+    pass "$retained_webapp uses Quattro's stock web app"
+  else
+    miss "$retained_webapp launcher drifted from Quattro's packaged copy"
+  fi
+done
+unset retained_webapp retained_user retained_stock
 
 for retained_pkg in omacalc obsidian; do
   if pkg_installed "$retained_pkg"; then
@@ -448,29 +426,6 @@ for retained_pkg in omacalc obsidian; do
   fi
 done
 unset retained_pkg
-
-for retired_unit in elephant.service app-walker@autostart.service; do
-  if systemctl --user is-enabled "$retired_unit" >/dev/null 2>&1; then
-    miss "retired unit still enabled: $retired_unit"
-  else
-    pass "retired unit disabled: $retired_unit"
-  fi
-done
-for retired_pkg in waybar walker-bin omarchy-walker elephant elephant-calc elephant-desktopapplications elephant-files elephant-symbols; do
-  if pkg_installed "$retired_pkg"; then
-    miss "retired package still installed: $retired_pkg"
-  fi
-done
-unset retired_unit retired_pkg
-
-legacy_omarchy="$(readlink -f "$HOME/.local/share/omarchy" 2>/dev/null || true)"
-cleanup_hook="$HOME/.config/omarchy/hooks/post-boot.d/cleanup-upgrade-to-quattro-live-shim"
-if [ "$legacy_omarchy" = /usr/share/omarchy ] && [ ! -e "$cleanup_hook" ]; then
-  pass "Quattro live shim cleanup completed"
-else
-  miss "Quattro live shim cleanup incomplete (target=${legacy_omarchy:-missing})"
-fi
-unset legacy_omarchy cleanup_hook
 
 echo
 if [ "$fails" -gt 0 ]; then

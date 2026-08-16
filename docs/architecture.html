@@ -144,21 +144,19 @@
           </tr>
           <tr>
             <td><code>~/.config/starship.toml</code></td>
-            <td>defines and references the personal virtual-env module</td>
+            <td>references and configures starship's built-in python module</td>
           </tr>
         </tbody>
       </table>
       <p>
         Quickshell's <code>shell.json</code> has no deep merge, so it uses a
-        different mechanism: <code>install</code> sources the official
-        <code>omarchy-shell-config</code> helper and applies the narrow
-        <code>omarchy/shell.jq</code> delta through its normalize, atomic
-        commit, and reload path. The plugin and memory command are user-owned
-        extension files; mutable <code>shell.toml</code> receives one scalar
-        TOML delta and the layout stays unstowed. See
-        <a href="decisions.html#D-QUICKSHELL-DELTAS">D-QUICKSHELL-DELTAS</a>;
-        the retired v3 implementation remains recorded under
-        <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>.
+        different mechanism: <code>install</code> drives Quattro's own
+        <code>omarchy bar</code> / <code>omarchy plugin</code> CLI, which routes
+        through the same <code>omarchy-shell-config</code> normalize, atomic
+        commit, and reload path. The plugin is a user-owned extension file;
+        mutable <code>shell.toml</code> receives no TOML delta and the layout
+        stays unstowed. See
+        <a href="decisions.html#D-QUICKSHELL-DELTAS">D-QUICKSHELL-DELTAS</a>.
       </p>
 
       <h2>What stow does (and doesn't)</h2>
