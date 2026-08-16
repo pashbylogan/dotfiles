@@ -261,7 +261,7 @@
     },
     {
       "id": "D-TERM-GHOSTTY",
-      "title": "Ghostty is the default terminal and Alacritty is denied: install independently guards the official Ghostty package-install and default-selection flows, asserts the selected default before package removal, and removes Alacritty's stale user launcher",
+      "title": "Ghostty is the default terminal and alternate terminals are denied: install guards the official Ghostty flows and removes stale Alacritty/Foot user launchers",
       "canonical": "decisions.html#D-TERM-GHOSTTY",
       "appears_in": ["todos.html"],
       "code_paths": [

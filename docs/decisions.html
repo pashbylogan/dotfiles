@@ -961,7 +961,7 @@
                 ><code>install</code> installs Ghostty only when its package is
                 absent, selects it with <code>omarchy default terminal</code>
                 only when the default differs, and adds
-                <code>alacritty</code> to
+                <code>alacritty</code> and <code>foot</code> to
                 <code>packages.remove.txt</code>.</strong
               >
               The omarchy CLI is the whole mechanism: it installs the package,
@@ -977,8 +977,13 @@
               gate. After the package drop, install also removes Omarchy
               migration <code>1763558828</code>'s user-owned
               <code>~/.local/share/applications/Alacritty.desktop</code> when it
-              exists; pacman does not own or remove the override. No terminal
-              config is carried — Omarchy seeds ghostty, and ghostty's default
+              exists. Quattro's application refresh also copies Foot's desktop
+              file independently of the package, so install removes the
+              user-level <code>foot.desktop</code>,
+              <code>foot-server.desktop</code>, and
+              <code>footclient.desktop</code> variants whenever Foot is absent.
+              Pacman does not own or remove these user files. No terminal config
+              is carried — Omarchy seeds ghostty, and ghostty's default
               right-click is a context menu (not paste), so the former Alacritty
               right-click no-op overlay was retired rather than ported.
             </td>
@@ -1001,11 +1006,10 @@
               <code>[[ -f ]]</code> test so it no-ops when the file is gone. The
               one durability caveat: a manual package-reinstall recovery flow
               (never <code>omarchy update</code>) reinstalls base packages
-              including Alacritty; the package and migration-created launcher
-              cleanup are idempotent, so re-running
-              <code>./install</code> re-drops both.
-              <code>make verify</code> checks the default, package, and user
-              launcher so this residue cannot pass unnoticed again.
+              including alternate terminals; package and stale-launcher cleanup
+              are idempotent, so re-running <code>./install</code> re-drops
+              both. <code>make verify</code> checks the default, packages, and
+              user launchers so this residue cannot pass unnoticed again.
             </td>
           </tr>
         </tbody>

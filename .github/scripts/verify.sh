@@ -280,6 +280,12 @@ if [ "$(omarchy default terminal 2>/dev/null)" = ghostty ]; then
 else
   miss "default terminal is not Ghostty — re-run ./install"
 fi
+for stale_foot_launcher in foot.desktop foot-server.desktop footclient.desktop; do
+  if [ -e "$HOME/.local/share/applications/$stale_foot_launcher" ]; then
+    miss "stale Foot launcher remains: $stale_foot_launcher"
+  fi
+done
+unset stale_foot_launcher
 unset mime_type
 
 # Quattro owns agent installation and updates through mise wrappers; the repo

@@ -433,6 +433,14 @@ rm -f "$HOME/.local/share/applications/typora.desktop"
 if ! pacman -Qq alacritty >/dev/null 2>&1; then
   rm -f "$HOME/.local/share/applications/Alacritty.desktop"
 fi
+# omarchy-refresh-applications copies Foot's packaged launcher even when the
+# package is denied. Remove every user-level variant after the package drop.
+if ! pacman -Qq foot >/dev/null 2>&1; then
+  rm -f \
+    "$HOME/.local/share/applications/foot.desktop" \
+    "$HOME/.local/share/applications/foot-server.desktop" \
+    "$HOME/.local/share/applications/footclient.desktop"
+fi
 
 # ssh ignores overly-open config paths; harden the dir + every config file.
 [ -d "$HOME/.ssh" ] && chmod 700 "$HOME/.ssh" 2>/dev/null || true
