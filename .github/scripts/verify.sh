@@ -8,6 +8,17 @@ REPO="$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)"
 # shellcheck source=lib/style.sh
 . "$REPO/lib/style.sh"
 
+# This script tests ~39 package names; one `pacman -Qq` spawn per name costs
+# ~300ms of a ~790ms run, so snapshot the installed set once instead. Safe only
+# because verify is read-only — install mutates packages between its own checks
+# and must keep querying pacman directly.
+declare -A INSTALLED_PKGS=()
+while IFS= read -r installed_pkg; do
+  INSTALLED_PKGS["$installed_pkg"]=1
+done < <(pacman -Qq 2>/dev/null)
+unset installed_pkg
+pkg_installed() { [ -n "${INSTALLED_PKGS[$1]:-}" ]; }
+
 fails=0
 pass() { printf '  %s✓%s %s\n' "$GREEN" "$NC" "$1"; }
 miss() {
@@ -137,15 +148,24 @@ if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && have hyprctl; then
     miss "hyprctl: config errors — run 'hyprctl configerrors'"
   fi
 
-  check_hypr_int() {
+  # hyprctl -j nests each option under a type-specific key. Read it with has()
+  # rather than `//` because jq treats both false and 0 as falsy.
+  hypr_option() {
+    hyprctl -j getoption "$1" 2>/dev/null |
+      jq -r --arg k "$2" 'if has($k) then .[$k] else empty end' 2>/dev/null
+  }
+  # int and bool differ only in which key holds the value, so they share a body.
+  check_hypr_scalar() {
     local option="$1" expected="$2" actual
-    actual="$(hyprctl -j getoption "$option" 2>/dev/null | jq -r '.int // empty' 2>/dev/null)"
+    actual="$(hypr_option "$option" "$3")"
     if [ "$actual" = "$expected" ]; then
       pass "Hyprland $option = $expected"
     else
       miss "Hyprland $option = ${actual:-<unreadable>}, expected $expected"
     fi
   }
+  check_hypr_int() { check_hypr_scalar "$1" "$2" int; }
+  check_hypr_bool() { check_hypr_scalar "$1" "$2" bool; }
   check_hypr_custom() {
     local option="$1" expected="$2" actual
     # Hyprland 0.56 reports CSS-like gaps under .css; older builds used
@@ -158,18 +178,9 @@ if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && have hyprctl; then
       miss "Hyprland $option = ${actual:-<unreadable>}, expected $expected"
     fi
   }
-  check_hypr_bool() {
-    local option="$1" expected="$2" actual
-    actual="$(hyprctl -j getoption "$option" 2>/dev/null | jq -r 'if has("bool") then .bool else empty end' 2>/dev/null)"
-    if [ "$actual" = "$expected" ]; then
-      pass "Hyprland $option = $expected"
-    else
-      miss "Hyprland $option = ${actual:-<unreadable>}, expected $expected"
-    fi
-  }
   check_hypr_float() {
     local option="$1" expected="$2" actual
-    actual="$(hyprctl -j getoption "$option" 2>/dev/null | jq -r '.float // empty' 2>/dev/null)"
+    actual="$(hypr_option "$option" float)"
     if [ -n "$actual" ] && awk -v actual="$actual" -v expected="$expected" 'BEGIN { d = actual - expected; if (d < 0) d = -d; exit(d > 0.0001) }'; then
       pass "Hyprland $option = $expected"
     else
@@ -266,11 +277,6 @@ if [ "$(omarchy default browser 2>/dev/null)" = brave-origin ]; then
 else
   miss "default browser is not Brave Origin — re-run ./install"
 fi
-BRAVE_MIME_TYPES=(
-  x-scheme-handler/http x-scheme-handler/https x-scheme-handler/chrome text/html
-  application/x-extension-htm application/x-extension-html application/x-extension-shtml
-  application/xhtml+xml application/x-extension-xhtml application/x-extension-xht
-)
 for mime_type in "${BRAVE_MIME_TYPES[@]}"; do
   if [ "$(xdg-mime query default "$mime_type" 2>/dev/null)" = brave-origin.desktop ]; then
     pass "$mime_type -> brave-origin.desktop"
@@ -283,12 +289,12 @@ if [ "$(omarchy default terminal 2>/dev/null)" = ghostty ]; then
 else
   miss "default terminal is not Ghostty — re-run ./install"
 fi
-unset BRAVE_MIME_TYPES mime_type
+unset mime_type
 
 # Quattro owns agent installation and updates through mise wrappers; the repo
 # owns only mutable user configuration. [D-CLAUDE-CONFIG][D-OPENCODE-LSP]
 for legacy_agent_pkg in opencode claude-code; do
-  if pacman -Qq "$legacy_agent_pkg" >/dev/null 2>&1; then
+  if pkg_installed "$legacy_agent_pkg"; then
     miss "legacy $legacy_agent_pkg package installed; Quattro mise owns agents"
   else
     pass "legacy $legacy_agent_pkg package absent"
@@ -359,7 +365,7 @@ fi
 
 check_tool() {
   local tool="$1" current
-  if pacman -Qq "$tool" >/dev/null 2>&1; then
+  if pkg_installed "$tool"; then
     miss "$tool is pacman-owned; expected Omarchy dev-env ownership"
     return
   fi
@@ -408,14 +414,14 @@ unset STARSHIP_TOML
 # Every deny-list entry is desired absent state; pkg drop may refuse a real
 # reverse dependency, which this makes visible rather than hiding. [D-PKG-REMOVE]
 while IFS= read -r unwanted; do
-  if pacman -Qq "$unwanted" >/dev/null 2>&1; then
+  if pkg_installed "$unwanted"; then
     miss "unwanted package remains: $unwanted"
   fi
 done < <(parse_pkg_file "$REPO/packages.remove.txt")
 unset unwanted
 
 for retained_pkg in omacalc obsidian; do
-  if pacman -Qq "$retained_pkg" >/dev/null 2>&1; then
+  if pkg_installed "$retained_pkg"; then
     pass "retained Quattro package present: $retained_pkg"
   else
     miss "retained Quattro package missing: $retained_pkg"
@@ -431,7 +437,7 @@ for retired_unit in elephant.service app-walker@autostart.service; do
   fi
 done
 for retired_pkg in waybar walker-bin omarchy-walker elephant elephant-calc elephant-desktopapplications elephant-files elephant-symbols; do
-  if pacman -Qq "$retired_pkg" >/dev/null 2>&1; then
+  if pkg_installed "$retired_pkg"; then
     miss "retired package still installed: $retired_pkg"
   fi
 done

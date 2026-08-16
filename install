@@ -181,6 +181,23 @@ prestow_backup() {
   done
 }
 
+# Print the given package names that are (or are not) installed, one per line,
+# so every add/drop path shares one definition of "pacman already has it".
+# $1 = installed|missing, rest = package names. [D-PKG-REMOVE][D-IDEMPOTENT]
+pkg_filter() {
+  local mode="$1" pkg
+  shift
+  for pkg in "$@"; do
+    if pacman -Qq "$pkg" >/dev/null 2>&1; then
+      [ "$mode" = installed ] && printf '%s\n' "$pkg"
+    else
+      [ "$mode" = missing ] && printf '%s\n' "$pkg"
+    fi
+  done
+  # The loop's last test decides $? otherwise, which set -e would treat as fatal.
+  return 0
+}
+
 # Retired Stow packages are no longer in STOW_PKGS, so clean up only their
 # exact symlinks when they still resolve into this checkout. [D-IDEMPOTENT]
 remove_legacy_repo_link() {
@@ -220,10 +237,7 @@ fi
 
 if [ -f packages.txt ]; then
   mapfile -t PKGS < <(parse_pkg_file packages.txt)
-  MISSING_PKGS=()
-  for pkg in "${PKGS[@]}"; do
-    pacman -Qq "$pkg" >/dev/null 2>&1 || MISSING_PKGS+=("$pkg")
-  done
+  mapfile -t MISSING_PKGS < <(pkg_filter missing "${PKGS[@]}")
   if [ "${#MISSING_PKGS[@]}" -gt 0 ]; then
     info "installing extras: ${MISSING_PKGS[*]}"
     omarchy pkg add "${MISSING_PKGS[@]}"
@@ -232,10 +246,7 @@ fi
 
 if [ -f packages.aur.txt ]; then
   mapfile -t AUR_PKGS < <(parse_pkg_file packages.aur.txt)
-  MISSING_AUR_PKGS=()
-  for pkg in "${AUR_PKGS[@]}"; do
-    pacman -Qq "$pkg" >/dev/null 2>&1 || MISSING_AUR_PKGS+=("$pkg")
-  done
+  mapfile -t MISSING_AUR_PKGS < <(pkg_filter missing "${AUR_PKGS[@]}")
   if [ "${#MISSING_AUR_PKGS[@]}" -gt 0 ]; then
     info "installing AUR extras: ${MISSING_AUR_PKGS[*]}"
     omarchy pkg aur add "${MISSING_AUR_PKGS[@]}"
@@ -257,18 +268,6 @@ fi
   die "Brave Origin did not become the default — not removing Chromium"
 
 # xdg-settings does not assert these additional associations on every desktop.
-BRAVE_MIME_TYPES=(
-  x-scheme-handler/http
-  x-scheme-handler/https
-  x-scheme-handler/chrome
-  text/html
-  application/x-extension-htm
-  application/x-extension-html
-  application/x-extension-shtml
-  application/xhtml+xml
-  application/x-extension-xhtml
-  application/x-extension-xht
-)
 for mime_type in "${BRAVE_MIME_TYPES[@]}"; do
   xdg-mime default "$BRAVE_ORIGIN_DESKTOP" "$mime_type"
 done
@@ -287,14 +286,11 @@ fi
 [ "$(omarchy default terminal)" = "ghostty" ] ||
   die "Ghostty did not become the default — not removing Alacritty"
 success "Ghostty is the default terminal"
-unset BRAVE_MIME_TYPES BRAVE_ORIGIN_DESKTOP mime_type
+unset BRAVE_ORIGIN_DESKTOP mime_type
 
 if [ -f packages.remove.txt ]; then
   mapfile -t REMOVE_PKGS < <(parse_pkg_file packages.remove.txt)
-  INSTALLED_REMOVE_PKGS=()
-  for pkg in "${REMOVE_PKGS[@]}"; do
-    pacman -Qq "$pkg" >/dev/null 2>&1 && INSTALLED_REMOVE_PKGS+=("$pkg")
-  done
+  mapfile -t INSTALLED_REMOVE_PKGS < <(pkg_filter installed "${REMOVE_PKGS[@]}")
   if [ "${#INSTALLED_REMOVE_PKGS[@]}" -gt 0 ]; then
     info "removing unwanted packages: ${INSTALLED_REMOVE_PKGS[*]}"
     # pacman -Rns refuses reverse-dep conflicts; warn instead of abort. [D-PKG-REMOVE]
@@ -307,15 +303,12 @@ fi
 # Quattro's upgrade normally retires these pacman packages before installing
 # its mise wrappers. Reconcile interrupted/manual upgrades without touching the
 # wrappers or their user config.
-LEGACY_AGENT_PKGS=()
-for legacy_agent_pkg in opencode claude-code; do
-  pacman -Qq "$legacy_agent_pkg" >/dev/null 2>&1 && LEGACY_AGENT_PKGS+=("$legacy_agent_pkg")
-done
+mapfile -t LEGACY_AGENT_PKGS < <(pkg_filter installed opencode claude-code)
 if [ "${#LEGACY_AGENT_PKGS[@]}" -gt 0 ]; then
   info "dropping retired agent packages: ${LEGACY_AGENT_PKGS[*]}"
   omarchy pkg drop "${LEGACY_AGENT_PKGS[@]}"
 fi
-unset LEGACY_AGENT_PKGS legacy_agent_pkg
+unset LEGACY_AGENT_PKGS
 
 # Quattro owns the lazy OpenCode launcher; seed only its mutable user config,
 # then assert the personal LSP delta. [D-OPENCODE-LSP][F-OPENCODE-LSP]
@@ -407,13 +400,11 @@ upsert_toml_key "$HOME/.config/omarchy/shell.toml" bar active '"#a55555"' || tru
 
 # Stale user launchers survive package removal because pacman never owned them.
 # [D-PKG-REMOVE][D-TERM-GHOSTTY]
-if [ -e "$HOME/.local/share/applications/typora.desktop" ]; then
-  rm -f "$HOME/.local/share/applications/typora.desktop"
-fi
+rm -f "$HOME/.local/share/applications/typora.desktop"
 # Omarchy migration 1763558828 created this user-owned override while Alacritty
-# was installed; pacman cannot remove it with the package.
-if ! pacman -Qq alacritty >/dev/null 2>&1 &&
-  [ -e "$HOME/.local/share/applications/Alacritty.desktop" ]; then
+# was installed; pacman cannot remove it with the package. Keep the package
+# guard — the launcher is legitimate while Alacritty is still installed.
+if ! pacman -Qq alacritty >/dev/null 2>&1; then
   rm -f "$HOME/.local/share/applications/Alacritty.desktop"
 fi
 

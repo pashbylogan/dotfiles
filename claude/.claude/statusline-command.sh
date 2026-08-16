@@ -7,17 +7,16 @@
 # stdin fields: .cwd / .workspace.current_dir, .model.display_name,
 #               .context_window.used_percentage
 
-input=$(cat)
-
 # One jq pass emits the three fields on separate lines (the comma operator); three
 # line reads recover them while preserving empty fields, which an IFS=tab split
-# would collapse. printf '%s' (not echo) feeds the payload verbatim.
+# would collapse. jq inherits this script's stdin through the process
+# substitution, so the payload never needs buffering through a variable.
 {
   IFS= read -r cwd
   IFS= read -r model
   IFS= read -r used_pct
 } < <(
-  printf '%s' "$input" | jq -r '
+  jq -r '
     .cwd // .workspace.current_dir // "",
     .model.display_name // "",
     (.context_window.used_percentage // "" | tostring)' 2>/dev/null
@@ -39,24 +38,29 @@ fi
 unset short
 
 esc=$'\033'
-# Map a palette key to a truecolor SGR built from real ESC bytes. $1 = palette
-# key (e.g. accent, color5); $2 = fallback ANSI escape when it is missing.
+# Map a palette key to a truecolor SGR built from real ESC bytes. $1 = variable
+# to assign, $2 = palette key (e.g. accent, color5), $3 = fallback ANSI escape
+# when it is missing. Assigning via printf -v keeps this whole block fork-free;
+# a command substitution per color would cost seven subshells on every render.
 theme_color() {
-  local hex=${pal[$1]:-}
+  local hex=${pal[$2]:-}
   if [ -n "$hex" ]; then
-    printf '%s[38;2;%d;%d;%dm' "$esc" "$((16#${hex:0:2}))" "$((16#${hex:2:2}))" "$((16#${hex:4:2}))"
+    printf -v "$1" '%s[38;2;%d;%d;%dm' "$esc" "$((16#${hex:0:2}))" "$((16#${hex:2:2}))" "$((16#${hex:4:2}))"
   else
-    printf '%s' "$2"
+    printf -v "$1" '%s' "$3"
   fi
 }
 
-c_folder=$(theme_color accent "${esc}[0;36m") # signature accent for the path
-c_branch=$(theme_color color5 "${esc}[0;35m") # purple — distinct from severity hues
-c_model=$(theme_color color6 "${esc}[0;36m")  # cyan
-c_low=$(theme_color color2 "${esc}[0;32m")    # green  — context < 50%
-c_mid=$(theme_color color3 "${esc}[0;33m")    # yellow — context 50-79%
-c_high=$(theme_color color1 "${esc}[0;31m")   # red    — context >= 80%
-c_sep=$(theme_color color8 "${esc}[0;90m")    # dim — segment separators
+# Declared here so the indirect `printf -v` assignments stay visible to static
+# analysis; theme_color is what actually fills each one in.
+c_folder='' c_branch='' c_model='' c_low='' c_mid='' c_high='' c_sep=''
+theme_color c_folder accent "${esc}[0;36m" # signature accent for the path
+theme_color c_branch color5 "${esc}[0;35m" # purple — distinct from severity hues
+theme_color c_model color6 "${esc}[0;36m"  # cyan
+theme_color c_low color2 "${esc}[0;32m"    # green  — context < 50%
+theme_color c_mid color3 "${esc}[0;33m"    # yellow — context 50-79%
+theme_color c_high color1 "${esc}[0;31m"   # red    — context >= 80%
+theme_color c_sep color8 "${esc}[0;90m"    # dim — segment separators
 reset="${esc}[0m"
 sep_char=$'│'    # │ box-drawing vertical separator
 branch_icon=$'' # nerd-font git branch glyph
