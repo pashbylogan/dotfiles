@@ -767,10 +767,11 @@
       <p>
         Quattro retires Waybar, Walker, and Elephant. The current overlay uses a
         supported Quickshell plugin for dynamic workspaces, a command module for
-        memory, <code>shell.toml</code> for the exact urgent/active color, and a
-        narrow <code>shell.json</code> delta applied through
-        <code>omarchy-shell-config</code>. The stable ID below is kept for trace
-        continuity. The remaining v3 detail is historical context only.
+        memory, a scalar delta in mutable <code>shell.toml</code> for the exact
+        urgent/active color, and a narrow <code>shell.json</code> delta applied
+        through <code>omarchy-shell-config</code>. The stable ID below is kept
+        for trace continuity. The remaining v3 detail is historical context
+        only.
       </p>
       <p>
         Historically, Waybar's config sat in
@@ -800,9 +801,10 @@
             </td>
             <td>
               Stow the supported user-owned
-              <code>pashbyl.workspaces</code> plugin, memory command, and
-              <code>shell.toml</code>. Keep <code>shell.json</code> mutable and
-              converge only module IDs and ordering with
+              <code>pashbyl.workspaces</code> plugin and memory command. Keep
+              <code>shell.toml</code> mutable because shell settings rewrite it;
+              merge only <code>bar.active</code>. Keep <code>shell.json</code>
+              mutable and converge only module IDs and ordering with
               <code>omarchy/shell.jq</code> through the official
               <code>omarchy-shell-config</code> normalize/commit helpers. The
               filter removes every stock or personal workspace entry before
@@ -812,8 +814,10 @@
             <td>
               Quattro documents plugins as the supported widget seam, while
               <code>shell.json</code> has no deep-merge facility and is replaced
-              by the upgrade. A narrow, fixed-point jq delta preserves upstream
-              modules and repairs duplicates without forking Omarchy's shell.
+              by the upgrade. Quickshell atomically replaces the user
+              <code>shell.toml</code> when settings change, so a merge avoids a
+              broken Stow link and preserves those settings. Narrow fixed-point
+              deltas preserve upstream state without forking Omarchy's shell.
             </td>
           </tr>
           <tr id="D-WAYBAR-DELTAS">

@@ -84,6 +84,53 @@ remove_block() {
   info "obsolete managed block removed from ${file/#$HOME/\~}"
 }
 
+# shell.toml is user-owned but atomically rewritten by Quickshell settings.
+# Merge one scalar without replacing unrelated runtime-owned keys.
+# [D-QUICKSHELL-DELTAS][D-IDEMPOTENT]
+upsert_toml_key() {
+  local file="$1" section="$2" key="$3" value="$4" tmp
+  mkdir -p "$(dirname "$file")"
+  [ -f "$file" ] || install -m 600 /dev/null "$file"
+  tmp="$(mktemp "${file}.dotfiles.XXXXXX")"
+  if ! awk -v section="$section" -v key="$key" -v value="$value" '
+    function header_name(line, name) {
+      name = line
+      sub(/^[[:space:]]*\[/, "", name)
+      sub(/\][[:space:]]*$/, "", name)
+      return name
+    }
+    /^[[:space:]]*\[[^]]+\][[:space:]]*$/ {
+      if (in_section && !wrote) { print key " = " value; wrote = 1 }
+      in_section = (header_name($0) == section)
+      if (in_section) section_seen = 1
+    }
+    in_section && $0 ~ "^[[:space:]]*" key "[[:space:]]*=" {
+      if (!wrote) { print key " = " value; wrote = 1 }
+      next
+    }
+    { print }
+    END {
+      if (in_section && !wrote) print key " = " value
+      if (!section_seen) {
+        if (NR > 0) print ""
+        print "[" section "]"
+        print key " = " value
+      }
+    }
+  ' "$file" >"$tmp"; then
+    rm -f "$tmp"
+    die "failed to merge $section.$key into $file"
+  fi
+  if cmp -s "$tmp" "$file"; then
+    rm -f "$tmp"
+    return 1
+  fi
+  cp -f "$tmp" "$file"
+  rm -f "$tmp"
+  info "TOML delta applied to ${file/#$HOME/\~} ($section.$key)"
+  return 0
+}
+
 # Idempotent jq overlay for tool-owned JSON; returns 0 only on content change.
 # cp -f preserves the target mode while keeping mutable state out of Stow.
 # [D-IDEMPOTENT][D-DELTA-STORAGE]
@@ -338,6 +385,7 @@ remove_legacy_repo_link "$HOME/.config/dotfiles/hypr.conf"
 remove_legacy_repo_link "$HOME/.config/dotfiles/hypr.local.conf.example"
 remove_legacy_repo_link "$HOME/.config/elephant/websearch.toml"
 remove_legacy_repo_link "$HOME/.config/omarchy/hooks/theme-set.d/brave-origin-stable"
+remove_legacy_repo_link "$HOME/.config/omarchy/shell.toml"
 prestow_backup "$HOME/.ssh/config"
 # UWSM env.d is stowed because Omarchy-launched apps inherit that session env. [F-SSH-AGENT]
 prestow_backup "$HOME/.config/uwsm/env.d/dotfiles.sh"
@@ -349,10 +397,13 @@ prestow_backup \
   "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json" \
   "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
 prestow_backup "$HOME/.config/omarchy/bar/scripts/memory-status"
-prestow_backup "$HOME/.config/omarchy/shell.toml"
 STOW_PKGS=(bash ssh bin hypr tmux nvim uwsm omarchy claude)
 stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
 success "stowed: ${STOW_PKGS[*]}"
+
+# Quickshell preserves user overrides but rewrites this file when settings such
+# as font size change. Keep it mutable and reassert only the exact urgent role.
+upsert_toml_key "$HOME/.config/omarchy/shell.toml" bar active '"#a55555"' || true
 
 # Stale user launchers survive package removal because pacman never owned them.
 # [D-PKG-REMOVE][D-TERM-GHOSTTY]
@@ -444,7 +495,7 @@ unset STARSHIP_TOML
 
 # Quattro's shell.json is mutable and canonical once customized. Source its
 # official helper for stock fallback, normalization, atomic commit, and reload;
-# Stow owns only the plugin, command, and shell.toml override.
+# Stow owns only the plugin and command; both shell config files stay mutable.
 # [D-QUICKSHELL-DELTAS][D-IDEMPOTENT]
 SHELL_CONFIG_HELPER="$(command -v omarchy-shell-config)"
 # shellcheck source=/usr/bin/omarchy-shell-config disable=SC1090,SC1091

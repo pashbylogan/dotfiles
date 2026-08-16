@@ -434,7 +434,9 @@
         This finding explains the retired v3 design. Quattro removes Waybar,
         Walker, and Elephant and replaces them with <code>omarchy-shell</code>.
         Current user extension points are plugins, scripts, and
-        <code>shell.toml</code>; mutable <code>shell.json</code> is edited with
+        <code>shell.toml</code>; the shell rewrites <code>shell.toml</code> for
+        settings such as font size, so the repo merges its single color key
+        instead of stowing it. Mutable <code>shell.json</code> is edited with
         the sourceable <code>omarchy-shell-config</code> helper. Historically,
         the omarchy
         <a href="https://learn.omacom.io/2/the-omarchy-manual/65/dotfiles"

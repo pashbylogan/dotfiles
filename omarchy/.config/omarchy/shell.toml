@@ -1,4 +1,0 @@
-# Preserve the explicit Waybar urgent color through Quattro theme changes.
-# [D-QUICKSHELL-DELTAS]
-[bar]
-active = "#a55555"

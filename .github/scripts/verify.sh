@@ -83,7 +83,6 @@ check_link "$HOME/.claude/statusline-command.sh"
 check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json"
 check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
 check_link "$HOME/.config/omarchy/bar/scripts/memory-status"
-check_link "$HOME/.config/omarchy/shell.toml"
 
 for legacy_link in \
   "$HOME/.config/dotfiles/hypr.conf" \
@@ -240,7 +239,15 @@ if jq -e '
 else
   miss "workspace plugin manifest is invalid"
 fi
-if grep -qxF 'active = "#a55555"' "$HOME/.config/omarchy/shell.toml" 2>/dev/null; then
+if grep -qF 'root.bar.run("hyprctl dispatch " + Util.shellQuote("hl.dsp.focus' \
+  "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml" 2>/dev/null; then
+  pass "workspace click uses Quattro Lua dispatch"
+else
+  miss "workspace click dispatch drifted from Quattro's supported form"
+fi
+if [ -L "$HOME/.config/omarchy/shell.toml" ]; then
+  miss "Quickshell shell.toml is a symlink; keep mutable settings unstowed"
+elif grep -qxF 'active = "#a55555"' "$HOME/.config/omarchy/shell.toml" 2>/dev/null; then
   pass "Quickshell urgent/active color override is exact"
 else
   miss "Quickshell urgent/active color override drifted"

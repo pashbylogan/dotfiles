@@ -240,7 +240,7 @@
     },
     {
       "id": "D-QUICKSHELL-DELTAS",
-      "title": "Use a supported Quickshell workspace plugin, shell.toml, command module, and duplicate-repairing fixed-point shell.json delta",
+      "title": "Use a supported Quickshell workspace plugin, mutable shell.toml scalar merge, command module, and duplicate-repairing fixed-point shell.json delta",
       "canonical": "decisions.html#D-QUICKSHELL-DELTAS",
       "appears_in": ["architecture.html"],
       "code_paths": [
@@ -248,8 +248,7 @@
         ".github/scripts/verify.sh",
         "omarchy/shell.jq",
         "omarchy/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml",
-        "omarchy/.config/omarchy/bar/scripts/memory-status",
-        "omarchy/.config/omarchy/shell.toml"
+        "omarchy/.config/omarchy/bar/scripts/memory-status"
       ],
       "related": ["D-DELTA-STORAGE", "D-WAYBAR-DELTAS", "D-IDEMPOTENT"]
     },
