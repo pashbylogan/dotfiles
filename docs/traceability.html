@@ -81,12 +81,16 @@
           </tr>
           <tr>
             <td><code>D-DELTA-STORAGE</code></td>
-            <td>Own fragments + managed block; never symlink Omarchy files</td>
+            <td>
+              Own Lua/plugin/script fragments plus managed seams; never symlink
+              mutable Omarchy files
+            </td>
             <td>
               <a href="architecture.html#D-DELTA-STORAGE">architecture</a>
             </td>
             <td>
-              <code>install</code>, <code>hypr/.config/dotfiles/hypr.conf</code>
+              <code>install</code>, <code>hypr/.config/hypr/dotfiles.lua</code>,
+              <code>omarchy/shell.jq</code>
             </td>
           </tr>
           <tr>
@@ -173,15 +177,17 @@
           </tr>
           <tr>
             <td><code>D-CAPS-CTRL</code></td>
-            <td>caps→ctrl in owned fragment</td>
+            <td>caps→ctrl in reloadable Hypr Lua module</td>
             <td><a href="decisions.html#D-CAPS-CTRL">decisions</a></td>
-            <td><code>hypr.conf</code>, <code>install</code></td>
+            <td>
+              <code>hypr/.config/hypr/dotfiles.lua</code>, <code>install</code>
+            </td>
           </tr>
           <tr>
             <td><code>D-WORKSPACE-RULES</code></td>
-            <td>Workspace app-assignments in fragment</td>
+            <td>Workspace app assignments in Hypr Lua module</td>
             <td><a href="decisions.html#D-WORKSPACE-RULES">decisions</a></td>
-            <td><code>hypr.conf</code></td>
+            <td><code>hypr/.config/hypr/dotfiles.lua</code></td>
           </tr>
           <tr>
             <td><code>D-SLACK-HUDDLE-FLOAT</code></td>
@@ -192,7 +198,7 @@
             <td>
               <a href="decisions.html#D-SLACK-HUDDLE-FLOAT">decisions</a>
             </td>
-            <td><code>hypr/.config/dotfiles/hypr.conf</code></td>
+            <td><code>hypr/.config/hypr/dotfiles.lua</code></td>
           </tr>
           <tr>
             <td><code>D-SCREENSHOT-FALLBACK</code></td>
@@ -203,7 +209,7 @@
             <td>
               <a href="decisions.html#D-SCREENSHOT-FALLBACK">decisions</a>
             </td>
-            <td><code>hypr/.config/dotfiles/hypr.conf</code></td>
+            <td><code>hypr/.config/hypr/dotfiles.lua</code></td>
           </tr>
           <tr>
             <td><code>D-KEYBIND-OVERRIDES</code></td>
@@ -211,19 +217,19 @@
             <td>
               <a href="decisions.html#D-KEYBIND-OVERRIDES">decisions</a>
             </td>
-            <td><code>hypr/.config/dotfiles/hypr.conf</code></td>
+            <td><code>hypr/.config/hypr/dotfiles.lua</code></td>
           </tr>
           <tr>
             <td><code>D-MOUSE-ACCEL</code></td>
-            <td>MX Master accel in <code>hypr.local.conf</code></td>
+            <td>MX Master accel in optional <code>dotfiles_local.lua</code></td>
             <td><a href="decisions.html#D-MOUSE-ACCEL">decisions</a></td>
-            <td><code>hypr.local.conf.example</code></td>
+            <td><code>hypr/.config/hypr/dotfiles_local.lua.example</code></td>
           </tr>
           <tr>
             <td><code>D-HJKL-DECLINED</code></td>
-            <td>Declined hjkl focus</td>
+            <td>Historical slug: personal HJKL focus/swaps preserved</td>
             <td><a href="decisions.html#D-HJKL-DECLINED">decisions</a></td>
-            <td>—</td>
+            <td><code>hypr/.config/hypr/dotfiles.lua</code></td>
           </tr>
           <tr>
             <td><code>D-LOOKNFEEL</code></td>
@@ -238,19 +244,18 @@
             </td>
             <td><a href="decisions.html#D-LOOKNFEEL">decisions</a></td>
             <td>
-              <code>hypr/.config/dotfiles/hypr.conf</code>,
+              <code>hypr/.config/hypr/dotfiles.lua</code>,
               <code>.github/scripts/verify.sh</code>
             </td>
           </tr>
           <tr>
             <td><code>D-WAYBAR-DELTAS</code></td>
             <td>
-              Personal waybar deltas (jq filters + style.css managed block);
-              install applies them idempotently — includes an urgent-workspace
-              highlight (#workspaces button.urgent)
+              Historical slug: Quickshell workspace plugin, memory command,
+              shell.toml override, and mutable shell.json delta
             </td>
             <td><a href="decisions.html#D-WAYBAR-DELTAS">decisions</a></td>
-            <td><code>install</code>, <code>waybar/deltas.jq</code></td>
+            <td><code>install</code>, <code>omarchy/shell.jq</code></td>
           </tr>
           <tr>
             <td><code>D-TERM-GHOSTTY</code></td>
@@ -258,8 +263,7 @@
               Ghostty is the default terminal (guarded
               <code>omarchy install terminal ghostty</code> before the drop);
               Alacritty removed via <code>packages.remove.txt</code>, including
-              its migration-created user launcher so Walker cannot index an
-              orphan
+              its migration-created user launcher
             </td>
             <td><a href="decisions.html#D-TERM-GHOSTTY">decisions</a></td>
             <td>
@@ -313,7 +317,8 @@
           <tr>
             <td><code>D-BASELINE</code></td>
             <td>
-              Baseline = post-Remove-Preinstalled; bindings.conf untracked
+              Baseline = stock Quattro plus explicit additions and package
+              deny-list
             </td>
             <td><a href="decisions.html#D-BASELINE">decisions</a></td>
             <td><code>README.md</code></td>
@@ -321,44 +326,33 @@
           <tr>
             <td><code>D-PKG-REMOVE</code></td>
             <td>
-              Package/app and operator-tool curation: pacman additions,
-              restores, and drops; elephant websearch override; stale launcher
-              cleanup; and read-only residue audit
+              Package/app curation: explicit additions, persistent package
+              deny-list, stale-launcher cleanup, and read-only residue audit
             </td>
             <td><a href="decisions.html#D-PKG-REMOVE">decisions</a></td>
             <td>
               <code>install</code>, <code>packages.txt</code>,
               <code>packages.remove.txt</code>, <code>README.md</code>,
-              <code>elephant/.config/elephant/websearch.toml</code>,
               <code>bin/.local/bin/pkg-residue</code>
             </td>
           </tr>
           <tr>
             <td><code>D-WEBAPP</code></td>
             <td>
-              Reproduce omarchy-curated webapp launchers idempotently via
-              <code>omarchy webapp install</code> (Zoom) with exact
-              <code>webapps.sh</code> args + icon re-seed + desktop-DB refresh;
-              <code>verify.sh</code> health-checks the launcher
+              Retired: Quattro packages and refreshes the Zoom desktop launcher
             </td>
             <td><a href="decisions.html#D-WEBAPP">decisions</a></td>
-            <td>
-              <code>install</code>, <code>.github/scripts/verify.sh</code>
-            </td>
+            <td>—</td>
           </tr>
           <tr>
             <td><code>D-BROWSER-DEFAULT</code></td>
             <td>
-              Stable Brave Origin is the default browser via Omarchy package,
-              theming, and hook surfaces until Omarchy's browser commands map
-              <code>brave-origin</code> to stable
+              Stable Brave Origin through Quattro's native install/default flow
+              plus explicit MIME associations
             </td>
             <td><a href="decisions.html#D-BROWSER-DEFAULT">decisions</a></td>
             <td>
-              <code>install</code>, <code>.github/scripts/verify.sh</code>,
-              <code
-                >omarchy/.config/omarchy/hooks/theme-set.d/brave-origin-stable</code
-              >
+              <code>install</code>, <code>.github/scripts/verify.sh</code>
             </td>
           </tr>
           <tr>
@@ -374,8 +368,7 @@
             </td>
             <td><a href="decisions.html#D-MONITORS">decisions</a></td>
             <td>
-              <code>hypr/.config/dotfiles/hypr.conf</code>,
-              <code>install</code>
+              <code>hypr/.config/hypr/dotfiles.lua</code>
             </td>
           </tr>
           <tr>
@@ -388,7 +381,7 @@
             <td><a href="decisions.html#D-KINESIS-REMAP">decisions</a></td>
             <td>
               <code>kinesis/README.md</code>,
-              <code>hypr/.config/dotfiles/hypr.conf</code>
+              <code>hypr/.config/hypr/dotfiles.lua</code>
             </td>
           </tr>
         </tbody>
@@ -422,7 +415,10 @@
           </tr>
           <tr>
             <td><code>F-LUA</code></td>
-            <td>dev branch already on Lua Hyprland config</td>
+            <td>
+              Quattro ships Lua Hyprland config with selective module-cache
+              purging
+            </td>
             <td><a href="findings.html#F-LUA">findings</a></td>
             <td><code>D-DELTA-STORAGE</code>, <code>D-MONITORS</code></td>
           </tr>
@@ -434,29 +430,30 @@
           </tr>
           <tr>
             <td><code>F-NVIM-OWNED</code></td>
-            <td>omarchy-nvim-setup overwrites nvim tree</td>
+            <td>
+              Separate omarchy-nvim package seeds the user seam; refresh
+              replaces the tree
+            </td>
             <td><a href="findings.html#F-NVIM-OWNED">findings</a></td>
             <td><code>D-NVIM-KEYMAPS</code></td>
           </tr>
           <tr>
             <td><code>F-BASELINE</code></td>
-            <td>Remove Preinstalled explains trimmed bindings.conf</td>
+            <td>
+              Historical v3 baseline; Quattro uses stock plus narrow package
+              deltas
+            </td>
             <td><a href="findings.html#F-BASELINE">findings</a></td>
             <td><code>D-BASELINE</code></td>
           </tr>
           <tr>
             <td><code>F-APP-CHANNELS</code></td>
             <td>
-              App package/webapp channel choices are audited Omarchy-native
-              first: Brave Origin uses stable AUR with Omarchy package, theming,
-              and hook surfaces until Omarchy's browser commands catch up,
-              Spotify follows Omarchy's AUR package, Obsidian follows official
-              <code>extra</code> with Omarchy flags/theme hooks, Slack stays
-              native AUR with Chrome as huddles fallback, and Claude Code is
-              force-installed from the AUR via
-              <code>yay -S --needed aur/claude-code</code> because Omarchy
-              publishes a stale same-name package its foreign-only
-              <code>yay -Sua</code> step skips
+              App channels are Omarchy-native first: Quattro owns Brave Origin,
+              Ghostty, mise agent wrappers, and Obsidian; Spotify follows
+              Quattro's sync-repo service package, Slack stays native AUR with a
+              browser fallback, and other explicit extras follow their audited
+              package channels
             </td>
             <td><a href="findings.html#F-APP-CHANNELS">findings</a></td>
             <td>
@@ -510,9 +507,8 @@
           <tr>
             <td><code>F-WAYBAR-MIGRATIONS</code></td>
             <td>
-              Waybar config drifts via wholesale <code>refresh-waybar</code> AND
-              surgical sed migrations; manual's "won't be overwritten" claim is
-              inaccurate
+              Historical v3 Waybar drift; Quattro replaces it with supported
+              plugins and mutable shell.json
             </td>
             <td><a href="findings.html#F-WAYBAR-MIGRATIONS">findings</a></td>
             <td><code>D-WAYBAR-DELTAS</code></td>

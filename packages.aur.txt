@@ -2,15 +2,13 @@
 # Same syntax as packages.txt. [D-SCRIPTS-MINIMAL][F-CLI]
 
 slack-desktop          # workspace 3 — AUR-only on Arch (no official-repo package)
-spotify                # workspace 10 — matches omarchy-base.packages (omarchy's chosen Spotify path is AUR) [F-APP-CHANNELS]
 # JetBrains Toolbox owns IDE updates/version pinning better than AUR IDE packages.
 jetbrains-toolbox
 postman-bin            # API client — AUR-only on Arch (official prebuilt binary; no repo/omarchy pkg)
 claude-desktop         # Claude Desktop — installs Anthropic's official Linux .deb verbatim (committed checksum matches the signed InRelease); no repo/omarchy pkg [F-APP-CHANNELS]
 
-# claude-code is intentionally NOT a plain entry: it exists in both the omarchy
-# repo (pinned) and the AUR, and the batch `omarchy pkg aur add` uses bare names
-# (repo wins). install/make update force it via `yay -S --needed aur/claude-code`. [F-APP-CHANNELS]
+# Coding agents intentionally stay out of both manifests; Quattro supplies and
+# updates their lazy mise wrappers. [F-APP-CHANNELS]
 
 # gcloud core CLI (no official-repo pkg); used by gssh() in shell.local.sh.
 # Ships /etc/profile.d/google-cloud-cli.sh, so gcloud lands on PATH natively.

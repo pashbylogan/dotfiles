@@ -11,6 +11,7 @@ git-delta              # syntax-highlighted git diffs (binary: delta)
 wireguard-tools        # wg-quick — used by vpns() / exitnode() in shell.local.sh
 azure-cli              # Azure CLI (binary: az) — official extra-repo pkg, so here not packages.aur.txt (unlike gcloud)
 nmap                   # network discovery and security auditing
+spotify                # Quattro's supported Spotify service installs this sync-repo package [F-APP-CHANNELS]
 
 # Keep malware scanning explicit and on-demand; no clamd/on-access services. [F-MALWARE-SCANNER]
 clamav                 # file-signature scanner; refresh signatures before each incident scan
@@ -19,11 +20,9 @@ clamav                 # file-signature scanner; refresh signatures before each 
 # can invoke the plugin by name in every shell. [F-APP-CHANNELS]
 kubectl
 
-# Selected Omarchy defaults removed by "Remove Preinstalled"; restore them
-# through pacman, not alternate launchers or self-managed installers. [D-PKG-REMOVE][F-APP-CHANNELS]
-opencode               # OpenCode; install seeds Omarchy config only when missing.
-obsidian               # workspace 3 — notes
-discord                # chat (native client; omarchy default is a webapp — we want full voice/screen-share)
+# Quattro supplies Obsidian and all coding agents. Keep only the native Discord
+# client as a deliberate delta over its default webapp. [D-PKG-REMOVE][F-APP-CHANNELS]
+discord                # full voice/screen-share support
 
 # Claude Desktop Cowork sandbox: an app-managed ephemeral QEMU/KVM microVM for
 # running agent code in isolation. Enabled by default; KVM is already usable here

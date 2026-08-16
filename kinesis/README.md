@@ -31,7 +31,7 @@ layer (`<function1>` keeps `[home]>[del]`).
 `hypr/.config/dotfiles/hypr.conf`:
 
 ```
-bindd = , code:192, Clipboard history, exec, omarchy-launch-walker -m clipboard
+o.bind("code:192", "Clipboard history", "omarchy-shell shell toggle omarchy.clipboard")
 ```
 
 X keycode `192` = evdev `184` + 8. Binding by keycode is required because F13+

@@ -56,9 +56,9 @@ upsert_block() {
   info "managed block updated in ${file/#$HOME/\~}"
 }
 
-# Idempotent jq overlay for omarchy-owned JSON; returns 0 only on content change.
-# cp -f follows symlinks + preserves mode, matching omarchy-refresh-config.
-# [D-WAYBAR-DELTAS][F-WAYBAR-MIGRATIONS]
+# Idempotent jq overlay for tool-owned JSON; returns 0 only on content change.
+# cp -f preserves the target mode while keeping mutable state out of Stow.
+# [D-IDEMPOTENT][D-DELTA-STORAGE]
 apply_jq_deltas() {
   local target="$1" filter="$2" label="${3:-jq deltas}" new tmp target_clean
   if [ ! -f "$target" ]; then
@@ -106,31 +106,10 @@ prestow_backup() {
   done
 }
 
-# `omarchy-restart-waybar` exits 0 as soon as setsid forks even if waybar
-# then dies; poll until the process actually shows up.
-restart_waybar_polled() {
-  omarchy-restart-waybar
-  for _ in 1 2 3 4 5 6 7 8 9 10; do
-    pgrep -x waybar >/dev/null 2>&1 && break
-    sleep 0.1
-  done
-  if pgrep -x waybar >/dev/null 2>&1; then
-    success "waybar restarted"
-  else
-    warn "waybar did not relaunch — check journalctl --user -t waybar"
-  fi
-}
-
-# Topology snapshot includes scale so a single-monitor scale toggle still trips
-# downstream diffs; empty on failure = downstream no-op. [D-MONITORS]
-snapshot_monitor_topology() {
-  hyprctl monitors -j 2>/dev/null |
-    jq -c '[.[]|{name,x,y,width,height,refreshRate,scale,disabled}]' 2>/dev/null || true
-}
-
 # ── prerequisites ────────────────────────────────────────────────────────────
 # Omarchy CLI is preferred over re-implementing package logic [F-CLI][D-ENGINE].
 step "Prerequisites"
+have omarchy-shell-config || die "Omarchy Quattro is required — upgrade the OS before running this branch"
 if have stow; then
   success "stow present"
 else
@@ -155,13 +134,6 @@ parse_pkg_file() {
   tr -d '\r' <"$1" | sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | grep -v '^$' || true
 }
 
-desktop_file_exists() {
-  local desktop_id="$1"
-  [ -f "$HOME/.local/share/applications/$desktop_id" ] ||
-    [ -f "$HOME/.nix-profile/share/applications/$desktop_id" ] ||
-    [ -f "/usr/share/applications/$desktop_id" ]
-}
-
 if [ -f packages.txt ]; then
   mapfile -t PKGS < <(parse_pkg_file packages.txt)
   if [ "${#PKGS[@]}" -gt 0 ]; then
@@ -178,31 +150,48 @@ if [ -f packages.aur.txt ]; then
   fi
 fi
 
-# Force the current AUR build over the pinned same-name repo package; --needed
-# no-ops once current, so `make update` reruns this to keep it fresh. [F-APP-CHANNELS]
-info "installing/updating claude-code from AUR (omarchy repo build is pinned)"
-if ! yay -S --noconfirm --needed --cleanafter aur/claude-code; then
-  warn "  claude-code AUR install/update failed (AUR unavailable?); continuing"
-fi
+# Quattro natively owns Brave Origin setup, extensions, policies, and theme
+# refresh. The default command can fail only in its notification tail, so verify
+# state before any browser package removal. [D-BROWSER-DEFAULT][F-APP-CHANNELS]
+step "Browser and terminal defaults"
+BRAVE_ORIGIN_DESKTOP="brave-origin.desktop"
+omarchy install browser brave-origin
+omarchy default browser brave-origin || true
+[ "$(omarchy default browser)" = "brave-origin" ] ||
+  die "Brave Origin did not become the default — not removing Chromium"
 
-# Ghostty is the default terminal, set BEFORE the alacritty drop below so the
-# list never points at a removed terminal; guard on the actual default (not just
-# "ghostty installed") to stay idempotent. omarchy-install-terminal is fail-open
-# — it swallows a failed package install and exits 0 without rewriting the list
-# — so re-assert afterward and abort before the drop, else a transient failure
-# breaks the default. Base-package/reinstall caveat: decisions.html#D-TERM-GHOSTTY.
+# xdg-settings does not assert these additional associations on every desktop.
+BRAVE_MIME_TYPES=(
+  x-scheme-handler/http
+  x-scheme-handler/https
+  x-scheme-handler/chrome
+  text/html
+  application/x-extension-htm
+  application/x-extension-html
+  application/x-extension-shtml
+  application/xhtml+xml
+  application/x-extension-xhtml
+  application/x-extension-xht
+)
+for mime_type in "${BRAVE_MIME_TYPES[@]}"; do
+  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" "$mime_type"
+done
+success "Brave Origin is the default browser"
+
+# Installing a supported terminal also writes xdg-terminals.list; a second
+# default-terminal call would be redundant. The installer is fail-open, so the
+# following assertion is the real safety gate before Alacritty is dropped.
 # [D-TERM-GHOSTTY]
-if [ "$(omarchy-default-terminal)" != "ghostty" ]; then
-  info "setting ghostty as the default terminal"
-  omarchy install terminal ghostty
-  [ "$(omarchy-default-terminal)" = "ghostty" ] ||
-    die "ghostty did not become the default (install failed?) — not removing alacritty; re-run ./install"
-fi
+omarchy install terminal ghostty
+[ "$(omarchy default terminal)" = "ghostty" ] ||
+  die "Ghostty did not become the default — not removing Alacritty"
+success "Ghostty is the default terminal"
+unset BRAVE_MIME_TYPES BRAVE_ORIGIN_DESKTOP mime_type
 
 if [ -f packages.remove.txt ]; then
   mapfile -t REMOVE_PKGS < <(parse_pkg_file packages.remove.txt)
   if [ "${#REMOVE_PKGS[@]}" -gt 0 ]; then
-    info "removing omarchy builtins: ${REMOVE_PKGS[*]}"
+    info "removing unwanted packages: ${REMOVE_PKGS[*]}"
     # pacman -Rns refuses reverse-dep conflicts; warn instead of abort. [D-PKG-REMOVE]
     if ! omarchy pkg drop "${REMOVE_PKGS[@]}"; then
       warn "  one or more removes refused (reverse-dep conflict?); continuing"
@@ -210,65 +199,8 @@ if [ -f packages.remove.txt ]; then
   fi
 fi
 
-# Use Omarchy's package manager, theming helper, and hook surface while its
-# browser/default wrappers still target Brave Origin Beta.
-# [D-BROWSER-DEFAULT][F-APP-CHANNELS]
-step "Browser default"
-BRAVE_ORIGIN_PKG="brave-origin-bin"
-BRAVE_ORIGIN_BETA_PKG="brave-origin-beta-bin"
-BRAVE_ORIGIN_DESKTOP="brave-origin.desktop"
-BRAVE_ORIGIN_FLAGS="$HOME/.config/brave-origin-flags.conf"
-if desktop_file_exists "$BRAVE_ORIGIN_DESKTOP"; then
-  success "Brave Origin desktop entry present"
-else
-  info "installing stable Brave Origin via 'omarchy pkg aur add $BRAVE_ORIGIN_PKG'"
-  omarchy pkg aur add "$BRAVE_ORIGIN_PKG"
-fi
-
-# Mirror Omarchy's channel-neutral Brave Origin setup against the stable
-# package: policy directory, flags file, and theme refresh.
-sudo mkdir -p /etc/brave/policies/managed
-sudo chmod a+rw /etc/brave/policies/managed
-mkdir -p "$HOME/.config"
-printf '%s\n' "--load-extension=$HOME/.local/share/omarchy/default/chromium/extensions/copy-url" >"$BRAVE_ORIGIN_FLAGS"
-if have omarchy-theme-set-browser; then
-  omarchy-theme-set-browser
-fi
-
-current_browser="$(xdg-settings get default-web-browser 2>/dev/null || true)"
-if [ "$current_browser" = "$BRAVE_ORIGIN_DESKTOP" ]; then
-  success "Brave Origin is the default browser"
-else
-  info "setting Brave Origin as the default browser"
-  xdg-settings set default-web-browser "$BRAVE_ORIGIN_DESKTOP"
-  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" x-scheme-handler/http
-  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" x-scheme-handler/https
-  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" x-scheme-handler/chrome
-  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" text/html
-  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" application/x-extension-htm
-  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" application/x-extension-html
-  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" application/x-extension-shtml
-  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" application/xhtml+xml
-  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" application/x-extension-xhtml
-  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" application/x-extension-xht
-fi
-MIMEAPPS="$HOME/.config/mimeapps.list"
-if [ -f "$MIMEAPPS" ]; then
-  sed -i '/brave-origin-beta\.desktop/d' "$MIMEAPPS"
-fi
-
-if pacman -Qq "$BRAVE_ORIGIN_BETA_PKG" >/dev/null 2>&1; then
-  info "dropping Brave Origin Beta after stable default is configured"
-  if ! omarchy pkg drop "$BRAVE_ORIGIN_BETA_PKG"; then
-    warn "  could not drop $BRAVE_ORIGIN_BETA_PKG; continuing"
-  fi
-fi
-rm -f "$HOME/.config/brave-origin-beta-flags.conf"
-unset BRAVE_ORIGIN_PKG BRAVE_ORIGIN_BETA_PKG BRAVE_ORIGIN_DESKTOP BRAVE_ORIGIN_FLAGS MIMEAPPS current_browser
-
-# Package reconciliation above restores OpenCode; its config stays Omarchy-owned
-# and is seeded only when absent. Assert LSP enablement as a narrow jq delta so
-# Omarchy and user-owned keys survive. [D-PKG-REMOVE][D-OPENCODE-LSP][F-OPENCODE-LSP]
+# Quattro owns the lazy OpenCode launcher; seed only its mutable user config,
+# then assert the personal LSP delta. [D-OPENCODE-LSP][F-OPENCODE-LSP]
 OPENCODE_CONFIG="$HOME/.config/opencode/opencode.json"
 if [ ! -f "$OPENCODE_CONFIG" ]; then
   info "seeding OpenCode config from Omarchy default"
@@ -329,63 +261,29 @@ fi
 # Stow only repo-owned namespaces; Omarchy-owned files get managed blocks. [D-DELTA-STORAGE]
 step "Stow"
 prestow_backup "$HOME/.ssh/config"
-# Hash before/after stow so we restart elephant only on a real content
-# change (elephant reads websearch.toml at service start, no auto-reload).
-ELEPHANT_WEBSEARCH="$HOME/.config/elephant/websearch.toml"
-elephant_pre_hash=$(sha256sum "$ELEPHANT_WEBSEARCH" 2>/dev/null | cut -d' ' -f1 || true)
-prestow_backup "$ELEPHANT_WEBSEARCH"
 # UWSM env.d is stowed because Omarchy-launched apps inherit that session env. [F-SSH-AGENT]
 prestow_backup "$HOME/.config/uwsm/env.d/dotfiles.sh"
 # Claude Code statusline is a pure user script (Claude never rewrites it), so it
 # stows; settings.json is tool-rewritten and rides a jq delta instead. [D-CLAUDE-CONFIG]
 prestow_backup "$HOME/.claude/statusline-command.sh"
-# Remove only our obsolete ~/.tmux.conf symlink; tmux now loads through Omarchy's
-# XDG config path so the overlay is not shadowed.
-if [ -L "$HOME/.tmux.conf" ]; then
-  _t="$(readlink -f "$HOME/.tmux.conf" 2>/dev/null || true)"
-  # Never delete foreign or unresolvable links.
-  case "$_t" in "$REPO"/*) rm -f "$HOME/.tmux.conf" ;; esac
-  unset _t
-fi
-STOW_PKGS=(bash ssh bin hypr tmux elephant nvim uwsm omarchy claude)
+prestow_backup "$HOME/.config/hypr/dotfiles.lua"
+prestow_backup "$HOME/.config/omarchy/plugins/pashbyl.workspaces"
+prestow_backup "$HOME/.config/omarchy/bar/scripts/memory-status"
+prestow_backup "$HOME/.config/omarchy/shell.toml"
+STOW_PKGS=(bash ssh bin hypr tmux nvim uwsm omarchy claude)
 stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
 success "stowed: ${STOW_PKGS[*]}"
 
-elephant_post_hash=$(sha256sum "$ELEPHANT_WEBSEARCH" 2>/dev/null | cut -d' ' -f1 || true)
-elephant_changed=0
-[ "$elephant_pre_hash" != "$elephant_post_hash" ] && elephant_changed=1
-unset elephant_pre_hash elephant_post_hash ELEPHANT_WEBSEARCH
-
-# Stale launcher orphans (.desktop files left behind after the package was
-# stripped). Track real removals so elephant drops them from Walker immediately.
+# Stale user launchers survive package removal because pacman never owned them.
 # [D-PKG-REMOVE][D-TERM-GHOSTTY]
 if [ -e "$HOME/.local/share/applications/typora.desktop" ]; then
   rm -f "$HOME/.local/share/applications/typora.desktop"
-  elephant_changed=1
 fi
 # Omarchy migration 1763558828 created this user-owned override while Alacritty
 # was installed; pacman cannot remove it with the package.
 if ! pacman -Qq alacritty >/dev/null 2>&1 &&
   [ -e "$HOME/.local/share/applications/Alacritty.desktop" ]; then
   rm -f "$HOME/.local/share/applications/Alacritty.desktop"
-  elephant_changed=1
-fi
-
-# Reproduce omarchy's curated Zoom webapp (dropped by Remove Preinstalled, not
-# restored on update): call omarchy's own installer with webapps.sh's exact args,
-# re-seed the icon, and refresh the desktop DB so zoommtg:// registers. [D-WEBAPP]
-ZOOM_ICON_DIR="$HOME/.local/share/applications/icons"
-ZOOM_ICON_SRC="$HOME/.local/share/omarchy/applications/icons/Zoom.png"
-# Best-effort (|| true): a missing source or unwritable dir must not abort install.
-if [ -f "$ZOOM_ICON_SRC" ]; then
-  mkdir -p "$ZOOM_ICON_DIR" || true
-  cp -f "$ZOOM_ICON_SRC" "$ZOOM_ICON_DIR/Zoom.png" || true
-fi
-omarchy webapp install "Zoom" https://app.zoom.us/wc/home Zoom.png \
-  "omarchy-webapp-handler-zoom %u" "x-scheme-handler/zoommtg;x-scheme-handler/zoomus" ||
-  warn "omarchy webapp install Zoom failed — re-run ./install to retry"
-if have update-desktop-database; then
-  update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
 fi
 
 # ssh ignores overly-open config paths; harden the dir + every config file.
@@ -404,15 +302,15 @@ upsert_block "$HOME/.bashrc" shell '#' <<'EOF'
 [ -f ~/.config/dotfiles/shell.local.sh ] && . ~/.config/dotfiles/shell.local.sh
 EOF
 
-# Source the Hypr overlay last so repo-owned deltas win. [D-CAPS-CTRL][F-HYPR-SEAM]
-HYPR_CONF="$HOME/.config/hypr/hyprland.conf"
-hypr_body="# [D-DELTA-STORAGE] personal Hyprland overlay, sourced last — docs/architecture.html#D-DELTA-STORAGE
-source = ~/.config/dotfiles/hypr.conf"
-# Hyprland errors on missing source files.
-if [ -f "$HOME/.config/dotfiles/hypr.local.conf" ]; then
-  hypr_body+=$'\n'"source = ~/.config/dotfiles/hypr.local.conf"
-fi
-printf '%s\n' "$hypr_body" | upsert_block "$HYPR_CONF" hypr '#'
+# Load a reloadable personal module after Quattro defaults. hyprland.lua is
+# Omarchy-owned and refreshable, so reassert this seam on every run.
+# [D-CAPS-CTRL][F-HYPR-SEAM]
+upsert_block "$HOME/.config/hypr/hyprland.lua" hypr '--' <<'EOF'
+-- [D-DELTA-STORAGE] reload-safe personal Hyprland overlay
+local require_optional = require("default.hypr.require_optional")
+require("hypr.dotfiles")
+require_optional.module("hypr.dotfiles_local")
+EOF
 
 # Load our tracked nvim fragment via Omarchy's keymaps.lua, not the cp-reset tree. [D-NVIM-KEYMAPS][F-NVIM-OWNED]
 upsert_block "$HOME/.config/nvim/lua/config/keymaps.lua" keymaps '--' <<'EOF'
@@ -464,78 +362,38 @@ EOF
 fi
 unset STARSHIP_TOML
 
-# Apply both waybar overlays (config.jsonc via jq, style.css via managed block);
-# restart only on real content change. [D-WAYBAR-DELTAS][F-WAYBAR-MIGRATIONS]
-waybar_changed=0
+# Quattro's shell.json is mutable and canonical once customized. Source its
+# official helper for stock fallback, normalization, atomic commit, and reload;
+# Stow owns only the plugin, command, and shell.toml override.
+# Historical ID retained for trace continuity; Quattro replaces Waybar here.
+# [D-WAYBAR-DELTAS][D-IDEMPOTENT]
+SHELL_CONFIG_HELPER="$(command -v omarchy-shell-config)"
+# shellcheck source=/usr/bin/omarchy-shell-config disable=SC1090,SC1091
+. "$SHELL_CONFIG_HELPER"
+shell_source="$(source_file)"
+jq -e 'type == "object"' "$shell_source" >/dev/null ||
+  die "Quickshell config root is not an object — refusing to replace it"
+shell_delta="$(<"$REPO/omarchy/shell.jq")"
+shell_program="$NORMALIZE | $shell_delta"
+shell_new="$(jq -S -e "$shell_program" "$shell_source")" ||
+  die "Quickshell config delta failed"
+shell_current="$(cat "$CONFIG_FILE" 2>/dev/null || true)"
 
-if apply_jq_deltas "$HOME/.config/waybar/config.jsonc" "$REPO/waybar/deltas.jq" "waybar deltas"; then
-  waybar_changed=1
+omarchy-shell shell rescanPlugins >/dev/null 2>&1 || true
+if [ "$shell_new" != "$shell_current" ]; then
+  commit "$shell_program"
+  info "Quickshell layout delta applied to ${CONFIG_FILE/#$HOME/\~}"
+else
+  success "Quickshell layout already converged"
 fi
+unset SHELL_CONFIG_HELPER shell_source shell_delta shell_program shell_new shell_current
 
-# Hash-compare around the style block because upsert_block always rewrites;
-# only a real content change should restart waybar.
-WAYBAR_STYLE="$HOME/.config/waybar/style.css"
-if [ -f "$WAYBAR_STYLE" ]; then
-  pre_hash=$(sha256sum "$WAYBAR_STYLE" | cut -d' ' -f1)
-  upsert_block "$WAYBAR_STYLE" waybar '/*' ' */' <<'EOF'
-/* [D-WAYBAR-DELTAS] Keep the personal #memory module spaced like its
- * right-side neighbors; full rationale lives in docs/decisions.html#D-WAYBAR-DELTAS. */
-#memory,
-#custom-expand-icon,
-#tray,
-#bluetooth,
-#network,
-#cpu,
-#battery,
-#pulseaudio {
-  min-width: 12px;
-  margin: 0 4px;
-}
-/* The `*{background-color}` reset boxes every menu node; clear the box on the
- * content nodes, then tint the hovered row. docs/decisions.html#D-WAYBAR-DELTAS */
-menu menuitem label,
-menu menuitem arrow,
-menu menuitem check,
-menu menuitem radio {
-  background-color: transparent;
-}
-menu menuitem:hover {
-  background-color: alpha(@theme_selected_bg_color, 0.4);
-}
-/* [D-WAYBAR-DELTAS] No urgent styling ships with omarchy; recolor the urgent
- * workspace label (the global `*{color}` beats a button-only rule). docs/decisions.html#D-WAYBAR-DELTAS */
-#workspaces button.urgent label {
-  color: #a55555;
-}
-EOF
-  post_hash=$(sha256sum "$WAYBAR_STYLE" | cut -d' ' -f1)
-  [ "$pre_hash" != "$post_hash" ] && waybar_changed=1
+# The upgrade may preserve custom legacy UWSM lines in a later-sorting fragment.
+# Do not delete potentially unique state automatically; surface it for the
+# one-time migration audit. [F-SSH-AGENT]
+if [ -f "$HOME/.config/uwsm/env.d/99-omarchy-upgrade-env" ]; then
+  warn "review ~/.config/uwsm/env.d/99-omarchy-upgrade-env for duplicate or overriding exports"
 fi
-unset pre_hash post_hash WAYBAR_STYLE
-
-if [ "$waybar_changed" -eq 1 ]; then
-  if [ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
-    info "waybar overlay updated; restart skipped (no live Hyprland session)"
-  elif ! have omarchy-restart-waybar; then
-    warn "waybar overlay updated; omarchy-restart-waybar not on PATH — restart manually"
-  else
-    restart_waybar_polled
-  fi
-fi
-unset waybar_changed
-
-# Elephant reads its inputs at service start; restart on real content or
-# launcher changes so Walker reflects the converged application set.
-# [D-PKG-REMOVE][D-TERM-GHOSTTY]
-if [ "$elephant_changed" -eq 1 ]; then
-  if have omarchy-restart-walker; then
-    omarchy-restart-walker
-    success "elephant/walker restarted"
-  else
-    warn "elephant overlay updated; omarchy-restart-walker not on PATH — restart manually"
-  fi
-fi
-unset elephant_changed
 
 # Overlay our Claude Code settings idempotently. Claude rewrites settings.json
 # itself (via /config), so we assert only our keys via jq — preserving any keys
@@ -550,7 +408,6 @@ apply_jq_deltas "$HOME/.claude/settings.json" "$REPO/claude/settings.jq" "claude
 # ── validation ───────────────────────────────────────────────────────────────
 if have hyprctl && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
   step "Validate Hyprland"
-  monitors_pre=$(snapshot_monitor_topology)
   if hyprctl reload >/dev/null 2>&1; then success "hyprctl reload ok"; else warn "hyprctl reload failed"; fi
   errs="$(hyprctl configerrors 2>/dev/null || true)"
   # Clean when output is empty/whitespace or contains "no error". Don't rely on
@@ -561,16 +418,6 @@ if have hyprctl && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
     warn "hyprctl reported config issues:"
     printf '%s\n' "$errs"
   fi
-  monitors_post=$(snapshot_monitor_topology)
-  if [ -n "$monitors_pre" ] && [ "$monitors_pre" != "$monitors_post" ]; then
-    if ! have omarchy-restart-waybar; then
-      warn "monitor topology changed; omarchy-restart-waybar not on PATH — restart manually"
-    else
-      info "monitor topology changed; restarting waybar"
-      restart_waybar_polled
-    fi
-  fi
-  unset monitors_pre monitors_post
 fi
 
 step "Done"

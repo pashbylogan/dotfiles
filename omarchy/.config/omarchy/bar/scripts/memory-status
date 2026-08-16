@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Quickshell command-module payload for the personal memory indicator.
+# [D-QUICKSHELL-DELTAS]
+
+set -euo pipefail
+
+LC_ALL=C awk '
+  /^MemTotal:/     { total = $2 }
+  /^MemAvailable:/ { available = $2 }
+  END {
+    if (total <= 0) exit 1
+    used = total - available
+    printf "{\"text\":\"\",\"tooltip\":\"RAM %.1fG / %.1fG (%d%%)\"}\n", \
+      used / 1048576, total / 1048576, (used * 100) / total
+  }
+' /proc/meminfo

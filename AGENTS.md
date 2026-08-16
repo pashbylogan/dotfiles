@@ -14,8 +14,9 @@ the repo docs for durable context, and keep only rules agents need in most tasks
 
 ## Omarchy Sources
 
-- For desktop or Omarchy customization, use the local Omarchy skill at
-  `/home/pashbyl/.local/share/omarchy/default/omarchy-skill/SKILL.md`.
+- For desktop or Omarchy customization, use the available `omarchy` skill. On
+  Quattro its packaged source is
+  `/usr/share/omarchy/default/agents/skills/omarchy/SKILL.md`.
 - Prefer Omarchy-native features: `omarchy` commands, Omarchy menu flows,
   supported hooks, and user-owned config under `~/.config/`.
 - Official docs start at `https://omarchy.org/` and the manual at

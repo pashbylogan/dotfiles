@@ -19,8 +19,10 @@ represents. Each numbered step is necessary in order.
 1. **Install Omarchy.** The installer prompts for full name + email and writes
    them to `~/.config/git/config` as `user.name` / `user.email`, so no
    follow-up `git config` is needed.
-2. **Run "Remove Preinstalled"** (`Super + Alt + Space` → Remove). The repo's
-   baseline is the post-Remove-Preinstalled state. [D-BASELINE][F-BASELINE]
+2. **Keep the stock Quattro baseline.** Do not run the broad Remove
+   Preinstalled flow: Quattro owns retained apps, OmaCalc, and its lazy agent
+   wrappers. `packages.remove.txt` is the explicit persistent deny-list applied
+   by this repo. [D-BASELINE][F-BASELINE]
 
 ### SSH + GitHub
 
@@ -66,13 +68,12 @@ represents. Each numbered step is necessary in order.
    ```
    `./install` is idempotent — re-run after editing a fragment, after an
    Omarchy refresh, or to drop newly-added entries in `packages.remove.txt`.
-   It also converges stable Brave Origin as the default browser through
-   Omarchy's package, theming, and hook surfaces while Omarchy's browser
-   wrappers still target beta. [D-IDEMPOTENT][D-PKG-REMOVE][D-BROWSER-DEFAULT]
+   It also selects Brave Origin and Ghostty through Quattro's supported install
+   flows. [D-IDEMPOTENT][D-PKG-REMOVE][D-BROWSER-DEFAULT]
 7. **Create per-machine overrides** (see [Per-machine overrides](#per-machine-overrides)
    below). `shell.local.sh` and `~/.ssh/config.local` are picked up on next
-   shell / ssh invocation; `hypr.local.conf` requires re-running `./install`
-   so its `source =` line gets added.
+   shell / ssh invocation; `dotfiles_local.lua` is loaded automatically after
+   re-running `./install` to create its Stow link.
 8. **Log out and back into Omarchy** so UWSM reads the stowed
    `~/.config/uwsm/env.d/dotfiles.sh` fragment. Obsidian and terminals launched
    from the Omarchy session then inherit the same `SSH_AUTH_SOCK`. Quick check:
@@ -93,11 +94,11 @@ Each ends in an interactive auth flow.
     frozen; just finish the login and the command returns.
 10. **Slack** — sign in to your workspace. Native `slack-desktop` is installed
     by `./install` (via `packages.aur.txt`) and pinned to workspace 3 in
-    `hypr.conf`. If huddles or screen sharing regress in the native app, use
-    Slack in Google Chrome as the fallback; do not add a tray dependency unless
+    `hypr/dotfiles.lua`. If huddles or screen sharing regress in the native app,
+    use Slack in the browser as the fallback; do not add a tray dependency unless
     the local tray behavior stops working. [F-APP-CHANNELS]
-11. **Spotify** — sign in to your account. AUR-installed by `./install`,
-    pinned to workspace 10.
+11. **Spotify** — sign in to your account. Installed from Quattro's supported
+    sync-repo package by `./install`, pinned to workspace 10.
 
 ### Work-specific (optional)
 
@@ -117,7 +118,7 @@ gitignored and sourced automatically. [D-SECRETS-LOCAL]
 | ---                                             | ---                                      | ---                                                                                          |
 | `bash/.config/dotfiles/shell.local.sh.example`  | `~/.config/dotfiles/shell.local.sh`      | secrets, project IDs, device serials                                                         |
 | `ssh/.ssh/config.local.example`                 | `~/.ssh/config.local`                    | machine-specific ssh hosts                                                                   |
-| `hypr/.config/dotfiles/hypr.local.conf.example` | `~/.config/dotfiles/hypr.local.conf`     | device-specific Hyprland (e.g. mouse accel) — re-run `./install` after creating              |
+| `hypr/.config/hypr/dotfiles_local.lua.example` | `~/.config/hypr/dotfiles_local.lua` | device-specific Hyprland Lua (e.g. mouse accel) — re-run `./install` after creating |
 
 ## Daily use
 
@@ -127,7 +128,7 @@ gitignored and sourced automatically. [D-SECRETS-LOCAL]
 | `make ci`              | Lint + format check + docs integrity (run before committing) |
 | `make fmt`             | Auto-fix formatting (shfmt + prettier)                       |
 | `make verify`          | Live overlay health check (read-only)                        |
-| `make update`          | Omarchy/pacman/AUR + self-managed tools (uv, mise), then `make verify` |
+| `make update`          | Omarchy packages + Quattro-managed mise agents + uv, then verification |
 | `make update-firmware` | Firmware only (fwupd) — opt-in                               |
 | `pkg-residue <package>` | Read-only audit for package leftovers after removal [D-PKG-REMOVE] |
 
@@ -157,17 +158,11 @@ and network checks; it does not prove that a machine was never compromised.
 make update
 ```
 
-Runs `omarchy update -y` (pacman + AUR + Omarchy migrations), force-refreshes
-Claude Code from the AUR (`yay -S --needed aur/claude-code` — the repo build is
-pinned and Omarchy's foreign-only `yay -Sua` skips it), then updates the
-package-like self-managed tools (`uv self update`, then `mise upgrade` +
-`mise prune`), then
-`make verify`. Each step is warn-on-failure so a reboot prompt or other non-zero
-exit still leaves a visible verify boundary when the shell continues. `mise
-upgrade` only moves tools to their newest **stable** release — it honors the
-specs in `~/.config/mise/config.toml` (`latest` excludes prereleases/nightlies;
-exact pins like `node = "26.2.0"` stay put) and never rewrites that config (no
-`--bump`); `mise prune` then reclaims superseded or orphaned versions. [F-CLI]
+Refuses to start while `pacman -Qdtq` reports orphans, avoiding Omarchy's
+pseudo-TTY orphan prompt (especially the one-time post-Elephant
+`libqalculate` case). Then runs `omarchy update -y`, which owns package,
+migration, and mise-backed agent updates, followed by `uv self update` because
+uv remains outside mise and `make verify`. [F-CLI]
 
 ```sh
 make update-firmware

@@ -1,22 +1,37 @@
-# Omarchy builtins to remove; processed by `install` via `omarchy pkg drop`.
-# Audit ~/.local/share/omarchy/ before adding (see decisions.html#D-PKG-REMOVE). [D-PKG-REMOVE]
+# Unwanted Omarchy packages; processed by `install` via `omarchy pkg drop`.
+# Quattro may reinstall base packages during a major migration, so this file is
+# the persistent desired-state deny-list. [D-PKG-REMOVE]
 
 # bash/aliases guards `cd` with `command -v` — coreutil fallback kicks in.
 zoxide
 
-# Omitted (omarchy uses them unguarded): libqalculate (elephant-calc) and
-# inxi (omarchy-debug). Re-add to this list only after patching those.
-dust
+# inxi remains because omarchy-debug uses it directly. libqalculate is audited
+# once after Elephant's retirement rather than kept in the permanent list.
 lazygit
 plocate
 tldr
 
 # ruby ↔ rubygems mutual dep — both must be in the same pacman -Rns transaction.
-dotnet-runtime-9.0
+dotnet-runtime
 mariadb-libs
 ruby
 rubygems
 tobi-try
+
+# Quattro base applications this machine deliberately does not keep.
+aether
+cliamp
+herdr
+kdenlive
+lazydocker
+libreoffice-fresh
+moonlight-qt
+obs-studio
+omacut
+omawrite
+pinta
+tensaku
+xournalpp
 
 # User-removed browsers (not omarchy builtins, so no ~/.local/share/omarchy/
 # audit applies). Brave Origin is the sole browser. [D-PKG-REMOVE]

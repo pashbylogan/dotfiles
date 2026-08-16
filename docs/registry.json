@@ -37,10 +37,14 @@
     },
     {
       "id": "D-DELTA-STORAGE",
-      "title": "Own thin fragments + single managed integration block; never symlink Omarchy-owned files",
+      "title": "Own thin Lua/plugin/script fragments plus managed seams; never symlink Omarchy-owned mutable files",
       "canonical": "architecture.html#D-DELTA-STORAGE",
       "appears_in": ["augmentation-approach.html", "decisions.html"],
-      "code_paths": ["install", "hypr/.config/dotfiles/hypr.conf"],
+      "code_paths": [
+        "install",
+        "hypr/.config/hypr/dotfiles.lua",
+        "omarchy/shell.jq"
+      ],
       "related": [
         "F-REFRESH-WRITETHROUGH",
         "F-LUA",
@@ -128,7 +132,7 @@
       "code_paths": [
         "bash/.config/dotfiles/shell.local.sh.example",
         "ssh/.ssh/config.local.example",
-        "hypr/.config/dotfiles/hypr.local.conf.example",
+        "hypr/.config/hypr/dotfiles_local.lua.example",
         ".gitignore"
       ],
       "related": ["D-SHELL-SEAM", "D-MOUSE-ACCEL"]
@@ -164,18 +168,18 @@
     },
     {
       "id": "D-CAPS-CTRL",
-      "title": "caps->ctrl remap lives in the owned hypr fragment (sourced last), not Omarchy's input.conf",
+      "title": "caps->ctrl remap lives in the reloadable personal Hypr Lua module, not Omarchy's input defaults",
       "canonical": "decisions.html#D-CAPS-CTRL",
       "appears_in": [],
-      "code_paths": ["hypr/.config/dotfiles/hypr.conf", "install"],
+      "code_paths": ["hypr/.config/hypr/dotfiles.lua", "install"],
       "related": ["D-DELTA-STORAGE", "F-HYPR-SEAM", "D-KINESIS-REMAP"]
     },
     {
       "id": "D-WORKSPACE-RULES",
-      "title": "Workspace app-assignments as windowrules in the hypr fragment",
+      "title": "Workspace app assignments as window rules in the personal Hypr Lua module",
       "canonical": "decisions.html#D-WORKSPACE-RULES",
       "appears_in": [],
-      "code_paths": ["hypr/.config/dotfiles/hypr.conf"],
+      "code_paths": ["hypr/.config/hypr/dotfiles.lua"],
       "related": ["D-CAPS-CTRL"]
     },
     {
@@ -183,7 +187,7 @@
       "title": "Float the Slack huddle window (matched on title) while the main Slack window stays tiled",
       "canonical": "decisions.html#D-SLACK-HUDDLE-FLOAT",
       "appears_in": [],
-      "code_paths": ["hypr/.config/dotfiles/hypr.conf"],
+      "code_paths": ["hypr/.config/hypr/dotfiles.lua"],
       "related": ["D-WORKSPACE-RULES", "D-LOOKNFEEL", "F-HYPR-SEAM"]
     },
     {
@@ -191,15 +195,15 @@
       "title": "SUPER+SHIFT+S screenshot fallback while the keyboard PRINT key emits no Linux input event",
       "canonical": "decisions.html#D-SCREENSHOT-FALLBACK",
       "appears_in": [],
-      "code_paths": ["hypr/.config/dotfiles/hypr.conf"],
+      "code_paths": ["hypr/.config/hypr/dotfiles.lua"],
       "related": ["D-DELTA-STORAGE", "F-HYPR-SEAM"]
     },
     {
       "id": "D-KEYBIND-OVERRIDES",
-      "title": "Personal keybinding overrides live in the owned Hyprland fragment with conflict notes",
+      "title": "Personal keybindings are preserved in the reloadable Hypr Lua module; unbind only real Quattro conflicts",
       "canonical": "decisions.html#D-KEYBIND-OVERRIDES",
       "appears_in": [],
-      "code_paths": ["hypr/.config/dotfiles/hypr.conf"],
+      "code_paths": ["hypr/.config/hypr/dotfiles.lua"],
       "related": [
         "D-DELTA-STORAGE",
         "D-BASELINE",
@@ -209,10 +213,10 @@
     },
     {
       "id": "D-MOUSE-ACCEL",
-      "title": "External MX Master mouse accel in gitignored hypr.local.conf (device-specific)",
+      "title": "External MX Master mouse acceleration in an optional gitignored Hypr Lua module",
       "canonical": "decisions.html#D-MOUSE-ACCEL",
       "appears_in": [],
-      "code_paths": ["hypr/.config/dotfiles/hypr.local.conf.example"],
+      "code_paths": ["hypr/.config/hypr/dotfiles_local.lua.example"],
       "related": ["D-SECRETS-LOCAL", "D-WORKSPACE-RULES"]
     },
     {
@@ -221,25 +225,25 @@
       "canonical": "decisions.html#D-LOOKNFEEL",
       "appears_in": ["findings.html"],
       "code_paths": [
-        "hypr/.config/dotfiles/hypr.conf",
+        "hypr/.config/hypr/dotfiles.lua",
         ".github/scripts/verify.sh"
       ],
       "related": ["D-DELTA-STORAGE", "F-HYPR-SEAM"]
     },
     {
       "id": "D-HJKL-DECLINED",
-      "title": "Declined vim hjkl window focus (keep Omarchy SUPER+arrows; preserve SUPER+J/L)",
+      "title": "Historical slug: preserve personal SUPER+H/J/K/L focus and Shift-H/J/K/L swap bindings over Quattro defaults",
       "canonical": "decisions.html#D-HJKL-DECLINED",
       "appears_in": [],
-      "code_paths": [],
+      "code_paths": ["hypr/.config/hypr/dotfiles.lua"],
       "related": ["D-WORKSPACE-RULES"]
     },
     {
       "id": "D-WAYBAR-DELTAS",
-      "title": "Personal waybar deltas as composed jq filters in waybar/deltas.jq, applied idempotently by install (apply_jq_deltas helper); restart waybar only when content changes",
+      "title": "Historical slug: replace retired Waybar with a supported Quickshell plugin, shell.toml, command module, and idempotent shell.json delta",
       "canonical": "decisions.html#D-WAYBAR-DELTAS",
       "appears_in": ["architecture.html", "findings.html", "todos.html"],
-      "code_paths": ["install", "waybar/deltas.jq"],
+      "code_paths": ["install", "omarchy/shell.jq"],
       "related": ["D-DELTA-STORAGE", "F-WAYBAR-MIGRATIONS", "D-IDEMPOTENT"]
     },
     {
@@ -256,7 +260,7 @@
     },
     {
       "id": "D-STARSHIP-VENV",
-      "title": "Show the active Python venv name in the prompt via a $VIRTUAL_ENV-keyed [custom.venv] module; hybrid delta = in-place format-key edit + appended managed block, not stowed (like D-WAYBAR-DELTAS)",
+      "title": "Show the active Python venv name through a $VIRTUAL_ENV-keyed [custom.venv] module and managed block",
       "canonical": "decisions.html#D-STARSHIP-VENV",
       "appears_in": [],
       "code_paths": ["install", ".github/scripts/verify.sh"],
@@ -288,7 +292,7 @@
     },
     {
       "id": "D-BASELINE",
-      "title": "Reference baseline = Omarchy after 'Remove Preinstalled'; bindings.conf left untracked",
+      "title": "Reference baseline = stock Quattro plus explicit additive manifests and the persistent package deny-list",
       "canonical": "decisions.html#D-BASELINE",
       "appears_in": ["README.md"],
       "code_paths": ["README.md"],
@@ -309,7 +313,6 @@
         "packages.txt",
         "packages.remove.txt",
         "README.md",
-        "elephant/.config/elephant/websearch.toml",
         "bin/.local/bin/pkg-residue"
       ],
       "related": [
@@ -323,22 +326,18 @@
     },
     {
       "id": "D-WEBAPP",
-      "title": "Reproduce omarchy-curated webapp launchers idempotently",
+      "title": "Retired: Quattro owns the Zoom desktop launcher and native webapp lifecycle",
       "canonical": "decisions.html#D-WEBAPP",
       "appears_in": [],
-      "code_paths": ["install", ".github/scripts/verify.sh"],
+      "code_paths": [],
       "related": ["D-PKG-REMOVE", "D-IDEMPOTENT", "D-SCRIPTS-MINIMAL", "F-CLI"]
     },
     {
       "id": "D-BROWSER-DEFAULT",
-      "title": "Stable Brave Origin is the default browser via Omarchy package, theming, and hook surfaces until Omarchy's browser commands map brave-origin to stable",
+      "title": "Stable Brave Origin is installed and selected through Quattro's native browser flow, plus explicit MIME associations",
       "canonical": "decisions.html#D-BROWSER-DEFAULT",
       "appears_in": ["README.md", "findings.html", "todos.html"],
-      "code_paths": [
-        "install",
-        ".github/scripts/verify.sh",
-        "omarchy/.config/omarchy/hooks/theme-set.d/brave-origin-stable"
-      ],
+      "code_paths": ["install", ".github/scripts/verify.sh"],
       "related": [
         "D-IDEMPOTENT",
         "D-SCRIPTS-MINIMAL",
@@ -348,10 +347,10 @@
     },
     {
       "id": "D-MONITORS",
-      "title": "Known external monitor layouts as desc:-matched monitor= rules in the hypr overlay: home dual-Acer dock at native 2560×1440@144 with scale 1.333333, work Dell U2719DC at native 2560×1440@59.95 with scale 1.25; eDP-1 stays governed by Omarchy's lid switch + internal-monitor-disable toggle (no overlay line); GDK_SCALE intentionally untouched; install restarts waybar when reload changes monitor topology",
+      "title": "Known external monitor layouts as description-matched Lua rules; eDP-1 remains governed by Quattro's lid and internal-monitor toggles",
       "canonical": "decisions.html#D-MONITORS",
       "appears_in": ["findings.html"],
-      "code_paths": ["hypr/.config/dotfiles/hypr.conf", "install"],
+      "code_paths": ["hypr/.config/hypr/dotfiles.lua"],
       "related": [
         "D-DELTA-STORAGE",
         "F-HYPR-SEAM",
@@ -367,17 +366,17 @@
       "title": "Kinesis Advantage360 SmartSet profile-1 thumb remap: SUPER on both bottom thumb keys (END/PGDN) for either-hand chording, Alt moved to the inner-right key (RWIN), Home->Tab, Calc->F14 bound by keycode 192 to the clipboard; Caps left as-is; layout backed up in kinesis/",
       "canonical": "decisions.html#D-KINESIS-REMAP",
       "appears_in": [],
-      "code_paths": ["kinesis/README.md", "hypr/.config/dotfiles/hypr.conf"],
+      "code_paths": ["kinesis/README.md", "hypr/.config/hypr/dotfiles.lua"],
       "related": ["D-KEYBIND-OVERRIDES", "D-CAPS-CTRL"]
     }
   ],
   "findings": [
     {
       "id": "F-HYPR-SEAM",
-      "title": "hyprland.conf sources defaults -> user override files -> theme -> toggles; later wins",
+      "title": "Quattro's hyprland.lua loads defaults then a reloadable hypr.* personal module; the mutable entry-point seam must be reasserted after refresh",
       "canonical": "findings.html#F-HYPR-SEAM",
       "appears_in": ["decisions.html"],
-      "code_paths": ["hypr/.config/dotfiles/hypr.conf", "install"],
+      "code_paths": ["hypr/.config/hypr/dotfiles.lua", "install"],
       "related": ["D-DELTA-STORAGE", "D-CAPS-CTRL", "D-LOOKNFEEL"]
     },
     {
@@ -390,7 +389,7 @@
     },
     {
       "id": "F-LUA",
-      "title": "Omarchy dev branch already migrated Hyprland config to Lua",
+      "title": "Quattro ships Hyprland Lua configuration and reloads only selected package.loaded namespaces",
       "canonical": "findings.html#F-LUA",
       "appears_in": [
         "augmentation-approach.html",
@@ -410,7 +409,7 @@
     },
     {
       "id": "F-NVIM-OWNED",
-      "title": "omarchy-nvim-setup cp -r replaces ~/.config/nvim; keymaps.lua is the user-extension file",
+      "title": "The separate omarchy-nvim package seeds keymaps.lua as the user seam; refresh backs up and replaces the entire config",
       "canonical": "findings.html#F-NVIM-OWNED",
       "appears_in": ["decisions.html"],
       "code_paths": ["install"],
@@ -418,7 +417,7 @@
     },
     {
       "id": "F-BASELINE",
-      "title": "Remove Preinstalled explains the trimmed bindings.conf (intentional, not drift)",
+      "title": "Historical v3 Remove Preinstalled baseline; Quattro migration now uses stock defaults plus a narrow deny-list",
       "canonical": "findings.html#F-BASELINE",
       "appears_in": ["README.md", "decisions.html", "index.html"],
       "code_paths": ["README.md"],
@@ -426,16 +425,10 @@
     },
     {
       "id": "F-APP-CHANNELS",
-      "title": "App package/webapp/browser channel choices are audited Omarchy-native first: Brave Origin uses stable AUR with Omarchy package, theming, and hook surfaces until Omarchy's browser commands catch up, Spotify follows Omarchy's AUR package, Obsidian follows official extra with Omarchy flags/theme hooks, Slack stays native AUR with Chrome as huddles fallback, Claude Code is force-installed from the AUR via `yay -S --needed aur/claude-code` in both install and make update because Omarchy publishes a stale same-name package that its foreign-only `yay -Sua` step skips, and Google Cloud tooling stays on AUR gcloud with the GKE auth plugin as a version-locked split package while kubectl moves to the official extra repo",
+      "title": "App channels are Omarchy-native first: Brave Origin and Ghostty use Quattro flows, agents use mise wrappers, Spotify uses its sync-repo service package, and explicit extras stay in manifests",
       "canonical": "findings.html#F-APP-CHANNELS",
       "appears_in": ["README.md", "decisions.html", "todos.html"],
-      "code_paths": [
-        "install",
-        "Makefile",
-        "packages.txt",
-        "packages.aur.txt",
-        "omarchy/.config/omarchy/hooks/theme-set.d/brave-origin-stable"
-      ],
+      "code_paths": ["install", "packages.txt", "packages.aur.txt"],
       "related": ["D-PKG-REMOVE", "D-WEBAPP", "D-BROWSER-DEFAULT", "F-BASELINE"]
     },
     {
@@ -489,10 +482,10 @@
     },
     {
       "id": "F-WAYBAR-MIGRATIONS",
-      "title": "Omarchy mutates ~/.config/waybar/config.jsonc via two patterns: wholesale refresh-waybar overwrites AND surgical sed-style migrations; the manual's 'will not be overwritten' claim is inaccurate for waybar",
+      "title": "Historical v3 finding: Waybar was mutable and refresh-prone; Quattro retires it in favor of user plugins plus mutable shell.json",
       "canonical": "findings.html#F-WAYBAR-MIGRATIONS",
-      "appears_in": ["architecture.html", "decisions.html", "todos.html"],
-      "code_paths": ["install", "waybar/deltas.jq"],
+      "appears_in": ["decisions.html", "todos.html"],
+      "code_paths": [],
       "related": ["D-WAYBAR-DELTAS", "F-REFRESH-WRITETHROUGH"]
     },
     {

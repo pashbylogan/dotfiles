@@ -1,0 +1,8 @@
+-- Keep device-specific Hyprland input out of git. The optional module is
+-- loaded after dotfiles.lua when this file exists without the .example suffix.
+-- [D-MOUSE-ACCEL][D-SECRETS-LOCAL]
+
+-- hl.device({
+--   name = "name-from-hyprctl-devices",
+--   sensitivity = 0.6,
+-- })

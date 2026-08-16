@@ -5,9 +5,6 @@
 set -u
 
 REPO="$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)"
-
-# ── output helpers ───────────────────────────────────────────────────────────
-# Shared palette + managed-block marker contract; single source of truth in lib/style.sh.
 # shellcheck source=lib/style.sh
 . "$REPO/lib/style.sh"
 
@@ -18,38 +15,25 @@ miss() {
   fails=$((fails + 1))
 }
 skip() { printf '  %s- skipped: %s%s\n' "$DIM" "$1" "$NC"; }
-# Anchor the $HOME rewrite so /home/userN-backup does not become ~-backup.
 pretty() {
-  # The printed "~" is display text, not a tilde-expansion target.
+  # The printed tilde is display text, not a shell expansion target.
   # shellcheck disable=SC2088
   case "$1" in
-    "$HOME"/*) printf '%s' "~/${1#"$HOME"/}" ;;
-    "$HOME") printf '%s' "~" ;;
+    "$HOME"/*) printf '~/%s' "${1#"$HOME"/}" ;;
+    "$HOME") printf '~' ;;
     *) printf '%s' "$1" ;;
   esac
 }
 
-# ── Hyprland config ──────────────────────────────────────────────────────────
-if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && have hyprctl; then
-  errs="$(hyprctl configerrors 2>&1 || true)"
-  # A stale HYPRLAND_INSTANCE_SIGNATURE (shell predates a Hyprland restart) makes
-  # hyprctl fail to reach the socket; that's an unreachable session, not a config
-  # error, so skip rather than flag it as one.
-  if printf '%s' "$errs" | grep -qiF "couldn't connect"; then
-    skip "hyprctl (stale instance signature — re-login or 'hyprctl reload')"
-  elif [ -z "${errs//[[:space:]]/}" ] || printf '%s' "$errs" | grep -qiF 'no error'; then
-    pass "hyprctl: no config errors"
-  else
-    miss "hyprctl: config errors — run 'hyprctl configerrors'"
-  fi
-else
-  skip "hyprctl (Hyprland not running in this session)"
+if [ ! -d /usr/share/omarchy ]; then
+  miss "Omarchy Quattro layout absent — upgrade before validating this branch"
+  printf '\n%sverify: %d check(s) failed%s\n' "$RED" "$fails" "$NC"
+  exit 1
 fi
+pass "Omarchy Quattro package layout present"
 
-# ── managed blocks ───────────────────────────────────────────────────────────
 check_block() {
   local file="$1" marker
-  # Same builder install writes with (lib/style.sh), so a miss is an absent block, not marker drift.
   marker="$(managed_marker begin "$2" "$3" "${4:-}")"
   if [ -f "$file" ] && grep -qxF -- "$marker" "$file"; then
     pass "$(pretty "$file") managed block present"
@@ -57,207 +41,303 @@ check_block() {
     miss "$(pretty "$file") managed block missing — re-run ./install"
   fi
 }
+
+# Mutable upstream files keep only small, re-assertable seams. [D-DELTA-STORAGE]
 check_block "$HOME/.bashrc" shell '#'
-check_block "$HOME/.config/hypr/hyprland.conf" hypr '#'
+check_block "$HOME/.config/hypr/hyprland.lua" hypr '--'
 check_block "$HOME/.config/nvim/lua/config/keymaps.lua" keymaps '--'
 check_block "$HOME/.config/tmux/tmux.conf" tmux '#'
-check_block "$HOME/.config/waybar/style.css" waybar '/*' ' */'
 check_block "$HOME/.config/starship.toml" starship-venv '#'
 
-# ── default terminal ─────────────────────────────────────────────────────────
-# Ghostty replaced Alacritty; the default is the first entry of
-# xdg-terminals.list, which omarchy-default-terminal reports. Alacritty's old
-# Omarchy migration-created user launcher must also be absent or Walker will
-# still index it after the package is gone. [D-TERM-GHOSTTY]
-if ! have omarchy-default-terminal; then
-  skip "default terminal (omarchy-default-terminal not on PATH)"
-else
-  term="$(omarchy-default-terminal)"
-  if [ "$term" = "ghostty" ]; then
-    pass "default terminal is ghostty"
-  else
-    miss "default terminal is ${term:-<none>}, expected ghostty — re-run ./install"
-  fi
-fi
-
-if pacman -Qq alacritty >/dev/null 2>&1; then
-  miss "Alacritty package still installed — re-run ./install"
-else
-  pass "Alacritty package absent"
-fi
-
-ALACRITTY_DESKTOP="$HOME/.local/share/applications/Alacritty.desktop"
-if [ -e "$ALACRITTY_DESKTOP" ]; then
-  miss "$(pretty "$ALACRITTY_DESKTOP") remains and will appear in Walker — re-run ./install"
-else
-  pass "Alacritty user launcher absent"
-fi
-unset ALACRITTY_DESKTOP
-
-# ── starship venv reference ──────────────────────────────────────────────────
-# The starship-venv block only renders if the format scalar references it; the
-# block check above can't see that in-place edit, so grep for it. Drift (e.g. a
-# refreshed Omarchy default dropping the $character anchor) → re-run ./install.
-# [D-STARSHIP-VENV]
-STARSHIP_TOML="$HOME/.config/starship.toml"
-# ${custom.venv} is a literal starship token grep must match, not an expansion.
-# shellcheck disable=SC2016
-if [ ! -f "$STARSHIP_TOML" ]; then
-  skip "starship venv reference ($(pretty "$STARSHIP_TOML") not present)"
-elif grep -qF '${custom.venv}' "$STARSHIP_TOML"; then
-  pass "starship format references the venv module (\${custom.venv})"
-else
-  miss "starship format missing \${custom.venv} — venv won't show; re-run ./install"
-fi
-unset STARSHIP_TOML
-
-# ── stow links ───────────────────────────────────────────────────────────────
 check_link() {
   local link="$1" resolved
   if [ ! -L "$link" ]; then
-    miss "$(pretty "$link") is not a symlink (expected stow link into the repo)"
+    miss "$(pretty "$link") is not a Stow symlink"
     return
   fi
   resolved="$(readlink -f "$link" 2>/dev/null || true)"
-  # `readlink -f` resolves dangling links, so test target existence separately.
   if [ ! -e "$link" ]; then
-    miss "$(pretty "$link") is a dangling symlink -> $resolved"
-    return
+    miss "$(pretty "$link") is dangling -> $resolved"
+  elif [[ $resolved == "$REPO"/* ]]; then
+    pass "$(pretty "$link") -> repo"
+  else
+    miss "$(pretty "$link") resolves outside the repo ($resolved)"
   fi
-  case "$resolved" in
-    "$REPO"/*) pass "$(pretty "$link") -> repo" ;;
-    *) miss "$(pretty "$link") is a symlink but doesn't resolve into the repo ($resolved)" ;;
-  esac
 }
+
 check_link "$HOME/.config/dotfiles/shell.sh"
-check_link "$HOME/.config/dotfiles/hypr.conf"
+check_link "$HOME/.config/hypr/dotfiles.lua"
 check_link "$HOME/.config/dotfiles/nvim.lua"
 check_link "$HOME/.config/uwsm/env.d/dotfiles.sh"
 check_link "$HOME/.ssh/config"
 check_link "$HOME/.config/tmux/local.conf"
-check_link "$HOME/.config/omarchy/hooks/theme-set.d/brave-origin-stable"
 check_link "$HOME/.claude/statusline-command.sh"
+check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json"
+check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
+check_link "$HOME/.config/omarchy/bar/scripts/memory-status"
+check_link "$HOME/.config/omarchy/shell.toml"
 
-# ── claude code ──────────────────────────────────────────────────────────────
-# statusline is stowed (checked above); settings.json is jq-overlaid in place. Re-
-# run the overlay filter and check it's a no-op — that's exactly what install
-# asserts, so it covers every managed key and scales with the filter. [D-CLAUDE-CONFIG]
-CLAUDE_SETTINGS="$HOME/.claude/settings.json"
-if [ ! -f "$CLAUDE_SETTINGS" ]; then
-  miss "$(pretty "$CLAUDE_SETTINGS") missing — re-run ./install"
-elif [ "$(jq -f "$REPO/claude/settings.jq" "$CLAUDE_SETTINGS" 2>/dev/null)" = "$(cat "$CLAUDE_SETTINGS")" ]; then
-  pass "claude settings overlay fully applied (settings.jq is a no-op)"
+# The hypr.* namespace is purged by Quattro on reload; dotfiles.* is not.
+# Verify both the module name and the optional-module binding. [F-HYPR-SEAM]
+HYPR_MAIN="$HOME/.config/hypr/hyprland.lua"
+if grep -qF 'require("hypr.dotfiles")' "$HYPR_MAIN" 2>/dev/null &&
+  grep -qF 'local require_optional = require("default.hypr.require_optional")' "$HYPR_MAIN" 2>/dev/null &&
+  grep -qF 'require_optional.module("hypr.dotfiles_local")' "$HYPR_MAIN" 2>/dev/null; then
+  pass "Hyprland reloadable overlay seam is intact"
 else
-  miss "claude settings overlay drifted — re-run ./install"
+  miss "Hyprland overlay seam drifted — re-run ./install"
 fi
-unset CLAUDE_SETTINGS
+unset HYPR_MAIN
 
-# OpenCode's config is Omarchy-seeded and user-editable; install asserts only
-# global built-in LSP enablement through a jq delta. [D-OPENCODE-LSP][F-OPENCODE-LSP]
-OPENCODE_SETTINGS="$HOME/.config/opencode/opencode.json"
-if [ ! -f "$OPENCODE_SETTINGS" ]; then
-  miss "$(pretty "$OPENCODE_SETTINGS") missing — re-run ./install"
-elif [ "$(jq -f "$REPO/opencode/settings.jq" "$OPENCODE_SETTINGS" 2>/dev/null)" = "$(cat "$OPENCODE_SETTINGS")" ]; then
-  pass "OpenCode built-in LSP servers enabled globally"
+HYPR_MODULE="$HOME/.config/hypr/dotfiles.lua"
+if grep -qF 'opacity = "0.86 override 0.78 override"' "$HYPR_MODULE" 2>/dev/null &&
+  grep -qF 'o.bind("SUPER + H", "Focus on left window"' "$HYPR_MODULE" 2>/dev/null &&
+  grep -qF '"SUPER + SHIFT + S"' "$HYPR_MODULE" 2>/dev/null &&
+  grep -qF '"SUPER + ALT + SPACE"' "$HYPR_MODULE" 2>/dev/null; then
+  pass "Hyprland opacity, representative binds, and conflict unbinds are present"
 else
-  miss "OpenCode LSP setting drifted — re-run ./install"
+  miss "Hyprland personal behavior is incomplete — restore/re-stow the module"
 fi
-unset OPENCODE_SETTINGS
-
-# ── browser default ──────────────────────────────────────────────────────────
-# install uses Omarchy's package, theming, and hook surfaces until Omarchy's
-# browser commands map brave-origin to stable. [D-BROWSER-DEFAULT]
-BRAVE_ORIGIN_DESKTOP="brave-origin.desktop"
-if [ -f "$HOME/.local/share/applications/$BRAVE_ORIGIN_DESKTOP" ] ||
-  [ -f "$HOME/.nix-profile/share/applications/$BRAVE_ORIGIN_DESKTOP" ] ||
-  [ -f "/usr/share/applications/$BRAVE_ORIGIN_DESKTOP" ]; then
-  pass "Brave Origin desktop entry present"
+if have luac && luac -p "$HYPR_MODULE"; then
+  pass "Hyprland personal Lua parses"
+elif have luac; then
+  miss "Hyprland personal Lua does not parse"
 else
-  miss "Brave Origin desktop entry missing — re-run ./install"
+  skip "standalone Lua parse (luac unavailable)"
 fi
+unset HYPR_MODULE
 
-if current_browser="$(xdg-settings get default-web-browser 2>/dev/null)"; then
-  if [ "$current_browser" = "$BRAVE_ORIGIN_DESKTOP" ]; then
-    pass "Brave Origin is the default browser"
+if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && have hyprctl; then
+  errs="$(hyprctl configerrors 2>&1 || true)"
+  if printf '%s' "$errs" | grep -qiF "couldn't connect"; then
+    skip "hyprctl (stale instance signature)"
+  elif [ -z "${errs//[[:space:]]/}" ] || printf '%s' "$errs" | grep -qiF 'no error'; then
+    pass "hyprctl: no config errors"
   else
-    miss "default browser is $current_browser, expected $BRAVE_ORIGIN_DESKTOP — re-run ./install"
+    miss "hyprctl: config errors — run 'hyprctl configerrors'"
   fi
+
+  check_hypr_int() {
+    local option="$1" expected="$2" actual
+    actual="$(hyprctl -j getoption "$option" 2>/dev/null | jq -r '.int // empty' 2>/dev/null)"
+    if [ "$actual" = "$expected" ]; then
+      pass "Hyprland $option = $expected"
+    else
+      miss "Hyprland $option = ${actual:-<unreadable>}, expected $expected"
+    fi
+  }
+  check_hypr_custom() {
+    local option="$1" expected="$2" actual
+    actual="$(hyprctl -j getoption "$option" 2>/dev/null | jq -r '.custom // empty' 2>/dev/null)"
+    if [ -n "$actual" ] && awk -v want="$expected" '{ for (i = 1; i <= NF; i++) if ($i != want) exit 1 }' <<<"$actual"; then
+      pass "Hyprland $option = $expected"
+    else
+      miss "Hyprland $option = ${actual:-<unreadable>}, expected $expected"
+    fi
+  }
+  check_hypr_float() {
+    local option="$1" expected="$2" actual
+    actual="$(hyprctl -j getoption "$option" 2>/dev/null | jq -r '.float // empty' 2>/dev/null)"
+    if [ -n "$actual" ] && awk -v actual="$actual" -v expected="$expected" 'BEGIN { d = actual - expected; if (d < 0) d = -d; exit(d > 0.0001) }'; then
+      pass "Hyprland $option = $expected"
+    else
+      miss "Hyprland $option = ${actual:-<unreadable>}, expected $expected"
+    fi
+  }
+  # These are deliberate appearance deltas, not inherited defaults. [D-LOOKNFEEL]
+  check_hypr_custom general:gaps_in 2
+  check_hypr_custom general:gaps_out 4
+  check_hypr_int general:border_size 2
+  check_hypr_int decoration:rounding 8
+  check_hypr_int decoration:blur:enabled 1
+  check_hypr_int decoration:blur:size 8
+  check_hypr_int decoration:blur:passes 2
+  check_hypr_float decoration:blur:brightness 0.72
+  check_hypr_float decoration:blur:contrast 0.75
+  check_hypr_int decoration:shadow:enabled 1
+  check_hypr_int misc:focus_on_activate 0
 else
-  skip "default browser (xdg-settings unavailable or unusable)"
+  skip "live Hyprland values (session unavailable)"
 fi
 
-if pacman -Qq brave-origin-beta-bin >/dev/null 2>&1; then
-  miss "brave-origin-beta-bin still installed — re-run ./install"
+# Quickshell uses an official plugin seam; shell.json remains mutable and must
+# already be a fixed point under the repo delta. [D-WAYBAR-DELTAS]
+SHELL_JSON="$HOME/.config/omarchy/shell.json"
+if [ ! -f "$SHELL_JSON" ]; then
+  miss "$(pretty "$SHELL_JSON") missing — re-run ./install"
 else
-  pass "Brave Origin Beta package absent"
+  # shellcheck source=/usr/bin/omarchy-shell-config disable=SC1090,SC1091
+  . "$(command -v omarchy-shell-config)"
+  shell_program="$NORMALIZE | $(<"$REPO/omarchy/shell.jq")"
+  shell_expected="$(jq -S -e "$shell_program" "$SHELL_JSON" 2>/dev/null || true)"
+  shell_actual="$(jq -S -e . "$SHELL_JSON" 2>/dev/null || true)"
+  if [ -n "$shell_expected" ] && [ "$shell_expected" = "$shell_actual" ]; then
+    pass "Quickshell layout delta fully applied"
+  else
+    miss "Quickshell layout drifted — re-run ./install"
+  fi
+  if jq -e '
+    [.bar.layout.left[], .bar.layout.center[], .bar.layout.right[]] as $all
+    | (.bar.layout.right | map(.id) | index("dotfiles.memory")) as $m
+    | (.bar.layout.right | map(.id) | index("omarchy.power")) as $p
+    | (($all | map(select(.id == "pashbyl.workspaces")) | length) == 1)
+      and (($all | map(select(.id == "omarchy.workspaces")) | length) == 0)
+      and ($m != null)
+      and ($p == null or $m == ($p - 1))
+  ' "$SHELL_JSON" >/dev/null 2>&1; then
+    pass "workspace and memory bar modules are placed correctly"
+  else
+    miss "workspace/memory bar module placement is wrong"
+  fi
 fi
-
-if [ -e "$HOME/.config/brave-origin-beta-flags.conf" ]; then
-  miss "$(pretty "$HOME/.config/brave-origin-beta-flags.conf") remains — re-run ./install"
+if "$REPO/omarchy/.config/omarchy/bar/scripts/memory-status" | jq -e '
+  .text == "" and (.tooltip | startswith("RAM "))
+' >/dev/null 2>&1; then
+  pass "memory bar command emits valid JSON"
 else
-  pass "Brave Origin Beta flags absent"
+  miss "memory bar command output is invalid"
 fi
-
-if [ -f "$HOME/.config/mimeapps.list" ] && grep -qF 'brave-origin-beta.desktop' "$HOME/.config/mimeapps.list"; then
-  miss "$(pretty "$HOME/.config/mimeapps.list") still references brave-origin-beta.desktop — re-run ./install"
+if jq -e '
+  .id == "pashbyl.workspaces"
+  and .entryPoints.barWidget == "Workspaces.qml"
+  and .omarchy.clonedFrom == "omarchy.workspaces"
+' "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json" >/dev/null 2>&1; then
+  pass "workspace plugin manifest matches the supported clone shape"
 else
-  pass "mimeapps has no Brave Origin Beta references"
+  miss "workspace plugin manifest is invalid"
 fi
-unset BRAVE_ORIGIN_DESKTOP current_browser
-
-# ── webapp launchers ─────────────────────────────────────────────────────────
-# install reproduces omarchy's Zoom webapp launcher; flag if it drifted away
-# (e.g. Remove Preinstalled / `omarchy webapp remove`) — re-run ./install. [D-WEBAPP]
-if [ -f "$HOME/.local/share/applications/Zoom.desktop" ]; then
-  pass "Zoom webapp launcher present"
+if grep -qxF 'active = "#a55555"' "$HOME/.config/omarchy/shell.toml" 2>/dev/null; then
+  pass "Quickshell urgent/active color override is exact"
 else
-  miss "Zoom webapp launcher missing — re-run ./install"
+  miss "Quickshell urgent/active color override drifted"
 fi
+if omarchy-shell shell ping >/dev/null 2>&1; then
+  pass "Quickshell IPC responds"
+else
+  skip "Quickshell IPC (shell not running in this session)"
+fi
+unset SHELL_JSON shell_program shell_expected shell_actual
 
-# ── ssh-agent socket ─────────────────────────────────────────────────────────
-# The UWSM SSH_AUTH_SOCK export is dead unless this unit is enabled. [F-SSH-AGENT]
-if state=$(systemctl --user is-enabled ssh-agent.socket 2>/dev/null); then
+# Official default flows own all browser/terminal integration. [D-BROWSER-DEFAULT][D-TERM-GHOSTTY]
+if [ "$(omarchy default browser 2>/dev/null)" = brave-origin ]; then
+  pass "default browser is Brave Origin"
+else
+  miss "default browser is not Brave Origin — re-run ./install"
+fi
+BRAVE_MIME_TYPES=(
+  x-scheme-handler/http x-scheme-handler/https x-scheme-handler/chrome text/html
+  application/x-extension-htm application/x-extension-html application/x-extension-shtml
+  application/xhtml+xml application/x-extension-xhtml application/x-extension-xht
+)
+for mime_type in "${BRAVE_MIME_TYPES[@]}"; do
+  if [ "$(xdg-mime query default "$mime_type" 2>/dev/null)" = brave-origin.desktop ]; then
+    pass "$mime_type -> brave-origin.desktop"
+  else
+    miss "$mime_type is not associated with Brave Origin"
+  fi
+done
+if [ "$(omarchy default terminal 2>/dev/null)" = ghostty ]; then
+  pass "default terminal is Ghostty"
+else
+  miss "default terminal is not Ghostty — re-run ./install"
+fi
+unset BRAVE_MIME_TYPES mime_type
+
+# Quattro owns agent installation and updates through mise wrappers; the repo
+# owns only mutable user configuration. [D-CLAUDE-CONFIG][D-OPENCODE-LSP]
+for legacy_agent_pkg in opencode claude-code; do
+  if pacman -Qq "$legacy_agent_pkg" >/dev/null 2>&1; then
+    miss "legacy $legacy_agent_pkg package installed; Quattro mise owns agents"
+  else
+    pass "legacy $legacy_agent_pkg package absent"
+  fi
+done
+if have mise; then
+  pass "mise is available for Quattro agent wrappers"
+else
+  miss "mise missing — Quattro agent wrappers cannot install/update"
+fi
+for agent in codex claude crush gemini copilot opencode pi omp grok; do
+  if [ -x "$HOME/.local/bin/$agent" ] && grep -qF 'mise use -g' "$HOME/.local/bin/$agent"; then
+    pass "$agent uses an Omarchy mise wrapper"
+  else
+    miss "$agent mise wrapper missing or drifted"
+  fi
+done
+unset legacy_agent_pkg agent
+
+check_jq_fixed_point() {
+  local label="$1" target="$2" filter="$3" expected actual
+  if [ ! -f "$target" ]; then
+    miss "$(pretty "$target") missing — re-run ./install"
+    return
+  fi
+  expected="$(jq -S -f "$filter" "$target" 2>/dev/null || true)"
+  actual="$(jq -S . "$target" 2>/dev/null || true)"
+  if [ -n "$expected" ] && [ "$expected" = "$actual" ]; then
+    pass "$label overlay fully applied"
+  else
+    miss "$label overlay drifted — re-run ./install"
+  fi
+}
+# OpenCode's global LSP delta remains tool-owned mutable state. [F-OPENCODE-LSP]
+check_jq_fixed_point "Claude" "$HOME/.claude/settings.json" "$REPO/claude/settings.jq"
+check_jq_fixed_point "OpenCode" "$HOME/.config/opencode/opencode.json" "$REPO/opencode/settings.jq"
+
+# SSH silently ignores over-permissive configuration. [F-SSH-AGENT]
+check_mode() {
+  local path="$1" expected="$2" actual
+  if [ ! -e "$path" ]; then
+    miss "$(pretty "$path") missing"
+    return
+  fi
+  actual="$(stat -c '%a' "$path" 2>/dev/null || true)"
+  if [ "$actual" = "$expected" ]; then
+    pass "$(pretty "$path") mode $expected"
+  else
+    miss "$(pretty "$path") mode ${actual:-?}, expected $expected"
+  fi
+}
+check_mode "$HOME/.ssh" 700
+check_mode "$HOME/.ssh/config" 600
+[ ! -e "$HOME/.ssh/config.local" ] || check_mode "$HOME/.ssh/config.local" 600
+if state="$(systemctl --user is-enabled ssh-agent.socket 2>/dev/null)"; then
   pass "ssh-agent.socket $state"
-elif [ -z "${state:-}" ]; then
-  skip "ssh-agent.socket (systemd user manager not reachable)"
 else
-  miss "ssh-agent.socket $state — run 'systemctl --user enable --now ssh-agent.socket' (F-SSH-AGENT)"
+  miss "ssh-agent.socket ${state:-unreachable}"
+fi
+if [ -f "$HOME/.config/uwsm/env.d/99-omarchy-upgrade-env" ]; then
+  miss "99-omarchy-upgrade-env remains — audit precedence and remove it"
+else
+  pass "temporary UWSM migration fragment absent"
 fi
 
-# ── dev-env tools ────────────────────────────────────────────────────────────
-# Dev-env tool paths can move; ownership contract matters more than location.
-# Report pacman ownership first because ./install can reconcile that drift.
 check_tool() {
   local tool="$1" current
   if pacman -Qq "$tool" >/dev/null 2>&1; then
-    miss "$tool is owned by pacman — should be dev-env-managed; re-run ./install"
+    miss "$tool is pacman-owned; expected Omarchy dev-env ownership"
     return
   fi
   current="$(command -v "$tool" 2>/dev/null || true)"
   if [ -n "$current" ]; then
     pass "$tool on PATH ($(pretty "$current"))"
   else
-    miss "$tool not on PATH — re-run ./install"
+    miss "$tool not on PATH"
   fi
 }
 check_tool uv
 check_tool go
 
-# ── XDG user dirs ────────────────────────────────────────────────────────────
-# Match literal $HOME values and accept optional trailing slash because
-# xdg-user-dirs versions differ when a key collapses exactly to $HOME.
 check_xdg() {
   local key="$1" expected="$2" file="$HOME/.config/user-dirs.dirs" alt=""
-  case "$expected" in
-    */) alt="${expected%/}" ;;
-  esac
+  [[ $expected == */ ]] && alt="${expected%/}"
   if [ -f "$file" ] && {
-    grep -qxF -- "${key}=\"${expected}\"" "$file" ||
-      { [ -n "$alt" ] && grep -qxF -- "${key}=\"${alt}\"" "$file"; }
+    grep -qxF -- "$key=\"$expected\"" "$file" ||
+      { [ -n "$alt" ] && grep -qxF -- "$key=\"$alt\"" "$file"; }
   }; then
     pass "XDG $key = $expected"
   else
-    miss "XDG $key != $expected — re-run ./install"
+    miss "XDG $key != $expected"
   fi
 }
 # shellcheck disable=SC2016
@@ -267,42 +347,60 @@ check_xdg XDG_MUSIC_DIR '$HOME/'
 # shellcheck disable=SC2016
 check_xdg XDG_PROJECTS_DIR '$HOME/Projects'
 
-# ── default-tracking overrides ───────────────────────────────────────────────
-# The border_size overlay deliberately re-states an Omarchy default to beat the
-# window-no-gaps toggle; fail if upstream changes that default. [D-LOOKNFEEL]
-check_default_match() {
-  local label="$1" repo_file="$2" omarchy_file="$3" key="$4"
-  if [ ! -f "$omarchy_file" ]; then
-    skip "$label default-tracking ($(pretty "$omarchy_file") not present)"
-    return
-  fi
-  if [ ! -f "$repo_file" ]; then
-    skip "$label default-tracking ($(pretty "$repo_file") not present)"
-    return
-  fi
-  # Pre-strip comment lines so a `# example: key = N` line above the real
-  # setting can't shadow it. The regex is then applied to live config lines.
-  local repo_val omarchy_val
-  repo_val=$(grep -v '^[[:space:]]*#' "$repo_file" | grep -oE "${key}[[:space:]]*=[[:space:]]*[0-9A-Za-z_-]+" | head -1 | awk -F= '{gsub(/[[:space:]]/,"",$2); print $2}')
-  omarchy_val=$(grep -v '^[[:space:]]*#' "$omarchy_file" | grep -oE "${key}[[:space:]]*=[[:space:]]*[0-9A-Za-z_-]+" | head -1 | awk -F= '{gsub(/[[:space:]]/,"",$2); print $2}')
-  if [ -z "$repo_val" ] || [ -z "$omarchy_val" ]; then
-    miss "$label could not be extracted (repo='$repo_val' omarchy='$omarchy_val')"
-  elif [ "$repo_val" = "$omarchy_val" ]; then
-    pass "$label tracks omarchy default ($repo_val)"
-  else
-    miss "$label drift: overlay=$repo_val, omarchy default=$omarchy_val — update both together"
-  fi
-}
-check_default_match \
-  "border_size" \
-  "$REPO/hypr/.config/dotfiles/hypr.conf" \
-  "$HOME/.local/share/omarchy/default/hypr/looknfeel.conf" \
-  border_size
+# [D-STARSHIP-VENV]
+STARSHIP_TOML="$HOME/.config/starship.toml"
+# shellcheck disable=SC2016
+if grep -qF '${custom.venv}' "$STARSHIP_TOML" 2>/dev/null; then
+  pass "starship format references the venv module"
+else
+  miss "starship venv reference missing"
+fi
+unset STARSHIP_TOML
 
-# ── summary ──────────────────────────────────────────────────────────────────
+# Every deny-list entry is desired absent state; pkg drop may refuse a real
+# reverse dependency, which this makes visible rather than hiding. [D-PKG-REMOVE]
+while IFS= read -r unwanted; do
+  if pacman -Qq "$unwanted" >/dev/null 2>&1; then
+    miss "unwanted package remains: $unwanted"
+  fi
+done < <(sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' "$REPO/packages.remove.txt" | grep -v '^$')
+unset unwanted
+
+for retained_pkg in omacalc obsidian; do
+  if pacman -Qq "$retained_pkg" >/dev/null 2>&1; then
+    pass "retained Quattro package present: $retained_pkg"
+  else
+    miss "retained Quattro package missing: $retained_pkg"
+  fi
+done
+unset retained_pkg
+
+for retired_unit in elephant.service app-walker@autostart.service; do
+  if systemctl --user is-enabled "$retired_unit" >/dev/null 2>&1; then
+    miss "retired unit still enabled: $retired_unit"
+  else
+    pass "retired unit disabled: $retired_unit"
+  fi
+done
+for retired_pkg in waybar walker-bin omarchy-walker elephant elephant-calc elephant-desktopapplications elephant-files elephant-symbols; do
+  if pacman -Qq "$retired_pkg" >/dev/null 2>&1; then
+    miss "retired package still installed: $retired_pkg"
+  fi
+done
+unset retired_unit retired_pkg
+
+legacy_omarchy="$(readlink -f "$HOME/.local/share/omarchy" 2>/dev/null || true)"
+cleanup_hook="$HOME/.config/omarchy/hooks/post-boot.d/cleanup-upgrade-to-quattro-live-shim"
+if [ "$legacy_omarchy" = /usr/share/omarchy ] && [ ! -e "$cleanup_hook" ]; then
+  pass "Quattro live shim cleanup completed"
+else
+  miss "Quattro live shim cleanup incomplete (target=${legacy_omarchy:-missing})"
+fi
+unset legacy_omarchy cleanup_hook
+
 echo
 if [ "$fails" -gt 0 ]; then
   printf '%sverify: %d check(s) failed%s — re-run ./install to reconcile.\n' "$RED" "$fails" "$NC"
   exit 1
 fi
-printf '%sverify: OK%s — all overlay checks passed.\n' "$GREEN" "$NC"
+printf '%sverify: OK%s — all Quattro overlay checks passed.\n' "$GREEN" "$NC"

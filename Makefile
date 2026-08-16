@@ -15,17 +15,19 @@ POSIX_SHFMT_FLAGS  := -ln posix -i 2 -ci
 # ── file sets ────────────────────────────────────────────────────────────────
 # Include sourced fragments explicitly because shell globs won't discover them.
 OMARCHY_HOOK_FILES := $(shell find omarchy/.config/omarchy/hooks -type f 2>/dev/null)
+OMARCHY_SCRIPT_FILES := $(wildcard omarchy/.config/omarchy/bar/scripts/*)
 BASH_FILES := install lib/style.sh $(wildcard bin/.local/bin/*) \
 	bash/.config/dotfiles/shell.sh \
 	bash/.config/dotfiles/shell.local.sh.example \
 	claude/.claude/statusline-command.sh \
+	$(OMARCHY_SCRIPT_FILES) \
 	$(OMARCHY_HOOK_FILES) \
 	$(wildcard .github/scripts/*.sh)
 POSIX_FILES := $(wildcard uwsm/.config/uwsm/env.d/*.sh)
 SHELL_FILES := $(BASH_FILES) $(POSIX_FILES)
 PRETTIER_GLOBS := docs/*.html docs/registry.json
 DOCS_CHECK     := .github/scripts/check_docs.py
-JQ_FILTERS     := $(wildcard waybar/*.jq) $(wildcard claude/*.jq) $(wildcard opencode/*.jq)
+JQ_FILTERS     := $(wildcard omarchy/*.jq) $(wildcard claude/*.jq) $(wildcard opencode/*.jq)
 
 # ── output styling ───────────────────────────────────────────────────────────
 # Mirror the shell palette (lib/style.sh: ── headers ──, ℹ info, ⚠ warn) so `make`
@@ -52,9 +54,9 @@ ci: ## Run the full gate: shellcheck + shfmt + prettier + jq filter parse + docs
 	shfmt -d $(BASH_SHFMT_FLAGS) $(BASH_FILES)
 	shfmt -d $(POSIX_SHFMT_FLAGS) $(POSIX_FILES)
 	$(PRETTIER) --check $(PRETTIER_GLOBS)
-	@# Smoke-check each jq filter against an empty-object fixture so syntax
-	@# errors + obvious filter bugs surface here, not at ./install time.
-	@for f in $(JQ_FILTERS); do echo '{}' | jq -f "$$f" >/dev/null || { echo "jq filter failed: $$f"; exit 1; }; done
+	@# The shell filter is evaluated after Quattro's NORMALIZE helper; this
+	@# minimal normalized object is also a valid fixture for the other filters.
+	@for f in $(JQ_FILTERS); do echo '{"bar":{"layout":{"left":[],"center":[],"right":[]}}}' | jq -f "$$f" >/dev/null || { echo "jq filter failed: $$f"; exit 1; }; done
 	@if [ -n "$(JQ_FILTERS)" ]; then echo "jq filters parse + smoke pass: $(JQ_FILTERS)"; fi
 	python3 $(DOCS_CHECK)
 	@echo "OK - all checks passed"
@@ -73,37 +75,26 @@ tools: ## Show required tools + how to install them on Omarchy
 
 # ── machine maintenance ──────────────────────────────────────────────────────
 # `make update` bundles the frequent, low-risk channels: Omarchy/pacman/AUR
-# packages plus package-like self-managed tools (uv, mise). Firmware is the lone
+# packages plus uv's self-managed release. Quattro owns mise updates. Firmware is the lone
 # opt-in exception (`make update-firmware`) because it alone carries
 # device-specific reboot/power-cycle risk. [D-CI]
-update: ## Packages + Omarchy migrations + self-managed tools (uv, mise), then `make verify`
+update: ## Packages + Omarchy migrations + uv, then `make verify`
 	@printf "$(CYAN)ℹ$(NC) If 'omarchy update -y' triggers a reboot, verify won't run — re-run 'make update' after.\n"
-	@# Still run verify after non-reboot updater failures so drift is visible.
+	@orphans="$$(pacman -Qdtq 2>/dev/null || true)"; \
+	if [ -n "$$orphans" ]; then \
+		printf "$(YELLOW)⚠$(NC) Orphan packages would make Omarchy's pseudo-TTY updater prompt:\n%s\n" "$$orphans"; \
+		printf "Audit them first; drop confirmed leftovers with 'omarchy pkg drop <names>' or run 'omarchy update' interactively.\n"; \
+		exit 1; \
+	fi
 	@printf "\n$(BOLD)── Packages & Omarchy migrations ──$(NC)\n"
 	@printf "$(CYAN)$$ omarchy update -y$(NC)\n"
-	@omarchy update -y || printf "$(YELLOW)⚠$(NC) 'omarchy update -y' returned non-zero (benign if a reboot was requested).\n"
-	@printf "\n$(BOLD)── Claude Code AUR refresh ──$(NC)\n"
-	@# omarchy update's `yay -Sua` skips claude-code (native via the same-name
-	@# repo pkg), so force the AUR build here; --needed no-ops. [F-APP-CHANNELS]
-	@printf "$(CYAN)$$ yay -S --noconfirm --needed --cleanafter aur/claude-code$(NC)\n"
-	@yay -S --noconfirm --needed --cleanafter aur/claude-code || printf "$(YELLOW)⚠$(NC) 'yay -S aur/claude-code' returned non-zero.\n"
+	@omarchy update -y
 	@printf "\n$(BOLD)── uv self-update ──$(NC)\n"
 	@if command -v uv >/dev/null 2>&1; then \
 		printf "$(CYAN)$$ uv self update$(NC)\n"; \
-		uv self update || printf "$(YELLOW)⚠$(NC) 'uv self update' returned non-zero.\n"; \
+		uv self update; \
 	else \
 		printf "$(CYAN)ℹ$(NC) uv not found on PATH — skipped.\n"; \
-	fi
-	@printf "\n$(BOLD)── mise tool upgrades ──$(NC)\n"
-	@# `latest` specs resolve to newest stable (mise excludes prereleases) and
-	@# exact pins are held; `--bump` is omitted so config.toml is never rewritten.
-	@if command -v mise >/dev/null 2>&1; then \
-		printf "$(CYAN)$$ mise upgrade -y$(NC)\n"; \
-		mise upgrade -y || printf "$(YELLOW)⚠$(NC) 'mise upgrade' returned non-zero.\n"; \
-		printf "$(CYAN)$$ mise prune -y$(NC)\n"; \
-		mise prune -y || printf "$(YELLOW)⚠$(NC) 'mise prune' returned non-zero.\n"; \
-	else \
-		printf "$(CYAN)ℹ$(NC) mise not found on PATH — skipped.\n"; \
 	fi
 	@printf "\n$(CYAN)ℹ$(NC) JetBrains IDEs update via jetbrains-toolbox's own UI.\n"
 	@printf "\n$(BOLD)── Verify overlay ──$(NC)\n"

@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # [D-CLAUDE-CONFIG] tracked Claude Code statusline — see docs/decisions.html#D-CLAUDE-CONFIG
 # Claude Code statusLine — receives session JSON on stdin, prints one styled line.
-# Colors track the active Omarchy theme by reading its generated palette
-# (~/.config/omarchy/current/theme/colors.toml), which Omarchy rewrites on every
-# `omarchy theme set`, so the bar restyles itself with no hook or cache. Falls
-# back to basic ANSI colors when the palette is absent (non-Omarchy host).
+# Colors track the active Omarchy theme through Quattro's palette resolver, so
+# aliases and fallbacks behave exactly like the shell. Falls back to basic ANSI
+# colors when the resolver is absent (non-Omarchy host).
 # stdin fields: .cwd / .workspace.current_dir, .model.display_name,
 #               .context_window.used_percentage
 
@@ -25,21 +24,17 @@ input=$(cat)
 )
 
 # ── Omarchy theme palette ──────────────────────────────────────────────
-# current/theme always points at the live theme. Parse colors.toml once into a
-# key→hex map (lines look like: accent = "#7aa2f7") instead of re-scanning it
-# per color on every refresh.
+# The resolver emits one tab-separated key/value pair per palette role.
 declare -A pal
-theme_file="$HOME/.config/omarchy/current/theme/colors.toml"
-if [ -r "$theme_file" ]; then
-  while IFS= read -r ln; do
-    [[ $ln =~ ^([a-zA-Z0-9_]+)[[:space:]]*=[[:space:]]*\"?#([0-9a-fA-F]{6}) ]] &&
-      pal[${BASH_REMATCH[1]}]=${BASH_REMATCH[2]}
-  done <"$theme_file"
+if command -v omarchy-theme-color >/dev/null 2>&1; then
+  while IFS=$'\t' read -r key value; do
+    [[ $value =~ ^#[0-9a-fA-F]{6}$ ]] && pal["$key"]="${value#\#}"
+  done < <(omarchy-theme-color --all 2>/dev/null)
 fi
 
 esc=$'\033'
-# Map a palette key to a truecolor SGR built from real ESC bytes. $1 = colors.toml
-# key (e.g. accent, color5); $2 = fallback ANSI escape when the key/palette is missing.
+# Map a palette key to a truecolor SGR built from real ESC bytes. $1 = palette
+# key (e.g. accent, color5); $2 = fallback ANSI escape when it is missing.
 theme_color() {
   local hex=${pal[$1]:-}
   if [ -n "$hex" ]; then

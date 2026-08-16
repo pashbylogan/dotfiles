@@ -117,20 +117,13 @@
                 <li>
                   <code>make update</code> — the frequent, low-risk channel:
                   <code>omarchy update -y</code> (pacman + AUR + omarchy
-                  migrations), then the package-like self-managed tools (<code
-                    >uv self update</code
-                  >, then <code>mise upgrade</code> + <code>mise prune</code>),
-                  then <code>make verify</code>. Every step is warn-on-failure
-                  so a non-zero exit (reboot decline/request, package-manager
-                  interruption, etc.) stays visible.
-                  <code>mise upgrade</code> honors the specs in
-                  <code>~/.config/mise/config.toml</code> —
-                  <code>latest</code> resolves to the newest
-                  <em>stable</em> release (prereleases and nightlies are
-                  excluded unless a spec explicitly asks for one) and exact pins
-                  are left untouched — and omits <code>--bump</code> so the
-                  config is never rewritten; <code>mise prune</code> then
-                  reclaims superseded or orphaned versions.
+                  migrations and Quattro-owned mise agent updates), then
+                  <code>uv self update</code> because uv remains outside mise,
+                  then <code>make verify</code>. It first refuses while
+                  <code>pacman -Qdtq</code> reports orphans, avoiding the
+                  updater's pseudo-TTY prompt after Elephant retirement. A
+                  failed main update is strict and stops the wrapper before a
+                  misleading verification pass.
                 </li>
                 <li>
                   <code>make update-firmware</code> — firmware only:
@@ -142,16 +135,14 @@
                 <li>
                   <code>make verify</code> — read-only live health check
                   (<code>.github/scripts/verify.sh</code>): hyprctl
-                  configerrors, all six managed blocks present (bashrc, hypr,
-                  keymaps, tmux, waybar style.css, starship-venv), terminal
-                  convergence (Ghostty default plus no Alacritty package or user
-                  launcher;
+                  configerrors, the five managed seams (bashrc, Hypr Lua,
+                  keymaps, tmux, starship), Quickshell plugin/layout/command
+                  checks, terminal and browser convergence,
                   <a href="decisions.html#D-TERM-GHOSTTY">D-TERM-GHOSTTY</a>),
                   stow links resolve into the repo (including the
                   <code>uwsm/env.d</code> SSH-agent fragment and dangling
-                  detection), dev-env tools on PATH and not pacman-owned, XDG
-                  state, and the default-tracking override comparison
-                  (border_size = 2 vs omarchy's looknfeel.conf default — see
+                  detection), mise agent wrappers, dev-env tools, XDG/SSH state,
+                  and live Hypr appearance values (see
                   <a href="decisions.html#D-LOOKNFEEL">D-LOOKNFEEL</a>).
                 </li>
                 <li>
@@ -201,9 +192,8 @@
               <code>omarchy install dev-env</code> pulls latest at the time it
               runs (mise <code>@latest</code>, Astral installer), so a fresh
               bootstrap on different days may yield different versions;
-              <code>make update</code> is the deliberate bumper for self-managed
-              tool updates (<code>uv self update</code> +
-              <code>mise upgrade</code>/<code>prune</code>, stable-only).
+              <code>make update</code> runs <code>uv self update</code>;
+              Quattro's main updater owns mise-backed tool and agent upgrades.
             </td>
           </tr>
           <tr id="D-OPENCODE-LSP">
@@ -239,29 +229,25 @@
               curation
             </td>
             <td>
-              <strong
-                >Package and launcher curation mechanisms that converge the
-                post–Remove-Preinstalled baseline.</strong
-              >
+              <strong>Keep stock Quattro, then apply explicit deltas.</strong>
+              <code>packages.txt</code> and <code>packages.aur.txt</code> add
+              genuine extras; <code>packages.remove.txt</code> is the persistent
+              deny-list applied with <code>omarchy pkg drop</code>. The broad
+              Remove Preinstalled flow is not used because it also removes
+              retained Quattro apps, OmaCalc, and agent wrappers.
               <ul>
                 <li>
                   <code>packages.txt</code> / <code>packages.aur.txt</code> —
-                  additive package restores and extras, processed through
+                  additive extras, processed through
                   <code>omarchy pkg add</code> /
-                  <code>omarchy pkg aur add</code>. This includes restoring
-                  selected Omarchy defaults after <em>Remove Preinstalled</em>,
-                  such as pacman-managed <code>opencode</code>. App channel
-                  choices follow the Omarchy-native audit in
+                  <code>omarchy pkg aur add</code>. Coding agents and Obsidian
+                  are omitted because Quattro owns them. App channel choices
+                  follow the Omarchy-native audit in
                   <a href="findings.html#F-APP-CHANNELS">F-APP-CHANNELS</a>:
-                  <code>obsidian</code> stays in the official repo,
-                  <code>spotify</code> stays on Omarchy's AUR path, and
-                  <code>slack-desktop</code> is an intentional local AUR choice
-                  because Omarchy has no Slack package, webapp, binding, or
-                  migration. <code>claude-code</code> is force-installed from
-                  the AUR via
-                  <code>yay -S --needed aur/claude-code</code> because Omarchy
-                  publishes a stale same-name package that hides it from generic
-                  <code>yay -Sua</code>. Operator CLI utilities use the same
+                  <code>spotify</code> uses Quattro's sync-repo service package,
+                  and <code>slack-desktop</code> is an intentional local AUR
+                  choice because Omarchy has no Slack package, webapp, binding,
+                  or migration. Operator CLI utilities use the same
                   official-repository path: <code>nmap</code> comes from Arch
                   <code>extra</code> through <code>packages.txt</code>. Security
                   tooling follows
@@ -285,13 +271,6 @@
                   <code>omarchy webapp remove</code>.
                 </li>
                 <li>
-                  <code>elephant/.config/elephant/websearch.toml</code> — stowed
-                  override of elephant's compiled-in default web-search entry
-                  (Google). Walker's app picker queries elephant; the TOML
-                  override is the elephant-generated, elephant-doc'd way to set
-                  custom engines. Defaults to DuckDuckGo here.
-                </li>
-                <li>
                   Stale-launcher cleanup in <code>install</code> — explicit
                   <code>rm -f</code> for known orphan
                   <code>~/.local/share/applications/*.desktop</code> files whose
@@ -312,80 +291,36 @@
               </ul>
             </td>
             <td>
-              The repo's overlay surface was previously additive-only for
-              packages and silent on user-state under
-              <code>~/.local/share/applications/</code> and
-              <code>~/.config/elephant/</code>. The "Deeper package cleanup"
-              backlog wanted a way to express "drop this omarchy default"
-              without depending on the one-shot
-              <em>Remove Preinstalled</em> menu (per
-              <a href="decisions.html#D-BASELINE">D-BASELINE</a>, that menu
-              action is the documented manual prerequisite, not a substitute for
-              ongoing curation). The same package surface can also restore an
-              upstream default when the current durable Omarchy path is still
-              desirable: <code>opencode</code> stays a pacman package, and
-              <code>install</code> uses <code>omarchy refresh config</code> only
-              to seed a missing <code>opencode.json</code> instead of vendoring
-              it here. One token, several mechanisms — because they share the
-              same intent (curate the baseline) but live on different surfaces
-              (pacman db, stowed config, user-state launchers).
+              A major upgrade can reinstall base packages and mark them
+              explicit, so the deny-list is durable desired state rather than a
+              one-time cleanup. <code>install</code> seeds a missing mutable
+              OpenCode config only to apply the user's LSP delta; Quattro still
+              owns the OpenCode binary through its mise wrapper.
               <strong>Audit rule:</strong> before adding a name to
               <code>packages.remove.txt</code>, grep
-              <code>~/.local/share/omarchy/</code> for usage — omarchy wires
-              some "builtins" into keybindings or shell init (e.g.
+              <code>/usr/share/omarchy/</code> for usage — Omarchy wires some
+              "builtins" into keybindings or shell init (e.g.
               <code>zoxide</code> → <code>cd</code> alias, <code>fzf</code> →
               keybindings, <code>btop</code> → <code>SUPER+CTRL+T</code>).
               Removing one of those silently breaks omarchy commands, so clean
               up the matching wiring in our overlay in the same change (e.g. an
-              <code>unbind</code> in <code>hypr.conf</code> for a keybound tool
-              — which is exactly why <code>btop</code> and <code>eza</code> are
-              <em>not</em> dropped: btop is keybound and eza backs the
-              <code>ls</code> alias).
+              <code>hl.unbind</code> in <code>hypr/dotfiles.lua</code> for a
+              keybound tool — which is exactly why <code>btop</code> and
+              <code>eza</code> are <em>not</em> dropped: btop is keybound and
+              eza backs the <code>ls</code> alias).
             </td>
           </tr>
           <tr id="D-WEBAPP">
+            <td><code class="meta">D-WEBAPP</code> Webapp ownership retired</td>
             <td>
-              <code class="meta">D-WEBAPP</code> Reproduce curated webapp
-              launchers
+              No repository implementation remains. Quattro packages the Zoom
+              desktop entry with the needed protocol handlers and refreshes
+              applications through its native lifecycle.
             </td>
             <td>
-              <code>install</code> re-creates the omarchy webapp launchers we
-              rely on by calling omarchy's own
-              <code>omarchy webapp install</code> with the
-              <strong
-                >exact arguments from omarchy's <code>webapps.sh</code></strong
-              >
-              — currently just <strong>Zoom</strong> (<code
-                >app.zoom.us/wc/home</code
-              >
-              + <code>omarchy-webapp-handler-zoom</code> +
-              <code>zoommtg://</code>/<code>zoomus://</code> scheme handlers).
-              Idempotent: the installer rewrites the <code>.desktop</code> on
-              every run; we re-copy omarchy's own <code>Zoom.png</code> into
-              <code>~/.local/share/applications/icons/</code> (omarchy's
-              <code>icons.sh</code> seeds it at first install) and refresh the
-              desktop database so the <code>zoommtg://</code> handler registers.
-              Removal stays on omarchy's surface too:
-              <code>omarchy webapp remove Zoom</code>.
-            </td>
-            <td>
-              omarchy installs its curated webapps only at first install —
-              <code>webapps.sh</code> doesn't re-run on
-              <code>omarchy update</code>, and
-              <a href="decisions.html#D-BASELINE">Remove Preinstalled</a> / a
-              fresh machine drop them. Calling omarchy's installer rather than
-              hand-writing a <code>.desktop</code> keeps the launcher
-              byte-identical to upstream and inherits the protocol handler. Zoom
-              is the webapp, not the AUR native client: on Wayland the native
-              client's screen-share is unreliable (black screen / crash on
-              re-share), while the Chromium PWA shares screen through the
-              browser's portal — the mirror image of <code>discord</code>, where
-              the native client wins for global push-to-talk + desktop-audio
-              share. Slack is not reproduced as an Omarchy webapp: unlike Zoom,
-              Omarchy does not ship one, and Slack's Linux huddle support is
-              documented for the desktop app and Google Chrome. Keep native
-              <code>slack-desktop</code> as the daily client; fall back to
-              Chrome only if huddles/screen sharing regress.
+              Restating a packaged Quattro launcher would violate the
+              deltas-only rule and create two owners. The historical ID remains
+              so earlier trace links continue to resolve.
             </td>
           </tr>
           <tr id="D-BROWSER-DEFAULT">
@@ -394,32 +329,18 @@
               <strong
                 >Stable Brave Origin is the converged default browser.</strong
               >
-              Until a released Omarchy version maps its Brave Origin
-              install/default commands to stable, <code>install</code> uses
-              Omarchy's package and theming surfaces directly:
-              <code>omarchy pkg aur add brave-origin-bin</code>, Omarchy's
-              shared Brave policy directory,
-              <code>~/.config/brave-origin-flags.conf</code>, and
-              <code>omarchy-theme-set-browser</code>. It then sets XDG's browser
-              and web MIME defaults to <code>brave-origin.desktop</code> and
-              drops the old <code>brave-origin-beta-bin</code> package.
+              <code>install</code> uses
+              <code>omarchy install browser brave-origin</code> and
+              <code>omarchy default browser brave-origin</code>, verifies the
+              resulting state, then asserts the additional HTML and scheme MIME
+              handlers that <code>xdg-settings</code> does not cover.
             </td>
             <td>
-              Omarchy's current browser installer/default wrappers still map
-              <code>brave-origin</code> to
-              <code>brave-origin-beta-bin</code> and
-              <code>brave-origin-beta.desktop</code>. Brave now documents
-              <code>brave-origin-bin</code> as the release Arch package, and
-              upstream Omarchy PR
-              <a href="https://github.com/basecamp/omarchy/pull/6021">#6021</a>
-              tracks the same migration. This repo keeps the transition as close
-              to native as possible by reusing Omarchy's package manager,
-              Chromium extension flag, Brave policy theming, and
-              <code>theme-set</code> hook surface. Once a released Omarchy
-              version maps <code>brave-origin</code> to stable, remove the
-              compatibility code and return to
-              <code>omarchy install browser brave-origin</code> /
-              <code>omarchy default browser brave-origin</code>.
+              Quattro natively maps Brave Origin to stable, owns its flags,
+              extensions, policies, and theme refresh. The repository hook and
+              package/channel compatibility code are therefore deleted. The
+              command's desktop notification can fail after state succeeds, so
+              the following read-only default assertion is the safety gate.
             </td>
           </tr>
         </tbody>
@@ -650,26 +571,32 @@
               accel
             </td>
             <td><span class="badge badge-done">in (local)</span></td>
-            <td>Device-specific → gitignored <code>hypr.local.conf</code>.</td>
+            <td>
+              Device-specific → optional gitignored
+              <code>hypr/dotfiles_local.lua</code>, loaded through Quattro's
+              <code>require_optional</code> helper.
+            </td>
           </tr>
           <tr id="D-HJKL-DECLINED">
             <td>
               <code class="meta">D-HJKL-DECLINED</code> vim
               <code>hjkl</code> window focus
             </td>
-            <td><span class="badge badge-drop">declined</span></td>
+            <td><span class="badge badge-done">preserved</span></td>
             <td>
-              Would require unbinding Omarchy's
-              <code>SUPER+J</code>/<code>SUPER+L</code>. Keep Omarchy's
-              <code>SUPER+arrows</code>.
+              The historical slug is retained for stable trace links, but the
+              decision changed: personal <code>SUPER+H/J/K/L</code> focus and
+              <code>SUPER+SHIFT+H/J/K/L</code> swaps win. Quattro's conflicting
+              J/K/L actions are explicitly unbound; free chords are not
+              pointlessly unbound.
             </td>
           </tr>
           <tr id="D-LOOKNFEEL">
             <td><code class="meta">D-LOOKNFEEL</code> Looknfeel deltas</td>
             <td><span class="badge badge-done">in (fragment)</span></td>
             <td>
-              An always-on "compact look" of overlay-sourced-last deltas to
-              omarchy's looknfeel chain: (1)
+              An always-on "compact look" in the reloadable personal Lua module:
+              (1)
               <code>general { gaps_in = 2; gaps_out = 4 }</code> — slim but
               present gaps (omarchy's defaults are
               <code>5</code>/<code>10</code>); (2)
@@ -686,9 +613,13 @@
               template, and the same radius omarchy applies to popups via
               <code>rounding 8, match:tag pop</code> in
               <code>default/hypr/apps/system.conf</code>); (4)
-              <code>decoration { blur { size = 8; brightness = 0.72 } }</code>
-              plus
-              <code>windowrule = opacity 0.86 0.78, match:tag terminal</code>
+              <code
+                >decoration { blur { enabled = true; size = 8; passes = 2;
+                brightness = 0.72; contrast = 0.75 } }</code
+              >
+              plus explicit shadow enablement because Quattro disables both
+              effects by default, and plus a narrow terminal-class opacity rule
+              at <code>0.86/0.78</code>
               so terminals get a mild frosted-glass effect without hard-coding
               terminal colors or breaking omarchy theme swaps; (5)
               <code>misc { focus_on_activate = false }</code> so an app's
@@ -765,17 +696,6 @@
               whichever monitor it was on, and fully migrates only on next fresh
               login (or move it now with
               <code>hyprctl dispatch movecurrentworkspacetomonitor DP-5</code>).
-              <strong>Install restarts waybar on topology change</strong>:
-              <code>install</code>'s validation block snapshots
-              <code>hyprctl monitors</code> around the post-stow
-              <code>hyprctl reload</code> (extracting
-              name/position/mode/disabled per output) and, if the snapshot diff
-              is non-empty, invokes <code>omarchy-restart-waybar</code> with the
-              same poll-and-confirm pattern as the waybar-overlay restart.
-              Waybar's per-output bars don't always survive a layout flip; this
-              is the integration step that makes a fresh
-              <code>./install</code> after a <code>monitor =</code> edit reach a
-              fully-rendered desktop without a manual restart.
               <strong>eDP-1 is deliberately not in the overlay</strong>:
               omarchy's lid-switch handler at
               <code>default/hypr/bindings/utilities.conf</code> calls
@@ -835,10 +755,19 @@
         </tbody>
       </table>
 
-      <h2>Waybar deltas</h2>
+      <h2>Quickshell deltas (historical Waybar ID)</h2>
       <p>
-        Waybar's config sits in <code>~/.config/waybar/config.jsonc</code>, an
-        omarchy-seeded file that the live system mutates two different ways (<a
+        Quattro retires Waybar, Walker, and Elephant. The current overlay uses a
+        supported Quickshell plugin for dynamic workspaces, a command module for
+        memory, <code>shell.toml</code> for the exact urgent/active color, and a
+        narrow <code>shell.json</code> delta applied through
+        <code>omarchy-shell-config</code>. The stable ID below is kept for trace
+        continuity. The remaining v3 detail is historical context only.
+      </p>
+      <p>
+        Historically, Waybar's config sat in
+        <code>~/.config/waybar/config.jsonc</code>, an omarchy-seeded file that
+        the live system mutates two different ways (<a
           href="findings.html#F-WAYBAR-MIGRATIONS"
           >F-WAYBAR-MIGRATIONS</a
         >). Omarchy's manual recommends direct edits and treats periodic
@@ -858,9 +787,14 @@
         <tbody>
           <tr id="D-WAYBAR-DELTAS">
             <td>
-              <code class="meta">D-WAYBAR-DELTAS</code> Waybar overlay shape
+              <code class="meta">D-WAYBAR-DELTAS</code> Quickshell overlay shape
             </td>
             <td>
+              <strong>Current Quattro shape:</strong> Stow the user-owned
+              <code>pashbyl.workspaces</code> plugin, memory command, and
+              <code>shell.toml</code>; keep <code>shell.json</code> mutable and
+              converge only layout IDs/order with <code>omarchy/shell.jq</code>.
+              <strong>Retired v3 implementation details:</strong>
               <strong
                 >Two coupled overlays: <code>waybar/deltas.jq</code> holds
                 personal <code>config.jsonc</code> deltas as composed jq
@@ -995,12 +929,11 @@
               merely "ghostty installed", so re-runs are idempotent. After the
               package drop, install also removes Omarchy migration
               <code>1763558828</code>'s user-owned
-              <code>~/.local/share/applications/Alacritty.desktop</code> and
-              restarts Elephant/Walker when that launcher existed; pacman does
-              not own or remove the override. No terminal config is carried —
-              Omarchy seeds ghostty, and ghostty's default right-click is a
-              context menu (not paste), so the former Alacritty right-click
-              no-op overlay was retired rather than ported.
+              <code>~/.local/share/applications/Alacritty.desktop</code> when it
+              exists; pacman does not own or remove the override. No terminal
+              config is carried — Omarchy seeds ghostty, and ghostty's default
+              right-click is a context menu (not paste), so the former Alacritty
+              right-click no-op overlay was retired rather than ported.
             </td>
             <td>
               <strong
@@ -1018,16 +951,9 @@
               <code>omarchy-launch-screensaver</code> dispatches on the actual
               default terminal (it has a ghostty branch), and every other
               omarchy script naming <code>alacritty.toml</code> is guarded by an
-              <code>[[ -f ]]</code> test so it no-ops when the file is gone.
-              <strong>One known loose end, accepted deliberately:</strong>
-              stock omarchy waybar binds the CPU module's right-click to
-              <code>alacritty</code> in <code>config.jsonc</code>; after removal
-              that one right-click launches nothing. Fixing it would mean the
-              repo owning all of waybar's <code>config.jsonc</code> and silently
-              pinning every upstream change — a far worse trade than a dead
-              right-click on one module, so it is left as-is. The one durability
-              caveat: <code>omarchy-reinstall-pkgs</code> (a manual recovery
-              flow, never <code>omarchy update</code>) reinstalls base packages
+              <code>[[ -f ]]</code> test so it no-ops when the file is gone. The
+              one durability caveat: a manual package-reinstall recovery flow
+              (never <code>omarchy update</code>) reinstalls base packages
               including Alacritty; the package and migration-created launcher
               cleanup are idempotent, so re-running
               <code>./install</code> re-drops both.
@@ -1190,16 +1116,15 @@
       </h2>
       <div class="callout note">
         <span class="label"
-          >Reference baseline = "Omarchy after Remove Preinstalled"</span
+          >Reference baseline = stock Quattro plus explicit deltas</span
         >
-        The owner's first step was running <strong>Remove Preinstalled</strong>,
-        which stripped bundled apps and their launcher bindings (<a
-          href="findings.html#F-BASELINE"
-          >F-BASELINE</a
-        >). So the trimmed <code>~/.config/hypr/bindings.conf</code> is
-        <em>intentional, not drift</em>. We leave it Omarchy-owned and
-        untracked; we do not restore it to vanilla stock. Reproduction recipe:
-        install → Remove Preinstalled → <code>./install</code>.
+        Do not run the broad <strong>Remove Preinstalled</strong> flow: it also
+        removes retained Quattro apps, OmaCalc, and lazy agent wrappers. Start
+        from stock Quattro, apply additive manifests and the narrow package
+        deny-list, and leave Omarchy-owned bindings untouched except for
+        explicit personal Lua overrides. The previous v3 baseline is retained as
+        a historical finding (<a href="findings.html#F-BASELINE">F-BASELINE</a
+        >). Reproduction recipe: install Quattro → <code>./install</code>.
       </div>
 
       <h2 id="D-KEYBIND-OVERRIDES">
@@ -1207,10 +1132,11 @@
       </h2>
       <div class="callout decision">
         <span class="label">Track every personal keybind override here</span>
-        Personal keybinds live in the owned Hyprland fragment that is sourced
-        last, not in Omarchy-owned default files. Each override must record the
-        desired chord, the prior binding or conflict audit, and the chosen
-        resolution so future keyboard-layout changes can extend the same table.
+        Personal keybinds live in the reloadable
+        <code>hypr.dotfiles</code> module, not in Omarchy-owned default files.
+        Each override must record the desired chord, the prior binding or
+        conflict audit, and the chosen resolution so future keyboard-layout
+        changes can extend the same table.
       </div>
       <table>
         <thead>
@@ -1232,9 +1158,9 @@
               as a possible future conflict.
             </td>
             <td>
-              Unbind both <code>SUPER+ALT+SPACE</code> (old menu trigger) and
-              <code>SUPER+D</code>, then bind <code>SUPER+D</code> to the menu.
-              No Lazy Docker replacement is needed unless that workflow becomes
+              Unbind <code>SUPER+ALT+SPACE</code> (Quattro's Apps menu), then
+              bind the otherwise-free <code>SUPER+D</code> to the menu. No Lazy
+              Docker replacement is needed unless that workflow becomes
               important again.
             </td>
           </tr>
@@ -1249,8 +1175,8 @@
               defaults use <code>SUPER+SHIFT+SLASH</code> for Passwords.
             </td>
             <td>
-              Unbind <code>SUPER+I</code>, bind it to keybindings help, and
-              reuse <code>SUPER+K</code> for focus up.
+              Bind the otherwise-free <code>SUPER+I</code> to keybindings help,
+              and unbind/reuse <code>SUPER+K</code> for focus up.
             </td>
           </tr>
           <tr>
@@ -1267,8 +1193,8 @@
               exact chord.
             </td>
             <td>
-              Unbind <code>SUPER+E</code>, bind it to the layout toggle, and
-              reuse <code>SUPER+L</code> for focus right.
+              Bind the otherwise-free <code>SUPER+E</code> to the layout toggle,
+              and unbind/reuse <code>SUPER+L</code> for focus right.
             </td>
           </tr>
           <tr>

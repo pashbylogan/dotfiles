@@ -68,15 +68,15 @@
           <h3>Findings <span class="arrow">→</span></h3>
           <p>
             Verified research about how Omarchy behaves — Hyprland sourcing,
-            refresh/migrations, the Lua move, the bash chain, nvim setup, and
-            the "Remove Preinstalled" baseline.
+            Quattro's Lua reload seam, Quickshell extensions, the bash chain,
+            nvim package ownership, and package baselines.
           </p>
         </a>
         <a class="card" href="todos.html">
           <h3>To-Dos <span class="arrow">→</span></h3>
           <p>
-            Implementation progress, deferred decisions, and future work (incl.
-            the eventual Hyprland → Lua port).
+            Implementation progress, migration history, deferred decisions, and
+            future cleanup.
           </p>
         </a>
         <a class="card" href="augmentation-approach.html">
@@ -100,18 +100,18 @@
 ├── ssh/.ssh/                    # config (+ Include config.local) + config.local.example
 ├── bin/.local/bin/              # personal commands → ~/.local/bin (on PATH), incl. package residue audits
 ├── tmux/.config/tmux/local.conf  # tmux overlay (source-file'd from omarchy's tmux.conf)
-├── hypr/.config/dotfiles/       # hypr.conf override fragment + hypr.local.conf.example
-├── omarchy/.config/omarchy/hooks/ # Omarchy hook extensions (theme bridge)
-├── waybar/deltas.jq             # jq filters applied to ~/.config/waybar/config.jsonc by install
+├── hypr/.config/hypr/           # reloadable dotfiles.lua + optional local module example
+├── omarchy/.config/omarchy/     # Quickshell plugin, command module, and shell.toml override
+├── omarchy/shell.jq             # narrow mutable shell.json delta via Omarchy's helper
 ├── opencode/settings.jq          # enables built-in LSP dispatch in Omarchy's seeded global config
 ├── docs/                        # this knowledge base
 └── .github/                     # CI workflow + scripts/check_docs.py (docs gate) + scripts/verify.sh (live gate)</code></pre>
 
       <div class="callout note">
         <span class="label">Reproduction recipe</span>
-        Install Omarchy → run <strong>Remove Preinstalled</strong> (omarchy
-        menu) → <code>./install</code>. The "after Remove Preinstalled" state is
-        this repo's reference baseline — see
+        Install Omarchy Quattro → keep its stock retained apps and agent
+        wrappers → <code>./install</code>. The repo adds explicit extras and
+        applies <code>packages.remove.txt</code> as its deny-list — see
         <a href="findings.html#F-BASELINE">Findings → Baseline</a>.
       </div>
     </div>

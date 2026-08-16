@@ -31,38 +31,35 @@
       </p>
 
       <h2 id="F-HYPR-SEAM">
-        Hyprland config is a sourcing seam <code class="meta">F-HYPR-SEAM</code>
+        Hyprland config is a reloadable Lua seam
+        <code class="meta">F-HYPR-SEAM</code>
       </h2>
       <p>
-        <code>~/.config/hypr/hyprland.conf</code> is a seeded, owner-owned file
-        that <code>source</code>s, in order (verified against the live machine
-        and omarchy's shipped seed at
-        <code>~/.local/share/omarchy/config/hypr/hyprland.conf</code>):
+        Quattro owns <code>~/.config/hypr/hyprland.lua</code>. Its bootstrap
+        loads packaged defaults, then the installer-managed EOF seam requires
+        <code>hypr.dotfiles</code> and optionally
+        <code>hypr.dotfiles_local</code>.
       </p>
       <ol>
         <li>
-          Omarchy defaults in
-          <code>~/.local/share/omarchy/default/hypr/*</code> —
+          Omarchy defaults in <code>/usr/share/omarchy/default/hypr/*</code> —
           <em>never edit these</em>;
         </li>
         <li>
-          the active theme:
-          <code>~/.config/omarchy/current/theme/hyprland.conf</code>;
+          the active theme under
+          <code>~/.local/state/omarchy/current/theme</code>;
         </li>
-        <li>
-          the user override files: <code>monitors.conf</code>,
-          <code>input.conf</code>, <code>bindings.conf</code>,
-          <code>looknfeel.conf</code>, <code>autostart.conf</code>;
-        </li>
-        <li><code>~/.local/state/omarchy/toggles/hypr/*.conf</code>.</li>
+        <li>Quattro's mutable user modules and toggles;</li>
+        <li>the personal <code>hypr.*</code> modules at the managed seam.</li>
       </ol>
       <p>
-        Later sources win. Our fragment is added <em>after</em> all of these
-        (managed block at EOF of <code>hyprland.conf</code>), so it overrides
-        cleanly. The toggles-before-fragment ordering is the load-order trap
-        behind two opposite-direction deltas: in
+        Later calls win. The <code>hypr.*</code> name is load-bearing: Quattro's
+        bootstrap purges that prefix from <code>package.loaded</code> on reload,
+        while <code>dotfiles.hypr</code> would remain cached and silently fail
+        to reapply. The toggles-before-personal-module ordering is the
+        load-order trap behind two opposite-direction deltas: in
         <a href="decisions.html#D-LOOKNFEEL">D-LOOKNFEEL</a> we re-state
-        <code>border_size = 2</code> in the fragment to beat the
+        <code>border_size = 2</code> in Lua to beat the
         <code>window-no-gaps</code> toggle, while in
         <a href="decisions.html#D-MONITORS">D-MONITORS</a> we deliberately stay
         silent on eDP-1 so the <code>internal-monitor-disable.conf</code> toggle
@@ -85,27 +82,23 @@
           the real reason we never symlink Omarchy-owned files.
         </li>
         <li>
-          <code>omarchy refresh hyprland</code> resets the whole set of hypr
-          user files at once — so a single added <code>source =</code> line is
-          the smallest, most recoverable integration surface.
+          <code>omarchy refresh hyprland</code> resets the mutable entry point,
+          so the installer must reassert its tiny require block.
         </li>
       </ul>
 
       <h2 id="F-LUA">
-        Hyprland is migrating to Lua (already on <code>dev</code>)
+        Quattro uses Hyprland Lua
         <code class="meta">F-LUA</code>
       </h2>
       <div class="callout warn">
-        <span class="label">Forward risk</span>
-        Omarchy's <code>dev</code>-branch
-        <code>omarchy-refresh-hyprland</code> refreshes
+        <span class="label">Released layout</span>
+        Quattro's <code>omarchy-refresh-hyprland</code> refreshes
         <code>hyprland.lua</code>, <code>bindings.lua</code>,
         <code>input.lua</code>, <code>looknfeel.lua</code>,
         <code>monitors.lua</code>, <code>autostart.lua</code>,
-        <code>.luarc.json</code>. The installed system is still
-        <code>.conf</code>, but the transition is real and close. A large
-        <code>.conf</code>-capturing layer would have a looming expiry — which
-        is why this repo owns only a small fragment + one integration line.
+        <code>.luarc.json</code>. The repo therefore owns a small reloadable Lua
+        module and one reassertable require seam, never the mutable tree.
       </div>
 
       <h2 id="F-BASH-CHAIN">
@@ -140,36 +133,34 @@
       </p>
 
       <h2 id="F-NVIM-OWNED">
-        Neovim is fully Omarchy-owned <code class="meta">F-NVIM-OWNED</code>
+        Neovim defaults come from a separate package
+        <code class="meta">F-NVIM-OWNED</code>
       </h2>
       <p>
-        <code>omarchy-nvim-setup</code> does
-        <code>cp&nbsp;-r .../config ~/.config/nvim</code> — it
-        <strong>replaces the entire nvim tree</strong> (backing up first via
-        <code>mv</code>, behind a <code>gum confirm</code>). The file
+        Quattro's separate <code>omarchy-nvim</code> package seeds the entire
+        nvim config and cached plugin data.
+        <code>omarchy-nvim-refresh</code> backs up and then
+        <strong>replaces the entire nvim tree</strong>. The file
         <code>~/.config/nvim/lua/config/keymaps.lua</code> already exists as the
         LazyVim user-extension point ("Add any additional keymaps here").
         Therefore we do not stow into <code>~/.config/nvim</code>; instead
         <code>install</code> upserts a managed block into that
-        <code>keymaps.lua</code>. It survives routine
-        <code>omarchy update</code> (only the deliberate, confirm-gated setup
-        re-copies nvim); re-run <code>./install</code> after such a reset.
+        <code>keymaps.lua</code>. Re-run <code>./install</code> after
+        <code>omarchy-nvim-refresh</code> or a full config reinstall.
       </p>
 
       <h2 id="F-BASELINE">
-        Baseline: "Omarchy after Remove Preinstalled"
+        Baseline history: v3 Remove Preinstalled, Quattro stock plus deltas
         <code class="meta">F-BASELINE</code>
       </h2>
       <p>
-        The owner's first post-install step was
-        <strong>Remove Preinstalled</strong> (omarchy menu), which removed
-        bundled apps (Spotify, Obsidian, Signal, Typora, 1Password, lazydocker,
-        the webapps, …). That is why the live
-        <code>~/.config/hypr/bindings.conf</code> lacks their launcher bindings,
-        whereas vanilla Omarchy ships ~20 of them. This divergence is
-        <strong>intentional</strong>. The repo's reference baseline is the
-        post-Remove-Preinstalled state, and <code>bindings.conf</code> is left
-        Omarchy-owned and untracked.
+        On v3 the owner used <strong>Remove Preinstalled</strong>, which
+        explains historical trimmed bindings and app state. Quattro changes the
+        tradeoff: the broad flow also removes retained native apps, OmaCalc, and
+        lazy mise agent wrappers. The current baseline is stock Quattro plus
+        explicit additive manifests and <code>packages.remove.txt</code>;
+        Omarchy-owned bindings remain untracked and only deliberate personal
+        chords are overridden in Lua.
       </p>
 
       <h2 id="F-APP-CHANNELS">
@@ -178,24 +169,19 @@
       </h2>
       <p>
         App curation starts with Omarchy's own code and docs, then checks
-        upstream app support and Arch packaging. On this machine that yields
-        four current channel outcomes: <code>brave-origin</code> uses a
-        temporary stable-channel compatibility overlay (<a
+        upstream app support and Arch packaging. On Quattro,
+        <code>brave-origin</code> is fully native (<a
           href="decisions.html#D-BROWSER-DEFAULT"
           >D-BROWSER-DEFAULT</a
-        >) because Omarchy's current native browser installer/default path still
-        targets <code>brave-origin-beta-bin</code> while Brave documents, and
-        the AUR exposes, stable <code>brave-origin-bin</code>. The overlay still
-        reuses Omarchy's package, flags, policy, theming, and hook surfaces;
-        <code>spotify</code> stays on the AUR package because Omarchy lists
-        <code>spotify</code> in <code>omarchy-base.packages</code> and binds
-        Music to <code>omarchy-launch-or-focus spotify</code>;
-        <code>obsidian</code> stays in Arch <code>extra</code> because Omarchy
-        lists <code>obsidian</code>, migrated <code>obsidian-bin</code> to
-        <code>obsidian</code>, moved its launch flags into
-        <code>~/.config/obsidian/user-flags.conf</code>, and themes Obsidian
-        vaults; <code>slack-desktop</code> stays as a local AUR choice because
-        Omarchy has no Slack package, webapp, binding, or migration.
+        >): Omarchy's install/default path, flags, extensions, policies, and
+        theme refresh all target stable. Ghostty likewise uses the native
+        terminal installer. Coding agents use Quattro's lazy mise wrappers and
+        update inside <code>omarchy update</code>; the repo owns only config
+        deltas. Obsidian is a retained base package rather than a manifest
+        entry; <code>spotify</code> uses the sync-repo package selected by
+        Quattro's supported Spotify service installer;
+        <code>slack-desktop</code> stays as a local AUR choice because Omarchy
+        has no Slack package, webapp, binding, or migration.
       </p>
       <p>
         The Slack exception is deliberately narrow. Native Slack provides the
@@ -247,27 +233,12 @@
         of the Omarchy baseline.
       </p>
       <p>
-        Claude Code (the CLI) follows the same audit, with a twist. It ships in
-        <em>both</em> the Omarchy repo — pinned and slow to move (it sat on
-        <code>2.1.179</code> for weeks) — and the AUR, where an automated
-        pipeline tracks upstream within hours and checksum-pins Anthropic's
-        official binary. Anthropic's <code>curl | bash</code> native installer
-        is rejected for the same reason as gcloud's: it bypasses pacman,
-        self-manages PATH, and updates outside <code>omarchy update</code>. The
-        twist is the shared package name: a bare
-        <code>claude-code</code> resolves to the pinned repo build, and once the
-        AUR build is installed, pacman classifies it as native because the same
-        name exists in the Omarchy sync database. Omarchy's
-        <code>yay -Sua</code> step upgrades only foreign packages, so it never
-        sees later AUR releases. <code>install</code> and
-        <code>make update</code> therefore both run
-        <code>yay -S --needed --cleanafter aur/claude-code</code> — the same
-        <code>aur/</code>-prefixed form Omarchy's own installer uses: the prefix
-        forces the current AUR build past the repo pin,
-        <code>--needed</code> makes it a no-op until the AUR moves ahead, and
-        <code>--cleanafter</code>
-        drops the build tree. No bespoke update script is needed; yay already
-        does the clone, version compare, and build.
+        Claude Code and OpenCode no longer have a repo-selected binary channel.
+        Quattro installs lightweight wrappers that run
+        <code>mise use -g</code> before execution, bypass the normal release-age
+        delay, and execute the resolved tool. This preserves user config while
+        keeping install, default-agent selection, and upgrades on one supported
+        Omarchy path.
       </p>
 
       <h2 id="F-MALWARE-SCANNER">
@@ -456,11 +427,16 @@
       </p>
 
       <h2 id="F-WAYBAR-MIGRATIONS">
-        Waybar config drifts via two omarchy patterns
+        Historical Waybar drift and its Quickshell replacement
         <code class="meta">F-WAYBAR-MIGRATIONS</code>
       </h2>
       <p>
-        The omarchy
+        This finding explains the retired v3 design. Quattro removes Waybar,
+        Walker, and Elephant and replaces them with <code>omarchy-shell</code>.
+        Current user extension points are plugins, scripts, and
+        <code>shell.toml</code>; mutable <code>shell.json</code> is edited with
+        the sourceable <code>omarchy-shell-config</code> helper. Historically,
+        the omarchy
         <a href="https://learn.omacom.io/2/the-omarchy-manual/65/dotfiles"
           >Dotfiles</a
         >
@@ -506,9 +482,9 @@
         (we'd never see the new keys upstream adds), while leaving the file
         unmanaged means a periodic
         <code>refresh-waybar</code> erases personal edits. The resolution lives
-        in <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>: own
-        only the deltas as jq filters, applied idempotently on every
-        <code>./install</code>.
+        in <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>. The
+        same delta-only principle now applies to <code>shell.json</code>, while
+        actual widget behavior lives in the supported plugin surface.
       </p>
 
       <h2 id="F-AGENT-GUIDANCE">
@@ -832,14 +808,20 @@
         </li>
         <li>
           <a
-            href="https://raw.githubusercontent.com/basecamp/omarchy/dev/bin/omarchy-refresh-hyprland"
-            >omarchy-refresh-hyprland (dev, Lua)</a
+            href="https://raw.githubusercontent.com/basecamp/omarchy/v4.0.0/bin/omarchy-refresh-hyprland"
+            >omarchy-refresh-hyprland (v4.0.0)</a
           >
         </li>
         <li>
           <a
-            href="https://raw.githubusercontent.com/basecamp/omarchy/dev/config/hypr/hyprland.lua"
-            >hyprland.lua (dev)</a
+            href="https://raw.githubusercontent.com/basecamp/omarchy/v4.0.0/config/hypr/hyprland.lua"
+            >hyprland.lua (v4.0.0)</a
+          >
+        </li>
+        <li>
+          <a href="https://github.com/basecamp/omarchy/tree/v4.0.0"
+            >Omarchy v4.0.0 source tag — Quattro package, shell, agent, and
+            migration behavior</a
           >
         </li>
         <li>

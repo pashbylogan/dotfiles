@@ -1,6 +1,6 @@
 # Machine-local overrides — never commit. [D-SECRETS-LOCAL]
 bash/.config/dotfiles/shell.local.sh
-hypr/.config/dotfiles/hypr.local.conf
+hypr/.config/hypr/dotfiles_local.lua
 ssh/.ssh/config.local
 
 *.swp

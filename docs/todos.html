@@ -24,6 +24,13 @@
       <p class="eyebrow">Status &amp; Future Work</p>
       <h1>To-Dos</h1>
       <p class="lead">Living checklist. Updated as implementation proceeds.</p>
+      <div class="callout note">
+        <span class="label">Quattro migration</span>
+        The older completed rows below are a v3 change log. Quattro retires
+        Waybar, Walker, and Elephant; the active implementation is the
+        reloadable Hypr Lua module plus Quickshell plugin/layout deltas
+        described in Decisions. Do not reimplement the historical rows.
+      </div>
 
       <h2>Implementation progress</h2>
       <table>
@@ -35,6 +42,19 @@
           </tr>
         </thead>
         <tbody>
+          <tr>
+            <td>Quattro</td>
+            <td>
+              Port Hyprland to reloadable Lua; replace Waybar/Walker/Elephant
+              parity with Quickshell; hand agents to mise wrappers; use native
+              Brave/Ghostty flows; rewrite verification and docs.
+            </td>
+            <td>
+              <span class="badge badge-done"
+                >repo rewrite done; live cutover pending</span
+              >
+            </td>
+          </tr>
           <tr>
             <td>0</td>
             <td>
@@ -59,11 +79,10 @@
           <tr>
             <td>2</td>
             <td>
-              Authored <code>hypr/.config/dotfiles/hypr.conf</code> (caps→ctrl +
-              workspace rules) + <code>hypr.local.conf.example</code>; install
-              sources it last. (Optional one-time
-              <code>omarchy refresh config hypr/input.conf</code> to dedupe —
-              see deferred.)
+              Historical v3: authored the text Hypr fragment and optional local
+              fragment; superseded by <code>hypr/dotfiles.lua</code>. (Optional
+              one-time <code>omarchy refresh config hypr/input.conf</code> to
+              dedupe — see deferred.)
             </td>
             <td><span class="badge badge-done">done</span></td>
           </tr>
@@ -71,8 +90,8 @@
             <td>3</td>
             <td>
               nvim <code>&lt;leader&gt;y</code> maps via managed block; README
-              quick-start (Remove Preinstalled → <code>./install</code> + manual
-              update/cleanup).
+              historical v3 quick-start; Quattro now starts from stock plus
+              explicit package deltas.
             </td>
             <td><span class="badge badge-done">done</span></td>
           </tr>
@@ -244,7 +263,7 @@
                   <code>have uv</code> so re-runs are no-ops.
                 </li>
                 <li>
-                  Spotify — use AUR <code>spotify</code> (matches
+                  Spotify — use sync-repo <code>spotify</code> (matches
                   <code>omarchy-base.packages</code>), not extra
                   <code>spotify-launcher</code>.
                 </li>
