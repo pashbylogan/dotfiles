@@ -20,9 +20,9 @@ fi
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
-# Package manifests accept comments, whitespace, blank lines, and CRLF. Keep
-# install and verification on the same parser so desired state cannot drift.
-parse_pkg_file() {
+# Declarative manifests accept comments, whitespace, blank lines, and CRLF.
+# Keep install and verification on one parser so desired state cannot drift.
+parse_list_file() {
   tr -d '\r' <"$1" | sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | grep -v '^$' || true
 }
 

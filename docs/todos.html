@@ -274,9 +274,10 @@
                   and has an Obsidian theme hook.
                 </li>
                 <li>
-                  Discord — keep native <code>discord</code> (extra) for full
-                  voice/screen-share; omarchy's default is a webapp via
-                  <code>webapps.sh</code> but the webapp limits voice.
+                  Discord — use Quattro's stock web app. The earlier native
+                  <code>discord</code> exception was retired to reduce duplicate
+                  ownership; switch back only if browser voice or screen sharing
+                  actually regresses.
                 </li>
                 <li>
                   Slack — keep native <code>slack-desktop</code> as a local AUR
@@ -292,14 +293,13 @@
                   <code>yay -Sua</code>.
                 </li>
               </ul>
-              Final lists:
-              <code>packages.txt</code> = <code>git-delta</code>,
-              <code>wireguard-tools</code>, <code>obsidian</code> (a base
-              package removed by Remove-Preinstalled), <code>discord</code>;
-              <code>packages.aur.txt</code> = <code>slack-desktop</code>,
-              <code>spotify</code>, <code>jetbrains-toolbox</code> (JetBrains'
-              own installer is the most stable channel for IntelliJ Ultimate).
-              Re-run <code>./install</code> to apply.
+              Final lists: The original package list included native
+              <code>discord</code>; Quattro later made that entry unnecessary.
+              At this checkpoint, <code>packages.aur.txt</code> included
+              <code>slack-desktop</code>, <code>spotify</code>, and
+              <code>jetbrains-toolbox</code> (JetBrains' own installer is the
+              most stable channel for IntelliJ Ultimate). Re-run
+              <code>./install</code> to apply.
             </td>
             <td><span class="badge badge-done">done</span></td>
           </tr>
@@ -427,11 +427,12 @@
             <td>
               Waybar system tray icons — resolved with Omarchy's existing
               <code>tray</code> module nested in
-              <code>group/tray-expander</code>. Native apps (Discord and local
-              <code>slack-desktop</code>) register tray icons through their own
-              app behavior, so no <code>waybar/deltas.jq</code> insertion or
-              Slack tray dependency was needed. The one repo-owned fix was the
-              right-click tray menu hover state: Omarchy's GTK reset flattened
+              <code>group/tray-expander</code>. The local native
+              <code>slack-desktop</code> registers its own tray icon; Discord
+              now uses Quattro's web app. No
+              <code>waybar/deltas.jq</code> insertion or Slack tray dependency
+              was needed. The one repo-owned fix was the right-click tray menu
+              hover state: Omarchy's GTK reset flattened
               <code>menuitem:hover</code>, so
               <a href="decisions.html#D-WAYBAR-DELTAS">D-WAYBAR-DELTAS</a>
               now carries a higher-specificity rule in the managed waybar CSS

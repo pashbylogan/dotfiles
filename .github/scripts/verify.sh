@@ -93,12 +93,12 @@ check_link "$HOME/.config/tmux/local.conf"
 check_link "$HOME/.claude/statusline-command.sh"
 check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json"
 check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
-check_link "$HOME/.config/omarchy/bar/scripts/memory-status"
 
 for legacy_link in \
   "$HOME/.config/dotfiles/hypr.conf" \
   "$HOME/.config/elephant/websearch.toml" \
-  "$HOME/.config/omarchy/hooks/theme-set.d/brave-origin-stable"; do
+  "$HOME/.config/omarchy/hooks/theme-set.d/brave-origin-stable" \
+  "$HOME/.config/omarchy/bar/scripts/memory-status"; do
   if [ -e "$legacy_link" ] || [ -L "$legacy_link" ]; then
     miss "retired repo path remains: $(pretty "$legacy_link")"
   else
@@ -221,26 +221,17 @@ else
   else
     miss "Quickshell layout drifted — re-run ./install"
   fi
+  # The retired RAM widget must be gone, not merely unplaced. [D-QUICKSHELL-DELTAS]
   if jq -e '
     [.bar.layout.left[], .bar.layout.center[], .bar.layout.right[]] as $all
-    | (.bar.layout.right | map(.id) | index("dotfiles.memory")) as $m
-    | (.bar.layout.right | map(.id) | index("omarchy.power")) as $p
     | (($all | map(select(.id == "pashbyl.workspaces")) | length) == 1)
       and (($all | map(select(.id == "omarchy.workspaces")) | length) == 0)
-      and ($m != null)
-      and ($p == null or $m == ($p - 1))
+      and (($all | map(select(.id == "dotfiles.memory")) | length) == 0)
   ' "$SHELL_JSON" >/dev/null 2>&1; then
-    pass "workspace and memory bar modules are placed correctly"
+    pass "workspace bar module placed, retired memory module absent"
   else
     miss "workspace/memory bar module placement is wrong"
   fi
-fi
-if "$REPO/omarchy/.config/omarchy/bar/scripts/memory-status" | jq -e '
-  .text == "" and (.tooltip | startswith("RAM "))
-' >/dev/null 2>&1; then
-  pass "memory bar command emits valid JSON"
-else
-  miss "memory bar command output is invalid"
 fi
 if jq -e '
   .id == "pashbyl.workspaces"
@@ -403,9 +394,15 @@ STARSHIP_TOML="$HOME/.config/starship.toml"
 # shellcheck disable=SC2016
 if [ ! -f "$STARSHIP_TOML" ]; then
   skip "starship venv overlay ($(pretty "$STARSHIP_TOML") not present)"
-elif grep -qF '${custom.venv}' "$STARSHIP_TOML"; then
+elif grep -qxF 'right_format = "${custom.venv}"' "$STARSHIP_TOML"; then
   check_block "$STARSHIP_TOML" starship-venv '#'
-  pass "starship format references the venv module"
+  pass "starship right_format references the venv module"
+  # A half-applied migration leaves both references and renders the venv twice.
+  if grep -qF '${custom.venv}$character' "$STARSHIP_TOML"; then
+    miss "legacy inline \${custom.venv} splice remains — re-run ./install"
+  else
+    pass "legacy inline venv splice absent"
+  fi
 else
   miss "starship venv reference missing"
 fi
@@ -417,8 +414,25 @@ while IFS= read -r unwanted; do
   if pkg_installed "$unwanted"; then
     miss "unwanted package remains: $unwanted"
   fi
-done < <(parse_pkg_file "$REPO/packages.remove.txt")
+done < <(parse_list_file "$REPO/packages.remove.txt")
 unset unwanted
+
+# Quattro may recopy its stock web apps during an application refresh; surface
+# that drift so running install re-applies the supported removals. [D-WEBAPP]
+while IFS= read -r unwanted_webapp; do
+  if [ -f "$HOME/.local/share/applications/$unwanted_webapp.desktop" ]; then
+    miss "unwanted web app remains: $unwanted_webapp"
+  fi
+done < <(parse_list_file "$REPO/webapps.remove.txt")
+unset unwanted_webapp
+
+discord_webapp="$HOME/.local/share/applications/Discord.desktop"
+if [ -f "$discord_webapp" ] && grep -qxF 'Exec=omarchy-launch-webapp https://discord.com/channels/@me' "$discord_webapp"; then
+  pass "Discord uses Quattro's stock web app"
+else
+  miss "Discord Quattro web app missing or drifted"
+fi
+unset discord_webapp
 
 for retained_pkg in omacalc obsidian; do
   if pkg_installed "$retained_pkg"; then

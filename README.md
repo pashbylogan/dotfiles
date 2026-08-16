@@ -21,8 +21,8 @@ represents. Each numbered step is necessary in order.
    follow-up `git config` is needed.
 2. **Keep the stock Quattro baseline.** Do not run the broad Remove
    Preinstalled flow: Quattro owns retained apps, OmaCalc, and its lazy agent
-   wrappers. `packages.remove.txt` is the explicit persistent deny-list applied
-   by this repo. [D-BASELINE][F-BASELINE]
+   wrappers. `packages.remove.txt` and `webapps.remove.txt` are the explicit
+   persistent deny-lists applied by this repo. [D-BASELINE][D-WEBAPP][F-BASELINE]
 
 ### SSH + GitHub
 
@@ -67,9 +67,9 @@ represents. Each numbered step is necessary in order.
    ssh-add ~/.ssh/id_ed25519
    ```
    `./install` is idempotent — re-run after editing a fragment, after an
-   Omarchy refresh, or to drop newly-added entries in `packages.remove.txt`.
-   It also selects Brave Origin and Ghostty through Quattro's supported install
-   flows. [D-IDEMPOTENT][D-PKG-REMOVE][D-BROWSER-DEFAULT]
+   Omarchy refresh, or to apply newly-added entries in either deny-list. It also
+   selects Brave Origin and Ghostty through Quattro's supported install flows.
+   [D-IDEMPOTENT][D-PKG-REMOVE][D-WEBAPP][D-BROWSER-DEFAULT]
 7. **Create per-machine overrides** (see [Per-machine overrides](#per-machine-overrides)
    below). `shell.local.sh` and `~/.ssh/config.local` are picked up on next
    shell / ssh invocation; `dotfiles_local.lua` is loaded automatically after

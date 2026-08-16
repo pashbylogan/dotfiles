@@ -247,8 +247,7 @@
         "install",
         ".github/scripts/verify.sh",
         "omarchy/shell.jq",
-        "omarchy/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml",
-        "omarchy/.config/omarchy/bar/scripts/memory-status"
+        "omarchy/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
       ],
       "related": ["D-DELTA-STORAGE", "D-WAYBAR-DELTAS", "D-IDEMPOTENT"]
     },
@@ -306,7 +305,7 @@
     },
     {
       "id": "D-BASELINE",
-      "title": "Reference baseline = stock Quattro plus explicit additive manifests and the persistent package deny-list",
+      "title": "Reference baseline = stock Quattro plus explicit additive manifests and persistent package/web-app deny-lists",
       "canonical": "decisions.html#D-BASELINE",
       "appears_in": ["README.md"],
       "code_paths": ["README.md"],
@@ -314,7 +313,7 @@
     },
     {
       "id": "D-PKG-REMOVE",
-      "title": "Package/app and operator-tool curation: packages.txt restores and adds, packages.remove.txt drops, app-picker cleanup, and residue audit",
+      "title": "Package and operator-tool curation: packages.txt restores and adds, packages.remove.txt drops, app-picker cleanup, and residue audit",
       "canonical": "decisions.html#D-PKG-REMOVE",
       "appears_in": [
         "README.md",
@@ -340,10 +339,15 @@
     },
     {
       "id": "D-WEBAPP",
-      "title": "Retired: Quattro owns the Zoom desktop launcher and native webapp lifecycle",
+      "title": "Quattro-owned web apps are curated through a persistent launcher deny-list and the native remove command",
       "canonical": "decisions.html#D-WEBAPP",
-      "appears_in": [],
-      "code_paths": [],
+      "appears_in": ["README.md"],
+      "code_paths": [
+        "install",
+        "webapps.remove.txt",
+        "README.md",
+        ".github/scripts/verify.sh"
+      ],
       "related": ["D-PKG-REMOVE", "D-IDEMPOTENT", "D-SCRIPTS-MINIMAL", "F-CLI"]
     },
     {
@@ -439,7 +443,7 @@
     },
     {
       "id": "F-APP-CHANNELS",
-      "title": "App channels are Omarchy-native first: Brave Origin and Ghostty use Quattro flows, agents use mise wrappers, Spotify uses its sync-repo service package, and explicit extras stay in manifests",
+      "title": "App channels are Omarchy-native first: Brave Origin, Ghostty, and Discord use Quattro flows, agents use mise wrappers, Spotify uses its sync-repo service package, and explicit extras stay in manifests",
       "canonical": "findings.html#F-APP-CHANNELS",
       "appears_in": ["README.md", "decisions.html", "todos.html"],
       "code_paths": ["install", "packages.txt", "packages.aur.txt"],

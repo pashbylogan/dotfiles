@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # [D-CLAUDE-CONFIG] tracked Claude Code statusline — see docs/decisions.html#D-CLAUDE-CONFIG
 # Claude Code statusLine — receives session JSON on stdin, prints one styled line.
-# Colors track the active Omarchy theme through Quattro's palette resolver, so
-# aliases and fallbacks behave exactly like the shell. Falls back to basic ANSI
-# colors when the resolver is absent (non-Omarchy host).
+# Colors are plain ANSI so the terminal renders them from the active Omarchy
+# theme; Quattro themes Claude Code itself via ~/.claude/themes/omarchy.json.
 # stdin fields: .cwd / .workspace.current_dir, .model.display_name,
 #               .context_window.used_percentage
 
@@ -22,45 +21,19 @@
     (.context_window.used_percentage // "" | tostring)' 2>/dev/null
 )
 
-# ── Omarchy theme palette ──────────────────────────────────────────────
-# The resolver emits one tab-separated key/value pair per palette role.
-declare -A pal
-if command -v omarchy-theme-color >/dev/null 2>&1; then
-  while IFS=$'\t' read -r key value; do
-    if [[ $value =~ ^#([0-9a-fA-F]{3})$ ]]; then
-      short=${BASH_REMATCH[1]}
-      pal["$key"]="${short:0:1}${short:0:1}${short:1:1}${short:1:1}${short:2:1}${short:2:1}"
-    elif [[ $value =~ ^#([0-9a-fA-F]{6})([0-9a-fA-F]{2})?$ ]]; then
-      pal["$key"]="${BASH_REMATCH[1]}"
-    fi
-  done < <(omarchy-theme-color --all 2>/dev/null)
-fi
-unset short
-
+# ── colors ───────────────────────────────────────────────────────────────────
+# Plain ANSI slots rather than resolved truecolor: the terminal already renders
+# 0-15 from the active Omarchy theme, so these track `omarchy theme set` for
+# free and cost no subprocess. The blue slot is the theme accent — Omarchy
+# generates both from the same hex. [D-CLAUDE-CONFIG]
 esc=$'\033'
-# Map a palette key to a truecolor SGR built from real ESC bytes. $1 = variable
-# to assign, $2 = palette key (e.g. accent, color5), $3 = fallback ANSI escape
-# when it is missing. Assigning via printf -v keeps this whole block fork-free;
-# a command substitution per color would cost seven subshells on every render.
-theme_color() {
-  local hex=${pal[$2]:-}
-  if [ -n "$hex" ]; then
-    printf -v "$1" '%s[38;2;%d;%d;%dm' "$esc" "$((16#${hex:0:2}))" "$((16#${hex:2:2}))" "$((16#${hex:4:2}))"
-  else
-    printf -v "$1" '%s' "$3"
-  fi
-}
-
-# Declared here so the indirect `printf -v` assignments stay visible to static
-# analysis; theme_color is what actually fills each one in.
-c_folder='' c_branch='' c_model='' c_low='' c_mid='' c_high='' c_sep=''
-theme_color c_folder accent "${esc}[0;36m" # signature accent for the path
-theme_color c_branch color5 "${esc}[0;35m" # purple — distinct from severity hues
-theme_color c_model color6 "${esc}[0;36m"  # cyan
-theme_color c_low color2 "${esc}[0;32m"    # green  — context < 50%
-theme_color c_mid color3 "${esc}[0;33m"    # yellow — context 50-79%
-theme_color c_high color1 "${esc}[0;31m"   # red    — context >= 80%
-theme_color c_sep color8 "${esc}[0;90m"    # dim — segment separators
+c_folder="${esc}[0;34m" # blue — the theme accent, for the path
+c_branch="${esc}[0;35m" # magenta — distinct from the severity hues
+c_model="${esc}[0;36m"  # cyan
+c_low="${esc}[0;32m"    # green  — context < 50%
+c_mid="${esc}[0;33m"    # yellow — context 50-79%
+c_high="${esc}[0;31m"   # red    — context >= 80%
+c_sep="${esc}[0;90m"    # bright black — segment separators
 reset="${esc}[0m"
 sep_char=$'│'    # │ box-drawing vertical separator
 branch_icon=$'' # nerd-font git branch glyph

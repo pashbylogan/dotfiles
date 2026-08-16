@@ -236,7 +236,7 @@ else
 fi
 
 if [ -f packages.txt ]; then
-  mapfile -t PKGS < <(parse_pkg_file packages.txt)
+  mapfile -t PKGS < <(parse_list_file packages.txt)
   mapfile -t MISSING_PKGS < <(pkg_filter missing "${PKGS[@]}")
   if [ "${#MISSING_PKGS[@]}" -gt 0 ]; then
     info "installing extras: ${MISSING_PKGS[*]}"
@@ -245,7 +245,7 @@ if [ -f packages.txt ]; then
 fi
 
 if [ -f packages.aur.txt ]; then
-  mapfile -t AUR_PKGS < <(parse_pkg_file packages.aur.txt)
+  mapfile -t AUR_PKGS < <(parse_list_file packages.aur.txt)
   mapfile -t MISSING_AUR_PKGS < <(pkg_filter missing "${AUR_PKGS[@]}")
   if [ "${#MISSING_AUR_PKGS[@]}" -gt 0 ]; then
     info "installing AUR extras: ${MISSING_AUR_PKGS[*]}"
@@ -289,7 +289,7 @@ success "Ghostty is the default terminal"
 unset BRAVE_ORIGIN_DESKTOP mime_type
 
 if [ -f packages.remove.txt ]; then
-  mapfile -t REMOVE_PKGS < <(parse_pkg_file packages.remove.txt)
+  mapfile -t REMOVE_PKGS < <(parse_list_file packages.remove.txt)
   mapfile -t INSTALLED_REMOVE_PKGS < <(pkg_filter installed "${REMOVE_PKGS[@]}")
   if [ "${#INSTALLED_REMOVE_PKGS[@]}" -gt 0 ]; then
     info "removing unwanted packages: ${INSTALLED_REMOVE_PKGS[*]}"
@@ -309,6 +309,30 @@ if [ "${#LEGACY_AGENT_PKGS[@]}" -gt 0 ]; then
   omarchy pkg drop "${LEGACY_AGENT_PKGS[@]}"
 fi
 unset LEGACY_AGENT_PKGS
+
+# Restore a missing retained Discord launcher through Quattro's application
+# lifecycle; the refresh may also recopy denied launchers, removed just below.
+# [D-WEBAPP][F-APP-CHANNELS]
+DISCORD_WEBAPP="$HOME/.local/share/applications/Discord.desktop"
+if [ ! -f "$DISCORD_WEBAPP" ]; then
+  info "restoring Quattro's Discord web app"
+  omarchy refresh applications
+fi
+unset DISCORD_WEBAPP
+
+# Quattro refreshes packaged launchers into the user application directory.
+# Reapply only the explicit stock-webapp deltas through its supported remover;
+# retained Discord/Zoom and user-installed Tailscale are absent. [D-WEBAPP]
+if [ -f webapps.remove.txt ]; then
+  mapfile -t REMOVE_WEBAPPS < <(parse_list_file webapps.remove.txt)
+  for webapp in "${REMOVE_WEBAPPS[@]}"; do
+    if [ -f "$HOME/.local/share/applications/$webapp.desktop" ]; then
+      info "removing unwanted web app: $webapp"
+      OMARCHY_REMOVE_NOTIFY=false omarchy webapp remove "$webapp"
+    fi
+  done
+fi
+unset REMOVE_WEBAPPS webapp
 
 # Quattro owns the lazy OpenCode launcher; seed only its mutable user config,
 # then assert the personal LSP delta. [D-OPENCODE-LSP][F-OPENCODE-LSP]
@@ -379,6 +403,9 @@ remove_legacy_repo_link "$HOME/.config/dotfiles/hypr.local.conf.example"
 remove_legacy_repo_link "$HOME/.config/elephant/websearch.toml"
 remove_legacy_repo_link "$HOME/.config/omarchy/hooks/theme-set.d/brave-origin-stable"
 remove_legacy_repo_link "$HOME/.config/omarchy/shell.toml"
+# Retired custom RAM widget; Quattro's power panel reports memory natively via
+# omarchy-system-stats. shell.jq drops the bar module, this drops its script.
+remove_legacy_repo_link "$HOME/.config/omarchy/bar/scripts/memory-status"
 prestow_backup "$HOME/.ssh/config"
 # UWSM env.d is stowed because Omarchy-launched apps inherit that session env. [F-SSH-AGENT]
 prestow_backup "$HOME/.config/uwsm/env.d/dotfiles.sh"
@@ -389,7 +416,6 @@ prestow_backup "$HOME/.config/hypr/dotfiles.lua"
 prestow_backup \
   "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json" \
   "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
-prestow_backup "$HOME/.config/omarchy/bar/scripts/memory-status"
 STOW_PKGS=(bash ssh bin hypr tmux nvim uwsm omarchy claude)
 stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
 success "stowed: ${STOW_PKGS[*]}"
@@ -462,15 +488,22 @@ if [ ! -f "$STARSHIP_TOML" ]; then
   warn "skip starship venv delta — missing ${STARSHIP_TOML/#$HOME/\~}"
 else
   # ${custom.venv} / $character are literal starship tokens for grep + sed, not
-  # shell expansions; silence SC2016 across the in-place reference edit below.
+  # shell expansions; silence SC2016 across the in-place edits below.
   # shellcheck disable=SC2016
-  if grep -qF '${custom.venv}' "$STARSHIP_TOML"; then
-    : # already references the module (idempotent)
-  elif grep -qF '$character' "$STARSHIP_TOML"; then
-    sed -i 's/\$character/${custom.venv}$character/' "$STARSHIP_TOML"
-    info "starship: referenced \${custom.venv} before \$character"
-  else
-    warn "starship: no \$character anchor in ${STARSHIP_TOML/#$HOME/\~} — left untouched"
+  # One-way migration: the module used to be spliced into Omarchy's `format`
+  # scalar. right_format is additive, so drop the old inline reference or the
+  # venv renders twice. [D-STARSHIP-VENV]
+  if grep -qF '${custom.venv}$character' "$STARSHIP_TOML"; then
+    sed -i 's/${custom\.venv}\$character/$character/' "$STARSHIP_TOML"
+    info "starship: removed the legacy inline \${custom.venv} reference"
+  fi
+  # right_format must be a root key, but upsert_block appends at EOF — which
+  # lands inside the last table. Line 1 is unambiguously top-level, and unlike
+  # the old splice this never rewrites Omarchy's own format string.
+  # shellcheck disable=SC2016
+  if ! grep -qF 'right_format' "$STARSHIP_TOML"; then
+    sed -i '1i right_format = "${custom.venv}"' "$STARSHIP_TOML"
+    info "starship: added right_format referencing \${custom.venv}"
   fi
   # Define the module: print the venv name only, nothing when $VIRTUAL_ENV unset.
   upsert_block "$STARSHIP_TOML" starship-venv '#' <<'EOF'
@@ -522,6 +555,11 @@ fi
 # warns + skips on a missing target (pre-first-run machine). [D-CLAUDE-CONFIG]
 mkdir -p "$HOME/.claude"
 [ -f "$HOME/.claude/settings.json" ] || printf '{}\n' >"$HOME/.claude/settings.json"
+# settings.jq selects custom:omarchy, so the generated theme must exist first.
+# omarchy-theme-set runs this on every theme change; call it here for first
+# install and after a themes/ wipe. Without --activate it only writes the theme
+# file, leaving .theme to our jq delta. [D-CLAUDE-CONFIG]
+have omarchy-theme-set-claude && omarchy-theme-set-claude
 # `|| true`: apply_jq_deltas returns 1 on "no change" under set -e; a real jq
 # error still dies inside the helper.
 apply_jq_deltas "$HOME/.claude/settings.json" "$REPO/claude/settings.jq" "claude settings" || true

@@ -269,8 +269,8 @@
                   on reverse-dep conflicts. Empty list → no-op; already-absent
                   names → no-op at the omarchy CLI layer.
                   <strong>Scope:</strong> pacman-tracked only (official-repo +
-                  AUR). Web apps are not pacman packages; remove those with
-                  <code>omarchy webapp remove</code>.
+                  AUR). Web-app launcher curation is handled separately by
+                  <a href="#D-WEBAPP">D-WEBAPP</a>.
                 </li>
                 <li>
                   Stale-launcher cleanup in <code>install</code> — explicit
@@ -317,16 +317,28 @@
             </td>
           </tr>
           <tr id="D-WEBAPP">
-            <td><code class="meta">D-WEBAPP</code> Webapp ownership retired</td>
+            <td><code class="meta">D-WEBAPP</code> Stock web-app curation</td>
             <td>
-              No repository implementation remains. Quattro packages the Zoom
-              desktop entry with the needed protocol handlers and refreshes
-              applications through its native lifecycle.
+              <strong
+                >Keep Quattro's native implementation and apply only an explicit
+                launcher deny-list.</strong
+              >
+              <code>webapps.remove.txt</code> lists unwanted stock launchers;
+              <code>install</code> processes each present entry through
+              <code>omarchy webapp remove</code>. Discord and Zoom remain
+              packaged and refreshed by Quattro, while the separately installed
+              Tailscale launcher is retained because none appears in the
+              deny-list. A missing Discord launcher is restored through
+              <code>omarchy refresh applications</code> before removals are
+              reapplied.
             </td>
             <td>
-              Restating a packaged Quattro launcher would violate the
-              deltas-only rule and create two owners. The historical ID remains
-              so earlier trace links continue to resolve.
+              Quattro's broad Remove Preinstalled flow would also remove
+              retained packages, OmaCalc, TUI wrappers, and mise-backed agent
+              launchers. Its application refresh can recopy stock desktop files,
+              so a small persistent delta is required. Calling the supported
+              remover preserves Quattro's ownership of launcher and icon cleanup
+              instead of restating or editing packaged files.
             </td>
           </tr>
           <tr id="D-BROWSER-DEFAULT">
@@ -442,8 +454,9 @@
             <td><code class="meta">D-TMUX-KEEP</code> tmux config</td>
             <td><span class="badge badge-done">carry</span></td>
             <td>
-              Genuinely customized (C-a prefix, vi copy-mode, sessionizer bind;
-              clipboard <code>xclip</code>→<code>wl-copy</code>). Omarchy ships
+              Genuinely customized (C-a prefix, pane binds, sessionizer bind).
+              Omarchy's own tmux.conf already covers vi copy-mode and OSC52
+              clipboard, so those deltas were retired. Omarchy ships
               <code>~/.config/tmux/tmux.conf</code>, which tmux
               <strong>prefers over <code>~/.tmux.conf</code></strong> (so the
               old stow target was silently shadowed). Now stowed to
@@ -801,7 +814,7 @@
             </td>
             <td>
               Stow the supported user-owned
-              <code>pashbyl.workspaces</code> plugin and memory command. Keep
+              <code>pashbyl.workspaces</code> plugin. Keep
               <code>shell.toml</code> mutable because shell settings rewrite it;
               merge only <code>bar.active</code>. Keep <code>shell.json</code>
               mutable and converge only module IDs and ordering with
@@ -1024,14 +1037,16 @@
               <code
                 >format =
                 "[$directory$git_branch$git_status]($style)$character"</code
-              >. <code>install</code> inserts <code>${custom.venv}</code> before
-              <code>$character</code> (in-place, grep-guarded) and appends the
-              module table as a standard <code>upsert_block</code> managed block
-              that runs <code>basename "$VIRTUAL_ENV"</code> <code>when</code>
+              >. <code>install</code> adds a top-level
+              <code>right_format = "${custom.venv}"</code> (inserted at line 1,
+              grep-guarded) rather than splicing Omarchy's own
+              <code>format</code> string, and appends the module table as a
+              standard <code>upsert_block</code> managed block that runs
+              <code>basename "$VIRTUAL_ENV"</code> <code>when</code>
               <code>$VIRTUAL_ENV</code> is set, styled
               <code>italic yellow</code>. <code>verify.sh</code> greps the
-              <code>${custom.venv}</code> format reference and
-              <code>check_block</code>s the module.
+              <code>right_format</code> reference, confirms the legacy inline
+              splice is gone, and <code>check_block</code>s the module.
             </td>
             <td>
               <strong
@@ -1096,8 +1111,9 @@
                 <code>~/.claude</code>, split by how Claude Code treats
                 them.</strong
               >
-              <code>statusline-command.sh</code> (a self-contained, theme-aware
-              prompt script Claude never rewrites) is
+              <code>statusline-command.sh</code> (a self-contained prompt script
+              Claude never rewrites, coloured with plain ANSI so the terminal
+              renders it in the active Omarchy theme) is
               <strong>stowed</strong> via a new <code>claude</code> package,
               like <a href="decisions.html#D-TMUX-KEEP">tmux/local.conf</a>.
               <code>settings.json</code> is instead applied as an idempotent

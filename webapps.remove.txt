@@ -1,0 +1,13 @@
+# Stock Quattro web apps this overlay deliberately hides from the launcher.
+# `install` applies each entry through `omarchy webapp remove`; Discord, Zoom,
+# and the user-installed Tailscale launcher remain outside it. [D-WEBAPP]
+
+Basecamp
+Google Contacts
+Google Maps
+Google Messages
+Google Photos
+HEY
+WhatsApp
+X
+YouTube
