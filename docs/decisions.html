@@ -482,17 +482,33 @@
             <td>Owned fragment: caps→ctrl + workspace rules.</td>
           </tr>
           <tr id="D-NVIM-KEYMAPS">
-            <td><code class="meta">D-NVIM-KEYMAPS</code> nvim keymaps</td>
+            <td><code class="meta">D-NVIM-KEYMAPS</code> nvim deltas</td>
             <td><span class="badge badge-done">carry</span></td>
             <td>
-              Personal keymaps + options live in a tracked Lua fragment
-              (<code>~/.config/dotfiles/nvim.lua</code>) loaded by a one-line
+              Personal nvim deltas ride three repo-owned seams. (1) Keymaps +
+              options in a tracked fragment
+              (<code>~/.config/dotfiles/nvim.lua</code>) loaded by a
               <code>dofile</code> managed block in Omarchy's
-              <code>keymaps.lua</code> — the fragment sits in our own namespace,
-              not the cp-reset nvim tree (<a href="findings.html#F-NVIM-OWNED"
+              <code>keymaps.lua</code>. (2) Plugin specs — the lightweight
+              disables (flash, mini.pairs, persistence, bufferline, lualine, and
+              neo-tree so netrw is the only navigator; trouble stays, it
+              lazy-loads free and todo-comments' keys call it) — in a second
+              fragment (<code>~/.config/dotfiles/nvim-plugins.lua</code>)
+              returned by a generated loader that <code>install</code> writes to
+              <code>~/.config/nvim/lua/plugins/dotfiles.lua</code>, guarded on
+              the seeded dir and never created pre-seed (<a
+                href="findings.html#F-NVIM-OWNED"
                 >F-NVIM-OWNED</a
-              >). Maps that clash with LazyVim which-key groups
-              (<code>&lt;leader&gt;f/s/d/x</code>) are omitted.
+              >). (3) LazyVim extras (harpoon2 + lang json/markdown/yaml) as a
+              jq delta (<code>nvim/lazyvim.jq</code>) onto tool-rewritten
+              <code>lazyvim.json</code>, touching only
+              <code>.extras</code> because <code>install_version</code> is
+              load-bearing. Never stow/symlink/mkdir inside the cp-reset nvim
+              tree, and never set a colorscheme — Omarchy's theme file owns it.
+              Old maps that clash with LazyVim which-key groups return renamed
+              (<code>&lt;leader&gt;D</code>, <code>&lt;leader&gt;cx</code>) or
+              stay cut where LazyVim covers them (<code>&lt;leader&gt;cf</code>
+              format, <code>&lt;leader&gt;sr</code> replace).
             </td>
           </tr>
           <tr>

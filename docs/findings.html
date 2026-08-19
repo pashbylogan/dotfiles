@@ -137,15 +137,28 @@
         <code class="meta">F-NVIM-OWNED</code>
       </h2>
       <p>
-        Quattro's separate <code>omarchy-nvim</code> package seeds the entire
-        nvim config and cached plugin data.
-        <code>omarchy-nvim-refresh</code> backs up and then
-        <strong>replaces the entire nvim tree</strong>. The file
-        <code>~/.config/nvim/lua/config/keymaps.lua</code> already exists as the
-        LazyVim user-extension point ("Add any additional keymaps here").
-        Therefore we do not stow into <code>~/.config/nvim</code>; instead
-        <code>install</code> upserts a managed block into that
-        <code>keymaps.lua</code>. Re-run <code>./install</code> after
+        Quattro's nvim config is owned by the separate Arch package
+        <code>omarchy-nvim</code>: a pre-built LazyVim config plus warm plugin
+        cache shipped into <code>/etc/skel</code> and seeded once into
+        <code>~/.config/nvim</code> by <code>omarchy-nvim-setup</code> — which
+        <strong>refuses to seed if the directory already exists</strong>, so
+        nothing may ever pre-create the tree on a fresh machine.
+        <code>omarchy-nvim-refresh</code> replaces the tree — <code>mv</code> to
+        a timestamped backup plus a fresh copy, no <code>cp -f</code>
+        write-through — and wipes nvim data/cache/state including the lazy
+        lockfile (post-refresh plugin versions ride unpinned HEAD).
+        <code>omarchy update</code> never reconciles the tree, but ad-hoc
+        migrations have written inside it, so treat it as Omarchy-writable
+        territory. Theming is one Omarchy-owned symlink,
+        <code>lua/plugins/theme.lua</code> →
+        <code>~/.local/state/omarchy/current/theme/neovim.lua</code>, plus the
+        seeded hotreload/transparency/all-themes files — never touch these, and
+        never set <code>opts.colorscheme</code> on <code>LazyVim/LazyVim</code>.
+        The seeded <code>keymaps.lua</code> and lazy's auto-scanned
+        <code>lua/plugins/*.lua</code> are the user-extension points
+        <code>install</code> re-asserts (<a href="decisions.html#D-NVIM-KEYMAPS"
+          >D-NVIM-KEYMAPS</a
+        >): re-run <code>./install</code> after
         <code>omarchy-nvim-refresh</code> or a full config reinstall.
       </p>
 

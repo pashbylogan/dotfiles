@@ -82,6 +82,13 @@ CLAUDE_CONFIG_HOME="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 CLAUDE_SETTINGS_FILE="$CLAUDE_CONFIG_HOME/settings.json"
 CLAUDE_THEME_FILE="$CLAUDE_CONFIG_HOME/themes/omarchy.json"
 
+# Lazy's auto-scanned plugins dir inside the omarchy-nvim seed, plus the loader
+# install generates there. The dir is never created — omarchy-nvim-setup refuses
+# to seed an existing ~/.config/nvim — so install writes and verify.sh checks
+# under the same guard, from one path. [D-NVIM-KEYMAPS][F-NVIM-OWNED]
+NVIM_PLUGINS_DIR="$HOME/.config/nvim/lua/plugins"
+NVIM_PLUGIN_LOADER="$NVIM_PLUGINS_DIR/dotfiles.lua"
+
 # Begin/end sentinel for a managed block. install writes these and verify.sh
 # greps for them (whole-line), so the `>>> dotfiles managed (NAME) >>>` contract
 # lives here once. $1=begin|end  $2=name  $3=comment-open  $4=comment-close(opt).

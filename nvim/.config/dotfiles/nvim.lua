@@ -31,3 +31,27 @@ vim.keymap.set("n", "Q", "<nop>")
 if vim.env.TMUX then
   vim.keymap.set("n", "<C-f>", "<cmd>silent !tmux neww tmux-sessionizer<CR>", { desc = "tmux-sessionizer" })
 end
+
+-- Harpoon (editor.harpoon2 extra, see nvim/lazyvim.jq): personal renames of the
+-- extra's <leader>H add / <leader>h menu; <leader>1-9 selects come from the
+-- extra. require() in the callback loads the lazy plugin on demand, so these
+-- need no plugin spec. <C-e> overrides Vim's default scroll-one-line, not a
+-- LazyVim map.
+vim.keymap.set("n", "<leader>a", function()
+  require("harpoon"):list():add()
+end, { desc = "Harpoon file" })
+vim.keymap.set("n", "<C-e>", function()
+  local harpoon = require("harpoon")
+  harpoon.ui:toggle_quick_menu(harpoon:list())
+end, { desc = "Harpoon quick menu" })
+
+-- Same picker as LazyVim's <leader>fg, kept on <C-p> for muscle memory
+-- (overrides Vim's default previous-line motion).
+vim.keymap.set("n", "<C-p>", function()
+  Snacks.picker.git_files()
+end, { desc = "Find git files" })
+
+-- Old <leader>d and <leader>x, renamed: those prefixes are LazyVim which-key
+-- groups (debug, diagnostics/quickfix).
+vim.keymap.set({ "n", "v" }, "<leader>D", [["_d]], { desc = "Delete to void register" })
+vim.keymap.set("n", "<leader>cx", "<cmd>!chmod +x %<CR>", { silent = true, desc = "chmod +x current file" })

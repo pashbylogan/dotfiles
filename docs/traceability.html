@@ -169,12 +169,18 @@
           <tr>
             <td><code>D-NVIM-KEYMAPS</code></td>
             <td>
-              nvim keymaps/options in a tracked nvim.lua fragment, loaded by a
-              dofile managed block; don't stow the nvim tree
+              nvim deltas via three seams: keymaps/options fragment + dofile
+              block, plugin-spec fragment + generated loader, LazyVim extras jq
+              delta; never stow/symlink/mkdir inside the nvim tree
             </td>
             <td><a href="decisions.html#D-NVIM-KEYMAPS">decisions</a></td>
             <td>
-              <code>install</code>, <code>nvim/.config/dotfiles/nvim.lua</code>
+              <code>install</code>, <code>lib/style.sh</code>,
+              <code>nvim/.config/dotfiles/nvim.lua</code>,
+              <code>nvim/.config/dotfiles/nvim-plugins.lua</code>,
+              <code>nvim/lazyvim.jq</code>,
+              <code>nvim/.stow-local-ignore</code>,
+              <code>.github/scripts/verify.sh</code>
             </td>
           </tr>
           <tr>
@@ -449,8 +455,10 @@
           <tr>
             <td><code>F-NVIM-OWNED</code></td>
             <td>
-              Separate omarchy-nvim package seeds the user seam; refresh
-              replaces the tree
+              Separate omarchy-nvim Arch package seeds the tree once from
+              /etc/skel (setup refuses if the dir exists — never pre-create it);
+              refresh replaces the tree and discards the lockfile; theme.lua
+              symlink + colorscheme stay Omarchy-owned
             </td>
             <td><a href="findings.html#F-NVIM-OWNED">findings</a></td>
             <td><code>D-NVIM-KEYMAPS</code></td>

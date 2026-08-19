@@ -54,9 +54,9 @@ check_block() {
 }
 
 # Mutable upstream files keep only small, re-assertable seams. [D-DELTA-STORAGE]
+# The nvim keymaps block is asserted below, under the seed guard.
 check_block "$HOME/.bashrc" shell '#'
 check_block "$HOME/.config/hypr/hyprland.lua" hypr '--'
-check_block "$HOME/.config/nvim/lua/config/keymaps.lua" keymaps '--'
 check_block "$HOME/.config/tmux/tmux.conf" tmux '#'
 
 check_link() {
@@ -78,6 +78,7 @@ check_link() {
 check_link "$HOME/.config/dotfiles/shell.sh"
 check_link "$HOME/.config/hypr/dotfiles.lua"
 check_link "$HOME/.config/dotfiles/nvim.lua"
+check_link "$HOME/.config/dotfiles/nvim-plugins.lua"
 check_link "$HOME/.config/uwsm/env.d/dotfiles.sh"
 check_link "$HOME/.ssh/config"
 check_link "$HOME/.config/tmux/local.conf"
@@ -107,13 +108,20 @@ if grep -qF 'opacity = "0.86 0.78"' "$HYPR_MODULE" 2>/dev/null &&
 else
   miss "Hyprland personal behavior is incomplete — restore/re-stow the module"
 fi
-if have luac && luac -p "$HYPR_MODULE"; then
-  pass "Hyprland personal Lua parses"
-elif have luac; then
-  miss "Hyprland personal Lua does not parse"
-else
-  skip "standalone Lua parse (luac unavailable)"
-fi
+# Typo-catcher only: luac is Lua 5.5 while nvim runs LuaJIT (5.1), so this
+# parses syntax but cannot prove LuaJIT compatibility. [D-NVIM-KEYMAPS]
+check_lua_parse() {
+  if ! have luac; then
+    skip "$(pretty "$1") parse (luac unavailable)"
+  elif luac -p "$1"; then
+    pass "$(pretty "$1") parses"
+  else
+    miss "$(pretty "$1") does not parse"
+  fi
+}
+check_lua_parse "$HYPR_MODULE"
+check_lua_parse "$HOME/.config/dotfiles/nvim.lua"
+check_lua_parse "$HOME/.config/dotfiles/nvim-plugins.lua"
 unset HYPR_MODULE
 
 if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && have hyprctl; then
@@ -295,12 +303,29 @@ check_jq_fixed_point() {
 # OpenCode's global LSP delta remains tool-owned mutable state. [F-OPENCODE-LSP]
 check_jq_fixed_point "Claude" "$CLAUDE_SETTINGS_FILE" "$REPO/claude/settings.jq"
 check_jq_fixed_point "OpenCode" "$HOME/.config/opencode/opencode.json" "$REPO/opencode/settings.jq"
+
 # settings.jq pins .theme to custom:omarchy, so the Quattro-generated theme file
 # must exist or Claude Code resolves a dangling reference. [D-CLAUDE-CONFIG]
 if [ -f "$CLAUDE_THEME_FILE" ]; then
   pass "Claude Code Omarchy theme present"
 else
   miss "$(pretty "$CLAUDE_THEME_FILE") missing — .theme pins custom:omarchy"
+fi
+
+# These seams live inside the omarchy-nvim seed, which ./install cannot create
+# pre-seed — hence skip, not miss. [D-NVIM-KEYMAPS][F-NVIM-OWNED]
+if [ ! -d "$NVIM_PLUGINS_DIR" ]; then
+  skip "nvim seams (~/.config/nvim not seeded — run omarchy-nvim-setup, then ./install)"
+else
+  check_block "$HOME/.config/nvim/lua/config/keymaps.lua" keymaps '--'
+  # install writes the loader in one shot, so the fragment path it dofiles is
+  # the whole contract — a second grep would assert the same fact twice.
+  if grep -qF 'dotfiles/nvim-plugins.lua' "$NVIM_PLUGIN_LOADER" 2>/dev/null; then
+    pass "$(pretty "$NVIM_PLUGIN_LOADER") loader present"
+  else
+    miss "$(pretty "$NVIM_PLUGIN_LOADER") loader missing or drifted — re-run ./install"
+  fi
+  check_jq_fixed_point "LazyVim extras" "$HOME/.config/nvim/lazyvim.json" "$REPO/nvim/lazyvim.jq"
 fi
 
 # SSH silently ignores over-permissive configuration. [F-SSH-AGENT]

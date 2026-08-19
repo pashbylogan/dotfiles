@@ -79,8 +79,8 @@
             <td>
               Personal overlays only: a reloadable Hyprland Lua module,
               Quickshell plugin/command/theme deltas, bash additions, ssh
-              config, personal commands, a few nvim keymaps, and explicit
-              package additions/removals — plus repo hygiene (a
+              config, personal commands, nvim keymap/plugin/extras deltas, and
+              explicit package additions/removals — plus repo hygiene (a
               <code>Makefile</code> + CI that lint/format the scripts and verify
               docs integrity, see <a href="decisions.html#D-CI">D-CI</a>).
             </td>
@@ -132,7 +132,11 @@
           </tr>
           <tr>
             <td><code>~/.config/nvim/lua/config/keymaps.lua</code></td>
-            <td>adds the <code>&lt;leader&gt;y</code> clipboard maps</td>
+            <td>
+              <code>dofile</code>s the tracked
+              <code>~/.config/dotfiles/nvim.lua</code> fragment (personal
+              keymaps + options)
+            </td>
           </tr>
           <tr>
             <td><code>~/.config/tmux/tmux.conf</code></td>
@@ -157,6 +161,18 @@
         mutable <code>shell.toml</code> receives no TOML delta and the layout
         stays unstowed. See
         <a href="decisions.html#D-QUICKSHELL-DELTAS">D-QUICKSHELL-DELTAS</a>.
+      </p>
+      <p>
+        Neovim adds two more managed seams beyond the keymaps block, because
+        lazy.nvim plugin specs must exist before <code>lazy.setup()</code>:
+        <code>install</code> writes a generated loader to
+        <code>~/.config/nvim/lua/plugins/dotfiles.lua</code> (returning the
+        tracked <code>~/.config/dotfiles/nvim-plugins.lua</code> spec fragment)
+        — guarded on the seeded dir, since pre-creating the tree would stop
+        <code>omarchy-nvim-setup</code> from ever seeding — and applies a jq
+        delta (<code>nvim/lazyvim.jq</code>) onto LazyVim-rewritten
+        <code>lazyvim.json</code>, touching only <code>.extras</code>. See
+        <a href="decisions.html#D-NVIM-KEYMAPS">D-NVIM-KEYMAPS</a>.
       </p>
 
       <h2>What stow does (and doesn't)</h2>

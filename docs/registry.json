@@ -156,11 +156,24 @@
     },
     {
       "id": "D-NVIM-KEYMAPS",
-      "title": "nvim keymaps/options in a tracked ~/.config/dotfiles/nvim.lua fragment, loaded by a one-line dofile managed block in Omarchy's keymaps.lua; do NOT stow the nvim tree",
+      "title": "nvim deltas via three seams: keymaps/options fragment + dofile managed block, plugin-spec fragment + generated loader in lazy's plugins dir, and a LazyVim-extras jq delta onto lazyvim.json; never stow/symlink/mkdir inside the nvim tree",
       "canonical": "decisions.html#D-NVIM-KEYMAPS",
-      "appears_in": [],
-      "code_paths": ["install", "nvim/.config/dotfiles/nvim.lua"],
-      "related": ["F-NVIM-OWNED", "D-DELTA-STORAGE"]
+      "appears_in": ["architecture.html", "findings.html"],
+      "code_paths": [
+        "install",
+        "lib/style.sh",
+        "nvim/.config/dotfiles/nvim.lua",
+        "nvim/.config/dotfiles/nvim-plugins.lua",
+        "nvim/lazyvim.jq",
+        "nvim/.stow-local-ignore",
+        ".github/scripts/verify.sh"
+      ],
+      "related": [
+        "F-NVIM-OWNED",
+        "D-DELTA-STORAGE",
+        "D-IDEMPOTENT",
+        "D-CLAUDE-CONFIG"
+      ]
     },
     {
       "id": "D-CAPS-CTRL",
@@ -411,10 +424,10 @@
     },
     {
       "id": "F-NVIM-OWNED",
-      "title": "The separate omarchy-nvim package seeds keymaps.lua as the user seam; refresh backs up and replaces the entire config",
+      "title": "The separate omarchy-nvim Arch package seeds ~/.config/nvim once from /etc/skel and refuses to seed if the dir exists (never pre-create it); refresh replaces the tree and discards the lockfile; migrations may write inside; theme.lua symlink + colorscheme are Omarchy-owned",
       "canonical": "findings.html#F-NVIM-OWNED",
       "appears_in": ["decisions.html"],
-      "code_paths": ["install"],
+      "code_paths": ["install", "lib/style.sh", ".github/scripts/verify.sh"],
       "related": ["D-NVIM-KEYMAPS"]
     },
     {
