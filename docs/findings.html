@@ -159,7 +159,13 @@
         <code>install</code> re-asserts (<a href="decisions.html#D-NVIM-KEYMAPS"
           >D-NVIM-KEYMAPS</a
         >): re-run <code>./install</code> after
-        <code>omarchy-nvim-refresh</code> or a full config reinstall.
+        <code>omarchy-nvim-refresh</code> or a full config reinstall. A refresh
+        also wipes the plugin cache, so plugins carrying an async build step
+        (LazyVim's markdown extra downloads a
+        <code>markdown-preview</code> binary) must be rebuilt from an
+        <em>interactive</em> nvim:
+        <code>nvim --headless +'Lazy! install' +qa</code> exits before the build
+        job finishes and leaves the plugin broken at runtime.
       </p>
 
       <h2 id="F-APP-CHANNELS">
