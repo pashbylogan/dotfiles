@@ -37,10 +37,15 @@
     },
     {
       "id": "D-DELTA-STORAGE",
-      "title": "Own thin Lua/plugin/script fragments plus managed seams; never symlink Omarchy-owned mutable files",
+      "title": "Own thin fragments and static assets at user extension points plus managed seams; never symlink Omarchy-owned mutable files or theme trees",
       "canonical": "architecture.html#D-DELTA-STORAGE",
       "appears_in": ["augmentation-approach.html", "decisions.html"],
-      "code_paths": ["install", "hypr/.config/hypr/dotfiles.lua"],
+      "code_paths": [
+        "install",
+        "hypr/.config/hypr/dotfiles.lua",
+        ".github/scripts/verify.sh",
+        "omarchy/.config/omarchy/backgrounds"
+      ],
       "related": [
         "F-REFRESH-WRITETHROUGH",
         "F-LUA",

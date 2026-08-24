@@ -85,6 +85,7 @@ check_link "$HOME/.config/tmux/local.conf"
 check_link "$HOME/.claude/statusline-command.sh"
 check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json"
 check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
+check_link "$HOME/.config/omarchy/backgrounds/tokyo-night/humpback.jpg"
 
 # The hypr.* namespace is purged by Quattro on reload; dotfiles.* is not.
 # Verify both the module name and the optional-module binding. [F-HYPR-SEAM]

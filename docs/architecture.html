@@ -39,10 +39,11 @@
         <span class="label"
           >Never symlink an Omarchy-owned mutable file into git.</span
         >
-        Own a thin <strong>personal fragment</strong>, and integrate it with a
-        <strong>single managed block</strong>
-        appended to Omarchy's file. Omarchy keeps owning (and
-        updating/migrating) its own files; we keep owning ours.
+        Own a thin <strong>personal fragment</strong> or static asset at an
+        Omarchy user extension point. Where integration with a mutable Omarchy
+        file is unavoidable, use a <strong>single managed block</strong>
+        appended to that file. Omarchy keeps owning (and updating/migrating) its
+        own files; we keep owning ours.
       </div>
       <p>
         Why this matters: Omarchy resets configs with
@@ -78,11 +79,12 @@
             <td><strong>This repo</strong></td>
             <td>
               Personal overlays only: a reloadable Hyprland Lua module,
-              Quickshell plugin/command/theme deltas, bash additions, ssh
-              config, personal commands, nvim keymap/plugin/extras deltas, and
-              explicit package additions/removals — plus repo hygiene (a
-              <code>Makefile</code> + CI that lint/format the scripts and verify
-              docs integrity, see <a href="decisions.html#D-CI">D-CI</a>).
+              Quickshell plugin/command/theme deltas, user backgrounds, bash
+              additions, ssh config, personal commands, nvim
+              keymap/plugin/extras deltas, and explicit package
+              additions/removals — plus repo hygiene (a <code>Makefile</code> +
+              CI that lint/format the scripts and verify docs integrity, see
+              <a href="decisions.html#D-CI">D-CI</a>).
             </td>
           </tr>
         </tbody>
@@ -181,9 +183,12 @@
         doesn't seed — our own namespaces (<code>~/.config/dotfiles/</code>,
         <code>~/.ssh/</code>, <code>~/.local/bin/</code>,
         <code>~/.config/tmux/local.conf</code>) and Omarchy
-        <em>extension points</em> reserved for user content (the Hypr Lua module
-        and Quickshell plugins/scripts). Stow never symlinks an Omarchy-managed
-        mutable file.
+        <em>extension points</em> reserved for user content (the Hypr Lua
+        module, Quickshell plugins/scripts, and
+        <code>~/.config/omarchy/backgrounds/&lt;theme-slug&gt;/</code>).
+        Omarchy's background switcher discovers those per-theme assets alongside
+        stock backgrounds. Stow never symlinks an Omarchy-managed mutable file
+        or theme tree.
       </p>
 
       <h2 id="D-IDEMPOTENT">
