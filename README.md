@@ -104,7 +104,8 @@ Each ends in an interactive auth flow.
 
 12. **WireGuard `cypris` tunnel** — drop the work-provided config at
     `/etc/wireguard/cypris.conf` (mode 600, root-owned). The `vpns()` and
-    `exitnode()` helpers in `shell.sh` then toggle it against the Tailscale
+    `exitnode()` helpers you author in machine-local `shell.local.sh` (see
+    `shell.local.sh.example`) then toggle it against the Tailscale
     exit-node path; without `cypris.conf` (or without an active VPN to flip
     from) `vpns` prints an error and returns non-zero — no state change,
     but not a silent no-op.

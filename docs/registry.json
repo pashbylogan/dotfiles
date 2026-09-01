@@ -532,6 +532,14 @@
         ".github/scripts/verify.sh"
       ],
       "related": ["D-CARRY-SET", "D-SCRIPTS-MINIMAL"]
+    },
+    {
+      "id": "F-TAILSCALE-DNS",
+      "title": "Mullvad exit nodes advertise their own DNS resolver, which Tailscale uses only when the tailnet sets no global nameservers; the tailnet therefore carries none, and exitnode/vpns carry no DNS flags",
+      "canonical": "findings.html#F-TAILSCALE-DNS",
+      "appears_in": [],
+      "code_paths": ["bash/.config/dotfiles/shell.local.sh.example"],
+      "related": ["D-SECRETS-LOCAL", "F-CLI"]
     }
   ]
 }

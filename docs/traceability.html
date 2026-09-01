@@ -567,6 +567,20 @@
             <td><a href="findings.html#F-SSH-AGENT">findings</a></td>
             <td><code>D-CARRY-SET</code></td>
           </tr>
+          <tr>
+            <td><code>F-TAILSCALE-DNS</code></td>
+            <td>
+              Mullvad exit nodes advertise
+              <code>ExitNodeDNSResolvers</code>, which Tailscale uses only when
+              the tailnet sets no global nameservers; Mullvad also refuses
+              plaintext <code>:53</code> from outside its network — so the
+              tailnet carries none, and <code>exitnode</code>/<code>vpns</code>
+              carry no <code>--accept-dns</code> or <code>resolvectl</code>
+              calls
+            </td>
+            <td><a href="findings.html#F-TAILSCALE-DNS">findings</a></td>
+            <td><code>D-SECRETS-LOCAL</code></td>
+          </tr>
         </tbody>
       </table>
 

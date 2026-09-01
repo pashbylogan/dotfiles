@@ -12,7 +12,10 @@
 #   *i*) bind -x '"\C-f": tmux-sessionizer' ;;
 # esac
 
-# Device-specific function, e.g. a VPN toggle keyed to your wireguard interface:
+# Device-specific function, e.g. a VPN toggle keyed to your wireguard interface.
+# Keep DNS handling out of it: the tailnet must carry no global nameservers, and
+# manual resolvectl calls on tailscale0 are wiped on the next link change (wg-quick
+# included). [F-TAILSCALE-DNS]
 # vpns() { ...; }
 
 # Secrets / project IDs stay out of git, e.g. a Vertex-backed CLI wrapper:

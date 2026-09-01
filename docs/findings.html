@@ -630,6 +630,66 @@
         available.
       </p>
 
+      <h2 id="F-TAILSCALE-DNS">
+        Mullvad exit nodes supply their own DNS; a tailnet global nameserver
+        shadows it <code class="meta">F-TAILSCALE-DNS</code>
+      </h2>
+      <p>
+        Every Mullvad exit node advertises its resolver in the netmap —
+        <code>ExitNodeDNSResolvers: [194.242.2.2]</code> alongside
+        <code>IsWireGuardOnly: true</code>, on all 544 peers — and tailscaled
+        uses it <em>only</em> when the tailnet itself sets no global
+        nameservers. <code>dnsConfigForNetmap</code> reads
+        <code
+          >if len(nm.DNS.Resolvers) &gt; 0 { addDefault(nm.DNS.Resolvers) } else
+          if wireguardExitNodeDNSResolvers(...)</code
+        >, so a global nameserver configured in the admin console
+        <strong>shadows</strong> the built-in mechanism rather than
+        complementing it. Tailscale has required no DNS configuration for
+        Mullvad exit nodes since v1.48.3; the global-nameserver approach is
+        documented only as a workaround for v1.48.1 and v1.48.2.
+      </p>
+      <p>
+        Pointing that global nameserver at Mullvad's own resolvers is actively
+        harmful, because Mullvad answers plaintext <code>:53</code> only for
+        clients arriving from inside its network. Off the exit node
+        <code>194.242.2.2</code> returns <code>REFUSED</code> (rcode 5) —
+        verified from two separate uplinks — and <code>2a07:e340::2</code> is
+        unroutable on an IPv4-only link. With that pair as the only system
+        resolver, every lookup died the moment the exit node was dropped:
+        measured windows of 32–78 s on each switch away from Mullvad, every
+        time. Removing the two global nameservers restores the native behaviour
+        — on the exit node <code>DefaultResolvers: [194.242.2.2]</code> through
+        the tunnel; off it a split config routing the tailnet domain plus the
+        ~65 reverse zones to <code>100.100.100.100</code> and everything else to
+        the link's own resolvers.
+      </p>
+      <p>
+        Client-side workarounds do not survive. tailscaled's systemd-resolved
+        integration is write-only and unconditional: every
+        <code>dns.Manager.Set</code> reprograms the <code>tailscale0</code> link
+        over D-Bus with no equality check, and it re-fires on every major link
+        change — which includes <code>wg-quick up/down</code> of a local
+        WireGuard interface. A manual
+        <code>resolvectl dns/domain/default-route</code> on
+        <code>tailscale0</code> is therefore wiped about a second after a VPN
+        toggle sets it. For the same reason <code>exitnode</code> and
+        <code>vpns</code> in <code>shell.local.sh</code> deliberately carry
+        <strong>no</strong> <code>--accept-dns</code> flags and no
+        <code>resolvectl</code> calls: the absence is the fix, not an oversight.
+      </p>
+      <p>
+        Two consequences elsewhere in the overlay. Mullvad must never be set as
+        the system resolver through <code>omarchy dns Custom</code> — that
+        branch writes <code>DNS=</code> and <code>FallbackDNS=</code> but no
+        <code>DNSOverTLS</code> line, yielding plaintext to a resolver that
+        refuses it. And because <code>tailscale0</code> reclaims the
+        <code>~.</code> routing domain whenever an exit node is active, the
+        <code>omarchy dns</code> selection governs resolution only while the
+        exit node is off; on Mullvad it is bypassed by design, which is what
+        stops a locally chosen resolver from leaking around the tunnel.
+      </p>
+
       <h2>Sources</h2>
       <ul class="clean">
         <li>
@@ -894,6 +954,26 @@
         <li>
           <a href="https://docs.clamav.net/Introduction.html"
             >ClamAV documentation — capabilities and endpoint-suite scope</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://tailscale.com/docs/features/exit-nodes/mullvad-exit-nodes"
+            >Tailscale — Mullvad exit nodes: "v1.48.3 and later don't require
+            additional configuration"</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://github.com/tailscale/tailscale/blob/v1.102.3/ipn/ipnlocal/node_backend.go"
+            >tailscale v1.102.3 <code>dnsConfigForNetmap</code> — global
+            resolvers take precedence over a WireGuard exit node's advertised
+            resolvers</a
+          >
+        </li>
+        <li>
+          <a href="https://tailscale.com/docs/reference/dns-in-tailscale"
+            >DNS in Tailscale — global nameservers and Override local DNS</a
           >
         </li>
       </ul>
