@@ -398,6 +398,17 @@
             </td>
           </tr>
           <tr>
+            <td><code>F-DOCK-MST-SEAM</code></td>
+            <td>
+              Dock's two externals share one DP-MST link and are committed one
+              head at a time, so the first is never re-committed once the second
+              joins and can scan out a post-scanout vertical seam; any real
+              modeset clears it, deliberately not automated
+            </td>
+            <td><a href="findings.html#F-DOCK-MST-SEAM">findings</a></td>
+            <td>—</td>
+          </tr>
+          <tr>
             <td><code>D-KINESIS-REMAP</code></td>
             <td>
               Kinesis Adv360 SmartSet profile-1 thumb remap: SUPER on both

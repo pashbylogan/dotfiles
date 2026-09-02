@@ -584,6 +584,81 @@
         <code>hyprdynamicmonitors</code> would fill it but is not bundled.
       </p>
 
+      <h2 id="F-DOCK-MST-SEAM">
+        The dock's two heads share one DP-MST link and are committed one at a
+        time, so the first can scan out a vertical seam
+        <code class="meta">F-DOCK-MST-SEAM</code>
+      </h2>
+      <p>
+        Both externals reach this machine as
+        <strong>DP-MST streams sharing a single DP link</strong> through one
+        USB-C dock: <code>/sys/class/drm/card0-DP-4/drm_dp_aux4/name</code> and
+        its DP-5 counterpart both read <code>DPMST</code>, and the Type-C
+        partner advertises DP alt mode (<code>svid=ff01</code>) with no
+        Thunderbolt router present. The dock enumerates the heads
+        <strong>one at a time</strong> — the Hyprland log modesets DP-4 alone
+        and only then reports
+        <code>udev: new udev add event for card0-DP-5</code> — so the head that
+        lands first is configured against a link it briefly owns outright and is
+        never re-committed once the second stream joins. It can then scan out a
+        <strong>static vertical seam down the middle of the panel</strong>. It
+        is always DP-4, because DP-4 is always enumerated first.
+      </p>
+      <p>
+        <strong>The seam is post-scanout.</strong>
+        <code>grim -o DP-4</code> taken while it was plainly visible came back
+        clean, so it is produced after Hyprland hands off the frame and no
+        compositor setting suppresses it: <code>allow_tearing</code> is already
+        <code>false</code>, <code>vrr</code> is <code>0</code>, and the kernel
+        log carries no flip or underrun errors.
+        <strong>Bandwidth is not the trigger.</strong> Dropping DP-5 to 60Hz
+        cleared the seam on DP-4 without DP-4 itself being modeset, which looks
+        like proof that the ~27.9 Gbps the two streams want exceeds HBR3's 25.92
+        Gbps ceiling — but restoring the original 144+144 left it
+        <em>clean</em>, so the modeset was doing the work, not the bandwidth.
+        Capping refresh would have been the wrong fix.
+      </p>
+      <p>
+        <strong>The remedy is any fresh modeset</strong>, which re-allocates
+        every stream on the link. Hyprland skips no-op mode changes and a plain
+        <code>hyprctl reload</code> modesets nothing (<code
+          >forcerendererreload</code
+        >
+        is a no-op here too), so the mode has to actually move:
+      </p>
+      <pre><code>hyprctl eval 'hl.monitor({ output = "DP-4", mode = "2560x1440@120" })'
+hyprctl reload</code></pre>
+      <p>
+        The reload restores mode, position and scale together from
+        <a href="decisions.html#D-MONITORS">D-MONITORS</a>, which matters
+        because a mode-only rule
+        <strong>resets scale to <code>1</code></strong> and reflows every window
+        on the head.
+      </p>
+      <p>
+        <strong>Deliberately not automated.</strong> An
+        <code>hl.on("monitor.added")</code> handler that bounced a head on every
+        plug was built and measured working, then removed: the seam has been
+        observed exactly <em>once</em>, and clearing it held for the rest of the
+        session, so a permanent hook plus an extra modeset on every dock plug is
+        a standing cost against a fault that may not recur. Two things worth
+        keeping from that attempt if it does. A reload re-runs the monitor rules
+        and <strong>re-emits <code>monitor.added</code></strong> for any head
+        whose active rule no longer matches the config — exactly what a bounce
+        creates — so a reload-based relink fires twice per plug; restore on an
+        <code>hl.timer</code> instead. And stable monitor ids across a reload do
+        <em>not</em> prove the event was not re-emitted.
+        <strong>Retest condition</strong>: aquamarine
+        <code>v0.15.0</code> (tagged 2026-08-29) is not in Arch stable yet —
+        <code>extra</code> still ships <code>0.14.0-2</code>, flagged
+        out-of-date. Nothing is pinned or hand-installed on its account; wait
+        for the normal Omarchy upgrade path. This defect also appears never to
+        have been reported upstream, since
+        <a href="https://github.com/hyprwm/aquamarine/issues/352"
+          >aquamarine #352</a
+        >
+        is a different pipe-allocation bug.
+      </p>
       <h2 id="F-SSH-AGENT">
         Omarchy ships ssh-agent dormant <code class="meta">F-SSH-AGENT</code>
       </h2>

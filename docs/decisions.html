@@ -760,9 +760,20 @@
               our <code>hl.monitor</code> entries are the in-scope correctness
               step; the GTK-oversize trade on the externals is acceptable until
               per-app launchers become worth it.
-              <strong>Known upstream bug — both externals sit at 60Hz</strong>:
+              <strong>No longer reproduces — both externals sat at 60Hz</strong
+              >: both heads now hold <code>2560×1440@144</code> (verified
+              2026-09-01 on <code>aquamarine 0.14.0-2</code>, kernel
+              <code>7.1.8-arch1-2-ptl</code>).
+              <strong>Cause deliberately not attributed</strong>: PR #346 merged
+              after the <code>v0.14.0</code> tag and there is no evidence the
+              Arch <code>-2</code> pkgrel is more than a rebuild, so the
+              recovery may have come from the kernel side instead. Do not credit
+              aquamarine for it without checking. The history is kept because
+              <a href="findings.html#F-DOCK-MST-SEAM">F-DOCK-MST-SEAM</a> is the
+              same sequential-commit defect in its hotplug form, so the
+              mechanism below is still the one to reason from. Historically,
               since aquamarine 0.14.0 the requested <code>@144</code> never
-              reaches the driver. Either the kernel rejects the commit (<code
+              reached the driver: either the kernel rejected the commit (<code
                 >atomic drm request: failed to commit: No space left on
                 device</code
               >
