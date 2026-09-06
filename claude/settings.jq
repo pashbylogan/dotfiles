@@ -10,8 +10,9 @@
 # keys: the /model and /effort pickers own/rewrite those keys at runtime (→ drift)
 # but never touch .env, so these stay no-ops. CLAUDE_CODE_EFFORT_LEVEL is read from
 # the env and is session-only; Claude applies its .env block to the session.
+# `skipAutoPermissionPrompt` is absent for the same reason — an upstream migration
+# deletes it (→ drift); `skipWorkflowUsageWarning` is the same shape, no migration yet.
   .theme = "custom:omarchy"
-| .skipAutoPermissionPrompt = true
 | .skipWorkflowUsageWarning = true
 | .attribution = { "commit": "", "pr": "" }
 | .env.ANTHROPIC_MODEL = "opus"

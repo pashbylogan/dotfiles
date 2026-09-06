@@ -1109,8 +1109,26 @@
               <code>CLAUDE_CODE_EFFORT_LEVEL</code> is read from the env and is
               session-only), so these set the startup defaults while
               <code>/model</code> and <code>/effort</code> still switch at
-              runtime. <code>verify.sh</code> link-checks the script and
-              confirms the settings overlay landed (which covers the env pin).
+              runtime. The same rule excludes <strong>consent flags</strong> —
+              keys recording that <em>the user</em> accepted a dialog. The
+              overlay originally asserted
+              <code>.skipAutoPermissionPrompt = true</code> to suppress the
+              auto-mode opt-in; Claude Code 2.1.263 added a one-shot migration
+              (<code>hasResetAutoModeOptInForDefaultOffer</code>, recorded in
+              <code>~/.claude.json</code>) that deletes the key whenever
+              <code>permissions.defaultMode</code> is not <code>auto</code>, so
+              auto mode can be re-offered as a default. That is deliberate
+              upstream behavior, not a bug: declaring someone's dialog consent
+              in a config overlay both forges it and drifts
+              <code>verify.sh</code> on the next run. Two asserted keys share
+              that shape and are deliberately kept —
+              <code>skipWorkflowUsageWarning</code> is also consent state, and
+              <code>teammateMode</code> is rewritten by <code>/config</code>'s
+              picker exactly like <code>model</code> — because neither has a
+              reset migration today; they stay until one appears rather than
+              being dropped on speculation. <code>verify.sh</code> link-checks
+              the script and confirms the settings overlay landed (which covers
+              the env pin).
             </td>
             <td>
               <strong>Tool-rewritten JSON gets a delta, not a symlink.</strong>
