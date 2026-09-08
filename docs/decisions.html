@@ -757,7 +757,7 @@
               Wayland — there is no per-monitor GTK scaling without per-app
               launchers — so dropping it to <code>1</code> for the 1440p
               externals would shrink GTK apps on eDP-1. The compositor scale in
-              our <code>hl.monitor</code> entries are the in-scope correctness
+              our <code>hl.monitor</code> entries is the in-scope correctness
               step; the GTK-oversize trade on the externals is acceptable until
               per-app launchers become worth it.
               <strong>No longer reproduces — both externals sat at 60Hz</strong
@@ -769,23 +769,24 @@
               Arch <code>-2</code> pkgrel is more than a rebuild, so the
               recovery may have come from the kernel side instead. Do not credit
               aquamarine for it without checking. The history is kept because
-              <a href="findings.html#F-DOCK-MST-SEAM">F-DOCK-MST-SEAM</a> is the
-              same sequential-commit defect in its hotplug form, so the
-              mechanism below is still the one to reason from. Historically,
-              since aquamarine 0.14.0 the requested <code>@144</code> never
-              reached the driver: either the kernel rejected the commit (<code
+              <a href="findings.html#F-DOCK-MST-SEAM">F-DOCK-MST-SEAM</a> also
+              involves sequential commits, but successful modesets followed by a
+              visible seam do not establish the same root cause as a rejected
+              commit. Historically, since aquamarine 0.14.0 the requested
+              <code>@144</code> never reached the driver: either the kernel
+              rejected the commit (<code
                 >atomic drm request: failed to commit: No space left on
                 device</code
               >
-              under <code>ATOMIC_ALLOW_MODESET</code>) and both outputs fall
-              back to 60, or aquamarine issues no modeset for the second output
-              at all and drops the mode silently. Each panel reaches 144 alone;
-              neither does while the other is enabled. The defect is aquamarine
-              committing connectors one at a time and giving up on the first
-              rejection: drivers that allocate display bandwidth globally refuse
-              a modeset touching one connector while the others stay pinned,
-              even though the same end state commits fine when every head is
-              modeset together.
+              under <code>ATOMIC_ALLOW_MODESET</code>) and both outputs fell
+              back to 60, or aquamarine issued no modeset for the second output
+              at all and dropped the mode silently. Each panel reached 144
+              alone; neither did while the other was enabled. The suspected
+              defect was aquamarine committing connectors one at a time and
+              giving up on the first rejection: drivers that allocate display
+              bandwidth globally refuse a modeset touching one connector while
+              the others stay pinned, even though the same end state commits
+              fine when every head is modeset together.
               <a href="https://github.com/hyprwm/aquamarine/pull/346"
                 >aquamarine PR #346</a
               >
@@ -794,20 +795,21 @@
               release with the bug and without the fix.
               <strong
                 >The config deliberately keeps <code>@144</code> on both</strong
-              >: it states the intent, the fallback is identical, and both
-              should reach 144 with no config change once a release carries the
-              fix. Not yet confirmed on Panther Lake / <code>xe</code> — every
-              reproduction upstream is i915 or NVIDIA — so if a later release
-              still yields 60Hz, add this machine to
+              >: it states the intent, and recovery needed no config change. The
+              upstream diagnosis was not confirmed on Panther Lake /
+              <code>xe</code>; the cited upstream reproductions concern i915 or
+              NVIDIA. If 60Hz recurs, collect fresh evidence rather than
+              assuming the same cause or appending it to
               <a href="https://github.com/hyprwm/aquamarine/issues/352"
                 >aquamarine #352</a
-              >. Do not chase this as a kernel, cable, or scaling problem:
-              <code>xe.enable_sagv=0</code> changed nothing, each link trains at
-              144 alone, and <code>scale = 1</code> behaves identically.
-              <strong>Forward risk</strong>: when omarchy ships the Lua hyprland
-              config (<a href="findings.html#F-LUA">F-LUA</a>), these lines
-              become <code>hl.monitor({…})</code> calls; the design is
-              unaffected.
+              >, which concerns a different pipe-allocation bug. During the
+              original investigation, <code>xe.enable_sagv=0</code> changed
+              nothing, each link trained at 144 alone, and
+              <code>scale = 1</code> behaved identically. The Lua migration (<a
+                href="findings.html#F-LUA"
+                >F-LUA</a
+              >) has since landed: these rules are
+              <code>hl.monitor({…})</code> calls, with the same intended modes.
             </td>
           </tr>
           <tr id="D-KINESIS-REMAP">

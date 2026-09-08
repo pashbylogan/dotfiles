@@ -523,7 +523,7 @@
     },
     {
       "id": "F-DOCK-MST-SEAM",
-      "title": "The dock's two externals are DP-MST streams on one link committed one head at a time, so the first-enumerated head is never re-committed once the second joins and can scan out a post-scanout vertical seam; any real modeset clears it, and the workaround is deliberately not automated",
+      "title": "The dock's two externals share a DP-MST link with sequential commits; a single vertical seam was absent from the captured frame and cleared by a modeset, but its root cause remains unconfirmed and the workaround is deliberately not automated",
       "canonical": "findings.html#F-DOCK-MST-SEAM",
       "appears_in": ["decisions.html"],
       "code_paths": [],

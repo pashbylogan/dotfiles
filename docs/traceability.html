@@ -401,9 +401,9 @@
             <td><code>F-DOCK-MST-SEAM</code></td>
             <td>
               Dock's two externals share one DP-MST link and are committed one
-              head at a time, so the first is never re-committed once the second
-              joins and can scan out a post-scanout vertical seam; any real
-              modeset clears it, deliberately not automated
+              head at a time; a single vertical seam was absent from the
+              captured frame and cleared by a modeset. Root cause unconfirmed;
+              workaround deliberately not automated
             </td>
             <td><a href="findings.html#F-DOCK-MST-SEAM">findings</a></td>
             <td>—</td>

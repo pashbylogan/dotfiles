@@ -595,32 +595,33 @@
         USB-C dock: <code>/sys/class/drm/card0-DP-4/drm_dp_aux4/name</code> and
         its DP-5 counterpart both read <code>DPMST</code>, and the Type-C
         partner advertises DP alt mode (<code>svid=ff01</code>) with no
-        Thunderbolt router present. The dock enumerates the heads
-        <strong>one at a time</strong> — the Hyprland log modesets DP-4 alone
-        and only then reports
-        <code>udev: new udev add event for card0-DP-5</code> — so the head that
-        lands first is configured against a link it briefly owns outright and is
-        never re-committed once the second stream joins. It can then scan out a
-        <strong>static vertical seam down the middle of the panel</strong>. It
-        is always DP-4, because DP-4 is always enumerated first.
+        Thunderbolt router present. The investigation recorded
+        <strong>one-head-at-a-time modesets</strong>, making link reallocation
+        during hotplug a candidate explanation for a
+        <strong>static vertical seam down the middle of the panel</strong>. The
+        single observed occurrence was on DP-4; that does not establish that
+        only DP-4 can be affected or prove the cause. Udev event order alone
+        does not establish modeset order; inspect the actual modesetting log
+        entries when investigating a recurrence.
       </p>
       <p>
-        <strong>The seam is post-scanout.</strong>
+        <strong>The seam is absent from the captured frame.</strong>
         <code>grim -o DP-4</code> taken while it was plainly visible came back
-        clean, so it is produced after Hyprland hands off the frame and no
-        compositor setting suppresses it: <code>allow_tearing</code> is already
+        clean, narrowing the investigation to the display path rather than the
+        captured composition. This does not distinguish the display engine,
+        link, or panel. <code>allow_tearing</code> is already
         <code>false</code>, <code>vrr</code> is <code>0</code>, and the kernel
         log carries no flip or underrun errors.
-        <strong>Bandwidth is not the trigger.</strong> Dropping DP-5 to 60Hz
-        cleared the seam on DP-4 without DP-4 itself being modeset, which looks
-        like proof that the ~27.9 Gbps the two streams want exceeds HBR3's 25.92
-        Gbps ceiling — but restoring the original 144+144 left it
-        <em>clean</em>, so the modeset was doing the work, not the bandwidth.
-        Capping refresh would have been the wrong fix.
+        <strong>A permanent refresh cap was unnecessary.</strong> Dropping DP-5
+        to 60Hz cleared the seam on DP-4 without DP-4 itself being modeset, and
+        restoring the original 144+144 left it <em>clean</em>. That supports a
+        modeset workaround, not a permanent bandwidth limit. It does not
+        establish the negotiated link rate, whether DSC is active, or any DSC
+        slice geometry; those require direct measurements.
       </p>
       <p>
-        <strong>The remedy is any fresh modeset</strong>, which re-allocates
-        every stream on the link. Hyprland skips no-op mode changes and a plain
+        <strong>A fresh modeset cleared the observed seam.</strong>
+        Hyprland skips no-op mode changes and a plain
         <code>hyprctl reload</code> modesets nothing (<code
           >forcerendererreload</code
         >
