@@ -438,10 +438,15 @@
     },
     {
       "id": "F-APP-CHANNELS",
-      "title": "App channels are Omarchy-native first: Brave Origin, Ghostty, and Discord use Quattro flows, agents use mise wrappers, Spotify uses its sync-repo service package, and explicit extras stay in manifests",
+      "title": "App channels are Omarchy-native first: Brave Origin, Ghostty, ChatGPT, Hermes, and Discord use Quattro flows, agents use mise wrappers, Spotify uses its sync-repo service package, and explicit extras stay in manifests",
       "canonical": "findings.html#F-APP-CHANNELS",
       "appears_in": ["README.md", "decisions.html"],
-      "code_paths": ["install", "packages.txt", "packages.aur.txt"],
+      "code_paths": [
+        "install",
+        "packages.txt",
+        "packages.aur.txt",
+        ".github/scripts/verify.sh"
+      ],
       "related": ["D-PKG-REMOVE", "D-WEBAPP", "D-BROWSER-DEFAULT"]
     },
     {

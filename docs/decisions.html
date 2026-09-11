@@ -423,11 +423,13 @@
               <code class="meta">D-SECRETS-LOCAL</code> Secrets/host-specific
             </td>
             <td>
-              Gitignored <code>shell.local.sh</code> holds personal and
-              device-specific aliases, functions, and keybinds (Vertex project
-              IDs, device serials, the Ctrl-F sessionizer bind, VPN/GCP helpers)
-              — never install-path redirects, since Omarchy installs tools (uv,
-              gcloud, …) natively on PATH.
+              Gitignored <code>*.local</code> files live beside their examples
+              in the Stow packages and link into <code>~</code>.
+              <code>shell.local.sh</code> holds personal and device-specific
+              aliases, functions, and keybinds (Vertex project IDs, device
+              serials, the Ctrl-F sessionizer bind, VPN/GCP helpers) — never
+              install-path redirects, since Omarchy installs tools (uv, gcloud,
+              …) natively on PATH.
             </td>
             <td>Keep the shared repo generic and secret-free.</td>
           </tr>

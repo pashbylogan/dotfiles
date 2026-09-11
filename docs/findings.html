@@ -180,16 +180,19 @@
           >D-BROWSER-DEFAULT</a
         >): Omarchy's install/default path, flags, extensions, policies, and
         theme refresh all target stable. Ghostty likewise uses the native
-        terminal installer. Coding agents use Quattro's lazy mise wrappers and
-        update inside <code>omarchy update</code>; the repo owns only config
-        deltas. Obsidian is a retained base package rather than a manifest
-        entry; <code>spotify</code> uses the sync-repo package selected by
-        Quattro's supported Spotify service installer; Discord uses Quattro's
-        packaged web app instead of the Arch native client; this removes a
-        parallel package/launcher identity and keeps the choice reversible if
-        browser voice or screen sharing regresses.
-        <code>slack-desktop</code> stays as a local AUR choice because Omarchy
-        has no Slack package, webapp, binding, or migration.
+        terminal installer. ChatGPT and Hermes likewise use their respective
+        <code>Install → AI</code> flows, not direct package entries: Hermes
+        additionally initializes its managed runtime and synchronizes its theme.
+        Coding agents use Quattro's lazy mise wrappers and update inside
+        <code>omarchy update</code>; the repo owns only config deltas. Obsidian
+        is a retained base package rather than a manifest entry;
+        <code>spotify</code> uses the sync-repo package selected by Quattro's
+        supported Spotify service installer; Discord uses Quattro's packaged web
+        app instead of the Arch native client; this removes a parallel
+        package/launcher identity and keeps the choice reversible if browser
+        voice or screen sharing regresses. <code>slack-desktop</code> stays as a
+        local AUR choice because Omarchy has no Slack package, webapp, binding,
+        or migration.
       </p>
       <p>
         The Slack exception is deliberately narrow. Native Slack provides the

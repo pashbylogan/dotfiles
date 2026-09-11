@@ -163,6 +163,17 @@ if [ -f packages.aur.txt ]; then
   fi
 fi
 
+# ChatGPT and Hermes have supported Omarchy installers rather than generic
+# package entries; Hermes also initializes its runtime and applies the theme.
+# [F-APP-CHANNELS][D-IDEMPOTENT]
+step "AI desktop apps"
+if ! pacman -Qq openai-codex-desktop >/dev/null 2>&1; then
+  omarchy install ai chatgpt
+fi
+if ! pacman -Qq hermes-desktop >/dev/null 2>&1; then
+  omarchy install ai hermes
+fi
+
 # Quattro natively owns Brave Origin setup, extensions, policies, and theme
 # refresh. The default command can fail only in its notification tail, so verify
 # state before any browser package removal. [D-BROWSER-DEFAULT][F-APP-CHANNELS]

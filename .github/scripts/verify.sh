@@ -370,6 +370,17 @@ check_tool() {
 check_tool uv
 check_tool go
 
+# These apps are installed through Omarchy's AI-specific flows. Hermes needs
+# that path to initialize its runtime and synchronize its theme. [F-APP-CHANNELS]
+for ai_desktop_pkg in openai-codex-desktop hermes-desktop; do
+  if pkg_installed "$ai_desktop_pkg"; then
+    pass "$ai_desktop_pkg installed"
+  else
+    miss "$ai_desktop_pkg missing — re-run ./install"
+  fi
+done
+unset ai_desktop_pkg
+
 check_xdg() {
   local key="$1" expected="$2" file="$HOME/.config/user-dirs.dirs" alt=""
   [[ $expected == */ ]] && alt="${expected%/}"

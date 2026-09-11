@@ -71,9 +71,9 @@ represents. Each numbered step is necessary in order.
    selects Brave Origin and Ghostty through Quattro's supported install flows.
    [D-IDEMPOTENT][D-PKG-REMOVE][D-WEBAPP][D-BROWSER-DEFAULT]
 7. **Create per-machine overrides** (see [Per-machine overrides](#per-machine-overrides)
-   below). `shell.local.sh` and `~/.ssh/config.local` are picked up on next
-   shell / ssh invocation; `dotfiles_local.lua` is loaded automatically after
-   re-running `./install` to create its Stow link.
+   below), then re-run `./install` to create their Stow links. The shell and SSH
+   overrides are picked up on their next invocation; `dotfiles_local.lua` is
+   loaded on the next Hyprland reload.
 8. **Log out and back into Omarchy** so UWSM reads the stowed
    `~/.config/uwsm/env.d/dotfiles.sh` fragment. Obsidian and terminals launched
    from the Omarchy session then inherit the same `SSH_AUTH_SOCK`. Quick check:
@@ -97,7 +97,10 @@ Each ends in an interactive auth flow.
     `hypr/dotfiles.lua`. If huddles or screen sharing regress in the native app,
     use Slack in the browser as the fallback; do not add a tray dependency unless
     the local tray behavior stops working. [F-APP-CHANNELS]
-11. **Spotify** — sign in to your account. Installed from Quattro's supported
+11. **ChatGPT and Hermes** — sign in to each desktop app. `./install` uses
+    Omarchy menu → Install → AI → ChatGPT / Hermes, so Hermes also receives its
+    managed runtime and current Omarchy theme. [F-APP-CHANNELS]
+12. **Spotify** — sign in to your account. Installed from Quattro's supported
     sync-repo package by `./install`, pinned to workspace 10.
 
 ### Work-specific (optional)
@@ -112,14 +115,15 @@ Each ends in an interactive auth flow.
 
 ## Per-machine overrides
 
-Copy each `.example` and fill in secrets/host values; the real files are
-gitignored and sourced automatically. [D-SECRETS-LOCAL]
+Copy each `.example` to the listed gitignored path inside this checkout and fill
+in secrets/host values. Re-run `./install` to link the real files into `~`.
+[D-SECRETS-LOCAL]
 
-| Copy this                                       | To                                       | For                                                                                          |
-| ---                                             | ---                                      | ---                                                                                          |
-| `bash/.config/dotfiles/shell.local.sh.example`  | `~/.config/dotfiles/shell.local.sh`      | secrets, project IDs, device serials                                                         |
-| `ssh/.ssh/config.local.example`                 | `~/.ssh/config.local`                    | machine-specific ssh hosts                                                                   |
-| `hypr/.config/hypr/dotfiles_local.lua.example` | `~/.config/hypr/dotfiles_local.lua` | device-specific Hyprland Lua (e.g. mouse accel) — re-run `./install` after creating |
+| Copy this                                       | To this gitignored path                         | For                                  |
+| ---                                             | ---                                             | ---                                  |
+| `bash/.config/dotfiles/shell.local.sh.example`  | `bash/.config/dotfiles/shell.local.sh`          | secrets, project IDs, device serials |
+| `ssh/.ssh/config.local.example`                 | `ssh/.ssh/config.local`                         | machine-specific ssh hosts           |
+| `hypr/.config/hypr/dotfiles_local.lua.example` | `hypr/.config/hypr/dotfiles_local.lua` | device-specific Hyprland Lua (e.g. mouse accel) |
 
 ## Daily use
 
