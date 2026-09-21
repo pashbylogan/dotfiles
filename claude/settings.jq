@@ -12,6 +12,8 @@
 # the env and is session-only; Claude applies its .env block to the session.
 # `skipAutoPermissionPrompt` is absent for the same reason — an upstream migration
 # deletes it (→ drift); `skipWorkflowUsageWarning` is the same shape, no migration yet.
+# The feedback keys mute Anthropic's draft/survey prompts. /config owns the
+# feedbackDrafts row but only rewrites it when the user picks a value, so no drift.
   .theme = "custom:omarchy"
 | .skipWorkflowUsageWarning = true
 | .attribution = { "commit": "", "pr": "" }
@@ -20,3 +22,5 @@
 | .env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"
 | .teammateMode = "auto"
 | .statusLine = { "type": "command", "command": "bash ~/.claude/statusline-command.sh" }
+| .feedbackDrafts = "off"
+| .feedbackSurveyRate = 0
