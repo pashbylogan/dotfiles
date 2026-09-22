@@ -578,8 +578,14 @@
             <td><span class="badge badge-done">in</span></td>
             <td>
               <code>windowrule = workspace N</code> (terminal→1, Brave Origin→2,
-              Slack+Obsidian→3, IntelliJ→5, Spotify→10). Verify classes via
-              <code>hyprctl clients</code>.
+              Slack+Obsidian→3, IntelliJ→5, Playwright browsers→9
+              <code>silent</code>, Spotify→10). Playwright's bundled Chromium
+              and Chrome-for-Testing builds both report
+              <code>class=chromium-browser</code> as native Wayland clients, and
+              no system chromium is installed, so the class is unambiguous here.
+              <code>silent</code> keeps a <code>--headed</code> test run from
+              pulling focus off the current workspace each time it opens a
+              browser. Verify classes via <code>hyprctl clients</code>.
             </td>
           </tr>
           <tr id="D-SLACK-HUDDLE-FLOAT">

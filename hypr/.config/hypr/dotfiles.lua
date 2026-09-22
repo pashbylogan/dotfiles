@@ -55,6 +55,9 @@ o.window("brave-origin", { workspace = "2" })
 o.window("(Slack|slack|obsidian)", { workspace = "3" })
 o.window("jetbrains-idea", { workspace = "5" })
 o.window("(Spotify|spotify)", { workspace = "10" })
+-- Playwright's bundled Chromium is the only chromium-browser here (Brave is the
+-- real browser); silent keeps a --headed run from dragging focus off workspace.
+o.window("chromium-browser", { workspace = "9 silent" })
 
 -- Float only Slack's huddle preview. Float is static, so match the initial
 -- title explicitly. [D-SLACK-HUDDLE-FLOAT]
