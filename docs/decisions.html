@@ -1106,16 +1106,18 @@
               it into <code>$HOME</code> (it sits at the package root, so it
               would otherwise land at <code>~/settings.jq</code>). The default
               model and effort level are pinned as
-              <code>.env.ANTHROPIC_MODEL = "opus"</code> and
-              <code>.env.CLAUDE_CODE_EFFORT_LEVEL = "xhigh"</code> in the same
-              overlay — not the top-level <code>model</code> /
+              <code>.env.ANTHROPIC_MODEL = "opus[1m]"</code> (bare
+              <code>opus</code> is standard context, unlike <em>Default</em>)
+              and <code>.env.CLAUDE_CODE_EFFORT_LEVEL = "xhigh"</code> in the
+              same overlay — not the top-level <code>model</code> /
               <code>effortLevel</code> keys: the <code>/model</code> and
               <code>/effort</code> pickers own and rewrite those keys (selecting
               <em>Default</em> even clears <code>model</code>), so a pinned key
               drifts on every switch, but neither picker touches
               <code>.env</code>, so the overlay stays a no-op. Claude Code
               applies its settings <code>env</code> block to the session
-              (verified: it selects the model;
+              (verified: it selects the model and, on 2.1.280, outranks the pick
+              <code>/model</code> saves;
               <code>CLAUDE_CODE_EFFORT_LEVEL</code> is read from the env and is
               session-only), so these set the startup defaults while
               <code>/model</code> and <code>/effort</code> still switch at

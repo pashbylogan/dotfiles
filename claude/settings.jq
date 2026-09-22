@@ -6,6 +6,7 @@
 # Applied idempotently onto ~/.claude/settings.json by install (apply_jq_deltas);
 # only these keys are asserted, so keys Claude Code adds on its own are preserved.
 # .env.<KEY> path-assignment auto-vivifies .env and leaves any sibling vars intact.
+# ANTHROPIC_MODEL beats the saved /model pick; [1m] as bare `opus` is standard context.
 # Model and effort defaults use .env vars, NOT the top-level `model`/`effortLevel`
 # keys: the /model and /effort pickers own/rewrite those keys at runtime (→ drift)
 # but never touch .env, so these stay no-ops. CLAUDE_CODE_EFFORT_LEVEL is read from
@@ -17,7 +18,7 @@
   .theme = "custom:omarchy"
 | .skipWorkflowUsageWarning = true
 | .attribution = { "commit": "", "pr": "" }
-| .env.ANTHROPIC_MODEL = "opus"
+| .env.ANTHROPIC_MODEL = "opus[1m]"
 | .env.CLAUDE_CODE_EFFORT_LEVEL = "xhigh"
 | .env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"
 | .teammateMode = "auto"
