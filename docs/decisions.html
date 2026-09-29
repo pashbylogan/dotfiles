@@ -1250,20 +1250,17 @@
           </tr>
           <tr>
             <td><code>SUPER+E</code></td>
+            <td>Unbound</td>
             <td>
-              Toggle workspace layout via
-              <code>omarchy-hyprland-workspace-layout-toggle</code>
+              The personal overlay previously moved Omarchy's workspace-layout
+              toggle from <code>SUPER+L</code> to <code>SUPER+E</code>.
+              Accidental presses change the layout, and the toggle conflicts
+              with the other workspace overrides.
             </td>
             <td>
-              No active or checked Omarchy app-default conflict.
-              <code>SUPER+L</code> previously toggled workspace layout, but
-              <code>L</code> is needed for vim-directional focus. Full Omarchy
-              app defaults use <code>SUPER+SHIFT+E</code> for Email, not this
-              exact chord.
-            </td>
-            <td>
-              Bind the otherwise-free <code>SUPER+E</code> to the layout toggle,
-              and unbind/reuse <code>SUPER+L</code> for focus right.
+              Remove the personal <code>SUPER+E</code> binding. Keep the stock
+              <code>SUPER+L</code> toggle unbound and reuse that chord for focus
+              right, leaving no workspace-layout toggle hotkey.
             </td>
           </tr>
           <tr>
@@ -1298,8 +1295,8 @@
             <td><code>SUPER+L</code></td>
             <td>Focus right</td>
             <td>
-              Conflicted with Omarchy's workspace-layout toggle, which moved to
-              <code>SUPER+E</code>.
+              Conflicted with Omarchy's workspace-layout toggle, which is now
+              disabled as a hotkey.
             </td>
             <td>Unbind <code>SUPER+L</code>, then bind it to focus right.</td>
           </tr>

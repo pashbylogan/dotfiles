@@ -214,7 +214,7 @@
     },
     {
       "id": "D-KEYBIND-OVERRIDES",
-      "title": "Personal keybindings are preserved in the reloadable Hypr Lua module; SUPER+SPACE opens Apps and only real Quattro conflicts are unbound",
+      "title": "Personal keybindings live in the reloadable Hypr Lua module; SUPER+SPACE opens Apps, and the workspace-layout toggle has no hotkey",
       "canonical": "decisions.html#D-KEYBIND-OVERRIDES",
       "appears_in": [],
       "code_paths": ["hypr/.config/hypr/dotfiles.lua"],

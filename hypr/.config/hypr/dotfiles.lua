@@ -81,6 +81,7 @@ o.window(
 -- Only unbind real Quattro conflicts before restoring the personal mapping.
 -- SUPER+J/K/L were toggle-split/keybindings/layout, SUPER+SPACE was the root
 -- menu, SUPER+SHIFT+S was Maps, and SUPER+ALT+SPACE was the Apps menu.
+-- Leave SUPER+E free; the workspace-layout toggle conflicts with our overrides.
 -- [D-KEYBIND-OVERRIDES]
 for _, keys in ipairs({
   "SUPER + J",
@@ -96,7 +97,6 @@ end
 o.bind("SUPER + D", "Omarchy menu", "omarchy-menu toggle")
 o.bind("SUPER + SPACE", "Apps menu", "omarchy-menu toggle apps")
 o.bind("SUPER + I", "Show keybindings", "omarchy-menu-keybindings")
-o.bind("SUPER + E", "Toggle workspace layout", "omarchy-hyprland-workspace-layout-toggle")
 
 o.bind("SUPER + H", "Focus on left window", hl.dsp.focus({ direction = "l" }))
 o.bind("SUPER + J", "Focus on below window", hl.dsp.focus({ direction = "d" }))
