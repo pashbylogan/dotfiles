@@ -55,6 +55,7 @@ ci: ## Run the full gate: shellcheck + shfmt + prettier + jq filter parse + docs
 	@for f in $(JQ_FILTERS); do echo '{}' | jq -f "$$f" >/dev/null || { echo "jq filter failed: $$f"; exit 1; }; done
 	@if [ -n "$(JQ_FILTERS)" ]; then echo "jq filters parse + smoke pass: $(JQ_FILTERS)"; fi
 	python3 $(DOCS_CHECK)
+	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_prune_mise.py'
 	@echo "OK - all checks passed"
 
 fmt: ## Auto-fix formatting in place (shfmt + prettier)
@@ -74,7 +75,7 @@ tools: ## Show required tools + how to install them on Omarchy
 # packages plus uv's self-managed release. Quattro owns mise updates. Firmware is the lone
 # opt-in exception (`make update-firmware`) because it alone carries
 # device-specific reboot/power-cycle risk. [D-CI]
-update: ## Packages + Omarchy migrations + uv, then `make verify`
+update: ## Packages + Omarchy migrations + uv + unused mise cleanup, then verify
 	@printf "$(CYAN)ℹ$(NC) If 'omarchy update -y' triggers a reboot, verify won't run — re-run 'make update' after.\n"
 	@orphans="$$(pacman -Qdtq 2>/dev/null || true)"; \
 	if [ -n "$$orphans" ]; then \
@@ -84,14 +85,16 @@ update: ## Packages + Omarchy migrations + uv, then `make verify`
 	fi
 	@printf "\n$(BOLD)── Packages & Omarchy migrations ──$(NC)\n"
 	@printf "$(CYAN)$$ omarchy update -y$(NC)\n"
-	@omarchy update -y || printf "$(YELLOW)⚠$(NC) 'omarchy update -y' returned non-zero; continuing to uv and verification.\n"
+	@omarchy update -y || printf "$(YELLOW)⚠$(NC) 'omarchy update -y' returned non-zero; continuing to uv, cleanup, and verification.\n"
 	@printf "\n$(BOLD)── uv self-update ──$(NC)\n"
 	@if command -v uv >/dev/null 2>&1; then \
 		printf "$(CYAN)$$ uv self update$(NC)\n"; \
-		uv self update || printf "$(YELLOW)⚠$(NC) 'uv self update' returned non-zero; continuing to verification.\n"; \
+		uv self update || printf "$(YELLOW)⚠$(NC) 'uv self update' returned non-zero; continuing to cleanup and verification.\n"; \
 	else \
 		printf "$(CYAN)ℹ$(NC) uv not found on PATH — skipped.\n"; \
 	fi
+	@printf "\n$(BOLD)── Unused mise versions ──$(NC)\n"
+	@/usr/bin/python3 .github/scripts/prune_mise.py || printf "$(YELLOW)⚠$(NC) Mise cleanup failed; continuing to verification.\n"
 	@printf "\n$(CYAN)ℹ$(NC) JetBrains IDEs update via jetbrains-toolbox's own UI.\n"
 	@printf "\n$(BOLD)── Verify overlay ──$(NC)\n"
 	@printf "$(CYAN)$$ $(MAKE) --no-print-directory verify$(NC)\n"

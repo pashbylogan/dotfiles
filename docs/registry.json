@@ -73,11 +73,13 @@
     },
     {
       "id": "D-CI",
-      "title": "Makefile is the single source of truth for repo operations (CI gates + `update` for packages and self-managed tools, opt-in `update-firmware`, and `verify` live health check); CI invokes it",
+      "title": "Makefile is the single source of truth for repo operations (CI gates, update with skip-in-use mise cleanup, opt-in update-firmware, and verify); CI invokes it",
       "canonical": "decisions.html#D-CI",
-      "appears_in": ["architecture.html"],
+      "appears_in": ["architecture.html", "README.md"],
       "code_paths": [
         "Makefile",
+        ".github/scripts/prune_mise.py",
+        ".github/scripts/test_prune_mise.py",
         ".github/workflows/ci.yml",
         ".github/scripts/check_docs.py",
         ".github/scripts/verify.sh"

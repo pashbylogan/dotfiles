@@ -133,7 +133,7 @@ in secrets/host values. Re-run `./install` to link the real files into `~`.
 | `make ci`              | Lint + format check + docs integrity (run before committing) |
 | `make fmt`             | Auto-fix formatting (shfmt + prettier)                       |
 | `make verify`          | Live overlay health check (read-only)                        |
-| `make update`          | Omarchy packages + Quattro-managed mise agents + uv, then verification |
+| `make update`          | Omarchy packages + mise agents + uv + unused mise cleanup, then verification |
 | `make update-firmware` | Firmware only (fwupd) — opt-in                               |
 | `pkg-residue <package>` | Read-only audit for package leftovers after removal [D-PKG-REMOVE] |
 
@@ -166,8 +166,9 @@ make update
 Refuses to start while `pacman -Qdtq` reports orphans, avoiding Omarchy's
 pseudo-TTY orphan prompt. Then runs `omarchy update -y`, which owns package,
 migration, and mise-backed agent updates, followed by `uv self update` because
-uv remains outside mise and `make verify`. Update failures are warned so the
-remaining channels and read-only verification still run. [F-CLI]
+uv remains outside mise, filtered mise cleanup, and `make verify`. Update and cleanup
+failures are warned so remaining work and read-only verification still run.
+[F-CLI][D-CI]
 
 ```sh
 make update-firmware
@@ -177,3 +178,37 @@ Firmware only: `omarchy update firmware` (fwupd). It stays opt-in because
 firmware updates — unlike packages or self-managed tools — can have
 device-specific prompts and reboot/power-cycle outcomes. JetBrains IDEs managed
 by Toolbox still update via Toolbox's own UI. [F-CLI]
+
+### Mise cleanup
+
+`make update` removes unused mise versions after updates while retaining versions
+with detected live consumers.
+It groups retained versions with process names and PIDs and summarizes removed
+and kept counts using the repo's normal status markers; you can keep working
+and let later cleanup runs remove them once their consumers exit. Skipping busy
+versions is a successful no-op, not an error.
+
+Candidates come from `mise ls --prunable --json`, preserving mise's config/stub
+reference tracking. The helper checks same-user Linux `/proc` executable paths,
+working directories, script arguments, memory maps, and open files. Before each
+removal it refreshes candidate eligibility and checks live consumers again, then
+calls `mise uninstall --yes <tool>@<version>` for that exact version. It never
+hands mise a broad removal set that could include the retained versions.
+
+Preview without deleting anything:
+
+```sh
+/usr/bin/python3 .github/scripts/prune_mise.py --dry-run
+```
+
+The process check is best-effort: it reports protected processes it cannot fully
+inspect and cannot cover other users, future imports, or launches between the
+check and deletion. It is a snapshot, not a launch lock.
+[D-CI]
+
+Omarchy deliberately keeps `upgrade.auto_prune=false` so updates cannot remove
+install directories out from under live sessions. Our cleanup adds live-consumer
+filtering to `make update`; mise's unused-version tracking does not prove a
+version has no running consumers. Mise also supports deferred upgrade pruning (a 24-hour grace
+period by default), but that delay is not a running-process check. Cleanup covers
+existing unused versions, including those left by Omarchy's lazy wrappers.

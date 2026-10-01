@@ -113,20 +113,21 @@
                   empty-object smoke-check of every tracked jq delta (so jq
                   syntax errors surface here rather than at
                   <code>./install</code> time), and
-                  <code>.github/scripts/check_docs.py</code> for docs integrity.
-                  <code>make fmt</code> auto-fixes.
+                  <code>.github/scripts/check_docs.py</code> for docs integrity,
+                  plus Python cleanup tests for live-consumer filtering and
+                  candidate revalidation. <code>make fmt</code> auto-fixes.
                 </li>
                 <li>
                   <code>make update</code> — the frequent, low-risk channel:
                   <code>omarchy update -y</code> (pacman + AUR + omarchy
                   migrations and Quattro-owned mise agent updates), then
                   <code>uv self update</code> because uv remains outside mise,
-                  then <code>make verify</code>. It first refuses while
-                  <code>pacman -Qdtq</code> reports orphans, avoiding the
-                  updater's pseudo-TTY prompt. Non-zero Omarchy or uv update
-                  exits are warned, then the wrapper continues through the
-                  remaining channel and read-only verification so independent
-                  drift is still reported.
+                  then filtered mise cleanup and <code>make verify</code>. It
+                  first refuses while <code>pacman -Qdtq</code> reports orphans,
+                  avoiding the updater's pseudo-TTY prompt. Non-zero Omarchy,
+                  uv, or cleanup exits are warned, then the wrapper continues
+                  through the remaining channel and read-only verification so
+                  independent drift is still reported.
                 </li>
                 <li>
                   <code>make update-firmware</code> — firmware only:
@@ -134,6 +135,29 @@
                   opt-in channel because firmware alone — unlike packages or the
                   self-managed tools folded into <code>make update</code> — has
                   device-specific prompts and reboot/power-cycle outcomes.
+                </li>
+                <li>
+                  Mise cleanup runs noninteractively inside
+                  <code>make update</code> through
+                  <code>.github/scripts/prune_mise.py</code>. Get candidates
+                  from <code>mise ls --prunable --json</code>, then retain
+                  versions referenced by same-user Linux
+                  <code>/proc</code> executable paths, working directories, argv
+                  paths, memory maps, or open files. Print retained versions
+                  with consumer PIDs and names, grouped by version, and
+                  summarize removed/kept counts using the repo's status palette
+                  (plain when redirected or <code>NO_COLOR</code> is set). Busy
+                  versions are a successful skip. Refresh eligibility and
+                  recheck consumers immediately before each exact
+                  <code>mise uninstall --yes tool@version</code>; never use a
+                  broad prune that could include retained versions. The helper's
+                  <code>--dry-run</code> reports selections without removal.
+                  Report protected processes that cannot be fully inspected.
+                  This is best-effort: no launch lock, protection from future
+                  imports, or complete visibility into protected/other-user
+                  processes. Preserve Omarchy's
+                  <code>upgrade.auto_prune=false</code> and use this filtered
+                  cleanup rather than unfiltered automatic pruning.
                 </li>
                 <li>
                   <code>make verify</code> — read-only live health check
@@ -1329,6 +1353,38 @@
         </tbody>
       </table>
     </div>
+
+    <section class="container">
+      <h2>Sources</h2>
+      <ul class="clean">
+        <li>
+          Installed Omarchy Quattro:
+          <code>/usr/share/omarchy/install/user/mise.sh</code> and
+          <code>/usr/share/omarchy/migrations/1787215483.sh</code> explicitly
+          disable upgrade pruning to protect live sessions.
+        </li>
+        <li>
+          Installed mise 2026.9.14: <code>mise prune --help</code> describes
+          tracked-config and stub references, and
+          <code>mise upgrade --help</code>
+          describes upgrade pruning. Mise's deferred pruning defaults to 24
+          hours; reference tracking and a delay do not detect live consumers.
+          Verified in the installed release's
+          <a href="https://github.com/jdx/mise/blob/v2026.9.14/src/cli/prune.rs"
+            >prune implementation</a
+          >
+          and
+          <a
+            href="https://github.com/jdx/mise/blob/v2026.9.14/src/tool_purgatory.rs"
+            >deferred-pruning implementation</a
+          >. See also the
+          <a href="https://mise.jdx.dev/cli/prune.html">mise prune reference</a
+          >. Targeted removal uses
+          <a href="https://mise.jdx.dev/cli/uninstall.html">mise uninstall</a>,
+          which removes installations without changing tool configuration.
+        </li>
+      </ul>
+    </section>
 
     <footer>
       Omarchy dotfiles knowledge base · <a href="index.html">Home</a>
