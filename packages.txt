@@ -1,5 +1,6 @@
 # Extra official-repo packages installed by `install`. [D-SCRIPTS-MINIMAL][D-PKG-REMOVE][F-CLI]
 # One package per line; '#' comments and blank lines are ignored.
+# Pi uses Omarchy's lazy mise wrapper, not a pacman package. [F-APP-CHANNELS]
 
 # Dev toolchain — used by `make ci` / `make fmt`. Pin to pacman (not mise's go
 # install dir, which mise doesn't shim) so they're on PATH unconditionally —

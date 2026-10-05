@@ -83,6 +83,8 @@ check_link "$HOME/.config/uwsm/env.d/dotfiles.sh"
 check_link "$HOME/.ssh/config"
 check_link "$HOME/.config/tmux/local.conf"
 check_link "$HOME/.claude/statusline-command.sh"
+# The PDF fix is user-owned; Omarchy's theme extension remains separate. [D-PI-WEB]
+check_link "$PI_AGENT_DIR/extensions/pi-web-access-pdf-compat.ts"
 check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json"
 check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
 check_link "$HOME/.config/omarchy/backgrounds/tokyo-night/humpback.jpg"
@@ -272,7 +274,7 @@ done
 unset stale_pkg stale_file mime_type
 
 # Quattro owns agent installation and updates through mise wrappers; the repo
-# owns only mutable user configuration. [D-CLAUDE-CONFIG][D-OPENCODE-LSP]
+# restores Pi's native wrapper and owns config deltas. [F-APP-CHANNELS][D-CLAUDE-CONFIG][D-OPENCODE-LSP]
 if have mise; then
   pass "mise is available for Quattro agent wrappers"
 else
@@ -304,6 +306,17 @@ check_jq_fixed_point() {
 # OpenCode's global LSP delta remains tool-owned mutable state. [F-OPENCODE-LSP]
 check_jq_fixed_point "Claude" "$CLAUDE_SETTINGS_FILE" "$REPO/claude/settings.jq"
 check_jq_fixed_point "OpenCode" "$HOME/.config/opencode/opencode.json" "$REPO/opencode/settings.jq"
+
+# Read the pin from the same delta as install; never invoke Pi or hydrate npm here. [D-PI-WEB]
+check_jq_fixed_point "Pi settings" "$PI_SETTINGS_FILE" "$REPO/pi/settings.jq"
+check_jq_fixed_point "Pi web access" "$PI_WEB_CONFIG_FILE" "$REPO/pi/web-search.jq"
+pi_web_source="$(jq -n -f "$REPO/pi/settings.jq" | jq -r '.packages[-1]')"
+if pi_web_installed "$pi_web_source"; then
+  pass "Pi extension installed: $pi_web_source"
+else
+  miss "Pi extension missing or wrong version — re-run ./install"
+fi
+unset pi_web_source
 
 # settings.jq pins .theme to custom:omarchy, so the Quattro-generated theme file
 # must exist or Claude Code resolves a dangling reference. [D-CLAUDE-CONFIG]

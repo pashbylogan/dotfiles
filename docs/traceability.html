@@ -326,6 +326,20 @@
             </td>
           </tr>
           <tr>
+            <td><code>D-PI-WEB</code></td>
+            <td>
+              Pi web-access package pin, mutable settings overlays, stowed PDF
+              initializer, ChatGPT search with keyless Exa fallback, and content
+              extraction with keyless Jina fallback
+            </td>
+            <td><a href="decisions.html#D-PI-WEB">decisions</a></td>
+            <td>
+              <code>install</code>, <code>lib/style.sh</code>, <code>pi/</code>,
+              <code>Makefile</code>, <code>.github/scripts/verify.sh</code>,
+              <code>.github/scripts/test_pi.py</code>
+            </td>
+          </tr>
+          <tr>
             <td><code>D-OPENCODE-LSP</code></td>
             <td>
               Enable all built-in OpenCode LSP servers globally through a narrow
@@ -483,10 +497,11 @@
             <td><code>F-APP-CHANNELS</code></td>
             <td>
               App channels are Omarchy-native first: Quattro owns Brave Origin,
-              Ghostty, ChatGPT, Hermes, the Discord web app, mise agent
-              wrappers, and Obsidian; Spotify follows Quattro's sync-repo
-              service package, Slack stays native AUR with a browser fallback,
-              and other explicit extras follow their audited package channels
+              Ghostty, ChatGPT, Hermes, the Discord web app, mise agent wrappers
+              (including Pi, restored natively when missing), and Obsidian;
+              Spotify follows Quattro's sync-repo service package, Slack stays
+              native AUR with a browser fallback, and other explicit extras
+              follow their audited package channels
             </td>
             <td><a href="findings.html#F-APP-CHANNELS">findings</a></td>
             <td>

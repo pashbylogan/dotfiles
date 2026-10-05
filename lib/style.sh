@@ -82,6 +82,25 @@ CLAUDE_CONFIG_HOME="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 CLAUDE_SETTINGS_FILE="$CLAUDE_CONFIG_HOME/settings.json"
 CLAUDE_THEME_FILE="$CLAUDE_CONFIG_HOME/themes/omarchy.json"
 
+# Stow and Pi's default agent directory share these paths; auth stays local. [D-PI-WEB]
+PI_AGENT_DIR="$HOME/.pi/agent"
+PI_SETTINGS_FILE="$PI_AGENT_DIR/settings.json"
+PI_WEB_PACKAGE_FILE="$PI_AGENT_DIR/npm/node_modules/pi-web-access/package.json"
+# Match pi-web-access's XDG/legacy discovery so the delta reaches the file it reads. [D-PI-WEB]
+PI_WEB_CONFIG_FILE="$PI_AGENT_DIR/web-search.json"
+[ -z "${XDG_CONFIG_HOME:-}" ] || PI_WEB_CONFIG_FILE="$XDG_CONFIG_HOME/pi/web-search.json"
+if [ -n "${PI_CODING_AGENT_DIR:-}" ]; then
+  PI_WEB_CONFIG_FILE="$PI_CODING_AGENT_DIR/web-search.json"
+elif [ ! -f "$PI_WEB_CONFIG_FILE" ] && [ -f "$HOME/.pi/web-search.json" ]; then
+  PI_WEB_CONFIG_FILE="$HOME/.pi/web-search.json"
+fi
+
+# Install and read-only verification must agree on what satisfies the pin. [D-PI-WEB]
+pi_web_installed() {
+  jq -e --arg version "${1##*@}" '.name == "pi-web-access" and .version == $version' \
+    "$PI_WEB_PACKAGE_FILE" >/dev/null 2>&1
+}
+
 # Lazy's auto-scanned plugins dir inside the omarchy-nvim seed, plus the loader
 # install generates there. The dir is never created — omarchy-nvim-setup refuses
 # to seed an existing ~/.config/nvim — so install writes and verify.sh checks

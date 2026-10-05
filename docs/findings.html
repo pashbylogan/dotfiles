@@ -244,12 +244,26 @@
         of the Omarchy baseline.
       </p>
       <p>
-        Claude Code and OpenCode no longer have a repo-selected binary channel.
-        Quattro installs lightweight wrappers that run
+        Claude Code, OpenCode, and Pi use Omarchy's binary channel. Quattro
+        installs lightweight wrappers that run
         <code>mise use -g</code> before execution, bypass the normal release-age
         delay, and execute the resolved tool. This preserves user config while
         keeping install, default-agent selection, and upgrades on one supported
         Omarchy path.
+      </p>
+      <p>
+        Pi is part of Quattro's stock agent set. <code>install</code> ensures
+        its executable <code>~/.local/bin/pi</code> launcher exists with
+        <code>omarchy mise install pi</code>, even when the application refresh
+        is unnecessary. An existing launcher is preserved. The
+        <a href="decisions.html#D-PI-WEB">D-PI-WEB</a> overlay invokes it to
+        provision a missing or incorrect web-access extension, which downloads
+        Pi on a fresh machine; Quattro's updater owns subsequent upgrades. Pi
+        stays out of both package manifests, and its authentication and session
+        state remain machine-local. Pi reads the repo's shared
+        <code>AGENTS.md</code> natively. The stock menu offers Setup → Defaults
+        → Agent → Pi. Verified on Omarchy <code>4.0.4</code> on 2 October 2026:
+        <code>mise latest pi</code> resolves to <code>1.0.0</code>.
       </p>
 
       <h2 id="F-MALWARE-SCANNER">
@@ -771,6 +785,22 @@ hyprctl reload</code></pre>
 
       <h2>Sources</h2>
       <ul class="clean">
+        <li>
+          Installed Omarchy <code>4.0.4</code>:
+          <code>/usr/share/omarchy/install/user/mise.sh</code>,
+          <code>/usr/share/omarchy/bin/omarchy-mise-install</code>, and
+          <code>/usr/share/omarchy/default/omarchy/omarchy-menu.jsonc</code>
+          (Pi wrapper lifecycle and default-agent menu).
+        </li>
+        <li>
+          <a href="https://github.com/earendil-works/pi/releases/tag/v1.0.0"
+            >Pi 1.0.0 release</a
+          >;
+          <a
+            href="https://github.com/earendil-works/pi/blob/v1.0.0/packages/coding-agent/docs/configuration.md"
+            >Pi configuration — local state and AGENTS.md discovery</a
+          >
+        </li>
         <li>
           <a href="https://opencode.ai/docs/lsp/"
             >OpenCode LSP docs — built-ins, requirements, lazy matching, and

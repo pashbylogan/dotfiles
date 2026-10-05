@@ -103,9 +103,14 @@ Each ends in an interactive auth flow.
 12. **Spotify** — sign in to your account. Installed from Quattro's supported
     sync-repo package by `./install`, pinned to workspace 10.
 
+13. **Pi** — run `pi`, then `/login openai` → **Sign in with ChatGPT**.
+    The overlay installs the pinned web-access extension and configures it;
+    OAuth credentials and plan authorization remain a one-time step per machine.
+    Start a fresh Pi session after installation. [D-PI-WEB]
+
 ### Work-specific (optional)
 
-12. **WireGuard `cypris` tunnel** — drop the work-provided config at
+14. **WireGuard `cypris` tunnel** — drop the work-provided config at
     `/etc/wireguard/cypris.conf` (mode 600, root-owned). The `vpns()` and
     `exitnode()` helpers you author in machine-local `shell.local.sh` (see
     `shell.local.sh.example`) then toggle it against the Tailscale
@@ -126,6 +131,38 @@ in secrets/host values. Re-run `./install` to link the real files into `~`.
 | `hypr/.config/hypr/dotfiles_local.lua.example` | `hypr/.config/hypr/dotfiles_local.lua` | device-specific Hyprland Lua (e.g. mouse accel) |
 
 ## Daily use
+
+### Pi coding agent
+
+`./install` ensures Pi's Omarchy-owned launcher exists through
+`omarchy mise install pi`. It uses that launcher to provision the pinned
+`pi-web-access@0.35.0` extension when missing or at the wrong version, downloading
+Pi on a fresh machine. Quattro's updater owns subsequent mise-backed agent
+updates. Pi uses the shared repo-root `AGENTS.md` guidance.
+[F-APP-CHANNELS]
+
+To select Pi for Omarchy's agent shortcut, use Omarchy menu → Setup → Defaults
+→ Agent → Pi. Authentication and session state stay local to the machine.
+
+The `pi/` overlay sets the default model to `openai/gpt-6.1-sol` and uses
+`gpt-6-luna` for web search and page answers through your ChatGPT login. Search
+falls back to keyless Exa; page fetching falls back to keyless Jina Reader.
+Images, PDFs, GitHub content, source checks, and stored-content retrieval are
+enabled. PDF extraction stays local, with a stowed compatibility extension for
+Pi's bundled runtime. Browser-cookie access stays off. [D-PI-WEB]
+
+`./install` merges the settings without tracking credentials or session state,
+installs Node through Omarchy if npm is missing, and stows the PDF fix.
+`make verify` checks the overlay without launching Pi or contacting providers.
+Implementation details and compatibility findings are documented in
+[the Pi decision](docs/decisions.html#D-PI-WEB).
+
+Scanned PDFs need OCR or visual inspection; local extraction is limited to
+20 MB and 100 pages. Video frame extraction uses Quattro's ffmpeg/yt-dlp tools;
+full video analysis requires separate Gemini credentials. Exa and Jina's keyless
+services have usage limits, and Jina receives URLs when direct fetching fails.
+
+### Operations
 
 | Command                | What it does                                                 |
 | ---                    | ---                                                          |

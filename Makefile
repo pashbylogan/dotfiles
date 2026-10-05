@@ -21,9 +21,10 @@ BASH_FILES := install lib/style.sh $(wildcard bin/.local/bin/*) \
 	$(wildcard .github/scripts/*.sh)
 POSIX_FILES := $(wildcard uwsm/.config/uwsm/env.d/*.sh)
 SHELL_FILES := $(BASH_FILES) $(POSIX_FILES)
-PRETTIER_GLOBS := docs/*.html docs/registry.json
+PRETTIER_GLOBS := docs/*.html docs/registry.json pi/.pi/agent/extensions/*.ts
 DOCS_CHECK     := .github/scripts/check_docs.py
-JQ_FILTERS     := $(wildcard claude/*.jq) $(wildcard nvim/*.jq) $(wildcard opencode/*.jq)
+# Pi's mutable JSON overlays and static extension share the gate. [D-PI-WEB]
+JQ_FILTERS     := $(wildcard claude/*.jq) $(wildcard nvim/*.jq) $(wildcard opencode/*.jq) $(wildcard pi/*.jq)
 
 # ── output styling ───────────────────────────────────────────────────────────
 # Mirror the shell palette (lib/style.sh: ── headers ──, ℹ info, ⚠ warn) so `make`
@@ -56,6 +57,7 @@ ci: ## Run the full gate: shellcheck + shfmt + prettier + jq filter parse + docs
 	@if [ -n "$(JQ_FILTERS)" ]; then echo "jq filters parse + smoke pass: $(JQ_FILTERS)"; fi
 	python3 $(DOCS_CHECK)
 	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_prune_mise.py'
+	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_pi.py'
 	@echo "OK - all checks passed"
 
 fmt: ## Auto-fix formatting in place (shfmt + prettier)

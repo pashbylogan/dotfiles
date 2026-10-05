@@ -192,6 +192,17 @@
         or theme tree.
       </p>
 
+      <p>
+        Pi follows the same mutable-state boundary:
+        <code>pi/settings.jq</code> and <code>pi/web-search.jq</code> merge into
+        its local JSON files, while the PDF compatibility extension is stowed
+        under <code>~/.pi/agent/extensions/</code>. Pi's CLI owns downloaded npm
+        packages; install hydrates the pinned release only when missing or
+        incorrect. OAuth, sessions, device IDs, and Omarchy's theme integration
+        stay outside the repo. See
+        <a href="decisions.html#D-PI-WEB">D-PI-WEB</a>.
+      </p>
+
       <h2 id="D-IDEMPOTENT">
         Idempotency guarantee <code class="meta">D-IDEMPOTENT</code>
       </h2>

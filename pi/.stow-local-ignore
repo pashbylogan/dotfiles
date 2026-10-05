@@ -1,0 +1,2 @@
+# Build inputs stay in the repo; only the static user extension is stowed. [D-PI-WEB]
+.*\.jq

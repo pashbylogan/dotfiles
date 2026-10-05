@@ -223,6 +223,55 @@
               Quattro's main updater owns mise-backed tool and agent upgrades.
             </td>
           </tr>
+          <tr id="D-PI-WEB">
+            <td>
+              <code class="meta">D-PI-WEB</code> Reproducible Pi web access
+            </td>
+            <td>
+              Keep Pi on Omarchy's mise launcher. Merge
+              <code>pi/settings.jq</code> and <code>pi/web-search.jq</code> into
+              mutable JSON: settings under <code>~/.pi/agent/</code>, web config
+              using the extension's XDG/legacy discovery. Stow only the
+              user-owned PDF compatibility extension. Seed missing JSON,
+              preserve unrelated keys and packages, and normalize this
+              extension's npm declarations to the exact
+              <code>npm:pi-web-access@0.35.0</code> pin. Provision through
+              <code>pi install</code> only when the installed package is absent
+              or has the wrong version; use Omarchy's Node dev-env if npm is
+              missing. Authentication, device IDs, sessions, package caches, and
+              Omarchy's theme extension remain local. The overlay targets Pi's
+              default agent directory; alternative agent roots are outside this
+              install. See
+              <a href="findings.html#F-APP-CHANNELS">F-APP-CHANNELS</a>.
+            </td>
+            <td>
+              Default chats use <code>openai/gpt-6.1-sol</code>; search and page
+              answers use <code>gpt-6-luna</code> with the existing ChatGPT
+              login. OpenAI search falls back only to Exa; Exa is keyless when
+              no local Exa credential is configured. Direct page reading falls
+              back to keyless Jina Reader, which receives the requested public
+              URL. Enable images, PDF text extraction, GitHub content, source
+              checks, and stored-content retrieval. Keep browser cookies off and
+              the default workflow free of extra summary calls. Gemini
+              credentials are still required for full video analysis; scanned
+              PDFs require OCR or visual inspection. Local PDFs have a 20 MB /
+              100-page bound. Quattro already supplies yt-dlp, OCR, and ffmpeg
+              through its base packages and dependencies. <br /><br />
+              Verified on 5 October 2026 with Pi 1.0.3 and pi-web-access 0.35.0:
+              subscription search, direct reading, simulated-rate-limit Exa
+              fallback, Jina fallback, and remote PDF extraction. The bundled
+              loader fails unpdf 1.8.1's internal <code>unpdf/pdfjs</code>
+              self-import. The static extension uses unpdf's supported
+              <code>definePDFJSModule</code> API with explicit ESM paths,
+              leaving installed packages untouched. Remove it when an upstream
+              fix passes the remote-PDF test. Pinning the extension does not
+              freeze npm's transitive dependency graph. Install and verification
+              share one package-version check. Read-only verification checks
+              JSON fixed points and the Stow link; bootstrap tests cover fresh
+              installs, repairs, XDG discovery, local-state preservation,
+              invalid JSON, and package-install failure.
+            </td>
+          </tr>
           <tr id="D-OPENCODE-LSP">
             <td>
               <code class="meta">D-OPENCODE-LSP</code> Global OpenCode LSP
@@ -370,12 +419,14 @@
             <td>
               Quattro's broad Remove Preinstalled flow would also remove
               retained packages, OmaCalc, TUI wrappers, and mise-backed agent
-              launchers. Its application refresh can recopy stock desktop files,
-              so a small persistent delta is required. Calling the supported
-              remover preserves Quattro's ownership of launcher and icon cleanup
-              instead of restating or editing packaged files — which is also why
-              the retained-launcher check compares against the packaged file
-              instead of pinning an upstream URL.
+              launchers, including Pi. The overlay restores a missing Pi wrapper
+              through <code>omarchy mise install pi</code>; Omarchy retains
+              binary and update ownership. Its application refresh can recopy
+              stock desktop files, so a small persistent delta is required.
+              Calling the supported remover preserves Quattro's ownership of
+              launcher and icon cleanup instead of restating or editing packaged
+              files — which is also why the retained-launcher check compares
+              against the packaged file instead of pinning an upstream URL.
             </td>
           </tr>
           <tr id="D-BROWSER-DEFAULT">
@@ -1357,6 +1408,30 @@
     <section class="container">
       <h2>Sources</h2>
       <ul class="clean">
+        <li>
+          Pi
+          <a href="https://pi.dev/docs/latest/configuration">configuration</a>
+          and
+          <a href="https://pi.dev/docs/latest/packages">package management</a>:
+          mutable agent state, static user extensions, and versioned package
+          pins.
+        </li>
+        <li>
+          <a
+            href="https://github.com/nicobailon/pi-web-access/releases/tag/v0.35.0"
+            >pi-web-access 0.35.0</a
+          >
+          adds Sign in with ChatGPT support; its
+          <a
+            href="https://github.com/nicobailon/pi-web-access/blob/v0.35.0/README.md"
+            >configuration reference</a
+          >
+          specifies ordered search/fetch routing and PDF engine choices.
+          <a href="https://github.com/unjs/unpdf#official-or-legacy-pdfjs-build"
+            >unpdf's module initializer</a
+          >
+          supports the local PDF compatibility fix.
+        </li>
         <li>
           Installed Omarchy Quattro:
           <code>/usr/share/omarchy/install/user/mise.sh</code> and

@@ -2,8 +2,8 @@
   "version": 1,
   "purpose": "Authoritative cross-reference index for this repo's design decisions and research findings. Each entry has a stable, grep-able ID. The ID appears (1) as an HTML anchor in its canonical doc page, (2) as a [ID] token in code comments at every governed path, and (3) here. To find every place affected by a change: grep the ID across the repo, OR read this entry's `code_paths` + `appears_in`.",
   "conventions": {
-    "decision_id": "D-<SLUG> — a design/architecture choice",
-    "finding_id": "F-<SLUG> — a verified fact about how Omarchy behaves",
+    "decision_id": "D-<SLUG> \u2014 a design/architecture choice",
+    "finding_id": "F-<SLUG> \u2014 a verified fact about how Omarchy behaves",
     "code_token": "Comments in code reference IDs as [D-SLUG] / [F-SLUG] so grep finds both docs and code.",
     "on_change": "When a decision changes: update its canonical doc section, every doc in `appears_in`, every file in `code_paths`, and this registry entry (incl. `related`)."
   },
@@ -391,6 +391,29 @@
       "appears_in": [],
       "code_paths": ["kinesis/README.md", "hypr/.config/hypr/dotfiles.lua"],
       "related": ["D-KEYBIND-OVERRIDES", "D-CAPS-CTRL"]
+    },
+    {
+      "id": "D-PI-WEB",
+      "title": "Pi web access uses a pinned native package install, mutable JSON deltas, and a stowed PDF compatibility extension; credentials and runtime state remain local",
+      "canonical": "decisions.html#D-PI-WEB",
+      "appears_in": [
+        "README.md",
+        "architecture.html",
+        "findings.html",
+        "index.html"
+      ],
+      "code_paths": [
+        "install",
+        "lib/style.sh",
+        "Makefile",
+        ".github/scripts/verify.sh",
+        ".github/scripts/test_pi.py",
+        "pi/settings.jq",
+        "pi/web-search.jq",
+        "pi/.stow-local-ignore",
+        "pi/.pi/agent/extensions/pi-web-access-pdf-compat.ts"
+      ],
+      "related": ["D-DELTA-STORAGE", "D-IDEMPOTENT", "F-APP-CHANNELS", "D-CI"]
     }
   ],
   "findings": [
@@ -440,7 +463,7 @@
     },
     {
       "id": "F-APP-CHANNELS",
-      "title": "App channels are Omarchy-native first: Brave Origin, Ghostty, ChatGPT, Hermes, and Discord use Quattro flows, agents use mise wrappers, Spotify uses its sync-repo service package, and explicit extras stay in manifests",
+      "title": "App channels are Omarchy-native first: Brave Origin, Ghostty, ChatGPT, Hermes, and Discord use Quattro flows, agents use mise wrappers with missing Pi launchers restored natively, Spotify uses its sync-repo service package, and explicit extras stay in manifests",
       "canonical": "findings.html#F-APP-CHANNELS",
       "appears_in": ["README.md", "decisions.html"],
       "code_paths": [
