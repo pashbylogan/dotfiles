@@ -1,0 +1,112 @@
+#!/bin/bash
+# Discover the current portal outside the browser's HTTPS-first interstitial. [D-WIFI-LOGIN]
+exec python3 - "$@" <<'PY'
+import argparse
+import html
+from html.parser import HTMLParser
+import re
+import shutil
+import subprocess
+import sys
+from urllib.error import HTTPError
+from urllib.parse import urljoin, urlsplit
+from urllib.request import HTTPRedirectHandler, ProxyHandler, build_opener
+
+
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+class MetaRefresh(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.target = None
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag.lower() == "meta" and attrs.get("http-equiv", "").lower() == "refresh":
+            match = re.search(r"(?:^|;)\s*url\s*=\s*(.+)", attrs.get("content", ""), re.I)
+            if match:
+                self.target = match[1].strip().strip("\"'")
+
+
+def redirect_url(base, status, headers, body):
+    target = headers.get("Location") if 300 <= status < 400 else None
+    if not target:
+        parser = MetaRefresh()
+        parser.feed(body)
+        target = parser.target
+    if not target:
+        # Only extract literal navigation URLs; never execute portal JavaScript.
+        match = re.search(
+            r"(?:window\.|document\.)?location(?:\.href)?\s*=\s*(['\"])(.*?)\1"
+            r"|(?:window\.|document\.)?location\.(?:replace|assign)\(\s*(['\"])(.*?)\3\s*\)",
+            body, re.I,
+        )
+        if match:
+            target = (match[2] if match[2] is not None else match[4]).replace(r"\/", "/")
+    if not target:
+        return None
+    target = html.unescape(target)
+    url = urljoin(base, target)
+    parts = urlsplit(url)
+    if (any(ord(c) <= 32 or ord(c) == 127 for c in target)
+            or parts.scheme not in ("http", "https") or not parts.hostname
+            or parts.username is not None or parts.password is not None):
+        raise ValueError("The network supplied an unsafe portal URL.")
+    return None if url == base else url
+
+
+def discover():
+    # Environment proxies can bypass the local portal; no DNS/VPN settings change.
+    opener = build_opener(ProxyHandler({}), NoRedirect())
+    for probe in ("http://ping.archlinux.org/nm-check.txt", "http://neverssl.com/"):
+        try:
+            try:
+                response = opener.open(probe, timeout=8)
+            except HTTPError as error:
+                response = error
+            with response:
+                body = response.read(65536).decode("utf-8", errors="replace")
+                url = redirect_url(probe, response.code, response.headers, body)
+            if url:
+                return url
+        except (OSError, ValueError) as error:
+            print(f"wifi-login: probe failed: {error}", file=sys.stderr)
+    raise ValueError(
+        "No supported portal redirect found. Check that you joined the guest Wi-Fi; "
+        "VPN routing or DNS may hide it. Inline login pages and computed JavaScript "
+        "redirects may require opening http://neverssl.com manually."
+    )
+
+
+def main():
+    parser = argparse.ArgumentParser(prog="wifi-login", description="Discover the current captive portal and open it in Omarchy's default browser.")
+    parser.add_argument("--print", action="store_true", help="print the discovered URL without opening a browser")
+    args = parser.parse_args()
+    for command in (["nmcli"] if args.print else ["nmcli", "omarchy"]):
+        if not shutil.which(command):
+            parser.exit(1, f"wifi-login: required command missing: {command}\n")
+    try:
+        result = subprocess.run(["nmcli", "networking", "connectivity", "check"],
+                                capture_output=True, text=True, check=True, timeout=12)
+        state = result.stdout.strip()
+        if state == "full":
+            print("Internet access is available; NetworkManager detects no captive portal.")
+            return
+        if state in ("none", ""):
+            raise ValueError("No network connectivity. Connect to the guest Wi-Fi first.")
+        url = discover()
+        if args.print:
+            print(url)
+        else:
+            print(f"Opening Wi-Fi login at {urlsplit(url).hostname} in Omarchy's default browser.")
+            subprocess.run(["omarchy", "launch", "browser", url], check=True)
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        parser.exit(1, f"wifi-login: {error}\n")
+
+
+if __name__ == "__main__":
+    main()
+PY

@@ -355,6 +355,17 @@
       "related": ["D-PKG-REMOVE", "D-IDEMPOTENT", "D-SCRIPTS-MINIMAL", "F-CLI"]
     },
     {
+      "id": "D-WIFI-LOGIN",
+      "title": "Manual stowed captive-portal discovery opens Omarchy's selected default browser without changing network or browser settings",
+      "canonical": "decisions.html#D-WIFI-LOGIN",
+      "appears_in": ["README.md"],
+      "code_paths": [
+        "bin/.local/bin/wifi-login",
+        ".github/scripts/test_wifi_login.py"
+      ],
+      "related": ["D-SCRIPTS-MINIMAL", "D-CARRY-SET", "D-BROWSER-DEFAULT"]
+    },
+    {
       "id": "D-BROWSER-DEFAULT",
       "title": "Stable Brave Origin is installed and selected through Quattro's native browser flow, plus explicit MIME associations",
       "canonical": "decisions.html#D-BROWSER-DEFAULT",

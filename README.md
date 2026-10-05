@@ -178,6 +178,22 @@ Network diagnostics are available through `nmap`, installed from Arch `extra`
 via `packages.txt` and the repo's normal `omarchy pkg add` convergence path.
 [D-PKG-REMOVE][F-CLI]
 
+### Guest Wi-Fi login
+
+Connect to the guest network, then run `wifi-login` if no sign-in page appears.
+The stowed command discovers HTTP, meta-refresh, or literal JavaScript portal
+redirects outside the browser, then opens the login URL through
+`omarchy launch browser` (whatever your selected default browser is).
+It does not switch networks, change DNS/VPN/browser settings, accept terms,
+or submit credentials. Use `wifi-login --print` to inspect the URL without
+opening it; treat portal URLs as temporary and potentially sensitive.
+[D-WIFI-LOGIN]
+
+If NetworkManager reports full internet access, it opens nothing. Unsupported
+inline login pages or computed JavaScript redirects need manual browser access;
+HTTP-only portals may still show the browser's HTTPS-first warning. Certificate
+verification stays enabled — do not bypass certificate errors.
+
 ## Security scans
 
 ClamAV is installed from Arch `extra` through `packages.txt`, but no ClamAV

@@ -114,8 +114,9 @@
                   syntax errors surface here rather than at
                   <code>./install</code> time), and
                   <code>.github/scripts/check_docs.py</code> for docs integrity,
-                  plus Python cleanup tests for live-consumer filtering and
-                  candidate revalidation. <code>make fmt</code> auto-fixes.
+                  plus Python tests for live-consumer cleanup, Pi bootstrap, and
+                  captive-portal helper behavior. <code>make fmt</code>
+                  auto-fixes.
                 </li>
                 <li>
                   <code>make update</code> — the frequent, low-risk channel:
@@ -453,6 +454,44 @@
           </tr>
         </tbody>
       </table>
+
+      <h2 id="D-WIFI-LOGIN">
+        Manual captive-portal login <code class="meta">D-WIFI-LOGIN</code>
+      </h2>
+      <p>
+        Stow <code>bin/.local/bin/wifi-login</code> as an explicit operator
+        command, not a daemon or NetworkManager dispatcher hook. Connect to the
+        guest network first, then run it to discover the portal through bounded
+        HTTP probes and open the discovered URL with
+        <code>omarchy launch browser</code>. The browser choice stays with
+        Omarchy; no Brave-specific executable, hotel URL, or host-specific
+        values are tracked. <code>--print</code> discovers without launching.
+      </p>
+      <p>
+        Support HTTP Location headers, HTML meta-refresh, and literal JavaScript
+        location assignments or assign/replace calls. Never execute portal
+        scripts, submit forms, accept terms, or change network, VPN, DNS, or
+        browser settings. Ignore environment proxies only for the discovery
+        requests; accept only HTTP(S) navigation URLs without embedded
+        credentials or whitespace/control characters. Keep browser certificate
+        verification and HTTPS protection intact. Full NetworkManager
+        connectivity is a no-op. Inline forms and computed JavaScript redirects
+        remain unsupported; HTTP-only portals may still require approving the
+        browser's HTTP warning. Portal URLs can contain ephemeral authentication
+        tokens and should not be committed or shared.
+      </p>
+      <p>
+        Local evidence, 5 October 2026: NetworkManager reported
+        <code>portal</code> on two guest networks, but the installed
+        <code>/usr/share/omarchy/shell/plugins/panels/network/Panel.qml</code>
+        had no captive-portal launcher. One network returned an HTTP 307;
+        another returned HTTP 200 with a literal JavaScript redirect. Its
+        discovered HTTPS login loaded in the main Brave Origin profile, while
+        the initial HTTP probe stopped at an HTTPS-first warning. The installed
+        <code>omarchy-launch-browser</code> resolves the selected XDG browser.
+        Offline regression tests cover redirect parsing, unsafe URLs, and
+        default-browser dispatch; no automatic sign-in behavior is promised.
+      </p>
 
       <h2>Shell</h2>
       <table>

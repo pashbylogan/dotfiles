@@ -58,6 +58,7 @@ ci: ## Run the full gate: shellcheck + shfmt + prettier + jq filter parse + docs
 	python3 $(DOCS_CHECK)
 	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_prune_mise.py'
 	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_pi.py'
+	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_wifi_login.py'
 	@echo "OK - all checks passed"
 
 fmt: ## Auto-fix formatting in place (shfmt + prettier)
