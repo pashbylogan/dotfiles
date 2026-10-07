@@ -73,7 +73,7 @@
     },
     {
       "id": "D-CI",
-      "title": "Makefile is the single source of truth for repo operations (CI gates, update with skip-in-use mise cleanup, opt-in update-firmware, and verify); CI invokes it",
+      "title": "Makefile is the single source of truth for repo operations (CI gates, update with skip-in-use mise cleanup, opt-in update-firmware, and verify); CI invokes it on pinned Ubuntu 26.04 with Node-24-based checkout v7",
       "canonical": "decisions.html#D-CI",
       "appears_in": ["architecture.html", "README.md"],
       "code_paths": [

@@ -104,7 +104,13 @@
               A root <code>Makefile</code> is the
               <strong>single source of truth</strong> for repo operations.
               GitHub Actions (<code>.github/workflows/ci.yml</code>) invokes the
-              same targets, so <code>make ci</code> == CI. Targets:
+              same targets, so <code>make ci</code> == CI. The workflow pins
+              <code>ubuntu-26.04</code> rather than following the moving
+              <code>ubuntu-latest</code> label and uses
+              <code>actions/checkout@v7</code> (Node 24 action runtime, not Node
+              20). OS/action upgrades need a hosted workflow run; a local Ubuntu
+              container can test the gate but not the hosted runner or checkout
+              action. Targets:
               <ul>
                 <li>
                   <code>make ci</code> — gates: <code>shellcheck</code> +
@@ -1447,6 +1453,21 @@
     <section class="container">
       <h2>Sources</h2>
       <ul class="clean">
+        <li>
+          GitHub's
+          <a href="https://github.com/actions/runner-images#available-images"
+            >runner image catalog</a
+          >
+          lists Ubuntu 26.04 and explains moving latest labels;
+          <a href="https://github.com/actions/checkout/blob/v7/action.yml"
+            >checkout v7's action manifest</a
+          >
+          specifies the Node 24 runtime. See the
+          <a href="https://github.com/actions/checkout/releases/tag/v7.0.1"
+            >checkout release</a
+          >
+          for upgrade details.
+        </li>
         <li>
           Pi
           <a href="https://pi.dev/docs/latest/configuration">configuration</a>
