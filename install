@@ -367,7 +367,7 @@ prestow_backup "$HOME/.config/hypr/dotfiles.lua"
 prestow_backup \
   "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json" \
   "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
-STOW_PKGS=(bash ssh bin hypr tmux nvim uwsm omarchy claude pi)
+STOW_PKGS=(bash ssh bin hypr tmux nvim uwsm omarchy claude pi human)
 stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
 success "stowed: ${STOW_PKGS[*]}"
 configure_pi
