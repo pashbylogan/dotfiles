@@ -367,10 +367,10 @@
     },
     {
       "id": "D-BROWSER-DEFAULT",
-      "title": "Stable Brave Origin is installed and selected through Quattro's native browser flow, plus explicit MIME associations",
+      "title": "Stable Brave Origin is installed and selected through Quattro's native browser flow; MIME associations stay Omarchy's",
       "canonical": "decisions.html#D-BROWSER-DEFAULT",
       "appears_in": ["README.md", "findings.html", "todos.html"],
-      "code_paths": ["install", "lib/style.sh", ".github/scripts/verify.sh"],
+      "code_paths": ["install", ".github/scripts/verify.sh"],
       "related": [
         "D-IDEMPOTENT",
         "D-SCRIPTS-MINIMAL",
@@ -487,7 +487,7 @@
     },
     {
       "id": "F-CLI",
-      "title": "Omarchy CLI surface (pkg add/aur/drop, browser install/default caveat, refresh config, theme/font, update -y)",
+      "title": "Omarchy CLI surface (pkg add/aur/drop, browser install/default, refresh config, theme/font, update -y)",
       "canonical": "findings.html#F-CLI",
       "appears_in": ["README.md"],
       "code_paths": ["install"],

@@ -246,13 +246,6 @@ if [ "$(omarchy default browser 2>/dev/null)" = brave-origin ]; then
 else
   miss "default browser is not Brave Origin — re-run ./install"
 fi
-for mime_type in "${BRAVE_MIME_TYPES[@]}"; do
-  if [ "$(xdg-mime query default "$mime_type" 2>/dev/null)" = brave-origin.desktop ]; then
-    pass "$mime_type -> brave-origin.desktop"
-  else
-    miss "$mime_type is not associated with Brave Origin"
-  fi
-done
 if [ "$(omarchy default terminal 2>/dev/null)" = ghostty ]; then
   pass "default terminal is Ghostty"
 else
@@ -271,7 +264,7 @@ for stale_pkg in "${!STALE_TERMINAL_LAUNCHERS[@]}"; do
     pass "stale terminal launcher absent: $stale_file"
   fi
 done
-unset stale_pkg stale_file mime_type
+unset stale_pkg stale_file
 
 # Quattro owns agent installation and updates through mise wrappers; the repo
 # restores Pi's native wrapper and owns config deltas. [F-APP-CHANNELS][D-CLAUDE-CONFIG][D-OPENCODE-LSP]

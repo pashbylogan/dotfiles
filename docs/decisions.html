@@ -446,16 +446,21 @@
               <code>omarchy install browser brave-origin</code> only when the
               package is absent and
               <code>omarchy default browser brave-origin</code> only when the
-              selected default differs. It verifies the resulting state, then
-              asserts the additional HTML and scheme MIME handlers that
-              <code>xdg-settings</code> does not cover.
+              selected default differs, then verifies the resulting state. MIME
+              associations are Omarchy's: the repo sets and asserts none.
             </td>
             <td>
               Quattro natively maps Brave Origin to stable, owns its flags,
-              extensions, policies, and theme refresh. The repository hook and
-              package/channel compatibility code are therefore deleted. The
-              command's desktop notification can fail after state succeeds, so
-              the following read-only default assertion is the safety gate.
+              extensions, policies, and theme refresh. The repository hook,
+              package/channel compatibility code, and the explicit MIME list
+              (written while Omarchy still mapped <code>brave-origin</code> to
+              the beta launcher) are therefore deleted. Since Omarchy 4.0.5,
+              <code>~/.config/hyprland-mimeapps.list</code> routes http(s) links
+              through <code>omarchy-browser.desktop</code>, and
+              <code>omarchy default browser</code> reads the browser beneath
+              that router. The command's desktop notification can fail after
+              state succeeds, so the following read-only default assertion is
+              the safety gate.
             </td>
           </tr>
         </tbody>

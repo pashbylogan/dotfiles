@@ -54,6 +54,16 @@
               >
             </td>
           </tr>
+          <tr>
+            <td>Brave bridge</td>
+            <td>
+              Retired the Brave Origin stable bridge: Omarchy 4.0.5 installs and
+              defaults stable <code>brave-origin</code> natively, so the
+              explicit MIME list is gone. See
+              <a href="decisions.html#D-BROWSER-DEFAULT">D-BROWSER-DEFAULT</a>.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
         </tbody>
       </table>
 
@@ -96,30 +106,6 @@
               integration line to <code>require("dotfiles.hypr")</code>. One
               module + one line. See
               <a href="findings.html#F-LUA">Findings → Lua</a>.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <span class="badge badge-future">future</span> Retire Brave Origin
-              stable bridge
-            </td>
-            <td>
-              A released Omarchy version maps <code>brave-origin</code> install
-              and default commands to stable (tracking
-              <a href="https://github.com/basecamp/omarchy/pull/6021"
-                >basecamp/omarchy#6021</a
-              >)
-            </td>
-            <td>
-              Remove the
-              <a href="decisions.html#D-BROWSER-DEFAULT">D-BROWSER-DEFAULT</a>
-              compatibility path that installs
-              <code>brave-origin-bin</code> through
-              <code>omarchy pkg aur add</code>, sets
-              <code>brave-origin.desktop</code>, and stows the
-              <code>theme-set.d/brave-origin-stable</code> hook. Return to
-              <code>omarchy install browser brave-origin</code> and
-              <code>omarchy default browser brave-origin</code>.
             </td>
           </tr>
           <tr>
