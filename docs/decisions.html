@@ -120,8 +120,9 @@
                   syntax errors surface here rather than at
                   <code>./install</code> time), and
                   <code>.github/scripts/check_docs.py</code> for docs integrity,
-                  plus Python tests for live-consumer cleanup, Pi bootstrap, and
-                  captive-portal helper behavior. <code>make fmt</code>
+                  plus Python tests for update delegation and failure handling,
+                  Pi bootstrap, and captive-portal helper behavior.
+                  <code>make fmt</code>
                   auto-fixes.
                 </li>
                 <li>
@@ -129,11 +130,12 @@
                   <code>omarchy update -y</code> (pacman + AUR + omarchy
                   migrations and Quattro-owned mise agent updates), then
                   <code>uv self update</code> because uv remains outside mise,
-                  then filtered mise cleanup and <code>make verify</code>. It
-                  first refuses while <code>pacman -Qdtq</code> reports orphans,
-                  avoiding the updater's pseudo-TTY prompt. Non-zero Omarchy,
-                  uv, or cleanup exits are warned, then the wrapper continues
-                  through the remaining channel and read-only verification so
+                  then native mise cleanup and <code>make verify</code>. Run in
+                  a terminal: Omarchy owns orphan review, and 4.0.5 still
+                  prompts for it despite <code>-y</code>. No separate repo
+                  preflight or package-removal policy. Non-zero Omarchy, uv, or
+                  cleanup exits are warned, then the wrapper continues through
+                  the remaining channel and read-only verification so
                   independent drift is still reported.
                 </li>
                 <li>
@@ -144,27 +146,25 @@
                   device-specific prompts and reboot/power-cycle outcomes.
                 </li>
                 <li>
-                  Mise cleanup runs noninteractively inside
-                  <code>make update</code> through
-                  <code>.github/scripts/prune_mise.py</code>. Get candidates
-                  from <code>mise ls --prunable --json</code>, then retain
-                  versions referenced by same-user Linux
-                  <code>/proc</code> executable paths, working directories, argv
-                  paths, memory maps, or open files. Print retained versions
-                  with consumer PIDs and names, grouped by version, and
-                  summarize removed/kept counts using the repo's status palette
-                  (plain when redirected or <code>NO_COLOR</code> is set). Busy
-                  versions are a successful skip. Refresh eligibility and
-                  recheck consumers immediately before each exact
-                  <code>mise uninstall --yes tool@version</code>; never use a
-                  broad prune that could include retained versions. The helper's
-                  <code>--dry-run</code> reports selections without removal.
-                  Report protected processes that cannot be fully inspected.
-                  This is best-effort: no launch lock, protection from future
-                  imports, or complete visibility into protected/other-user
-                  processes. Preserve Omarchy's
-                  <code>upgrade.auto_prune=false</code> and use this filtered
-                  cleanup rather than unfiltered automatic pruning.
+                  Mise cleanup delegates to
+                  <code>mise prune --tools --yes</code>, requiring the native
+                  live-process protection verified in mise
+                  <code>2026.10.13</code>. Config/stub tracking, executable and
+                  absolute script-path detection, retargeted runtime-link
+                  protection, reporting, and removal belong to mise, not a repo
+                  scanner. Preview with
+                  <code>mise prune --tools --dry-run</code>.
+                  <code>--tools</code> excludes tracked-config housekeeping.
+                  This deliberately retires the broader custom checks: working
+                  directories, open files, memory maps, and relative script
+                  paths alone no longer retain a version. Native detection skips
+                  uninspectable processes and is a snapshot, not a launch lock;
+                  future starts/imports are not protected. Keep
+                  <code>upgrade.auto_prune=false</code> so upgrading and
+                  explicit pruning remain separate. The wrapper skips cleanup
+                  below <code>2026.10.13</code>, including after an update
+                  failure, rather than pruning with an older mise lacking
+                  protection.
                 </li>
                 <li>
                   <code>make verify</code> — read-only live health check
@@ -1316,6 +1316,17 @@
         conflict audit, and the chosen resolution so future keyboard-layout
         changes can extend the same table.
       </div>
+      <p>
+        On Quattro 4.0.5, fixed root/apps routes call the menu plugin's
+        supported IPC with literal JSON, avoiding the
+        <code>omarchy-menu</code> wrapper and its <code>jq</code> subprocess.
+        The Kinesis clipboard binding already uses direct shell IPC. No
+        compatibility helper or backported <code>{ menu = … }</code>/<code
+          >{ panel = … }</code
+        >
+        syntax: neither that helper support nor shell global-shortcut
+        registrations is installed. Chords and toggle behavior are unchanged.
+      </p>
       <table>
         <thead>
           <tr>
@@ -1328,12 +1339,11 @@
         <tbody>
           <tr>
             <td><code>SUPER+D</code></td>
-            <td>Open Omarchy menu via <code>omarchy-menu</code></td>
+            <td>Open the root menu through <code>omarchy-shell</code> IPC</td>
             <td>
-              Not active in the live post-Remove-Preinstalled
-              <code>bindings.conf</code>. Stock Omarchy app bindings use
-              <code>SUPER+D</code> for Lazy Docker, so the overlay treats that
-              as a possible future conflict.
+              Audited on Quattro 4.0.5: the stock root menu is on
+              <code>SUPER+SPACE</code>; Docker is on <code>SUPER+SHIFT+D</code>.
+              <code>SUPER+D</code> is free.
             </td>
             <td>
               Keep <code>SUPER+ALT+SPACE</code> intentionally free, then bind
@@ -1344,9 +1354,7 @@
           </tr>
           <tr>
             <td><code>SUPER+SPACE</code></td>
-            <td>
-              Open the Apps menu via <code>omarchy-menu toggle apps</code>
-            </td>
+            <td>Open the Apps menu through <code>omarchy-shell</code> IPC</td>
             <td>
               Quattro changed this chord from the direct application launcher to
               its root Omarchy menu. The root menu is already preserved on the
@@ -1504,24 +1512,28 @@
           disable upgrade pruning to protect live sessions.
         </li>
         <li>
-          Installed mise 2026.9.14: <code>mise prune --help</code> describes
-          tracked-config and stub references, and
-          <code>mise upgrade --help</code>
-          describes upgrade pruning. Mise's deferred pruning defaults to 24
-          hours; reference tracking and a delay do not detect live consumers.
-          Verified in the installed release's
-          <a href="https://github.com/jdx/mise/blob/v2026.9.14/src/cli/prune.rs"
+          Installed mise 2026.10.13: <code>mise prune --help</code> now
+          documents running-process retention. Verified against the tagged
+          <a
+            href="https://github.com/jdx/mise/blob/v2026.10.13/src/cli/prune.rs"
             >prune implementation</a
           >
           and
           <a
-            href="https://github.com/jdx/mise/blob/v2026.9.14/src/tool_purgatory.rs"
-            >deferred-pruning implementation</a
-          >. See also the
+            href="https://github.com/jdx/mise/blob/v2026.10.13/src/toolset/running.rs"
+            >process matching and retargeted-link handling</a
+          >. An isolated temporary install confirmed a live executable is
+          excluded from <code>mise ls --prunable</code> and becomes eligible
+          after exit. See the
           <a href="https://mise.jdx.dev/cli/prune.html">mise prune reference</a
-          >. Targeted removal uses
-          <a href="https://mise.jdx.dev/cli/uninstall.html">mise uninstall</a>,
-          which removes installations without changing tool configuration.
+          >.
+        </li>
+        <li>
+          Installed Omarchy 4.0.5:
+          <code>/usr/share/omarchy/bin/omarchy-update-orphan-pkgs</code>
+          owns interactive orphan review, and
+          <code>/usr/share/omarchy/bin/omarchy-menu</code> documents the direct
+          menu plugin IPC and its literal root/apps payloads.
         </li>
       </ul>
     </section>

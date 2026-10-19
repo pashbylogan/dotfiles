@@ -94,8 +94,10 @@ for _, keys in ipairs({
   hl.unbind(keys)
 end
 
-o.bind("SUPER + D", "Omarchy menu", "omarchy-menu toggle")
-o.bind("SUPER + SPACE", "Apps menu", "omarchy-menu toggle apps")
+-- Static menu routes use supported shell IPC directly, avoiding the menu
+-- wrapper and its jq subprocess per keypress. [D-KEYBIND-OVERRIDES]
+o.bind("SUPER + D", "Omarchy menu", [[omarchy-shell shell toggle omarchy.menu '{"menu":"root"}']])
+o.bind("SUPER + SPACE", "Apps menu", [[omarchy-shell shell toggle omarchy.menu '{"menu":"apps"}']])
 o.bind("SUPER + I", "Show keybindings", "omarchy-menu-keybindings")
 
 o.bind("SUPER + H", "Focus on left window", hl.dsp.focus({ direction = "l" }))

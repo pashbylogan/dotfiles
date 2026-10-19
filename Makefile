@@ -56,7 +56,7 @@ ci: ## Run the full gate: shellcheck + shfmt + prettier + jq filter parse + docs
 	@for f in $(JQ_FILTERS); do echo '{}' | jq -f "$$f" >/dev/null || { echo "jq filter failed: $$f"; exit 1; }; done
 	@if [ -n "$(JQ_FILTERS)" ]; then echo "jq filters parse + smoke pass: $(JQ_FILTERS)"; fi
 	python3 $(DOCS_CHECK)
-	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_prune_mise.py'
+	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_update.py'
 	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_pi.py'
 	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_wifi_login.py'
 	@echo "OK - all checks passed"
@@ -80,12 +80,7 @@ tools: ## Show required tools + how to install them on Omarchy
 # device-specific reboot/power-cycle risk. [D-CI]
 update: ## Packages + Omarchy migrations + uv + unused mise cleanup, then verify
 	@printf "$(CYAN)ℹ$(NC) If 'omarchy update -y' triggers a reboot, verify won't run — re-run 'make update' after.\n"
-	@orphans="$$(pacman -Qdtq 2>/dev/null || true)"; \
-	if [ -n "$$orphans" ]; then \
-		printf "$(YELLOW)⚠$(NC) Orphan packages would make Omarchy's pseudo-TTY updater prompt:\n%s\n" "$$orphans"; \
-		printf "Audit them first; drop confirmed leftovers with 'omarchy pkg drop <names>' or run 'omarchy update' interactively.\n"; \
-		exit 1; \
-	fi
+	@printf "$(CYAN)ℹ$(NC) Run in a terminal: Omarchy owns orphan review and may still prompt with -y.\n"
 	@printf "\n$(BOLD)── Packages & Omarchy migrations ──$(NC)\n"
 	@printf "$(CYAN)$$ omarchy update -y$(NC)\n"
 	@omarchy update -y || printf "$(YELLOW)⚠$(NC) 'omarchy update -y' returned non-zero; continuing to uv, cleanup, and verification.\n"
@@ -97,7 +92,12 @@ update: ## Packages + Omarchy migrations + uv + unused mise cleanup, then verify
 		printf "$(CYAN)ℹ$(NC) uv not found on PATH — skipped.\n"; \
 	fi
 	@printf "\n$(BOLD)── Unused mise versions ──$(NC)\n"
-	@/usr/bin/python3 .github/scripts/prune_mise.py || printf "$(YELLOW)⚠$(NC) Mise cleanup failed; continuing to verification.\n"
+	@# An update failure must not fall through to older mise without process protection. [D-CI]
+	@if version="$$(mise version)" && printf '2026.10.13\n%s\n' "$${version%% *}" | sort -V -C; then \
+		mise prune --tools --yes || printf "$(YELLOW)⚠$(NC) Mise cleanup failed; continuing to verification.\n"; \
+	else \
+		printf "$(YELLOW)⚠$(NC) Mise cleanup requires mise >= 2026.10.13; skipped.\n"; \
+	fi
 	@printf "\n$(CYAN)ℹ$(NC) JetBrains IDEs update via jetbrains-toolbox's own UI.\n"
 	@printf "\n$(BOLD)── Verify overlay ──$(NC)\n"
 	@printf "$(CYAN)$$ $(MAKE) --no-print-directory verify$(NC)\n"
