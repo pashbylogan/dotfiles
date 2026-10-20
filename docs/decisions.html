@@ -328,12 +328,12 @@
                   follow the Omarchy-native audit in
                   <a href="findings.html#F-APP-CHANNELS">F-APP-CHANNELS</a>:
                   <code>spotify</code> uses Quattro's sync-repo service package,
-                  and <code>slack-desktop</code> is an intentional local AUR
-                  choice because Omarchy has no Slack package, webapp, binding,
-                  or migration. Operator CLI utilities use the same
-                  official-repository path: <code>nmap</code> comes from Arch
-                  <code>extra</code> through <code>packages.txt</code>. Security
-                  tooling follows
+                  while <code>slack-desktop</code> and
+                  <code>claude-desktop</code> use Omarchy's sync-repo packages
+                  through <code>packages.txt</code>, not the AUR. Operator CLI
+                  utilities use the same official-repository path:
+                  <code>nmap</code> comes from Arch <code>extra</code> through
+                  <code>packages.txt</code>. Security tooling follows
                   <a href="findings.html#F-MALWARE-SCANNER">F-MALWARE-SCANNER</a
                   >: <code>clamav</code> comes from Arch
                   <code>extra</code> through <code>packages.txt</code>, while

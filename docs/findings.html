@@ -190,19 +190,24 @@
         supported Spotify service installer; Discord uses Quattro's packaged web
         app instead of the Arch native client; this removes a parallel
         package/launcher identity and keeps the choice reversible if browser
-        voice or screen sharing regresses. <code>slack-desktop</code> stays as a
-        local AUR choice because Omarchy has no Slack package, webapp, binding,
-        or migration.
+        voice or screen sharing regresses. <code>slack-desktop</code> and
+        <code>claude-desktop</code> now use Omarchy's sync repository through
+        <code>packages.txt</code>, not the AUR. On the installed Omarchy 4.0.6
+        system, <code>pacman -Si slack-desktop claude-desktop</code> reports
+        <code>Repository : omarchy</code> for both; <code>pacman -Qi</code>
+        confirms both installed packages have the Omarchy packager. No reinstall
+        is needed: the package names and installed apps are unchanged.
       </p>
       <p>
-        The Slack exception is deliberately narrow. Native Slack provides the
-        installed app identity and <code>slack://</code> handler, and the local
-        tray already works without adding <code>libappindicator</code>. Slack's
-        Linux docs call the desktop app beta, support Ubuntu/RHEL directly, and
-        list huddles on desktop plus Google Chrome on Linux. So the durable
-        baseline is native <code>slack-desktop</code>, with Slack in Google
-        Chrome as the huddles/screen-share fallback if the native app regresses.
-        Do not install or remove anything for these three apps unless that local
+        The native Slack preference is deliberately narrow. Native Slack
+        provides the installed app identity and <code>slack://</code> handler,
+        and the local tray already works without adding
+        <code>libappindicator</code>. Slack's Linux docs call the desktop app
+        beta, support Ubuntu/RHEL directly, and list huddles on desktop plus
+        Google Chrome on Linux. So the durable baseline is native
+        <code>slack-desktop</code>, with Slack in Google Chrome as the
+        huddles/screen-share fallback if the native app regresses. Do not
+        install or remove anything for these three apps unless that local
         behavior changes.
       </p>
       <p>
@@ -226,22 +231,17 @@
         pins the dev toolchain to pacman.
       </p>
       <p>
-        Claude Desktop follows the same audit. Anthropic ships an official Linux
-        build, but only as a Debian/Ubuntu <code>.deb</code> from a GPG-signed
-        apt repo with no self-updater, and Arch has no native consumer of that
-        repo. The community AUR packages first repackaged the
-        <em>Windows</em> MSIX/exe; once they caught up to the official Linux
-        <code>.deb</code>, <code>claude-desktop</code> became the durable choice
-        because it installs Anthropic's <code>.deb</code>
-        <strong>verbatim</strong> — its committed checksum matches the signed
-        <code>InRelease</code> — and rides <code>omarchy update</code>'s
-        <code>yay -Sua</code> like the other AUR apps, rather than a
-        self-managed rebuild. Cowork's sandbox is an app-managed QEMU/KVM
-        microVM, so <code>qemu-base</code> and <code>edk2-ovmf</code> are added
-        to <code>packages.txt</code> to enable it by default; every other
-        feature dependency (the Hyprland portal, <code>gnome-keyring</code>,
-        <code>libayatana-appindicator</code>, <code>gvfs</code>) is already part
-        of the Omarchy baseline.
+        Claude Desktop follows the same Omarchy-native package policy. The
+        earlier AUR repackaging audit is no longer the channel decision:
+        <code>claude-desktop</code> is available directly from Omarchy's sync
+        repository and updates with the system packages through
+        <code>omarchy update</code>, rather than the AUR update phase or a
+        self-managed rebuild. Cowork's sandbox remains an app-managed QEMU/KVM
+        microVM, so <code>qemu-base</code> and <code>edk2-ovmf</code> are
+        retained in <code>packages.txt</code> to enable it by default; every
+        other feature dependency (the Hyprland portal,
+        <code>gnome-keyring</code>, <code>libayatana-appindicator</code>,
+        <code>gvfs</code>) is already part of the Omarchy baseline.
       </p>
       <p>
         Claude Code, OpenCode, and Pi use Omarchy's binary channel. Quattro
@@ -831,12 +831,6 @@ hyprctl reload</code></pre>
           <a href="https://code.claude.com/docs/en/desktop-linux"
             >Claude Desktop on Linux (beta) — official apt repo, no
             self-updater, beta feature list</a
-          >
-        </li>
-        <li>
-          <a href="https://aur.archlinux.org/packages/claude-desktop"
-            >AUR — claude-desktop (installs Anthropic's official Linux .deb
-            verbatim)</a
           >
         </li>
         <li>

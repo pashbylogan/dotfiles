@@ -93,8 +93,8 @@ Each ends in an interactive auth flow.
     complete the browser auth flow it prints — don't Ctrl-C while it looks
     frozen; just finish the login and the command returns.
 10. **Slack** — sign in to your workspace. Native `slack-desktop` is installed
-    by `./install` (via `packages.aur.txt`) and pinned to workspace 3 in
-    `hypr/dotfiles.lua`. If huddles or screen sharing regress in the native app,
+    by `./install` from Omarchy's sync repository (via `packages.txt`) and pinned
+    to workspace 3 in `hypr/dotfiles.lua`. If huddles or screen sharing regress in the native app,
     use Slack in the browser as the fallback; do not add a tray dependency unless
     the local tray behavior stops working. [F-APP-CHANNELS]
 11. **ChatGPT and Hermes** — sign in to each desktop app. `./install` uses
