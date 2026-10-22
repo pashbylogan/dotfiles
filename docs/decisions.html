@@ -1229,16 +1229,15 @@
               input read in place — not a dotfile — a
               <code>claude/.stow-local-ignore</code> keeps stow from symlinking
               it into <code>$HOME</code> (it sits at the package root, so it
-              would otherwise land at <code>~/settings.jq</code>). Model
-              selection is left to Claude Code: the overlay does not set
-              <code>model</code> or <code>.env.ANTHROPIC_MODEL</code>. The
-              previous <code>opus[1m]</code> overrides were cleared from the
-              live settings to try Claude Code's default. Future installs
-              preserve any selection made through <code>/model</code>. Effort
-              remains pinned through
-              <code>.env.CLAUDE_CODE_EFFORT_LEVEL = "xhigh"</code> rather than
-              the UI-owned <code>effortLevel</code> key. The same rule excludes
-              <strong>consent flags</strong> — keys recording that
+              would otherwise land at <code>~/settings.jq</code>). Model and
+              effort selection are left to Claude Code: the overlay does not set
+              <code>model</code>, <code>effortLevel</code>,
+              <code>.env.ANTHROPIC_MODEL</code>, or
+              <code>.env.CLAUDE_CODE_EFFORT_LEVEL</code>. The previous model and
+              effort overrides were cleared from the live settings to try Claude
+              Code's defaults. Future installs preserve selections made through
+              <code>/model</code> and <code>/effort</code>. The same rule
+              excludes <strong>consent flags</strong> — keys recording that
               <em>the user</em> accepted a dialog. The overlay originally
               asserted <code>.skipAutoPermissionPrompt = true</code> to suppress
               the auto-mode opt-in; Claude Code 2.1.263 added a one-shot
@@ -1255,8 +1254,7 @@
               picker exactly like <code>model</code> — because neither has a
               reset migration today; they stay until one appears rather than
               being dropped on speculation. <code>verify.sh</code> link-checks
-              the script and confirms the settings overlay landed (which covers
-              the effort env pin).
+              the script and confirms the settings overlay landed.
             </td>
             <td>
               <strong>Tool-rewritten JSON gets a delta, not a symlink.</strong>

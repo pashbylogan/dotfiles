@@ -293,7 +293,7 @@
     },
     {
       "id": "D-CLAUDE-CONFIG",
-      "title": "Consolidate Claude Code custom config: stow statusline-command.sh, jq-delta settings.json (Claude rewrites it), leave model selection to Claude Code's default or the user's /model choice (no model pin or consent flags Claude Code resets itself), exclude all secrets/state/cache",
+      "title": "Consolidate Claude Code custom config: stow statusline-command.sh, jq-delta settings.json (Claude rewrites it), leave model and effort selection to Claude Code's defaults or the user's picker choices (no model or effort pins or consent flags Claude Code resets itself), exclude all secrets/state/cache",
       "canonical": "decisions.html#D-CLAUDE-CONFIG",
       "appears_in": [],
       "code_paths": [

@@ -6,8 +6,7 @@
 # Applied idempotently onto ~/.claude/settings.json by install (apply_jq_deltas);
 # only these keys are asserted, so keys Claude Code adds on its own are preserved.
 # .env.<KEY> path-assignment auto-vivifies .env and leaves any sibling vars intact.
-# Model selection belongs to Claude Code; leave its default and /model picks alone.
-# Effort uses .env because /effort rewrites the top-level effortLevel key.
+# Model and effort belong to Claude Code; preserve its defaults and picker choices.
 # `skipAutoPermissionPrompt` is absent for the same reason — an upstream migration
 # deletes it (→ drift); `skipWorkflowUsageWarning` is the same shape, no migration yet.
 # The feedback keys mute Anthropic's draft/survey prompts. /config owns the
@@ -15,7 +14,6 @@
   .theme = "custom:omarchy"
 | .skipWorkflowUsageWarning = true
 | .attribution = { "commit": "", "pr": "" }
-| .env.CLAUDE_CODE_EFFORT_LEVEL = "xhigh"
 | .env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"
 | .teammateMode = "auto"
 | .statusLine = { "type": "command", "command": "bash ~/.claude/statusline-command.sh" }
