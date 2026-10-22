@@ -1229,43 +1229,34 @@
               input read in place — not a dotfile — a
               <code>claude/.stow-local-ignore</code> keeps stow from symlinking
               it into <code>$HOME</code> (it sits at the package root, so it
-              would otherwise land at <code>~/settings.jq</code>). The default
-              model and effort level are pinned as
-              <code>.env.ANTHROPIC_MODEL = "opus[1m]"</code> (bare
-              <code>opus</code> is standard context, unlike <em>Default</em>)
-              and <code>.env.CLAUDE_CODE_EFFORT_LEVEL = "xhigh"</code> in the
-              same overlay — not the top-level <code>model</code> /
-              <code>effortLevel</code> keys: the <code>/model</code> and
-              <code>/effort</code> pickers own and rewrite those keys (selecting
-              <em>Default</em> even clears <code>model</code>), so a pinned key
-              drifts on every switch, but neither picker touches
-              <code>.env</code>, so the overlay stays a no-op. Claude Code
-              applies its settings <code>env</code> block to the session
-              (verified: it selects the model and, on 2.1.280, outranks the pick
-              <code>/model</code> saves;
-              <code>CLAUDE_CODE_EFFORT_LEVEL</code> is read from the env and is
-              session-only), so these set the startup defaults while
-              <code>/model</code> and <code>/effort</code> still switch at
-              runtime. The same rule excludes <strong>consent flags</strong> —
-              keys recording that <em>the user</em> accepted a dialog. The
-              overlay originally asserted
-              <code>.skipAutoPermissionPrompt = true</code> to suppress the
-              auto-mode opt-in; Claude Code 2.1.263 added a one-shot migration
-              (<code>hasResetAutoModeOptInForDefaultOffer</code>, recorded in
-              <code>~/.claude.json</code>) that deletes the key whenever
-              <code>permissions.defaultMode</code> is not <code>auto</code>, so
-              auto mode can be re-offered as a default. That is deliberate
-              upstream behavior, not a bug: declaring someone's dialog consent
-              in a config overlay both forges it and drifts
-              <code>verify.sh</code> on the next run. Two asserted keys share
-              that shape and are deliberately kept —
+              would otherwise land at <code>~/settings.jq</code>). Model
+              selection is left to Claude Code: the overlay does not set
+              <code>model</code> or <code>.env.ANTHROPIC_MODEL</code>. The
+              previous <code>opus[1m]</code> overrides were cleared from the
+              live settings to try Claude Code's default. Future installs
+              preserve any selection made through <code>/model</code>. Effort
+              remains pinned through
+              <code>.env.CLAUDE_CODE_EFFORT_LEVEL = "xhigh"</code> rather than
+              the UI-owned <code>effortLevel</code> key. The same rule excludes
+              <strong>consent flags</strong> — keys recording that
+              <em>the user</em> accepted a dialog. The overlay originally
+              asserted <code>.skipAutoPermissionPrompt = true</code> to suppress
+              the auto-mode opt-in; Claude Code 2.1.263 added a one-shot
+              migration (<code>hasResetAutoModeOptInForDefaultOffer</code>,
+              recorded in <code>~/.claude.json</code>) that deletes the key
+              whenever <code>permissions.defaultMode</code> is not
+              <code>auto</code>, so auto mode can be re-offered as a default.
+              That is deliberate upstream behavior, not a bug: declaring
+              someone's dialog consent in a config overlay both forges it and
+              drifts <code>verify.sh</code> on the next run. Two asserted keys
+              share that shape and are deliberately kept —
               <code>skipWorkflowUsageWarning</code> is also consent state, and
               <code>teammateMode</code> is rewritten by <code>/config</code>'s
               picker exactly like <code>model</code> — because neither has a
               reset migration today; they stay until one appears rather than
               being dropped on speculation. <code>verify.sh</code> link-checks
               the script and confirms the settings overlay landed (which covers
-              the env pin).
+              the effort env pin).
             </td>
             <td>
               <strong>Tool-rewritten JSON gets a delta, not a symlink.</strong>
