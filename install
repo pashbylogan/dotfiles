@@ -189,8 +189,8 @@ if [ -f packages.aur.txt ]; then
   fi
 fi
 
-# ChatGPT and Hermes have supported Omarchy installers rather than generic
-# package entries; Hermes also initializes its runtime and applies the theme.
+# AI desktop apps use supported Omarchy installers rather than generic package
+# entries; Hermes initializes its runtime and T3 Code selects the Omarchy theme.
 # [F-APP-CHANNELS][D-IDEMPOTENT]
 step "AI desktop apps"
 if ! pacman -Qq openai-codex-desktop >/dev/null 2>&1; then
@@ -198,6 +198,9 @@ if ! pacman -Qq openai-codex-desktop >/dev/null 2>&1; then
 fi
 if ! pacman -Qq hermes-desktop >/dev/null 2>&1; then
   omarchy install ai hermes
+fi
+if ! pacman -Qq t3code-bin >/dev/null 2>&1; then
+  omarchy install ai t3-code
 fi
 
 # Quattro natively owns Brave Origin setup, extensions, policies, and theme

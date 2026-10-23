@@ -376,9 +376,9 @@ check_tool() {
 check_tool uv
 check_tool go
 
-# These apps are installed through Omarchy's AI-specific flows. Hermes needs
-# that path to initialize its runtime and synchronize its theme. [F-APP-CHANNELS]
-for ai_desktop_pkg in openai-codex-desktop hermes-desktop; do
+# AI-specific flows also initialize Hermes and select T3 Code's Omarchy theme.
+# T3 Code owns its mutable state; only package presence is asserted here. [F-APP-CHANNELS]
+for ai_desktop_pkg in openai-codex-desktop hermes-desktop t3code-bin; do
   if pkg_installed "$ai_desktop_pkg"; then
     pass "$ai_desktop_pkg installed"
   else

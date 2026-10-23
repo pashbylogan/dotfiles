@@ -199,6 +199,24 @@
         is needed: the package names and installed apps are unchanged.
       </p>
       <p>
+        T3 Code also uses <code>omarchy install ai t3-code</code>, rather than a
+        package-manifest entry. On Omarchy <code>4.0.6</code> on 23 October
+        2026, <code>t3code-bin 0.1.2-1</code> is installed from the Omarchy sync
+        repository. The supported installer adds that package, publishes the
+        generated palette to <code>~/.t3/userdata/themes/omarchy.json</code>,
+        selects it through <code>t3 theme set omarchy</code>, and opens the app.
+        Subsequent Omarchy theme switches atomically refresh the palette. The
+        package supplies <code>/usr/bin/t3</code>, <code>/usr/bin/t3code</code>,
+        and the Apps-menu launcher; no repo-owned launcher or PATH addition is
+        needed. <code>install</code> runs the native flow only when the package
+        is missing, and <code>make verify</code> checks package presence. T3's
+        mutable <code>~/.t3/</code> state and
+        <code>~/.config/t3code-v2/</code> Electron profile remain unstowed:
+        provider accounts, app preferences, projects, sessions, and worktrees
+        belong to the app and machine. Provider CLIs retain their existing
+        Omarchy mise ownership.
+      </p>
+      <p>
         The native Slack preference is deliberately narrow. Native Slack
         provides the installed app identity and <code>slack://</code> handler,
         and the local tray already works without adding
@@ -785,6 +803,16 @@ hyprctl reload</code></pre>
 
       <h2>Sources</h2>
       <ul class="clean">
+        <li>
+          Installed Omarchy <code>4.0.6</code>:
+          <code>/usr/share/omarchy/bin/omarchy-install-ai-t3-code</code>,
+          <code>/usr/share/omarchy/bin/omarchy-theme-set-t3code</code>,
+          <code>/usr/share/omarchy/default/omarchy/omarchy-menu.jsonc</code>,
+          <code>/usr/share/applications/t3code.desktop</code>, and
+          <code>pacman -Si t3code-bin</code> /
+          <code>pacman -Qi t3code-bin</code>
+          (native installer, theme lifecycle, launcher, and package channel).
+        </li>
         <li>
           Installed Omarchy <code>4.0.4</code>:
           <code>/usr/share/omarchy/install/user/mise.sh</code>,

@@ -6,7 +6,8 @@ jetbrains-toolbox
 postman-bin            # API client — AUR-only on Arch (official prebuilt binary; no repo/omarchy pkg)
 
 # Coding agents intentionally stay out of both manifests; Quattro supplies and
-# updates their lazy mise wrappers, including Pi. [F-APP-CHANNELS]
+# updates their lazy mise wrappers, including Pi. T3 Code uses Omarchy's
+# AI installer and sync-repo t3code-bin package, not the AUR. [F-APP-CHANNELS]
 
 # gcloud core CLI (no official-repo pkg); used by gssh() in shell.local.sh.
 # Ships /etc/profile.d/google-cloud-cli.sh, so gcloud lands on PATH natively.

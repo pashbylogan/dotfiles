@@ -330,8 +330,11 @@
                   <code>spotify</code> uses Quattro's sync-repo service package,
                   while <code>slack-desktop</code> and
                   <code>claude-desktop</code> use Omarchy's sync-repo packages
-                  through <code>packages.txt</code>, not the AUR. Operator CLI
-                  utilities use the same official-repository path:
+                  through <code>packages.txt</code>, not the AUR. T3 Code
+                  instead uses <code>omarchy install ai t3-code</code> so its
+                  sync-repo package also receives the native Omarchy theme
+                  setup; app state and provider authentication remain local.
+                  Operator CLI utilities use the same official-repository path:
                   <code>nmap</code> comes from Arch <code>extra</code> through
                   <code>packages.txt</code>. Security tooling follows
                   <a href="findings.html#F-MALWARE-SCANNER">F-MALWARE-SCANNER</a

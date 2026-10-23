@@ -97,9 +97,10 @@ Each ends in an interactive auth flow.
     to workspace 3 in `hypr/dotfiles.lua`. If huddles or screen sharing regress in the native app,
     use Slack in the browser as the fallback; do not add a tray dependency unless
     the local tray behavior stops working. [F-APP-CHANNELS]
-11. **ChatGPT and Hermes** — sign in to each desktop app. `./install` uses
-    Omarchy menu → Install → AI → ChatGPT / Hermes, so Hermes also receives its
-    managed runtime and current Omarchy theme. [F-APP-CHANNELS]
+11. **ChatGPT, Hermes, and T3 Code** — open each desktop app and complete its
+    account/provider setup. `./install` uses Omarchy menu → Install → AI →
+    ChatGPT / Hermes / T3 Code. Hermes receives its managed runtime; T3 Code
+    receives and selects the current Omarchy theme. [F-APP-CHANNELS]
 12. **Spotify** — sign in to your account. Installed from Quattro's supported
     sync-repo package by `./install`, pinned to workspace 10.
 
@@ -161,6 +162,21 @@ Scanned PDFs need OCR or visual inspection; local extraction is limited to
 20 MB and 100 pages. Video frame extraction uses Quattro's ffmpeg/yt-dlp tools;
 full video analysis requires separate Gemini credentials. Exa and Jina's keyless
 services have usage limits, and Jina receives URLs when direct fetching fails.
+
+### T3 Code
+
+`./install` installs T3 Code through `omarchy install ai t3-code` when
+`t3code-bin` is missing. The supported flow installs Omarchy's sync-repo package,
+selects the Omarchy palette, and opens the app. Subsequent theme changes are
+managed by Omarchy; package updates arrive through `make update`. `make verify`
+checks that the package is installed. [F-APP-CHANNELS]
+
+Use the packaged `t3` CLI or launch T3 Code from the Apps menu. Add projects and
+connect your providers in the app; the existing Omarchy agent wrappers remain
+the CLI installation path. T3 Code's `~/.t3/` state and
+`~/.config/t3code-v2/` Electron profile stay machine-local, including accounts,
+provider settings, project registrations, sessions, and worktrees. This repo's
+`AGENTS.md` remains the project guidance for the selected coding agent.
 
 ### Operations
 
