@@ -66,7 +66,7 @@ No provider/model call was used for discovery. Claude and Pi source references
 stay untouched by the skill-copy deployment.
 
 Restart agent sessions, or `/reload` in Pi. Ask for the skill by name; Pi supports
-`/skill:ub-mode`, `/skill:ub-tools`, `/skill:t3-subagents` and
+`/skill:ub-mode`, `/skill:ub-tools`, `/skill:t3-subagents`, `/skill:cleanup` and
 `/skill:simplify` (with optional target/focus).
 
 ## Conflicts and drift
