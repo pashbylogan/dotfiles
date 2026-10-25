@@ -557,6 +557,45 @@
         default-browser dispatch; no automatic sign-in behavior is promised.
       </p>
 
+      <h2 id="D-SECURITY-SCAN">
+        Read-only security scan wrapper
+        <code class="meta">D-SECURITY-SCAN</code>
+      </h2>
+      <p>
+        Stow <code>bin/.local/bin/security-scan</code> as an explicit operator
+        command. It refreshes ClamAV signatures, scans the filesystem with
+        <code>clamscan</code>, and reports posture checks: signature age and
+        daemon state, non-loopback TCP listeners, privileged files
+        (SUID/SGID/file capabilities) that no package owns, world-writable files
+        under <code>/etc</code>, <code>/usr/local</code>, <code>/opt</code>, and
+        <code>/root</code>, empty-password accounts, sshd exposure, and package
+        state. ClamAV stays the scanner; this is a thin, read-only orchestration
+        layer over the package-managed tool, not a second endpoint agent or a
+        background service.
+      </p>
+      <p>
+        A full sweep refuses to run without root, because unreadable paths would
+        silently weaken a "clean" claim. <code>--quick</code> stays unprivileged
+        and covers the invoking user's home plus <code>/tmp</code>,
+        <code>/var/tmp</code>, and <code>/dev/shm</code>. Detections are printed
+        for human review: the script never passes <code>--remove</code> or
+        <code>--move</code>, never changes configuration, and never enables (or
+        relies on) the ClamAV daemon. Logs are written under the invoking user's
+        <code>~/.local/state/security-scan/&lt;timestamp&gt;/</code> and chowned
+        back through <code>sudo</code>. Exit status separates usage errors
+        (<code>2</code>), detections or incomplete scans (<code>1</code>), and
+        clean runs (<code>0</code>); <code>--strict</code> also fails on posture
+        findings.
+      </p>
+      <p>
+        The wrapper reports what a bare <code>clamscan</code> run hides: files
+        over 100 MB and containers over 400 MB are skipped by ClamAV's defaults,
+        a scan that ends with errors is not reported as clean, and a stale
+        signature database becomes a visible finding instead of a silent
+        weakness. Posture findings are signals for review, not verdicts; a clean
+        run still does not prove the machine was never compromised.
+      </p>
+
       <h2>Shell</h2>
       <table>
         <thead>

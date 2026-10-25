@@ -396,6 +396,14 @@
       "related": ["D-SCRIPTS-MINIMAL", "D-CARRY-SET", "D-BROWSER-DEFAULT"]
     },
     {
+      "id": "D-SECURITY-SCAN",
+      "title": "Read-only stowed security-scan runs ClamAV plus host posture checks, needs root for a full sweep, and never deletes or quarantines",
+      "canonical": "decisions.html#D-SECURITY-SCAN",
+      "appears_in": ["README.md", "findings.html"],
+      "code_paths": ["bin/.local/bin/security-scan", "README.md"],
+      "related": ["D-SCRIPTS-MINIMAL", "F-MALWARE-SCANNER", "F-CLI"]
+    },
+    {
       "id": "D-BROWSER-DEFAULT",
       "title": "Stable Brave Origin is installed and selected through Quattro's native browser flow; MIME associations stay Omarchy's",
       "canonical": "decisions.html#D-BROWSER-DEFAULT",
@@ -545,8 +553,17 @@
       "title": "ClamAV is the repo-managed on-demand malware scanner from Arch extra; signatures and scans are explicit operator actions, with no background daemon enabled",
       "canonical": "findings.html#F-MALWARE-SCANNER",
       "appears_in": ["README.md", "decisions.html"],
-      "code_paths": ["packages.txt", "README.md"],
-      "related": ["D-PKG-REMOVE", "D-SCRIPTS-MINIMAL", "F-CLI"]
+      "code_paths": [
+        "packages.txt",
+        "README.md",
+        "bin/.local/bin/security-scan"
+      ],
+      "related": [
+        "D-PKG-REMOVE",
+        "D-SCRIPTS-MINIMAL",
+        "F-CLI",
+        "D-SECURITY-SCAN"
+      ]
     },
     {
       "id": "F-SHELL-RESEARCH",

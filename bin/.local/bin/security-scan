@@ -1,0 +1,487 @@
+#!/usr/bin/env bash
+# Read-only whole-machine security scan: ClamAV sweep plus host posture checks.
+# Detections are reported for human review; nothing is removed or quarantined.
+# [D-SECURITY-SCAN][F-MALWARE-SCANNER]
+
+set -euo pipefail
+
+PROG='security-scan'
+DETECTIONS=0
+SCAN_ERRORS=0
+FINDINGS=0
+QUICK=0
+SKIP_MALWARE=0
+SKIP_POSTURE=0
+FRESHCLAM=1
+STRICT=0
+LOG_DIR=''
+
+usage() {
+  cat <<'EOF'
+Usage: security-scan [options]
+
+Read-only security scan of this machine in two phases:
+
+  malware  Refresh ClamAV signatures, then scan the filesystem with ClamAV.
+  posture  Review exposure and tamper signals: signature age and daemon state,
+           non-loopback TCP listeners, privileged files (SUID/SGID/file
+           capabilities) no package owns, world-writable files in system paths,
+           accounts with empty passwords, sshd exposure, and package state.
+
+Nothing is deleted, quarantined, or reconfigured; every finding needs review.
+
+A whole-machine malware scan needs root, because unreadable paths would
+silently weaken the result: sudo security-scan. --quick stays unprivileged and
+covers your home plus /tmp, /var/tmp, and /dev/shm. Mounted filesystems are
+traversed; /proc and /sys are not.
+
+Options:
+  -q, --quick           Scan home and temp dirs instead of / (root optional)
+      --skip-malware    Posture checks only
+      --skip-posture    ClamAV scan only
+      --no-freshclam    Keep the local signature database (offline runs)
+  -l, --log-dir DIR     Write logs under DIR instead of
+                        ~/.local/state/security-scan/<timestamp>
+      --strict          Exit 1 on posture findings as well as detections
+  -h, --help            Show this help
+
+Exit codes: 0 clean, 1 detections, incomplete scan, or (with --strict) posture
+findings, 2 usage or setup error.
+
+ClamAV's size limits still apply: files over 100 MB and containers over 400 MB
+are skipped, so large images and archives can go unchecked. Signatures older
+than seven days are reported as a posture finding.
+
+Examples:
+  sudo security-scan                  # full machine, signatures refreshed
+  security-scan --quick               # unprivileged hot-spot sweep
+  security-scan --skip-malware        # fast posture checks only
+  sudo security-scan --no-freshclam   # offline full sweep
+EOF
+}
+
+die() {
+  printf '%s: %s\n' "$PROG" "$*" >&2
+  exit 2
+}
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# Default log root follows the invoking user through sudo, not root's home.
+state_base() {
+  local home
+  if [ "$EUID" -eq 0 ] && [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != root ]; then
+    home="$(getent passwd "$SUDO_USER" 2>/dev/null | cut -d: -f6 || true)"
+    if [ -n "$home" ]; then
+      printf '%s/.local/state' "$home"
+      return 0
+    fi
+  fi
+  printf '%s' "${XDG_STATE_HOME:-$HOME/.local/state}"
+}
+
+pretty() {
+  if [ -n "${TARGET_HOME:-}" ]; then
+    printf '%s' "${1/#$TARGET_HOME/\~}"
+  else
+    printf '%s' "$1"
+  fi
+}
+
+section() { printf '\n== %s ==\n' "$*"; }
+ok() { printf '  ok:     %s\n' "$*"; }
+info() { printf '  info:   %s\n' "$*"; }
+warn() { printf '  warn:   %s\n' "$*"; }
+finding() {
+  FINDINGS=$((FINDINGS + 1))
+  printf '  review: %s\n' "$*"
+}
+
+# --log-dir is excluded from the scan, so a path with regex metacharacters
+# must not widen or break that exclusion.
+regex_escape() { printf '%s' "$1" | sed 's/[][(){}.^$*+?|\\]/\\&/g'; }
+
+parse_args() {
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      -q | --quick)
+        QUICK=1
+        shift
+        ;;
+      --skip-malware)
+        SKIP_MALWARE=1
+        shift
+        ;;
+      --skip-posture)
+        SKIP_POSTURE=1
+        shift
+        ;;
+      --no-freshclam)
+        FRESHCLAM=0
+        shift
+        ;;
+      -l | --log-dir)
+        [ "$#" -ge 2 ] || die "$1 needs a value"
+        LOG_DIR="$2"
+        shift 2
+        ;;
+      --log-dir=*)
+        LOG_DIR="${1#*=}"
+        shift
+        ;;
+      --strict)
+        STRICT=1
+        shift
+        ;;
+      --)
+        shift
+        [ "$#" -eq 0 ] || die "unexpected argument: $1"
+        ;;
+      -*)
+        die "unknown option: $1 (try --help)"
+        ;;
+      *)
+        die "unexpected argument: $1"
+        ;;
+    esac
+  done
+}
+
+preflight() {
+  if [ "$QUICK" -eq 0 ] && [ "$SKIP_MALWARE" -eq 0 ] && [ "$EUID" -ne 0 ]; then
+    die "a whole-machine scan needs root: sudo $PROG (or --quick for your own files)"
+  fi
+  if [ "$SKIP_MALWARE" -eq 1 ] && [ "$SKIP_POSTURE" -eq 1 ]; then
+    die "nothing to do: --skip-malware and --skip-posture cancel each other out"
+  fi
+  if [ "$SKIP_MALWARE" -eq 0 ] && ! have clamscan; then
+    die "clamscan not found — ClamAV is tracked in packages.txt ($(have pacman && printf 'omarchy pkg add clamav' || printf 'install it first'))"
+  fi
+  mkdir -p "$LOG_DIR" || die "cannot create log dir: $LOG_DIR"
+  if have realpath; then
+    LOG_DIR="$(realpath "$LOG_DIR")"
+  fi
+  chmod 700 "$LOG_DIR" 2>/dev/null || true
+  trap 'printf "\n%s: interrupted; partial logs in %s\n" "$PROG" "$(pretty "$LOG_DIR")" >&2; exit 130' INT
+}
+
+banner() {
+  printf '%s: read-only scan; nothing is deleted, quarantined, or reconfigured\n' "$PROG"
+  printf '  user:   %s\n' "$TARGET_USER"
+  printf '  mode:   %s\n' "$([ "$QUICK" -eq 1 ] && printf quick || printf full)"
+  printf '  logs:   %s\n' "$(pretty "$LOG_DIR")"
+}
+
+# Newest ClamAV signature database age in days; non-zero when none is installed.
+db_age_days() {
+  local newest
+  newest="$(find /var/lib/clamav -maxdepth 1 -type f \( -name '*.cld' -o -name '*.cvd' \) -printf '%T@\n' 2>/dev/null | sort -n | tail -n 1 || true)"
+  [ -n "$newest" ] || return 1
+  printf '%s' $((($(date +%s) - ${newest%.*}) / 86400))
+}
+
+run_freshclam() {
+  local log="$LOG_DIR/freshclam.log" rc=0
+  if ! have freshclam; then
+    warn 'freshclam not found — using the local signature database'
+    return 0
+  fi
+  printf '  refreshing ClamAV signatures...\n'
+  freshclam --stdout >"$log" 2>&1 || rc=$?
+  if [ "$rc" -ne 0 ]; then
+    warn "freshclam failed (exit $rc) — continuing with the local database; see $(pretty "$log")"
+    return 0
+  fi
+  ok 'signatures refreshed'
+}
+
+# One ClamAV invocation; $1 is a label, $2 the report path, the rest are flags.
+clamav_pass() {
+  local label="$1" log="$2"
+  shift 2
+  local rc=0 infected errors
+  clamscan --recursive=yes --infected --log="$log" "$@" >"$log.out" 2>"$log.err" || rc=$?
+  if ! grep -q '^Infected files: ' "$log" 2>/dev/null; then
+    SCAN_ERRORS=$((SCAN_ERRORS + 1))
+    warn "$label: scan did not complete — $(head -n 1 "$log.err" 2>/dev/null | cut -c1-160)"
+    return 0
+  fi
+  infected="$(sed -n 's/^Infected files: //p' "$log" | tail -n 1)"
+  errors="$(sed -n 's/^Total errors: //p' "$log" 2>/dev/null | tail -n 1 || true)"
+  case "$infected" in '' | *[!0-9]*) infected=0 ;; esac
+  case "$errors" in '' | *[!0-9]*) errors=0 ;; esac
+  printf '  %s: %s infected, %s error(s)\n' "$label" "$infected" "$errors"
+  DETECTIONS=$((DETECTIONS + infected))
+  if [ "$infected" -gt 0 ]; then
+    grep -E ' FOUND$' "$log" | sed 's/^/    /' | head -n 50 || true
+  fi
+  if [ "$rc" -ge 1 ] && [ "$infected" -eq 0 ]; then
+    if [ "$EUID" -eq 0 ]; then
+      SCAN_ERRORS=$((SCAN_ERRORS + 1))
+      warn "$label: scan incomplete (exit $rc) — see $(pretty "$log.err")"
+    else
+      info "$label: some paths were unreadable without root (exit $rc)"
+    fi
+  fi
+}
+
+run_malware() {
+  section 'Malware scan (ClamAV)'
+  local -a targets=()
+  local -a excludes=(
+    --exclude-dir='^/(proc|sys)(/|$)'
+    --exclude-dir='^/var/lib/clamav(/|$)'
+    --exclude-dir="^$(regex_escape "$LOG_DIR")(/|$)"
+  )
+  if [ "$FRESHCLAM" -eq 1 ] && [ "$EUID" -eq 0 ]; then
+    run_freshclam
+  fi
+  if [ "$QUICK" -eq 1 ]; then
+    targets=("$TARGET_HOME")
+    for extra in /tmp /var/tmp /dev/shm; do
+      [ -d "$extra" ] && targets+=("$extra")
+    done
+    info "quick scope: ${targets[*]}"
+  else
+    targets=(/)
+    info "full scope: ${targets[*]} (signature-dependent; expect tens of minutes)"
+  fi
+  clamav_pass 'filesystem' "$LOG_DIR/clamav-filesystem.log" \
+    --cross-fs=yes --follow-dir-symlinks=0 --follow-file-symlinks=0 \
+    "${excludes[@]}" "${targets[@]}"
+}
+
+check_signatures() {
+  local age state active flagged=0
+  if age="$(db_age_days)"; then
+    if [ "$age" -gt 7 ]; then
+      finding "ClamAV signatures are ${age} days old — refresh them before trusting a clean result"
+    else
+      ok "ClamAV signatures are ${age} day(s) old"
+    fi
+  else
+    finding 'no ClamAV signature database in /var/lib/clamav'
+  fi
+  if ! have systemctl; then
+    return 0
+  fi
+  for unit in clamav-daemon.service clamav-daemon.socket clamav-clamonacc.service; do
+    state="$(systemctl is-enabled "$unit" 2>/dev/null || true)"
+    active="$(systemctl is-active "$unit" 2>/dev/null || true)"
+    case "$state" in
+      enabled | enabled-runtime)
+        finding "$unit is enabled — ClamAV stays on demand here"
+        flagged=1
+        ;;
+    esac
+    if [ "$active" = active ]; then
+      finding "$unit is running — ClamAV stays on demand here"
+      flagged=1
+    fi
+  done
+  [ "$flagged" -eq 1 ] || ok 'ClamAV daemon, socket, and on-access services stay disabled'
+}
+
+# Loopback is not exposure; anything else is reviewable, and remote-admin or
+# database ports on a non-loopback address are findings.
+check_sockets() {
+  if ! have ss; then
+    info 'ss not found — TCP listener check skipped'
+    return 0
+  fi
+  local raw="$LOG_DIR/tcp-listeners.txt" exposed="$LOG_DIR/tcp-listeners-exposed.txt"
+  local total port line sensitive=0
+  local sensitive_ports=' 22 23 445 3389 5900 3306 5432 6379 9200 11211 2375 '
+  local -a args=(-lntH)
+  [ "$EUID" -eq 0 ] && args=(-lntpH)
+  ss "${args[@]}" >"$raw" 2>/dev/null || true
+  total="$(wc -l <"$raw" | tr -d ' ')"
+  awk '{
+    port = $4
+    sub(/^.*:/, "", port)
+    addr = $4
+    sub(/:[0-9]+$/, "", addr)
+    sub(/%.*$/, "", addr)
+    gsub(/[\[\]]/, "", addr)
+    if (addr ~ /^127\./ || addr == "::1" || addr ~ /^::ffff:127\./) next
+    print port "\t" $0
+  }' "$raw" >"$exposed" || true
+  if [ ! -s "$exposed" ]; then
+    ok "no TCP listeners outside loopback (${total} total)"
+    return 0
+  fi
+  info "${total} TCP listener(s); non-loopback:"
+  while IFS=$'\t' read -r port line; do
+    printf '    %s\n' "$(printf '%s' "$line" | tr -s ' ')"
+    case "$sensitive_ports" in
+      *" $port "*)
+        finding "sensitive port $port is reachable beyond loopback"
+        sensitive=1
+        ;;
+    esac
+  done <"$exposed"
+  [ "$sensitive" -eq 1 ] || info 'nothing on a remote-admin or database port'
+}
+
+# Privileged bits or capabilities no package owns suggest something was added
+# outside the package manager.
+check_privileged_files() {
+  if ! have pacman; then
+    info 'pacman not found — privileged-file check skipped'
+    return 0
+  fi
+  local raw="$LOG_DIR/privileged-files.txt" unowned="$LOG_DIR/privileged-files-unowned.txt"
+  local path
+  local -a roots=(/)
+  if [ "$(stat -c %d / 2>/dev/null || printf 0)" != "$(stat -c %d "$TARGET_HOME" 2>/dev/null || printf 0)" ]; then
+    roots+=("$TARGET_HOME")
+  fi
+  for path in "${roots[@]}"; do
+    find "$path" -xdev -type f \( -perm -4000 -o -perm -2000 \) 2>/dev/null || true
+    if have getcap; then
+      getcap -r "$path" 2>/dev/null | awk '{ print $1 }' || true
+    fi
+  done | sort -u >"$raw"
+  : >"$unowned"
+  while IFS= read -r path; do
+    pacman -Qqo "$path" >/dev/null 2>&1 || printf '%s\n' "$path" >>"$unowned"
+  done <"$raw"
+  if [ ! -s "$unowned" ]; then
+    ok "every privileged file belongs to a package ($(wc -l <"$raw" | tr -d ' ') checked)"
+    return 0
+  fi
+  finding "$(wc -l <"$unowned" | tr -d ' ') privileged file(s) owned by no package"
+  sed 's/^/    /' "$unowned" | head -n 50 || true
+}
+
+check_world_writable() {
+  local out="$LOG_DIR/world-writable.txt"
+  local -a paths=(/etc /usr/local /opt)
+  [ -d /root ] && [ "$EUID" -eq 0 ] && paths+=(/root)
+  find "${paths[@]}" -xdev -type f -perm -0002 2>/dev/null | sort -u >"$out" || true
+  if [ ! -s "$out" ]; then
+    ok "no world-writable files under ${paths[*]}"
+    return 0
+  fi
+  finding "$(wc -l <"$out" | tr -d ' ') world-writable file(s) under ${paths[*]}"
+  sed 's/^/    /' "$out" | head -n 50 || true
+}
+
+check_empty_passwords() {
+  if [ "$EUID" -ne 0 ]; then
+    info 'empty-password account check needs root; skipped'
+    return 0
+  fi
+  local out="$LOG_DIR/empty-password-accounts.txt"
+  awk -F: '$2 == "" { print $1 }' /etc/shadow >"$out" 2>/dev/null || true
+  if [ ! -s "$out" ]; then
+    ok 'no account has an empty password field'
+    return 0
+  fi
+  finding "account(s) with an empty password: $(tr '\n' ' ' <"$out")"
+}
+
+check_sshd() {
+  if ! have sshd; then
+    info 'openssh server not installed — sshd check skipped'
+    return 0
+  fi
+  if ! systemctl is-active --quiet sshd.service 2>/dev/null &&
+    ! systemctl is-active --quiet sshd.socket 2>/dev/null; then
+    info 'sshd installed but not running'
+    return 0
+  fi
+  if [ "$EUID" -ne 0 ]; then
+    info 'sshd is running; effective-config check needs root'
+    return 0
+  fi
+  local config
+  config="$(sshd -T 2>/dev/null || true)"
+  if [ -z "$config" ]; then
+    info 'sshd is running but its effective config could not be read'
+    return 0
+  fi
+  if grep -qi '^permitrootlogin yes' <<<"$config"; then
+    finding 'sshd allows root login (PermitRootLogin yes)'
+  fi
+  if grep -qi '^passwordauthentication yes' <<<"$config"; then
+    finding 'sshd allows password authentication'
+  fi
+}
+
+# Package state is informational: pending updates are normal, but the count and
+# the foreign/AUR list belong in an incident review.
+check_packages() {
+  if ! have pacman; then
+    info 'pacman not found — package checks skipped'
+    return 0
+  fi
+  local updates foreign
+  updates="$(pacman -Qu 2>/dev/null | wc -l | tr -d ' ' || true)"
+  info "${updates:-0} package update(s) pending (pacman -Qu)"
+  pacman -Qmq 2>/dev/null >"$LOG_DIR/foreign-packages.txt" || true
+  foreign="$(wc -l <"$LOG_DIR/foreign-packages.txt" | tr -d ' ')"
+  info "${foreign} foreign (non-repo) package(s); see $(pretty "$LOG_DIR/foreign-packages.txt")"
+}
+
+run_posture() {
+  section 'Posture checks (read-only)'
+  check_signatures
+  check_sockets
+  check_privileged_files
+  check_world_writable
+  check_empty_passwords
+  check_sshd
+  check_packages
+}
+
+finish() {
+  local rc=0 note=''
+  if [ "$EUID" -eq 0 ] && [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != root ]; then
+    chown -R "$SUDO_USER:" "$LOG_DIR" 2>/dev/null || true
+  fi
+  if [ "$STRICT" -eq 1 ] && [ "$FINDINGS" -gt 0 ]; then
+    note=' (strict: exit 1)'
+  fi
+  section 'Summary'
+  printf '  malware detections: %s\n' "$DETECTIONS"
+  printf '  incomplete scans:   %s\n' "$SCAN_ERRORS"
+  printf '  posture findings:   %s%s\n' "$FINDINGS" "$note"
+  printf '  logs:               %s\n' "$(pretty "$LOG_DIR")"
+  if [ "$DETECTIONS" -gt 0 ] || [ "$SCAN_ERRORS" -gt 0 ] ||
+    { [ "$STRICT" -eq 1 ] && [ "$FINDINGS" -gt 0 ]; }; then
+    rc=1
+  fi
+  if [ "$rc" -ne 0 ]; then
+    printf '\n%s: review needed; findings are evidence, not a verdict.\n' "$PROG"
+  elif [ "$FINDINGS" -gt 0 ]; then
+    printf '\n%s: no malware detections; %s posture finding(s) to review.\n' "$PROG" "$FINDINGS"
+  else
+    printf '\n%s: nothing detected; review the items above before closing the case.\n' "$PROG"
+  fi
+  printf 'A clean result means no signature matches; it does not prove the machine is uncompromised.\n'
+  exit "$rc"
+}
+
+main() {
+  TARGET_USER="${SUDO_USER:-${USER:-$(id -un)}}"
+  TARGET_HOME="$(getent passwd "$TARGET_USER" 2>/dev/null | cut -d: -f6 || true)"
+  [ -n "$TARGET_HOME" ] || TARGET_HOME="$HOME"
+  parse_args "$@"
+  [ -n "$LOG_DIR" ] || LOG_DIR="$(state_base)/$PROG/$(date +%Y%m%dT%H%M%S)"
+  preflight
+  banner
+  if [ "$SKIP_MALWARE" -eq 0 ]; then
+    run_malware
+  fi
+  if [ "$SKIP_POSTURE" -eq 0 ]; then
+    run_posture
+  fi
+  finish
+}
+
+main "$@"

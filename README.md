@@ -219,6 +219,7 @@ provider settings, project registrations, sessions, and worktrees. This repo's
 | `make update`          | Omarchy packages + mise agents + uv + unused mise cleanup, then verification |
 | `make update-firmware` | Firmware only (fwupd) — opt-in                               |
 | `pkg-residue <package>` | Read-only audit for package leftovers after removal [D-PKG-REMOVE] |
+| `security-scan`        | Read-only ClamAV + posture scan (see [Security scans](#security-scans)) |
 
 Network diagnostics are available through `nmap`, installed from Arch `extra`
 via `packages.txt` and the repo's normal `omarchy pkg add` convergence path.
@@ -242,19 +243,34 @@ verification stays enabled — do not bypass certificate errors.
 
 ## Security scans
 
-ClamAV is installed from Arch `extra` through `packages.txt`, but no ClamAV
-daemon or on-access service is enabled. Refresh its signatures immediately
-before an explicit scan; review detections rather than auto-removing files:
-[F-MALWARE-SCANNER]
+`security-scan` (stowed from `bin/.local/bin/`) is the read-only whole-machine
+sweep. It refreshes ClamAV signatures, scans the filesystem, and runs posture
+checks: signature age and daemon state, non-loopback TCP listeners, privileged
+files (SUID/SGID/capabilities) that no package owns, world-writable files in
+system paths, empty-password accounts, sshd exposure, and package state. It
+never deletes, quarantines, or reconfigures anything — review detections
+instead of acting automatically. [D-SECURITY-SCAN][F-MALWARE-SCANNER]
 
 ```sh
-sudo freshclam
-clamscan --recursive --infected "$HOME"
+sudo security-scan                 # full sweep of / with fresh signatures
+security-scan --quick              # home + /tmp, /var/tmp, /dev/shm
+security-scan --skip-malware       # fast posture checks only
+sudo security-scan --no-freshclam  # offline full sweep
 ```
 
-ClamAV is a file-signature scanner, not a complete endpoint-security suite. A
-clean result complements process, persistence, browser-permission, download,
-and network checks; it does not prove that a machine was never compromised.
+A full sweep refuses to run without root so unreadable paths cannot quietly
+weaken a "clean" result; `--quick` stays unprivileged. Logs land in
+`~/.local/state/security-scan/<timestamp>/` and are owned by the invoking user
+even under `sudo`. A full sweep takes tens of minutes, and ClamAV's size limits
+still skip files over 100 MB and containers over 400 MB. Exit status is `0`
+clean, `1` detections or an incomplete scan, and `2` usage error; `--strict`
+also fails on posture findings.
+
+ClamAV comes from Arch `extra` through `packages.txt`, and no daemon or
+on-access service is enabled. It is a file-signature scanner, not a complete
+endpoint-security suite: a clean result complements process, persistence,
+browser-permission, download, and network checks, and does not prove that a
+machine was never compromised.
 
 ## Updates
 

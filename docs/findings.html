@@ -310,6 +310,17 @@
         checks rather than proving that compromise never occurred.
       </p>
 
+      <p>
+        The operator surface is the stowed <code>security-scan</code> command
+        (<a href="decisions.html#D-SECURITY-SCAN">D-SECURITY-SCAN</a>). It
+        refreshes signatures when running as root, scans with
+        <code>clamscan</code>, and reports small posture checks alongside the
+        results. It writes logs under
+        <code>~/.local/state/security-scan/</code> and never removes,
+        quarantines, or reconfigures anything. Signature and engine behavior
+        remain ClamAV's; the wrapper adds no detection logic of its own.
+      </p>
+
       <h2 id="F-CLI">
         Omarchy CLI surface (idempotent, preferred over re-implementing)
         <code class="meta">F-CLI</code>
