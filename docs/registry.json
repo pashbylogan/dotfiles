@@ -73,13 +73,12 @@
     },
     {
       "id": "D-CI",
-      "title": "Makefile is the single source of truth for repo operations (CI gates, update with skip-in-use mise cleanup, opt-in update-firmware, and verify); CI invokes it on pinned Ubuntu 26.04 with Node-24-based checkout v7",
+      "title": "Makefile is the single source of truth for repo operations (CI gates, update with Omarchy-owned orphan review and native mise 2026.10.13 pruning, opt-in update-firmware, and verify); CI invokes it on pinned Ubuntu 26.04 with Node-24-based checkout v7",
       "canonical": "decisions.html#D-CI",
       "appears_in": ["architecture.html", "README.md"],
       "code_paths": [
         "Makefile",
-        ".github/scripts/prune_mise.py",
-        ".github/scripts/test_prune_mise.py",
+        ".github/scripts/test_update.py",
         ".github/workflows/ci.yml",
         ".github/scripts/check_docs.py",
         ".github/scripts/verify.sh"
@@ -235,7 +234,7 @@
     },
     {
       "id": "D-KEYBIND-OVERRIDES",
-      "title": "Personal keybindings live in the reloadable Hypr Lua module; SUPER+SPACE opens Apps, and the workspace-layout toggle has no hotkey",
+      "title": "Personal keybindings live in the reloadable Hypr Lua module; fixed menu routes use direct shell IPC, SUPER+SPACE opens Apps, and the workspace-layout toggle has no hotkey",
       "canonical": "decisions.html#D-KEYBIND-OVERRIDES",
       "appears_in": [],
       "code_paths": ["hypr/.config/hypr/dotfiles.lua"],
@@ -313,7 +312,7 @@
     },
     {
       "id": "D-CLAUDE-CONFIG",
-      "title": "Consolidate Claude Code custom config: stow statusline-command.sh, jq-delta settings.json (Claude rewrites it), pin the default model via .env.ANTHROPIC_MODEL in the settings overlay (not the UI-owned top-level model key, and no consent flags Claude Code resets itself), exclude all secrets/state/cache",
+      "title": "Consolidate Claude Code custom config: stow statusline-command.sh, jq-delta settings.json (Claude rewrites it), leave model and effort selection to Claude Code's defaults or the user's picker choices (no model or effort pins or consent flags Claude Code resets itself), exclude all secrets/state/cache",
       "canonical": "decisions.html#D-CLAUDE-CONFIG",
       "appears_in": [],
       "code_paths": [
@@ -386,10 +385,10 @@
     },
     {
       "id": "D-BROWSER-DEFAULT",
-      "title": "Stable Brave Origin is installed and selected through Quattro's native browser flow, plus explicit MIME associations",
+      "title": "Stable Brave Origin is installed and selected through Quattro's native browser flow; MIME associations stay Omarchy's",
       "canonical": "decisions.html#D-BROWSER-DEFAULT",
       "appears_in": ["README.md", "findings.html", "todos.html"],
-      "code_paths": ["install", "lib/style.sh", ".github/scripts/verify.sh"],
+      "code_paths": ["install", ".github/scripts/verify.sh"],
       "related": [
         "D-IDEMPOTENT",
         "D-SCRIPTS-MINIMAL",
@@ -493,7 +492,7 @@
     },
     {
       "id": "F-APP-CHANNELS",
-      "title": "App channels are Omarchy-native first: Brave Origin, Ghostty, ChatGPT, Hermes, and Discord use Quattro flows, agents use mise wrappers with missing Pi launchers restored natively, Spotify uses its sync-repo service package, and explicit extras stay in manifests",
+      "title": "App channels are Omarchy-native first: Brave Origin, Ghostty, ChatGPT, Hermes, T3 Code (installer and theme), and Discord use Quattro flows, agents use mise wrappers with missing Pi launchers restored natively, Spotify uses its sync-repo service package, Slack and Claude Desktop use Omarchy sync-repo packages, and explicit extras stay in manifests",
       "canonical": "findings.html#F-APP-CHANNELS",
       "appears_in": ["README.md", "decisions.html"],
       "code_paths": [
@@ -506,7 +505,7 @@
     },
     {
       "id": "F-CLI",
-      "title": "Omarchy CLI surface (pkg add/aur/drop, browser install/default caveat, refresh config, theme/font, update -y)",
+      "title": "Omarchy CLI surface (pkg add/aur/drop, browser install/default, refresh config, theme/font, update -y)",
       "canonical": "findings.html#F-CLI",
       "appears_in": ["README.md"],
       "code_paths": ["install"],

@@ -189,8 +189,8 @@ if [ -f packages.aur.txt ]; then
   fi
 fi
 
-# ChatGPT and Hermes have supported Omarchy installers rather than generic
-# package entries; Hermes also initializes its runtime and applies the theme.
+# AI desktop apps use supported Omarchy installers rather than generic package
+# entries; Hermes initializes its runtime and T3 Code selects the Omarchy theme.
 # [F-APP-CHANNELS][D-IDEMPOTENT]
 step "AI desktop apps"
 if ! pacman -Qq openai-codex-desktop >/dev/null 2>&1; then
@@ -199,12 +199,14 @@ fi
 if ! pacman -Qq hermes-desktop >/dev/null 2>&1; then
   omarchy install ai hermes
 fi
+if ! pacman -Qq t3code-bin >/dev/null 2>&1; then
+  omarchy install ai t3-code
+fi
 
 # Quattro natively owns Brave Origin setup, extensions, policies, and theme
 # refresh. The default command can fail only in its notification tail, so verify
 # state before any browser package removal. [D-BROWSER-DEFAULT][F-APP-CHANNELS]
 step "Browser and terminal defaults"
-BRAVE_ORIGIN_DESKTOP="brave-origin.desktop"
 if ! pacman -Qq brave-origin-bin >/dev/null 2>&1; then
   omarchy install browser brave-origin
 fi
@@ -213,11 +215,6 @@ if [ "$(omarchy default browser 2>/dev/null)" != "brave-origin" ]; then
 fi
 [ "$(omarchy default browser)" = "brave-origin" ] ||
   die "Brave Origin did not become the default — not removing Chromium"
-
-# xdg-settings does not assert these additional associations on every desktop.
-for mime_type in "${BRAVE_MIME_TYPES[@]}"; do
-  xdg-mime default "$BRAVE_ORIGIN_DESKTOP" "$mime_type"
-done
 success "Brave Origin is the default browser"
 
 # Installing a supported terminal writes xdg-terminals.list. When Ghostty is
@@ -233,7 +230,6 @@ fi
 [ "$(omarchy default terminal)" = "ghostty" ] ||
   die "Ghostty did not become the default — not removing Alacritty"
 success "Ghostty is the default terminal"
-unset BRAVE_ORIGIN_DESKTOP mime_type
 
 if [ -f packages.remove.txt ]; then
   mapfile -t REMOVE_PKGS < <(parse_list_file packages.remove.txt)
@@ -371,7 +367,7 @@ prestow_backup "$HOME/.config/hypr/dotfiles.lua"
 prestow_backup \
   "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json" \
   "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
-STOW_PKGS=(bash ssh bin hypr tmux nvim uwsm omarchy)
+STOW_PKGS=(bash ssh bin hypr tmux nvim uwsm omarchy human)
 stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
 success "stowed: ${STOW_PKGS[*]}"
 # Agent static files use their own Stow directory; shared guidance is copied. [D-AGENT-SKILLS]

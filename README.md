@@ -93,13 +93,14 @@ Each ends in an interactive auth flow.
     complete the browser auth flow it prints — don't Ctrl-C while it looks
     frozen; just finish the login and the command returns.
 10. **Slack** — sign in to your workspace. Native `slack-desktop` is installed
-    by `./install` (via `packages.aur.txt`) and pinned to workspace 3 in
-    `hypr/dotfiles.lua`. If huddles or screen sharing regress in the native app,
+    by `./install` from Omarchy's sync repository (via `packages.txt`) and pinned
+    to workspace 3 in `hypr/dotfiles.lua`. If huddles or screen sharing regress in the native app,
     use Slack in the browser as the fallback; do not add a tray dependency unless
     the local tray behavior stops working. [F-APP-CHANNELS]
-11. **ChatGPT and Hermes** — sign in to each desktop app. `./install` uses
-    Omarchy menu → Install → AI → ChatGPT / Hermes, so Hermes also receives its
-    managed runtime and current Omarchy theme. [F-APP-CHANNELS]
+11. **ChatGPT, Hermes, and T3 Code** — open each desktop app and complete its
+    account/provider setup. `./install` uses Omarchy menu → Install → AI →
+    ChatGPT / Hermes / T3 Code. Hermes receives its managed runtime; T3 Code
+    receives and selects the current Omarchy theme. [F-APP-CHANNELS]
 12. **Spotify** — sign in to your account. Installed from Quattro's supported
     sync-repo package by `./install`, pinned to workspace 10.
 
@@ -192,6 +193,21 @@ apply behavior-preserving fixes. If subagents are unavailable, it covers all
 four angles inline and reports the fallback. Claude Code keeps its native
 `/simplify`; no competing personal skill is installed there.
 
+### T3 Code
+
+`./install` installs T3 Code through `omarchy install ai t3-code` when
+`t3code-bin` is missing. The supported flow installs Omarchy's sync-repo package,
+selects the Omarchy palette, and opens the app. Subsequent theme changes are
+managed by Omarchy; package updates arrive through `make update`. `make verify`
+checks that the package is installed. [F-APP-CHANNELS]
+
+Use the packaged `t3` CLI or launch T3 Code from the Apps menu. Add projects and
+connect your providers in the app; the existing Omarchy agent wrappers remain
+the CLI installation path. T3 Code's `~/.t3/` state and
+`~/.config/t3code-v2/` Electron profile stay machine-local, including accounts,
+provider settings, project registrations, sessions, and worktrees. This repo's
+`AGENTS.md` remains the project guidance for the selected coding agent.
+
 ### Operations
 
 | Command                | What it does                                                 |
@@ -246,11 +262,13 @@ and network checks; it does not prove that a machine was never compromised.
 make update
 ```
 
-Refuses to start while `pacman -Qdtq` reports orphans, avoiding Omarchy's
-pseudo-TTY orphan prompt. Then runs `omarchy update -y`, which owns package,
-migration, and mise-backed agent updates, followed by `uv self update` because
-uv remains outside mise, filtered mise cleanup, and `make verify`. Update and cleanup
-failures are warned so remaining work and read-only verification still run.
+Run in a terminal. `omarchy update -y` owns package, migration, mise-backed
+agent updates, and orphan review; on Omarchy 4.0.5 it can still ask whether to
+remove orphans despite `-y`. There is no separate repo preflight or automatic
+package-removal policy. Review the proposed removals and decline if unsure.
+Then run `uv self update` because uv remains outside mise, native mise cleanup,
+and `make verify`. Update and cleanup failures are warned so remaining work and
+read-only verification still run.
 [F-CLI][D-CI]
 
 ```sh
@@ -264,34 +282,27 @@ by Toolbox still update via Toolbox's own UI. [F-CLI]
 
 ### Mise cleanup
 
-`make update` removes unused mise versions after updates while retaining versions
-with detected live consumers.
-It groups retained versions with process names and PIDs and summarizes removed
-and kept counts using the repo's normal status markers; you can keep working
-and let later cleanup runs remove them once their consumers exit. Skipping busy
-versions is a successful no-op, not an error.
-
-Candidates come from `mise ls --prunable --json`, preserving mise's config/stub
-reference tracking. The helper checks same-user Linux `/proc` executable paths,
-working directories, script arguments, memory maps, and open files. Before each
-removal it refreshes candidate eligibility and checks live consumers again, then
-calls `mise uninstall --yes <tool>@<version>` for that exact version. It never
-hands mise a broad removal set that could include the retained versions.
+`make update` calls `mise prune --tools --yes`. This requires the native
+running-process protection verified in mise **2026.10.13** (shipped on our
+updated Omarchy 4.0.5 machine). The wrapper skips cleanup on older mise,
+even if the preceding update failed. Mise owns config/stub reference tracking,
+running-process detection, removal,
+and reporting. `--tools` leaves tracked-config housekeeping alone.
 
 Preview without deleting anything:
 
 ```sh
-/usr/bin/python3 .github/scripts/prune_mise.py --dry-run
+mise prune --tools --dry-run
 ```
 
-The process check is best-effort: it reports protected processes it cannot fully
-inspect and cannot cover other users, future imports, or launches between the
-check and deletion. It is a snapshot, not a launch lock.
-[D-CI]
+Native mise retains versions used by running executables or absolute script
+paths, including conservatively retaining versions behind a runtime symlink
+retargeted after a process started. This replaces our custom Python scanner.
+It is not identical: a working directory, open file, mapped library, or relative
+script path alone does not protect a version. Uninspectable processes and
+processes starting after the scan are not guaranteed protection. Close unusual
+consumers before cleanup; this is not a launch lock. [D-CI]
 
-Omarchy deliberately keeps `upgrade.auto_prune=false` so updates cannot remove
-install directories out from under live sessions. Our cleanup adds live-consumer
-filtering to `make update`; mise's unused-version tracking does not prove a
-version has no running consumers. Mise also supports deferred upgrade pruning (a 24-hour grace
-period by default), but that delay is not a running-process check. Cleanup covers
-existing unused versions, including those left by Omarchy's lazy wrappers.
+Keep Omarchy's `upgrade.auto_prune=false`: upgrades and this explicit cleanup
+step remain separate. There is no repo-owned process scanner or manual
+`mise uninstall` loop.

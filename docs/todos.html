@@ -26,9 +26,9 @@
       <p class="lead">Living checklist. Updated as implementation proceeds.</p>
       <div class="callout note">
         <span class="label">Scope</span>
-        This page tracks the Quattro migration and work still ahead. The
-        pre-Quattro change log was removed once the migration landed; current
-        behaviour is described in Decisions and Architecture.
+        This page records the completed Quattro migration and work still ahead.
+        The pre-Quattro change log was removed once the migration landed;
+        current behaviour is described in Decisions and Architecture.
       </div>
 
       <h2>Implementation progress</h2>
@@ -50,30 +50,42 @@
             </td>
             <td>
               <span class="badge badge-done"
-                >repo rewrite done; live cutover pending</span
+                >done; live overlay verified on 4.0.6</span
               >
             </td>
+          </tr>
+          <tr>
+            <td>Brave bridge</td>
+            <td>
+              Retired the Brave Origin stable bridge: Omarchy 4.0.5 installs and
+              defaults stable <code>brave-origin</code> natively, so the
+              explicit MIME list is gone. See
+              <a href="decisions.html#D-BROWSER-DEFAULT">D-BROWSER-DEFAULT</a>.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
+          </tr>
+          <tr>
+            <td>Hyprland Lua</td>
+            <td>
+              Personal settings live in the reloadable
+              <code>hypr.dotfiles</code> module, loaded after Quattro defaults
+              through a managed block. See
+              <a href="findings.html#F-LUA">Findings → Lua</a> and
+              <a href="architecture.html">the ownership model</a>.
+            </td>
+            <td><span class="badge badge-done">done</span></td>
           </tr>
         </tbody>
       </table>
 
-      <h2>Deferred decisions (resolve at implementation)</h2>
-      <ul class="clean">
-        <li>
-          Exact workspace app→number mapping and live window classes — verify
-          with <code>hyprctl clients</code>. Browser default is no longer part
-          of this open item; Brave Origin is converged by
-          <code>./install</code>.
-        </li>
-        <li>
-          Which <code>.zsh_profile</code> aliases survive the bash port (final
-          dedupe vs. Omarchy defaults).
-        </li>
-        <li>
-          Exact repo path the gitignored local files land in (folded vs.
-          unfolded stow dir) — verify and adjust <code>.gitignore</code>.
-        </li>
-      </ul>
+      <p>
+        The migration-era choices are implemented: workspace assignments live in
+        <code>hypr/.config/hypr/dotfiles.lua</code>, bash additions in
+        <code>bash/.config/dotfiles/shell.sh</code>, and Stow uses
+        <code>--no-folding</code> with gitignored machine-local overrides. See
+        <a href="../README.md#per-machine-overrides">Per-machine overrides</a>
+        for their paths.
+      </p>
 
       <h2>Future work</h2>
       <table>
@@ -87,43 +99,6 @@
         <tbody>
           <tr>
             <td>
-              <span class="badge badge-future">future</span> Hyprland
-              <code>.conf</code> → Lua port
-            </td>
-            <td>When Omarchy ships Lua config on stable</td>
-            <td>
-              Port <code>hypr.conf</code> → a small Lua module; swap the single
-              integration line to <code>require("dotfiles.hypr")</code>. One
-              module + one line. See
-              <a href="findings.html#F-LUA">Findings → Lua</a>.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <span class="badge badge-future">future</span> Retire Brave Origin
-              stable bridge
-            </td>
-            <td>
-              A released Omarchy version maps <code>brave-origin</code> install
-              and default commands to stable (tracking
-              <a href="https://github.com/basecamp/omarchy/pull/6021"
-                >basecamp/omarchy#6021</a
-              >)
-            </td>
-            <td>
-              Remove the
-              <a href="decisions.html#D-BROWSER-DEFAULT">D-BROWSER-DEFAULT</a>
-              compatibility path that installs
-              <code>brave-origin-bin</code> through
-              <code>omarchy pkg aur add</code>, sets
-              <code>brave-origin.desktop</code>, and stows the
-              <code>theme-set.d/brave-origin-stable</code> hook. Return to
-              <code>omarchy install browser brave-origin</code> and
-              <code>omarchy default browser brave-origin</code>.
-            </td>
-          </tr>
-          <tr>
-            <td>
               <span class="badge badge-future">future</span> Post-update
               integrity hook
             </td>
@@ -132,7 +107,7 @@
             </td>
             <td>
               A <code>~/.config/omarchy/hooks/post-update.d/</code> hook that
-              <em>checks</em> the <code>source =</code> line / bashrc block are
+              <em>checks</em> the Hyprland Lua integration and bashrc blocks are
               present and reports a recovery action (<code>./install</code>).
               Must not auto-rewrite Omarchy config.
             </td>

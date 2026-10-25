@@ -1,6 +1,7 @@
-# Extra official-repo packages installed by `install`. [D-SCRIPTS-MINIMAL][D-PKG-REMOVE][F-CLI]
+# Extra sync-repo packages (Arch + Omarchy) installed by `install`. [D-SCRIPTS-MINIMAL][D-PKG-REMOVE][F-CLI]
 # One package per line; '#' comments and blank lines are ignored.
-# Pi uses Omarchy's lazy mise wrapper, not a pacman package. [F-APP-CHANNELS]
+# Pi uses Omarchy's lazy mise wrapper; T3 Code uses its AI installer below
+# the manifest steps in install, including native theme setup. [F-APP-CHANNELS]
 
 # Dev toolchain — used by `make ci` / `make fmt`. Pin to pacman (not mise's go
 # install dir, which mise doesn't shim) so they're on PATH unconditionally —
@@ -13,6 +14,8 @@ wireguard-tools        # wg-quick — used by vpns() / exitnode() in shell.local
 azure-cli              # Azure CLI (binary: az) — official extra-repo pkg, so here not packages.aur.txt (unlike gcloud)
 nmap                   # network discovery and security auditing
 spotify                # Quattro's supported Spotify service installs this sync-repo package [F-APP-CHANNELS]
+slack-desktop          # workspace 3 — Omarchy sync-repo package [F-APP-CHANNELS]
+claude-desktop         # Claude Desktop — Omarchy sync-repo package [F-APP-CHANNELS]
 
 # Keep malware scanning explicit and on-demand; no clamd/on-access services. [F-MALWARE-SCANNER]
 clamav                 # file-signature scanner; refresh signatures before each incident scan

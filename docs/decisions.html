@@ -120,8 +120,9 @@
                   syntax errors surface here rather than at
                   <code>./install</code> time), and
                   <code>.github/scripts/check_docs.py</code> for docs integrity,
-                  plus Python tests for live-consumer cleanup, Pi bootstrap, and
-                  captive-portal helper behavior. <code>make fmt</code>
+                  plus Python tests for update delegation and failure handling,
+                  Pi bootstrap, and captive-portal helper behavior.
+                  <code>make fmt</code>
                   auto-fixes.
                 </li>
                 <li>
@@ -129,11 +130,12 @@
                   <code>omarchy update -y</code> (pacman + AUR + omarchy
                   migrations and Quattro-owned mise agent updates), then
                   <code>uv self update</code> because uv remains outside mise,
-                  then filtered mise cleanup and <code>make verify</code>. It
-                  first refuses while <code>pacman -Qdtq</code> reports orphans,
-                  avoiding the updater's pseudo-TTY prompt. Non-zero Omarchy,
-                  uv, or cleanup exits are warned, then the wrapper continues
-                  through the remaining channel and read-only verification so
+                  then native mise cleanup and <code>make verify</code>. Run in
+                  a terminal: Omarchy owns orphan review, and 4.0.5 still
+                  prompts for it despite <code>-y</code>. No separate repo
+                  preflight or package-removal policy. Non-zero Omarchy, uv, or
+                  cleanup exits are warned, then the wrapper continues through
+                  the remaining channel and read-only verification so
                   independent drift is still reported.
                 </li>
                 <li>
@@ -144,27 +146,25 @@
                   device-specific prompts and reboot/power-cycle outcomes.
                 </li>
                 <li>
-                  Mise cleanup runs noninteractively inside
-                  <code>make update</code> through
-                  <code>.github/scripts/prune_mise.py</code>. Get candidates
-                  from <code>mise ls --prunable --json</code>, then retain
-                  versions referenced by same-user Linux
-                  <code>/proc</code> executable paths, working directories, argv
-                  paths, memory maps, or open files. Print retained versions
-                  with consumer PIDs and names, grouped by version, and
-                  summarize removed/kept counts using the repo's status palette
-                  (plain when redirected or <code>NO_COLOR</code> is set). Busy
-                  versions are a successful skip. Refresh eligibility and
-                  recheck consumers immediately before each exact
-                  <code>mise uninstall --yes tool@version</code>; never use a
-                  broad prune that could include retained versions. The helper's
-                  <code>--dry-run</code> reports selections without removal.
-                  Report protected processes that cannot be fully inspected.
-                  This is best-effort: no launch lock, protection from future
-                  imports, or complete visibility into protected/other-user
-                  processes. Preserve Omarchy's
-                  <code>upgrade.auto_prune=false</code> and use this filtered
-                  cleanup rather than unfiltered automatic pruning.
+                  Mise cleanup delegates to
+                  <code>mise prune --tools --yes</code>, requiring the native
+                  live-process protection verified in mise
+                  <code>2026.10.13</code>. Config/stub tracking, executable and
+                  absolute script-path detection, retargeted runtime-link
+                  protection, reporting, and removal belong to mise, not a repo
+                  scanner. Preview with
+                  <code>mise prune --tools --dry-run</code>.
+                  <code>--tools</code> excludes tracked-config housekeeping.
+                  This deliberately retires the broader custom checks: working
+                  directories, open files, memory maps, and relative script
+                  paths alone no longer retain a version. Native detection skips
+                  uninspectable processes and is a snapshot, not a launch lock;
+                  future starts/imports are not protected. Keep
+                  <code>upgrade.auto_prune=false</code> so upgrading and
+                  explicit pruning remain separate. The wrapper skips cleanup
+                  below <code>2026.10.13</code>, including after an update
+                  failure, rather than pruning with an older mise lacking
+                  protection.
                 </li>
                 <li>
                   <code>make verify</code> — read-only live health check
@@ -378,12 +378,15 @@
                   follow the Omarchy-native audit in
                   <a href="findings.html#F-APP-CHANNELS">F-APP-CHANNELS</a>:
                   <code>spotify</code> uses Quattro's sync-repo service package,
-                  and <code>slack-desktop</code> is an intentional local AUR
-                  choice because Omarchy has no Slack package, webapp, binding,
-                  or migration. Operator CLI utilities use the same
-                  official-repository path: <code>nmap</code> comes from Arch
-                  <code>extra</code> through <code>packages.txt</code>. Security
-                  tooling follows
+                  while <code>slack-desktop</code> and
+                  <code>claude-desktop</code> use Omarchy's sync-repo packages
+                  through <code>packages.txt</code>, not the AUR. T3 Code
+                  instead uses <code>omarchy install ai t3-code</code> so its
+                  sync-repo package also receives the native Omarchy theme
+                  setup; app state and provider authentication remain local.
+                  Operator CLI utilities use the same official-repository path:
+                  <code>nmap</code> comes from Arch <code>extra</code> through
+                  <code>packages.txt</code>. Security tooling follows
                   <a href="findings.html#F-MALWARE-SCANNER">F-MALWARE-SCANNER</a
                   >: <code>clamav</code> comes from Arch
                   <code>extra</code> through <code>packages.txt</code>, while
@@ -496,16 +499,21 @@
               <code>omarchy install browser brave-origin</code> only when the
               package is absent and
               <code>omarchy default browser brave-origin</code> only when the
-              selected default differs. It verifies the resulting state, then
-              asserts the additional HTML and scheme MIME handlers that
-              <code>xdg-settings</code> does not cover.
+              selected default differs, then verifies the resulting state. MIME
+              associations are Omarchy's: the repo sets and asserts none.
             </td>
             <td>
               Quattro natively maps Brave Origin to stable, owns its flags,
-              extensions, policies, and theme refresh. The repository hook and
-              package/channel compatibility code are therefore deleted. The
-              command's desktop notification can fail after state succeeds, so
-              the following read-only default assertion is the safety gate.
+              extensions, policies, and theme refresh. The repository hook,
+              package/channel compatibility code, and the explicit MIME list
+              (written while Omarchy still mapped <code>brave-origin</code> to
+              the beta launcher) are therefore deleted. Since Omarchy 4.0.5,
+              <code>~/.config/hyprland-mimeapps.list</code> routes http(s) links
+              through <code>omarchy-browser.desktop</code>, and
+              <code>omarchy default browser</code> reads the browser beneath
+              that router. The command's desktop notification can fail after
+              state succeeds, so the following read-only default assertion is
+              the safety gate.
             </td>
           </tr>
         </tbody>
@@ -1277,42 +1285,31 @@
               <code>agents/harnesses/claude/.stow-local-ignore</code> keeps stow
               from symlinking it into <code>$HOME</code> (it sits at the package
               root, so it would otherwise land at <code>~/settings.jq</code>).
-              The default model and effort level are pinned as
-              <code>.env.ANTHROPIC_MODEL = "opus[1m]"</code> (bare
-              <code>opus</code> is standard context, unlike <em>Default</em>)
-              and <code>.env.CLAUDE_CODE_EFFORT_LEVEL = "xhigh"</code> in the
-              same overlay — not the top-level <code>model</code> /
-              <code>effortLevel</code> keys: the <code>/model</code> and
-              <code>/effort</code> pickers own and rewrite those keys (selecting
-              <em>Default</em> even clears <code>model</code>), so a pinned key
-              drifts on every switch, but neither picker touches
-              <code>.env</code>, so the overlay stays a no-op. Claude Code
-              applies its settings <code>env</code> block to the session
-              (verified: it selects the model and, on 2.1.280, outranks the pick
-              <code>/model</code> saves;
-              <code>CLAUDE_CODE_EFFORT_LEVEL</code> is read from the env and is
-              session-only), so these set the startup defaults while
-              <code>/model</code> and <code>/effort</code> still switch at
-              runtime. The same rule excludes <strong>consent flags</strong> —
-              keys recording that <em>the user</em> accepted a dialog. The
-              overlay originally asserted
-              <code>.skipAutoPermissionPrompt = true</code> to suppress the
-              auto-mode opt-in; Claude Code 2.1.263 added a one-shot migration
-              (<code>hasResetAutoModeOptInForDefaultOffer</code>, recorded in
-              <code>~/.claude.json</code>) that deletes the key whenever
-              <code>permissions.defaultMode</code> is not <code>auto</code>, so
-              auto mode can be re-offered as a default. That is deliberate
-              upstream behavior, not a bug: declaring someone's dialog consent
-              in a config overlay both forges it and drifts
-              <code>verify.sh</code> on the next run. Two asserted keys share
-              that shape and are deliberately kept —
+              Model and effort selection are left to Claude Code: the overlay
+              does not set <code>model</code>, <code>effortLevel</code>,
+              <code>.env.ANTHROPIC_MODEL</code>, or
+              <code>.env.CLAUDE_CODE_EFFORT_LEVEL</code>. The previous model and
+              effort overrides were cleared from the live settings to try Claude
+              Code's defaults. Future installs preserve selections made through
+              <code>/model</code> and <code>/effort</code>. The same rule
+              excludes <strong>consent flags</strong> — keys recording that
+              <em>the user</em> accepted a dialog. The overlay originally
+              asserted <code>.skipAutoPermissionPrompt = true</code> to suppress
+              the auto-mode opt-in; Claude Code 2.1.263 added a one-shot
+              migration (<code>hasResetAutoModeOptInForDefaultOffer</code>,
+              recorded in <code>~/.claude.json</code>) that deletes the key
+              whenever <code>permissions.defaultMode</code> is not
+              <code>auto</code>, so auto mode can be re-offered as a default.
+              That is deliberate upstream behavior, not a bug: declaring
+              someone's dialog consent in a config overlay both forges it and
+              drifts <code>verify.sh</code> on the next run. Two asserted keys
+              share that shape and are deliberately kept —
               <code>skipWorkflowUsageWarning</code> is also consent state, and
               <code>teammateMode</code> is rewritten by <code>/config</code>'s
               picker exactly like <code>model</code> — because neither has a
               reset migration today; they stay until one appears rather than
               being dropped on speculation. <code>verify.sh</code> link-checks
-              the script and confirms the settings overlay landed (which covers
-              the env pin).
+              the script and confirms the settings overlay landed.
             </td>
             <td>
               <strong>Tool-rewritten JSON gets a delta, not a symlink.</strong>
@@ -1363,6 +1360,17 @@
         conflict audit, and the chosen resolution so future keyboard-layout
         changes can extend the same table.
       </div>
+      <p>
+        On Quattro 4.0.5, fixed root/apps routes call the menu plugin's
+        supported IPC with literal JSON, avoiding the
+        <code>omarchy-menu</code> wrapper and its <code>jq</code> subprocess.
+        The Kinesis clipboard binding already uses direct shell IPC. No
+        compatibility helper or backported <code>{ menu = … }</code>/<code
+          >{ panel = … }</code
+        >
+        syntax: neither that helper support nor shell global-shortcut
+        registrations is installed. Chords and toggle behavior are unchanged.
+      </p>
       <table>
         <thead>
           <tr>
@@ -1375,12 +1383,11 @@
         <tbody>
           <tr>
             <td><code>SUPER+D</code></td>
-            <td>Open Omarchy menu via <code>omarchy-menu</code></td>
+            <td>Open the root menu through <code>omarchy-shell</code> IPC</td>
             <td>
-              Not active in the live post-Remove-Preinstalled
-              <code>bindings.conf</code>. Stock Omarchy app bindings use
-              <code>SUPER+D</code> for Lazy Docker, so the overlay treats that
-              as a possible future conflict.
+              Audited on Quattro 4.0.5: the stock root menu is on
+              <code>SUPER+SPACE</code>; Docker is on <code>SUPER+SHIFT+D</code>.
+              <code>SUPER+D</code> is free.
             </td>
             <td>
               Keep <code>SUPER+ALT+SPACE</code> intentionally free, then bind
@@ -1391,9 +1398,7 @@
           </tr>
           <tr>
             <td><code>SUPER+SPACE</code></td>
-            <td>
-              Open the Apps menu via <code>omarchy-menu toggle apps</code>
-            </td>
+            <td>Open the Apps menu through <code>omarchy-shell</code> IPC</td>
             <td>
               Quattro changed this chord from the direct application launcher to
               its root Omarchy menu. The root menu is already preserved on the
@@ -1591,24 +1596,28 @@
           disable upgrade pruning to protect live sessions.
         </li>
         <li>
-          Installed mise 2026.9.14: <code>mise prune --help</code> describes
-          tracked-config and stub references, and
-          <code>mise upgrade --help</code>
-          describes upgrade pruning. Mise's deferred pruning defaults to 24
-          hours; reference tracking and a delay do not detect live consumers.
-          Verified in the installed release's
-          <a href="https://github.com/jdx/mise/blob/v2026.9.14/src/cli/prune.rs"
+          Installed mise 2026.10.13: <code>mise prune --help</code> now
+          documents running-process retention. Verified against the tagged
+          <a
+            href="https://github.com/jdx/mise/blob/v2026.10.13/src/cli/prune.rs"
             >prune implementation</a
           >
           and
           <a
-            href="https://github.com/jdx/mise/blob/v2026.9.14/src/tool_purgatory.rs"
-            >deferred-pruning implementation</a
-          >. See also the
+            href="https://github.com/jdx/mise/blob/v2026.10.13/src/toolset/running.rs"
+            >process matching and retargeted-link handling</a
+          >. An isolated temporary install confirmed a live executable is
+          excluded from <code>mise ls --prunable</code> and becomes eligible
+          after exit. See the
           <a href="https://mise.jdx.dev/cli/prune.html">mise prune reference</a
-          >. Targeted removal uses
-          <a href="https://mise.jdx.dev/cli/uninstall.html">mise uninstall</a>,
-          which removes installations without changing tool configuration.
+          >.
+        </li>
+        <li>
+          Installed Omarchy 4.0.5:
+          <code>/usr/share/omarchy/bin/omarchy-update-orphan-pkgs</code>
+          owns interactive orphan review, and
+          <code>/usr/share/omarchy/bin/omarchy-menu</code> documents the direct
+          menu plugin IPC and its literal root/apps payloads.
         </li>
       </ul>
     </section>

@@ -55,22 +55,6 @@ declare -A STALE_TERMINAL_LAUNCHERS=(
   [foot]=foot.desktop
 )
 
-# xdg-settings asserts only the primary handler, so install sets and verify.sh
-# checks these associations explicitly — from one list, so they cannot drift.
-# [D-BROWSER-DEFAULT]
-BRAVE_MIME_TYPES=(
-  x-scheme-handler/http
-  x-scheme-handler/https
-  x-scheme-handler/chrome
-  text/html
-  application/x-extension-htm
-  application/x-extension-html
-  application/x-extension-shtml
-  application/xhtml+xml
-  application/x-extension-xhtml
-  application/x-extension-xht
-)
-
 # Omarchy's install root, defaulted the way its own env-bootstrap defaults it,
 # so install and verify.sh resolve packaged files identically.
 : "${OMARCHY_PATH:=/usr/share/omarchy}"

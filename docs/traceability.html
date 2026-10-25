@@ -108,15 +108,16 @@
             <td>
               Makefile = single source of truth for repo ops (CI gates +
               <code>make update</code> for packages and self-managed tools,
-              skip-in-use mise cleanup during updates, opt-in
+              Omarchy-owned orphan review and native mise pruning with
+              running-process retention, opt-in
               <code>make update-firmware</code>, and <code>make verify</code>);
               CI invokes it on pinned Ubuntu 26.04 with Node-24-based
               <code>actions/checkout@v7</code>
             </td>
             <td><a href="decisions.html#D-CI">decisions</a></td>
             <td>
-              <code>Makefile</code>, <code>.github/scripts/prune_mise.py</code>,
-              <code>.github/scripts/test_prune_mise.py</code>,
+              <code>Makefile</code>,
+              <code>.github/scripts/test_update.py</code>,
               <code>.github/workflows/ci.yml</code>,
               <code>.github/scripts/check_docs.py</code>,
               <code>.github/scripts/verify.sh</code>
@@ -228,8 +229,9 @@
           <tr>
             <td><code>D-KEYBIND-OVERRIDES</code></td>
             <td>
-              Personal keybinding overrides, including SUPER+SPACE Apps and no
-              workspace-layout toggle hotkey
+              Personal keybinding overrides with direct shell IPC for fixed menu
+              routes, including SUPER+SPACE Apps and no workspace-layout toggle
+              hotkey
             </td>
             <td>
               <a href="decisions.html#D-KEYBIND-OVERRIDES">decisions</a>
@@ -312,10 +314,10 @@
             <td>
               Consolidate Claude Code custom config: stow
               <code>statusline-command.sh</code>, jq-delta
-              <code>settings.json</code> (Claude rewrites it), pin the default
-              model via <code>.env.ANTHROPIC_MODEL</code> in the settings
-              overlay (not the UI-owned top-level model key, and no consent
-              flags Claude Code resets itself), opt into Quattro's generated
+              <code>settings.json</code> (Claude rewrites it), leave model and
+              effort selection to Claude Code's defaults or the user's picker
+              choices (no model or effort pins or consent flags Claude Code
+              resets itself), opt into Quattro's generated
               <code>custom:omarchy</code> theme, exclude all secrets/state/cache
             </td>
             <td><a href="decisions.html#D-CLAUDE-CONFIG">decisions</a></td>
@@ -427,8 +429,8 @@
           <tr>
             <td><code>D-BROWSER-DEFAULT</code></td>
             <td>
-              Stable Brave Origin through Quattro's native install/default flow
-              plus explicit MIME associations
+              Stable Brave Origin through Quattro's native install/default flow;
+              MIME associations stay Omarchy's
             </td>
             <td><a href="decisions.html#D-BROWSER-DEFAULT">decisions</a></td>
             <td>
@@ -534,11 +536,12 @@
             <td><code>F-APP-CHANNELS</code></td>
             <td>
               App channels are Omarchy-native first: Quattro owns Brave Origin,
-              Ghostty, ChatGPT, Hermes, the Discord web app, mise agent wrappers
-              (including Pi, restored natively when missing), and Obsidian;
-              Spotify follows Quattro's sync-repo service package, Slack stays
-              native AUR with a browser fallback, and other explicit extras
-              follow their audited package channels
+              Ghostty, ChatGPT, Hermes, T3 Code (native installer and theme),
+              the Discord web app, mise agent wrappers (including Pi, restored
+              natively when missing), and Obsidian; Spotify follows Quattro's
+              sync-repo service package, Slack and Claude Desktop use Omarchy
+              sync-repo packages (Slack retains its browser fallback), and other
+              explicit extras follow their audited package channels
             </td>
             <td><a href="findings.html#F-APP-CHANNELS">findings</a></td>
             <td>
