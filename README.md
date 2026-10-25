@@ -252,14 +252,16 @@ never deletes, quarantines, or reconfigures anything — review detections
 instead of acting automatically. [D-SECURITY-SCAN][F-MALWARE-SCANNER]
 
 ```sh
-sudo security-scan                 # full sweep of / with fresh signatures
+security-scan                      # requests sudo; full sweep with fresh signatures
 security-scan --quick              # home + /tmp, /var/tmp, /dev/shm
 security-scan --skip-malware       # fast posture checks only
-sudo security-scan --no-freshclam  # offline full sweep
+security-scan --no-freshclam       # requests sudo; offline full sweep
 ```
 
-A full sweep refuses to run without root so unreadable paths cannot quietly
-weaken a "clean" result; `--quick` stays unprivileged. Logs land in
+A full sweep requests sudo automatically so unreadable paths cannot quietly
+weaken a "clean" result; `--quick` and `--skip-malware` stay unprivileged.
+Run `security-scan` directly: sudo's restricted PATH may not include the
+stowed command in `~/.local/bin`. Logs land in
 `~/.local/state/security-scan/<timestamp>/` and are owned by the invoking user
 even under `sudo`. A full sweep takes tens of minutes, and ClamAV's size limits
 still skip files over 100 MB and containers over 400 MB. Exit status is `0`

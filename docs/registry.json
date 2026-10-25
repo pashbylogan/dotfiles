@@ -397,10 +397,14 @@
     },
     {
       "id": "D-SECURITY-SCAN",
-      "title": "Read-only stowed security-scan runs ClamAV plus host posture checks, needs root for a full sweep, and never deletes or quarantines",
+      "title": "Read-only stowed security-scan runs ClamAV plus host posture checks, requests sudo for a full sweep, and never deletes or quarantines",
       "canonical": "decisions.html#D-SECURITY-SCAN",
       "appears_in": ["README.md", "findings.html"],
-      "code_paths": ["bin/.local/bin/security-scan", "README.md"],
+      "code_paths": [
+        "bin/.local/bin/security-scan",
+        ".github/scripts/test_security_scan.py",
+        "README.md"
+      ],
       "related": ["D-SCRIPTS-MINIMAL", "F-MALWARE-SCANNER", "F-CLI"]
     },
     {

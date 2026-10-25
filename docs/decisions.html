@@ -574,9 +574,11 @@
         background service.
       </p>
       <p>
-        A full sweep refuses to run without root, because unreadable paths would
-        silently weaken a "clean" claim. <code>--quick</code> stays unprivileged
-        and covers the invoking user's home plus <code>/tmp</code>,
+        A full sweep requests sudo automatically, because unreadable paths would
+        silently weaken a "clean" claim. The script re-executes its resolved
+        absolute path so sudo's restricted PATH need not include
+        <code>~/.local/bin</code>. <code>--quick</code> stays unprivileged and
+        covers the invoking user's home plus <code>/tmp</code>,
         <code>/var/tmp</code>, and <code>/dev/shm</code>. Detections are printed
         for human review: the script never passes <code>--remove</code> or
         <code>--move</code>, never changes configuration, and never enables (or

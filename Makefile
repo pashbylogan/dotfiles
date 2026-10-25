@@ -59,6 +59,7 @@ ci: ## Run the full gate: shellcheck + shfmt + prettier + jq filter parse + docs
 	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_update.py'
 	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_pi.py'
 	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_wifi_login.py'
+	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_security_scan.py'
 	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_agent_skills.py'
 	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_agent_config.py'
 	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_agent_sources.py'

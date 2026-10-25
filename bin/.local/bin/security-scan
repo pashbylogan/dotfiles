@@ -31,7 +31,7 @@ Read-only security scan of this machine in two phases:
 Nothing is deleted, quarantined, or reconfigured; every finding needs review.
 
 A whole-machine malware scan needs root, because unreadable paths would
-silently weaken the result: sudo security-scan. --quick stays unprivileged and
+silently weaken the result; it requests sudo automatically. --quick stays unprivileged and
 covers your home plus /tmp, /var/tmp, and /dev/shm. Mounted filesystems are
 traversed; /proc and /sys are not.
 
@@ -53,10 +53,10 @@ are skipped, so large images and archives can go unchecked. Signatures older
 than seven days are reported as a posture finding.
 
 Examples:
-  sudo security-scan                  # full machine, signatures refreshed
+  security-scan                       # requests sudo; full machine, fresh signatures
   security-scan --quick               # unprivileged hot-spot sweep
   security-scan --skip-malware        # fast posture checks only
-  sudo security-scan --no-freshclam   # offline full sweep
+  security-scan --no-freshclam        # requests sudo; offline full sweep
 EOF
 }
 
@@ -153,7 +153,7 @@ parse_args() {
 
 preflight() {
   if [ "$QUICK" -eq 0 ] && [ "$SKIP_MALWARE" -eq 0 ] && [ "$EUID" -ne 0 ]; then
-    die "a whole-machine scan needs root: sudo $PROG (or --quick for your own files)"
+    die "a whole-machine scan needs root (or --quick for your own files)"
   fi
   if [ "$SKIP_MALWARE" -eq 1 ] && [ "$SKIP_POSTURE" -eq 1 ]; then
     die "nothing to do: --skip-malware and --skip-posture cancel each other out"
@@ -472,6 +472,11 @@ main() {
   TARGET_HOME="$(getent passwd "$TARGET_USER" 2>/dev/null | cut -d: -f6 || true)"
   [ -n "$TARGET_HOME" ] || TARGET_HOME="$HOME"
   parse_args "$@"
+  # Resolve before sudo: its restricted PATH does not include ~/.local/bin.
+  if [ "$QUICK" -eq 0 ] && [ "$SKIP_MALWARE" -eq 0 ] && [ "$EUID" -ne 0 ]; then
+    have sudo || die "a whole-machine scan needs sudo (or --quick for your own files)"
+    exec sudo -- "$(readlink -f "${BASH_SOURCE[0]}")" "$@"
+  fi
   [ -n "$LOG_DIR" ] || LOG_DIR="$(state_base)/$PROG/$(date +%Y%m%dT%H%M%S)"
   preflight
   banner
