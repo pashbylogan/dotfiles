@@ -9,15 +9,8 @@ Everything here is reversible except the last step, and only because the reflog 
 a filesystem. The order below exists to keep it that way. **When a check does not pass,
 report the item and move on; never widen a predicate to make something deletable.**
 
-Harnesses sweep some of this on their own, and only worktrees:
-
-- Claude Code removes subagent and background-session worktrees under `.claude/worktrees/`
-  once they pass `cleanupPeriodDays` (default 30), skipping changed or unpushed ones.
-- T3 Code removes worktrees under `~/.t3/worktrees/` by its Storage cleanup settings
-  (inactive, settled, merged, unchanged). Branches and thread history are kept.
-
-This skill is for not waiting, and for the branches, remote branches and scratch files
-no harness touches.
+Claude Code and T3 Code sweep only their own worktrees, on a schedule. This skill is for
+not waiting, and for the branches, remote branches and scratch files no harness touches.
 
 ## Merge targets
 
@@ -111,8 +104,7 @@ itself an ancestor of every merge target (an integration branch: of its own
 `origin/<env>`). Local and remote diverge.
 
 **Remove a worktree**: it is *this task's* worktree. Never sweep a harness's worktree
-folder (`.claude/worktrees/`, `~/.t3/worktrees/`) or a ship run's `wt-*` folders of other
-tickets: the others belong to live parallel sessions, and removing one destroys work in
+folder (`.claude/worktrees/`, `~/.t3/worktrees/`) or another task's worktree: the others belong to live parallel sessions, and removing one destroys work in
 progress. It must not be your cwd, its `status --porcelain` must be empty but for
 known-regenerable paths, and its branch must have passed the branch or integration-branch
 predicate. An integration worktree this task created counts as this task's. `git worktree
@@ -144,12 +136,3 @@ Show path and size before deleting.
 - Run while a merge, rebase, or revert is in progress (the stale-sequencer removal is the
   one exception, and it applies precisely when nothing is in progress)
 - Delete or overwrite a gitignored file that differs from its counterpart
-
-## Ask, or don't
-
-**Always the human's call**, listed with evidence rather than acted on: unmerged branches,
-dirty worktrees, gitignored files that differ, any worktree not tied to this task, any
-scratch path this session did not itself create.
-
-**Never worth asking about**: branch deletions whose predicate passed, a clean worktree of
-your own, regenerable build output, a stale sequencer.

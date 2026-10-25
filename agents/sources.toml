@@ -19,7 +19,7 @@ reference_tools = ["crapper", "dryer", "mutator"]
 kind = "local"
 [skills.cleanup]
 kind = "local"
-reference = "Generalised from the Cypris cleanup skill (developer-tooling prompts/skills/cleanup, never committed there)"
+reference = "Locally authored, generalised from a project-specific cleanup skill"
 [skills.simplify]
 kind = "local"
 reference = "Claude Code 2.1.310; see references/provenance.md"

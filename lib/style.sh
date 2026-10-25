@@ -64,6 +64,9 @@ declare -A STALE_TERMINAL_LAUNCHERS=(
 # machine where CLAUDE_CONFIG_DIR points elsewhere. [D-CLAUDE-CONFIG]
 CLAUDE_CONFIG_HOME="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 CLAUDE_SETTINGS_FILE="$CLAUDE_CONFIG_HOME/settings.json"
+# install asserts this one top-level key in Codex-owned config.toml; verify checks it. [D-AGENT-SKILLS]
+CODEX_CONFIG="$HOME/.codex/config.toml"
+CODEX_FALLBACK='project_doc_fallback_filenames = ["CLAUDE.md"]'
 CLAUDE_THEME_FILE="$CLAUDE_CONFIG_HOME/themes/omarchy.json"
 
 # Stow and Pi's default agent directory share these paths; auth stays local. [D-PI-WEB]
