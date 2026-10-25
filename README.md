@@ -137,8 +137,8 @@ in secrets/host values. Re-run `./install` to link the real files into `~`.
 
 `./install` ensures Pi's Omarchy-owned launcher exists through
 `omarchy mise install pi`. It uses that launcher to provision the pinned
-`pi-web-access@0.35.0` extension when missing or at the wrong version, downloading
-Pi on a fresh machine. Quattro's updater owns subsequent mise-backed agent
+`pi-web-access@0.44.0` extension and a commit-pinned Sol-pi revision when missing
+or incorrect, downloading Pi on a fresh machine. Quattro's updater owns subsequent mise-backed agent
 updates. Pi uses the shared repo-root `AGENTS.md` guidance.
 [F-APP-CHANNELS]
 
@@ -147,28 +147,46 @@ To select Pi for Omarchy's agent shortcut, use Omarchy menu → Setup → Defaul
 
 The `agents/harnesses/pi/` overlay sets the default model to `openai/gpt-6.1-sol` and uses
 `gpt-6-luna` for web search and page answers through your ChatGPT login. Search
-falls back to keyless Exa; page fetching falls back to keyless Jina Reader.
-Images, PDFs, GitHub content, source checks, and stored-content retrieval are
-enabled. PDF extraction stays local, with a stowed compatibility extension for
-Pi's bundled runtime. Browser-cookie access stays off. [D-PI-WEB]
+falls back to keyless Exa. Page fetching is direct HTTP only: automatic hosted
+fallbacks (including Jina) are disabled. Images, PDFs, GitHub content, source
+checks, and stored-content retrieval are enabled. PDF extraction stays local,
+with a stowed compatibility extension for Pi's bundled runtime. Browser-cookie
+access and hosted video analysis stay off. Search queries and explicit page-answer
+requests still go to their selected providers. [D-PI-WEB]
 
-`./install` merges the settings without tracking credentials or session state,
-installs Node through Omarchy if npm is missing, and stows the PDF fix.
-`make verify` checks the overlay without launching Pi or contacting providers.
+Sol-pi is pinned to upstream commit `219568034fa54ed121ede80961655e33dfb9d0e3`
+(the Pi 1.x compatibility revision). Action Fusion, local ObservationPack, and
+Online Context Compact are enabled. **Evidence-Preserving Reducer is disabled**:
+it would send diagnostic logs to a separate model call. ObservationPack archives
+tool output locally under Pi's session storage; native compaction uses the
+existing Pi model route. Trusted project `.pi/sol-pi.json` replaces the user-wide
+profile, so inspect overrides before trusting a project. Restart Pi after config
+changes.
+
+`./install` merges settings without tracking credentials/session state, installs
+Node through Omarchy if npm is missing, and stows the PDF fix. Pi's package and
+configuration setup is part of the existing `make agents` / `make agent-config`
+flow; portable hosts require Pi, Git, jq, and Node.js >=22.19/npm already on PATH.
+Both paths repair vulnerable cached undici 8.x within the extension's supported
+dependency range. `make verify-agents` and `make verify` inspect files without
+launching Pi or contacting providers.
 Implementation details and compatibility findings are documented in
 [the Pi decision](docs/decisions.html#D-PI-WEB).
 
 Scanned PDFs need OCR or visual inspection; local extraction is limited to
 20 MB and 100 pages. Video frame extraction uses Quattro's ffmpeg/yt-dlp tools;
-full video analysis requires separate Gemini credentials. Exa and Jina's keyless
-services have usage limits, and Jina receives URLs when direct fetching fails.
+hosted video analysis is disabled. Exa's keyless search service has usage limits.
+Pages that fail direct fetching need manual inspection rather than being forwarded
+to another hosted reader.
 
 ### Shared coding-agent skills
 
 `agents/` owns shared user instructions, portable skills, reviewed source pins,
 and harness-specific static assets/settings deltas. Static scripts/extensions
 use per-file Stow links from `agents/harnesses/`; shared instructions and skills
-use managed **copies**, while mutable settings keep narrow jq merges. Auth and
+use managed **copies**, while mutable settings keep narrow jq merges. Portable
+`make agents` also converges Pi's packages and privacy-preserving settings; Pi,
+Git, jq, and Node.js >=22.19/npm must already be on PATH. Auth and
 runtime state are never imported. Local edits or unknown conflicts stop deployment;
 unrelated files remain untouched. [D-AGENT-SKILLS]
 

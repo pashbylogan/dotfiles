@@ -123,32 +123,6 @@ pkg_filter() {
   return 0
 }
 
-# Pi rewrites its JSON files; converge deltas and hydrate only a missing/wrong
-# npm release through the native launcher, without loading agent code. [D-PI-WEB]
-configure_pi() {
-  local target source
-  mkdir -p "$PI_AGENT_DIR" "$(dirname "$PI_WEB_CONFIG_FILE")"
-  for target in "$PI_SETTINGS_FILE" "$PI_WEB_CONFIG_FILE"; do
-    if [ ! -f "$target" ]; then
-      (umask 077 && printf '{}\n' >"$target")
-    fi
-  done
-  apply_jq_deltas "$PI_SETTINGS_FILE" "$REPO/agents/harnesses/pi/settings.jq" "Pi settings" || true
-  apply_jq_deltas "$PI_WEB_CONFIG_FILE" "$REPO/agents/harnesses/pi/web-search.jq" "Pi web access" || true
-  source="$(jq -r '.packages[-1]' "$PI_SETTINGS_FILE")"
-  if ! pi_web_installed "$source"; then
-    if ! have npm; then
-      omarchy install dev-env node
-      have npm || die "npm unavailable after Omarchy Node setup — check mise's PATH"
-    fi
-    info "installing Pi extension: $source"
-    PI_CODING_AGENT_DIR="$PI_AGENT_DIR" "$HOME/.local/bin/pi" install "$source" ||
-      die "Pi extension installation failed — re-run ./install"
-    pi_web_installed "$source" || die "Pi extension version differs from $source"
-  fi
-  success "Pi web access configured ($source)"
-}
-
 # ── prerequisites ────────────────────────────────────────────────────────────
 # Omarchy CLI is preferred over re-implementing package logic [F-CLI][D-ENGINE].
 step "Prerequisites"
@@ -370,9 +344,13 @@ prestow_backup \
 STOW_PKGS=(bash ssh bin hypr tmux nvim uwsm omarchy human)
 stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
 success "stowed: ${STOW_PKGS[*]}"
+# Runtime provisioning stays Omarchy-owned; agent configuration also runs headlessly. [D-PI-WEB]
+if ! have npm; then
+  omarchy install dev-env node
+  have npm || die "npm unavailable after Omarchy Node setup — check mise's PATH"
+fi
 # Agent static files use their own Stow directory; shared guidance is copied. [D-AGENT-SKILLS]
-python3 -B "$REPO/.github/scripts/agent_config.py" install
-configure_pi
+PI_BIN="$HOME/.local/bin/pi" python3 -B "$REPO/.github/scripts/agent_config.py" install
 
 # Stale user launchers survive package removal because pacman never owned them.
 # [D-PKG-REMOVE][D-TERM-GHOSTTY]

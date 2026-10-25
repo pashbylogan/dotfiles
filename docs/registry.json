@@ -447,7 +447,7 @@
     },
     {
       "id": "D-PI-WEB",
-      "title": "Pi web access uses a pinned native package install, mutable JSON deltas, and a stowed PDF compatibility extension; credentials and runtime state remain local",
+      "title": "Pi web access and Pi 1.x Sol-pi use pinned native installs, portable JSON convergence and local PDF compatibility; log delegation, hosted reader fallback, cookies and hosted video analysis stay disabled",
       "canonical": "decisions.html#D-PI-WEB",
       "appears_in": [
         "README.md",
@@ -457,11 +457,13 @@
       ],
       "code_paths": [
         "install",
-        "lib/style.sh",
         "Makefile",
         ".github/scripts/verify.sh",
         ".github/scripts/test_pi.py",
+        ".github/scripts/agent_config.py",
+        ".github/scripts/test_agent_config.py",
         "agents/harnesses/pi/settings.jq",
+        "agents/harnesses/pi/sol-pi.jq",
         "agents/harnesses/pi/web-search.jq",
         "agents/harnesses/pi/.stow-local-ignore",
         "agents/harnesses/pi/.pi/agent/extensions/pi-web-access-pdf-compat.ts"

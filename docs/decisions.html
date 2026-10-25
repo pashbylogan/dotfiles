@@ -232,51 +232,79 @@
           </tr>
           <tr id="D-PI-WEB">
             <td>
-              <code class="meta">D-PI-WEB</code> Reproducible Pi web access
+              <code class="meta">D-PI-WEB</code> Reproducible,
+              privacy-preserving Pi extensions
             </td>
             <td>
-              Keep Pi on Omarchy's mise launcher. Merge
-              <code>agents/harnesses/pi/settings.jq</code> and
-              <code>agents/harnesses/pi/web-search.jq</code> into mutable JSON:
-              settings under <code>~/.pi/agent/</code>, web config using the
-              extension's XDG/legacy discovery. Stow only the user-owned PDF
-              compatibility extension. Seed missing JSON, preserve unrelated
-              keys and packages, and normalize this extension's npm declarations
-              to the exact <code>npm:pi-web-access@0.35.0</code> pin. Provision
-              through <code>pi install</code> only when the installed package is
-              absent or has the wrong version; use Omarchy's Node dev-env if npm
-              is missing. Authentication, device IDs, sessions, package caches,
-              and Omarchy's theme extension remain local. The overlay targets
-              Pi's default agent directory; alternative agent roots are outside
-              this install. See
+              Keep Pi on Omarchy's mise launcher; headless hosts retain their
+              existing Pi installation. Extend the existing
+              <code>.github/scripts/agent_config.py</code> install/verify flow,
+              already used by <code>./install</code> and portable
+              <code>make agents</code>; no separate Pi command or setup script.
+              Merge the settings, web-search and Sol-pi jq deltas under
+              <code>agents/harnesses/pi/</code> into mutable JSON. Honor
+              <code>PI_CODING_AGENT_DIR</code> for settings/packages and the
+              extension's XDG/legacy web-config discovery. Static PDF
+              compatibility assets remain stowed at Pi's default root. Validate
+              inputs before mutation, preserve unrelated state, and normalize
+              owned packages to <code>npm:pi-web-access@0.44.0</code> and
+              <code
+                >git:github.com/NVlabs/SoL-Pi@219568034fa54ed121ede80961655e33dfb9d0e3</code
+              >. Migrate the old npm Sol-pi registration before dropping its
+              declaration. Hydrate missing/wrong pins through Pi's CLI. Native
+              npm hydration can rewrite Sol-pi's lockfile; source changes still
+              fail verification. Refresh vulnerable cached undici 8.x within the
+              web extension's supported range (fixed floor 8.12.2), not a
+              blanket audit fix. Omarchy provisions Node when missing; portable
+              mode requires Pi, Git, jq, and Node &gt;=22.19/npm already on
+              PATH. Authentication, sessions, package caches, and Omarchy's
+              theme remain local. See
               <a href="findings.html#F-APP-CHANNELS">F-APP-CHANNELS</a>.
             </td>
             <td>
               Default chats use <code>openai/gpt-6.1-sol</code>; search and page
               answers use <code>gpt-6-luna</code> with the existing ChatGPT
               login. OpenAI search falls back only to Exa; Exa is keyless when
-              no local Exa credential is configured. Direct page reading falls
-              back to keyless Jina Reader, which receives the requested public
-              URL. Enable images, PDF text extraction, GitHub content, source
-              checks, and stored-content retrieval. Keep browser cookies off and
-              the default workflow free of extra summary calls. Gemini
-              credentials are still required for full video analysis; scanned
-              PDFs require OCR or visual inspection. Local PDFs have a 20 MB /
-              100-page bound. Quattro already supplies yt-dlp, OCR, and ffmpeg
-              through its base packages and dependencies. <br /><br />
-              Verified on 5 October 2026 with Pi 1.0.3 and pi-web-access 0.35.0:
-              subscription search, direct reading, simulated-rate-limit Exa
-              fallback, Jina fallback, and remote PDF extraction. The bundled
-              loader fails unpdf 1.8.1's internal <code>unpdf/pdfjs</code>
-              self-import. The static extension uses unpdf's supported
-              <code>definePDFJSModule</code> API with explicit ESM paths,
-              leaving installed packages untouched. Remove it when an upstream
-              fix passes the remote-PDF test. Pinning the extension does not
-              freeze npm's transitive dependency graph. Install and verification
-              share one package-version check. Read-only verification checks
-              JSON fixed points and the Stow link; bootstrap tests cover fresh
-              installs, repairs, XDG discovery, local-state preservation,
-              invalid JSON, and package-install failure.
+              no local Exa credential is configured. Fetch public pages
+              directly; automatic hosted readers (including Jina), browser
+              cookies, and hosted video analysis are disabled. Search queries
+              and explicitly requested page answers still reach their selected
+              provider. Images, local PDF extraction, GitHub content, source
+              checks, and stored-content retrieval remain enabled. PDFs have a
+              20 MB / 100-page bound; scanned PDFs need OCR or visual
+              inspection. <br /><br />
+              Enable Sol-pi Action Fusion, local ObservationPack and Online
+              Context Compact. Disable Evidence-Preserving Reducer: the pinned
+              revision delegates diagnostic logs to another model and has no
+              separate remote-off flag. Local observation archives persist under
+              session storage; native compaction uses Pi's existing model route.
+              Trusted project <code>.pi/sol-pi.json</code> replaces, rather than
+              merges, the global profile; review overrides before trusting them.
+              Restart Pi after configuration changes. <br /><br />
+              Pi 1.4.0 validation on durin (x86_64) and valinor (aarch64): type
+              checking and 253 upstream runtime tests pass, including real
+              AgentSession fusion, observation recall, and native
+              compaction/continuation with a deterministic local provider. Three
+              package-check assertions reject 1.4.0 solely because upstream
+              lists 0.84.2/1.0.4/1.3.0 as tested; public API checks pass with
+              that warning. Do not claim a fully passing upstream release gate,
+              live-model adoption, or measured savings. Native installed-Pi
+              smoke tests additionally verify fused command success/failure,
+              plan registration, observation projection and exact recall without
+              model traffic. Direct public-PDF fetching and local extraction
+              pass on both hosts with the compatibility initializer retained.
+              Both deployed runtime dependency trees audit clean; source-test
+              dev dependencies have separate advisories and are not deployed.
+              <br /><br />
+              Retain the PDF initializer: upstream's new explicit
+              <code>unpdf/pdfjs</code> import does not itself prove the bundled
+              loader issue fixed. It uses unpdf's supported
+              <code>definePDFJSModule</code> API without patching packages.
+              Read-only verification checks configuration fixed points, package
+              versions/commit and security floor without invoking Pi/npm.
+              Bootstrap tests cover idempotency, individual package repair,
+              config paths, privacy flags, preserved state, malformed inputs,
+              legacy migration, offline verification and install/update failure.
             </td>
           </tr>
           <tr id="D-AGENT-SKILLS">
@@ -300,7 +328,10 @@
               resources. The Python environment and executable links remain
               local, disposable state. The primary install/verify flows include
               this subset; standalone Make targets support headless hosts
-              without Omarchy. No separate hidden source repository or
+              without Omarchy. The portable aggregate also converges Pi's
+              package/configuration overlay through the existing agent-config
+              step; it requires an existing Pi and Node/npm runtime, as
+              documented in D-PI-WEB. No separate hidden source repository or
               background skill synchronization. The portable
               <code>simplify</code> skill reproduces Claude Code 2.1.310's four
               cleanup angles, parallel review and apply-fixes flow, with an
@@ -1742,19 +1773,41 @@
         </li>
         <li>
           <a
-            href="https://github.com/nicobailon/pi-web-access/releases/tag/v0.35.0"
-            >pi-web-access 0.35.0</a
+            href="https://github.com/nicobailon/pi-web-access/blob/v0.44.0/CHANGELOG.md"
+            >pi-web-access 0.44.0 changelog</a
           >
-          adds Sign in with ChatGPT support; its
+          documents redirect credential stripping and MCP dependency fixes; its
           <a
-            href="https://github.com/nicobailon/pi-web-access/blob/v0.35.0/README.md"
+            href="https://github.com/nicobailon/pi-web-access/blob/v0.44.0/README.md"
             >configuration reference</a
           >
           specifies ordered search/fetch routing and PDF engine choices.
           <a href="https://github.com/unjs/unpdf#official-or-legacy-pdfjs-build"
             >unpdf's module initializer</a
           >
-          supports the local PDF compatibility fix.
+          supports the local PDF compatibility fix. Undici's
+          <a href="https://github.com/advisories/GHSA-xjj6-f33q-929c"
+            >content-encoding denial-of-service advisory</a
+          >
+          establishes the 8.12.2 fixed floor.
+        </li>
+        <li>
+          Sol-pi's pinned
+          <a
+            href="https://github.com/NVlabs/SoL-Pi/blob/219568034fa54ed121ede80961655e33dfb9d0e3/docs/compatibility.md"
+            >Pi 1.x compatibility contract</a
+          >,
+          <a
+            href="https://github.com/NVlabs/SoL-Pi/blob/219568034fa54ed121ede80961655e33dfb9d0e3/docs/configuration.md"
+            >configuration schema</a
+          >, and
+          <a
+            href="https://github.com/NVlabs/SoL-Pi/blob/219568034fa54ed121ede80961655e33dfb9d0e3/SECURITY.md"
+            >security notes</a
+          >
+          define supported APIs, log delegation, local archives and native
+          compact-and-continue behavior. The old npm 0.1.0 release lacks these
+          Pi 1.x fixes; use the reviewed commit rather than a moving branch.
         </li>
         <li>
           Installed Omarchy Quattro:

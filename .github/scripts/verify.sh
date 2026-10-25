@@ -37,6 +37,7 @@ pretty() {
 }
 
 # This subset also has a standalone target for headless/non-Omarchy hosts. [D-AGENT-SKILLS]
+# Agent configuration includes the offline Pi package/privacy checks. [D-PI-WEB]
 if python3 -B "$REPO/.github/scripts/agent_config.py" verify &&
   python3 -B "$REPO/.github/scripts/agent_skills.py" verify; then
   pass "Shared agent guidance, Stow assets, skills and runtime are current"
@@ -92,7 +93,7 @@ check_link "$HOME/.ssh/config"
 check_link "$HOME/.config/tmux/local.conf"
 check_link "$HOME/.claude/statusline-command.sh"
 # The PDF fix is user-owned; Omarchy's theme extension remains separate. [D-PI-WEB]
-check_link "$PI_AGENT_DIR/extensions/pi-web-access-pdf-compat.ts"
+check_link "$HOME/.pi/agent/extensions/pi-web-access-pdf-compat.ts"
 check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json"
 check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
 check_link "$HOME/.config/omarchy/backgrounds/tokyo-night/humpback.jpg"
@@ -324,17 +325,6 @@ if grep -qxF "$CODEX_FALLBACK" "$CODEX_CONFIG" 2>/dev/null; then
 else
   miss "Codex CLAUDE.md fallback missing — re-run ./install"
 fi
-
-# Read the pin from the same delta as install; never invoke Pi or hydrate npm here. [D-PI-WEB]
-check_jq_fixed_point "Pi settings" "$PI_SETTINGS_FILE" "$REPO/agents/harnesses/pi/settings.jq"
-check_jq_fixed_point "Pi web access" "$PI_WEB_CONFIG_FILE" "$REPO/agents/harnesses/pi/web-search.jq"
-pi_web_source="$(jq -n -f "$REPO/agents/harnesses/pi/settings.jq" | jq -r '.packages[-1]')"
-if pi_web_installed "$pi_web_source"; then
-  pass "Pi extension installed: $pi_web_source"
-else
-  miss "Pi extension missing or wrong version — re-run ./install"
-fi
-unset pi_web_source
 
 # settings.jq pins .theme to custom:omarchy, so the Quattro-generated theme file
 # must exist or Claude Code resolves a dangling reference. [D-CLAUDE-CONFIG]

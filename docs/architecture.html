@@ -195,12 +195,18 @@
       <p>
         Pi follows the same mutable-state boundary:
         <code>agents/harnesses/pi/settings.jq</code> and
-        <code>agents/harnesses/pi/web-search.jq</code> merge into its local JSON
-        files, while the PDF compatibility extension is stowed under
-        <code>~/.pi/agent/extensions/</code>. Pi's CLI owns downloaded npm
-        packages; install hydrates the pinned release only when missing or
-        incorrect. OAuth, sessions, device IDs, and Omarchy's theme integration
-        stay outside the repo. See
+        <code>agents/harnesses/pi/web-search.jq</code>, plus
+        <code>agents/harnesses/pi/sol-pi.jq</code>, merge into local JSON, while
+        the PDF compatibility extension is stowed under
+        <code>~/.pi/agent/extensions/</code>. The existing portable
+        <code>.github/scripts/agent_config.py</code> flow handles these settings
+        alongside static assets and guidance for both <code>./install</code> and
+        <code>make agents</code>. Pi's CLI owns npm/git package caches; pinned
+        packages hydrate only when missing or incorrect. Sol-pi's local
+        observation archives stay with sessions; its separate diagnostic-log
+        reducer is disabled. Automatic hosted page fallbacks, video analysis,
+        and browser cookies are disabled. OAuth, sessions, device IDs, and
+        Omarchy's theme integration stay outside the repo. See
         <a href="decisions.html#D-PI-WEB">D-PI-WEB</a>.
       </p>
 

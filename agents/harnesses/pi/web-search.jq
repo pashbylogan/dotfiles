@@ -1,4 +1,4 @@
-# Preserve credentials and unrelated options; explicit providers bypass fallback. [D-PI-WEB]
+# Preserve credentials; no browser cookies or automatic hosted-content forwarding. [D-PI-WEB]
 del(.provider, .searchProvider)
 | . * {
   "webSearch": { "enabled": true, "allowedProviders": ["openai", "exa"] },
@@ -18,7 +18,7 @@ del(.provider, .searchProvider)
     "fetchContent": { "enabled": true },
     "getSearchContent": { "enabled": true }
   },
-  "fetchRouting": { "providers": ["http", "jina"], "allowRemoteHostedProviders": true },
+  "fetchRouting": { "providers": ["http"], "allowRemoteHostedProviders": false },
   "fetch": {
     "defaultMode": "readable",
     "allowedModes": ["readable", "raw", "answer"],
@@ -30,5 +30,5 @@ del(.provider, .searchProvider)
   "githubClone": { "enabled": true },
   "githubPrIssue": { "enabled": true },
   "youtube": { "enabled": true },
-  "video": { "enabled": true }
+  "video": { "enabled": false }
 }

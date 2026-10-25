@@ -1,4 +1,4 @@
-"""Static Stow assets and copied guidance never own credentials/state. [D-AGENT-SKILLS]"""
+"""Static assets, guidance and Pi configuration preserve unrelated state. [D-AGENT-SKILLS] [D-PI-WEB]"""
 from pathlib import Path
 import subprocess
 import tempfile
@@ -16,6 +16,12 @@ class AgentConfigTests(unittest.TestCase):
         self.home = self.root / 'home'
         self.home.mkdir()
         self.config = AgentConfig(self.root / 'repo', self.home)
+        # Pi's real convergence has its own disposable-home integration tests.
+        for method in ('plan', 'install', 'verify'):
+            patcher = patch.object(self.config.pi, method)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        self.config.pi.install.side_effect = self.config.pi.verify
         self.config.source.parent.mkdir(parents=True)
         self.config.source.write_text('Shared user guidance\n')
         for source in STATIC.values():
@@ -50,6 +56,21 @@ class AgentConfigTests(unittest.TestCase):
             self.assertEqual((self.home / name).stat().st_mtime_ns, before[name])
         self.assertTrue((self.home / '.claude').is_dir())
         self.assertFalse((self.home / '.claude').is_symlink())
+
+    def test_existing_flow_includes_pi_install_and_offline_verification(self):
+        self.install()
+        self.config.pi.install.assert_called_once_with()
+        self.config.pi.verify.assert_called_once_with()
+        self.config.verify()
+        self.assertEqual(self.config.pi.verify.call_count, 2)
+
+    def test_invalid_pi_config_blocks_static_deployment(self):
+        self.config.pi.plan.side_effect = ValueError('Invalid Pi configuration')
+        with patch('agent_config.subprocess.run') as run:
+            with self.assertRaisesRegex(ValueError, 'Invalid Pi'):
+                self.config.install()
+            run.assert_not_called()
+        self.assertFalse(self.config.state.exists())
 
     def test_managed_instruction_update(self):
         self.install()

@@ -11,7 +11,7 @@ conversation history, caches or downloaded runtime packages. [D-AGENT-SKILLS]
   from the existing Pi user guidance. T3 runtime routing lives in the `t3-subagents`
   skill, which the shared file points to, so non-T3 sessions don't carry it.
 - `harnesses/claude/`: Claude settings delta and static statusline Stow package.
-- `harnesses/pi/`: Pi settings/web deltas and static PDF-extension Stow package.
+- `harnesses/pi/`: Pi settings/web/Sol-pi deltas and static PDF-extension Stow package. [D-PI-WEB]
 - `harnesses/opencode/`: OpenCode settings delta (not a Stow package).
 - Codex: `./install` prepends `project_doc_fallback_filenames = ["CLAUDE.md"]` to
   `~/.codex/config.toml` so Codex reads repos that only ship a CLAUDE.md.
@@ -22,7 +22,7 @@ conversation history, caches or downloaded runtime packages. [D-AGENT-SKILLS]
 
 Static scripts/extensions use **per-file Stow links** from `harnesses/`, with
 `--no-folding`. Mutable agent settings keep their narrow jq merges in the main
-Omarchy installer. Neither mechanism owns whole agent directories. No auth,
+Omarchy installer; Pi's deltas are handled by the existing portable agent-config script. Neither mechanism owns whole agent directories. No auth,
 MCP credentials, machine endpoints, model-catalog state or session files are
 copied into dotfiles. Shared instructions and skills are **real managed copies**,
 so they remain readable without this checkout.
@@ -32,7 +32,7 @@ so they remain readable without this checkout.
 From the repository root:
 
 ```sh
-make agents                 # shared instructions + static Stow assets + skills + tools
+make agents                 # shared instructions + static assets + skills + tools + Pi overlay
 make verify-agents          # read-only/offline verification of that portable subset
 make check-agent-updates    # networked report only; no downloads, edits or deployment
 ```
@@ -40,9 +40,24 @@ make check-agent-updates    # networked report only; no downloads, edits or depl
 The main `./install` and `make verify` include the same operations on Omarchy.
 Headless/non-Omarchy hosts use the standalone targets; they do not run unrelated
 Omarchy setup or merge desktop-specific settings. Requirements: Linux, Python
-3.11+, GNU Stow, uv, Git and network access for initial tool installation.
-Individual `agent-config`, `verify-agent-config`, `agent-skills`, and
-`verify-agent-skills` targets remain available.
+3.11+, GNU Stow, uv, Git and network access for initial tool installation. The Pi
+step additionally requires an existing Pi launcher, jq, and Node.js >=22.19/npm
+on PATH; it never installs a system runtime. Pi configuration is included in
+`make agent-config` / `make verify-agent-config`, not a separate command.
+`PI_CODING_AGENT_DIR` selects an alternative Pi
+root; `PI_BIN` optionally selects its launcher. Static Stow assets still target
+Pi's default root. Individual `agent-config`, `verify-agent-config`, `agent-skills`,
+and `verify-agent-skills` targets remain available.
+
+Pi uses pinned pi-web-access 0.44.0 and Sol-pi's Pi 1.x compatibility commit.
+The existing agent-config script merges all three JSON deltas, migrates the old npm Sol-pi
+registration, and repairs cached vulnerable undici 8.x. It does not run a blanket
+`npm audit fix` or alter Pi itself. Action Fusion, local ObservationPack, and
+native Online Context Compact are on; Evidence-Preserving Reducer is off to
+prevent separate model calls containing diagnostic logs. Cookies, automatic
+hosted page-reader fallback, and hosted video analysis are off. Local observation
+archives persist with session storage. Trusted project `sol-pi.json` overrides
+replace the user-wide profile; review them before trust. [D-PI-WEB]
 
 Shared instructions deploy to Pi's `~/.pi/agent/AGENTS.md`, Codex's
 `~/.codex/AGENTS.md`, Claude's `~/.claude/CLAUDE.md` and OpenCode's

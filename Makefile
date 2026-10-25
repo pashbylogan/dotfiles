@@ -117,16 +117,17 @@ update-firmware: ## Update firmware (fwupd)
 	@omarchy update firmware || printf "$(YELLOW)⚠$(NC) 'omarchy update firmware' returned non-zero (no fwupd devices? offline? expected on some hardware).\n"
 
 # Headless hosts can converge just this portable subset. [D-AGENT-SKILLS]
-agents: ## Install shared guidance, static harness assets, skills and tools
+agents: ## Install shared guidance, static harness assets, skills, tools and Pi overlay
 	$(MAKE) --no-print-directory agent-config
 	$(MAKE) --no-print-directory agent-skills
 
 verify-agents: verify-agent-config verify-agent-skills ## Verify the complete portable agent overlay
 
-agent-config: ## Stow static harness files and deploy shared user instructions
+# Pi/npm/Node are prerequisites on portable hosts; no system runtime setup here. [D-PI-WEB]
+agent-config: ## Deploy shared instructions, static harness files and Pi configuration
 	python3 -B .github/scripts/agent_config.py install
 
-verify-agent-config: ## Check harness assets and shared instructions without writes
+verify-agent-config: ## Check harness assets, instructions and Pi configuration offline
 	python3 -B .github/scripts/agent_config.py verify
 
 check-agent-updates: ## Report upstream changes against reviewed pins (network; no writes)
