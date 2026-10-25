@@ -1,0 +1,13 @@
+[project]
+name = "unclebob-quality-tools"
+version = "0.1.0"
+description = "Machine-local, pinned ub-mode companion tools"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "crapper @ git+https://github.com/unclebob/crapper.git@6fd92c4c9bcc56efb64a2f8743d5a2993bcfd42d",
+  "dryer @ git+https://github.com/unclebob/dryer.git@66ff6d21a42c04afcad89c78a80066176d1294b0",
+  "mutator @ git+https://github.com/unclebob/mutator.git@a5a0cb803b66e0cdb8bf471b3b08af701d424a41",
+]
+
+[dependency-groups]
+dev = ["pytest>=8,<10"]

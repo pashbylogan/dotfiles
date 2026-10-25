@@ -36,6 +36,14 @@ pretty() {
   esac
 }
 
+# This subset also has a standalone target for headless/non-Omarchy hosts. [D-AGENT-SKILLS]
+if python3 -B "$REPO/.github/scripts/agent_config.py" verify &&
+  python3 -B "$REPO/.github/scripts/agent_skills.py" verify; then
+  pass "Shared agent guidance, Stow assets, skills and runtime are current"
+else
+  miss "Agent configuration drifted — run make agents"
+fi
+
 if [ ! -d "$OMARCHY_PATH" ]; then
   miss "Omarchy Quattro layout absent — upgrade before validating this branch"
   printf '\n%sverify: %d check(s) failed%s\n' "$RED" "$fails" "$NC"
@@ -304,13 +312,13 @@ check_jq_fixed_point() {
   fi
 }
 # OpenCode's global LSP delta remains tool-owned mutable state. [F-OPENCODE-LSP]
-check_jq_fixed_point "Claude" "$CLAUDE_SETTINGS_FILE" "$REPO/claude/settings.jq"
-check_jq_fixed_point "OpenCode" "$HOME/.config/opencode/opencode.json" "$REPO/opencode/settings.jq"
+check_jq_fixed_point "Claude" "$CLAUDE_SETTINGS_FILE" "$REPO/agents/harnesses/claude/settings.jq"
+check_jq_fixed_point "OpenCode" "$HOME/.config/opencode/opencode.json" "$REPO/agents/harnesses/opencode/settings.jq"
 
 # Read the pin from the same delta as install; never invoke Pi or hydrate npm here. [D-PI-WEB]
-check_jq_fixed_point "Pi settings" "$PI_SETTINGS_FILE" "$REPO/pi/settings.jq"
-check_jq_fixed_point "Pi web access" "$PI_WEB_CONFIG_FILE" "$REPO/pi/web-search.jq"
-pi_web_source="$(jq -n -f "$REPO/pi/settings.jq" | jq -r '.packages[-1]')"
+check_jq_fixed_point "Pi settings" "$PI_SETTINGS_FILE" "$REPO/agents/harnesses/pi/settings.jq"
+check_jq_fixed_point "Pi web access" "$PI_WEB_CONFIG_FILE" "$REPO/agents/harnesses/pi/web-search.jq"
+pi_web_source="$(jq -n -f "$REPO/agents/harnesses/pi/settings.jq" | jq -r '.packages[-1]')"
 if pi_web_installed "$pi_web_source"; then
   pass "Pi extension installed: $pi_web_source"
 else

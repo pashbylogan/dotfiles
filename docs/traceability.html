@@ -320,9 +320,11 @@
             </td>
             <td><a href="decisions.html#D-CLAUDE-CONFIG">decisions</a></td>
             <td>
-              <code>install</code>, <code>claude/settings.jq</code>,
-              <code>claude/.stow-local-ignore</code>,
-              <code>claude/.claude/statusline-command.sh</code>,
+              <code>install</code>,
+              <code>agents/harnesses/claude/settings.jq</code>,
+              <code>agents/harnesses/claude/.stow-local-ignore</code>,
+              <code>agents/harnesses/claude/.claude/statusline-command.sh</code
+              >,
               <code>.github/scripts/verify.sh</code>
             </td>
           </tr>
@@ -335,9 +337,30 @@
             </td>
             <td><a href="decisions.html#D-PI-WEB">decisions</a></td>
             <td>
-              <code>install</code>, <code>lib/style.sh</code>, <code>pi/</code>,
-              <code>Makefile</code>, <code>.github/scripts/verify.sh</code>,
+              <code>install</code>, <code>lib/style.sh</code>,
+              <code>agents/harnesses/pi/</code>, <code>Makefile</code>,
+              <code>.github/scripts/verify.sh</code>,
               <code>.github/scripts/test_pi.py</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>D-AGENT-SKILLS</code></td>
+            <td>
+              Central agent sources, shared instruction/skill copies, per-file
+              Stow assets and source/pin drift checks; portable simplify
+              preserves Claude's native command
+            </td>
+            <td><a href="decisions.html#D-AGENT-SKILLS">decisions</a></td>
+            <td>
+              <code>agents/</code>,
+              <code>.github/scripts/agent_skills.py</code>,
+              <code>.github/scripts/test_agent_skills.py</code>,
+              <code>.github/scripts/agent_config.py</code>,
+              <code>.github/scripts/test_agent_config.py</code>,
+              <code>.github/scripts/agent_sources.py</code>,
+              <code>.github/scripts/test_agent_sources.py</code>,
+              <code>install</code>, <code>Makefile</code>,
+              <code>.github/scripts/verify.sh</code>
             </td>
           </tr>
           <tr>
@@ -349,7 +372,8 @@
             </td>
             <td><a href="decisions.html#D-OPENCODE-LSP">decisions</a></td>
             <td>
-              <code>install</code>, <code>opencode/settings.jq</code>,
+              <code>install</code>,
+              <code>agents/harnesses/opencode/settings.jq</code>,
               <code>.github/scripts/verify.sh</code>
             </td>
           </tr>

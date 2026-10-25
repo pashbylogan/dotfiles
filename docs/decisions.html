@@ -236,19 +236,19 @@
             </td>
             <td>
               Keep Pi on Omarchy's mise launcher. Merge
-              <code>pi/settings.jq</code> and <code>pi/web-search.jq</code> into
-              mutable JSON: settings under <code>~/.pi/agent/</code>, web config
-              using the extension's XDG/legacy discovery. Stow only the
-              user-owned PDF compatibility extension. Seed missing JSON,
-              preserve unrelated keys and packages, and normalize this
-              extension's npm declarations to the exact
-              <code>npm:pi-web-access@0.35.0</code> pin. Provision through
-              <code>pi install</code> only when the installed package is absent
-              or has the wrong version; use Omarchy's Node dev-env if npm is
-              missing. Authentication, device IDs, sessions, package caches, and
-              Omarchy's theme extension remain local. The overlay targets Pi's
-              default agent directory; alternative agent roots are outside this
-              install. See
+              <code>agents/harnesses/pi/settings.jq</code> and
+              <code>agents/harnesses/pi/web-search.jq</code> into mutable JSON:
+              settings under <code>~/.pi/agent/</code>, web config using the
+              extension's XDG/legacy discovery. Stow only the user-owned PDF
+              compatibility extension. Seed missing JSON, preserve unrelated
+              keys and packages, and normalize this extension's npm declarations
+              to the exact <code>npm:pi-web-access@0.35.0</code> pin. Provision
+              through <code>pi install</code> only when the installed package is
+              absent or has the wrong version; use Omarchy's Node dev-env if npm
+              is missing. Authentication, device IDs, sessions, package caches,
+              and Omarchy's theme extension remain local. The overlay targets
+              Pi's default agent directory; alternative agent roots are outside
+              this install. See
               <a href="findings.html#F-APP-CHANNELS">F-APP-CHANNELS</a>.
             </td>
             <td>
@@ -279,6 +279,56 @@
               invalid JSON, and package-install failure.
             </td>
           </tr>
+          <tr id="D-AGENT-SKILLS">
+            <td>
+              <code class="meta">D-AGENT-SKILLS</code> Central agent
+              configuration
+            </td>
+            <td>
+              Own shared user guidance, portable skills, source inventory and
+              locked tool recipes in <code>agents/</code>. Keep the repo-root
+              guidance distinct from user-wide instructions. Static harness
+              scripts/extensions are per-file Stow packages under
+              <code>agents/harnesses/</code>; mutable settings retain jq deltas,
+              and credentials/state stay local. Shared instructions and skills
+              use managed copies. Pi and Codex discover the shared skill root
+              natively; the local Codex API confirmed duplicate discovery before
+              obsolete managed Codex copies were archived. Retain OpenCode
+              compatibility copies: v2.1.4's API did not confirm discovery,
+              despite latest documentation. Use ownership hashes to reject local
+              edits, unknown conflicts and symlinks; never prune unrelated
+              resources. The Python environment and executable links remain
+              local, disposable state. The primary install/verify flows include
+              this subset; standalone Make targets support headless hosts
+              without Omarchy. No separate hidden source repository or
+              background skill synchronization. The portable
+              <code>simplify</code> skill reproduces Claude Code 2.1.310's four
+              cleanup angles, parallel review and apply-fixes flow, with an
+              explicit inline fallback. Do not deploy that skill to Claude's
+              personal skill root: preserve its bundled command and native
+              invocation semantics. The other roots receive managed copies.
+            </td>
+            <td>
+              A durable source of truth without checkout-dependent skill links.
+              Install preflights conflicts, syncs reviewed commit/dependency
+              pins, smoke-tests CLIs in disposable projects, and deploys skills
+              one at a time with resumable ownership records. Verification is
+              read-only and offline; it checks deployed copies and the recipe
+              receipt, not every package byte. <code>sources.toml</code> records
+              vendored versus local resources, repositories, commit pins,
+              licenses and vendored hashes. Offline checks enforce its agreement
+              with the executable recipe/lockfile.
+              <code>make check-agent-updates</code>
+              performs bounded read-only upstream checks, never downloads or
+              applies changes, and distinguishes network failures from updates.
+              Edit sources in dotfiles and rerun installation; review pins and
+              restore known-good dotfiles revisions for rollback. Local guides
+              document tool side effects, missing coverage and
+              threshold/exit-code caveats. Optional
+              <code>uml-viewer</code> remains outside this install. See
+              <a href="../agents/README.md">the operator guide</a>.
+            </td>
+          </tr>
           <tr id="D-OPENCODE-LSP">
             <td>
               <code class="meta">D-OPENCODE-LSP</code> Global OpenCode LSP
@@ -286,7 +336,7 @@
             <td>
               Keep Omarchy's seeded
               <code>~/.config/opencode/opencode.json</code>, then use
-              <code>opencode/settings.jq</code> to assert only
+              <code>agents/harnesses/opencode/settings.jq</code> to assert only
               <code>"lsp": true</code>. This enables every built-in server
               globally while preserving Omarchy defaults and unrelated user
               keys. Do not install a blanket system LSP bundle: OpenCode lazily
@@ -1217,15 +1267,17 @@
               <code>verify.sh</code> checks for the theme file — a pinned
               <code>.theme</code> with no theme file is a dangling reference.
               <code>settings.json</code> is instead applied as an idempotent
-              <strong>jq delta</strong> (<code>claude/settings.jq</code> +
-              <code>apply_jq_deltas</code>) that <code>install</code> overlays
+              <strong>jq delta</strong> (<code
+                >agents/harnesses/claude/settings.jq</code
+              >
+              + <code>apply_jq_deltas</code>) that <code>install</code> overlays
               onto the live file, seeding <code>{}</code> first so a
               pre-first-run box still converges. Because that filter is a build
               input read in place — not a dotfile — a
-              <code>claude/.stow-local-ignore</code> keeps stow from symlinking
-              it into <code>$HOME</code> (it sits at the package root, so it
-              would otherwise land at <code>~/settings.jq</code>). The default
-              model and effort level are pinned as
+              <code>agents/harnesses/claude/.stow-local-ignore</code> keeps stow
+              from symlinking it into <code>$HOME</code> (it sits at the package
+              root, so it would otherwise land at <code>~/settings.jq</code>).
+              The default model and effort level are pinned as
               <code>.env.ANTHROPIC_MODEL = "opus[1m]"</code> (bare
               <code>opus</code> is standard context, unlike <em>Default</em>)
               and <code>.env.CLAUDE_CODE_EFFORT_LEVEL = "xhigh"</code> in the
@@ -1453,6 +1505,46 @@
     <section class="container">
       <h2>Sources</h2>
       <ul class="clean">
+        <li>
+          Shared configuration patterns:
+          <a href="https://github.com/sanketsudake/dotfiles"
+            >sanketsudake/dotfiles</a
+          >
+          uses per-resource source pins and drift checks;
+          <a href="https://github.com/TheGoatedDev/dotfiles"
+            >TheGoatedDev/dotfiles</a
+          >
+          combines Stow with a separate skills manifest. These are examples, not
+          dependencies.
+          <a href="https://www.gnu.org/software/stow/manual/stow.html"
+            >GNU Stow</a
+          >
+          documents no-folding and the source-mutating adopt option. Native
+          shared skill paths are documented by
+          <a href="https://developers.openai.com/codex/skills">Codex</a> and
+          <a href="https://opencode.ai/docs/skills/">OpenCode</a>;
+          installed-version discovery takes precedence over assumptions based on
+          those docs.
+        </li>
+        <li>
+          Claude Code
+          <a href="https://code.claude.com/docs/en/skills"
+            >skills documentation</a
+          >
+          and the locally installed 2.1.310 command templates: the portable
+          simplify skill mirrors the observed workflow without bundling the
+          original proprietary prompt. Its version and adaptations are recorded
+          under <code>agents/skills/simplify/references/</code>.
+        </li>
+        <li>
+          Official <a href="https://github.com/unclebob/ub-mode">ub-mode</a>,
+          <a href="https://github.com/unclebob/crapper">crapper</a>,
+          <a href="https://github.com/unclebob/dryer">dryer</a>, and
+          <a href="https://github.com/unclebob/mutator">mutator</a>
+          repositories: installation, report semantics and project-side effects.
+          Exact reviewed revisions and bundled references live in
+          <code>agents/</code>.
+        </li>
         <li>
           GitHub's
           <a href="https://github.com/actions/runner-images#available-images"

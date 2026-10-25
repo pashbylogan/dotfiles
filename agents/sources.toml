@@ -1,0 +1,42 @@
+# Reviewed source inventory; local resources are never replaced from upstream. [D-AGENT-SKILLS]
+version = 1
+
+[skills.ub-mode]
+kind = "vendored"
+repository = "https://github.com/unclebob/ub-mode.git"
+ref = "HEAD"
+commit = "57a8bdd28e45ed41900ace0bafa2ff76dd9ed70f"
+subpath = "."
+license = "No license file supplied by upstream at this revision"
+[skills.ub-mode.sha256]
+"SKILL.md" = "4120873db2e3681ea9b7de4d7105fc9d3406657c9ada91ce77b9b3c4962f3202"
+"README.md" = "1c8e56902f538453bb79674193e632bb1076624bcde0a00516d97410a18a6bd9"
+
+[skills.crapper]
+kind = "local"
+reference_tool = "crapper"
+[skills.dryer]
+kind = "local"
+reference_tool = "dryer"
+[skills.mutator]
+kind = "local"
+reference_tool = "mutator"
+[skills.simplify]
+kind = "local"
+reference = "Claude Code 2.1.310; see references/provenance.md"
+
+[tools.crapper]
+repository = "https://github.com/unclebob/crapper.git"
+ref = "HEAD"
+commit = "6fd92c4c9bcc56efb64a2f8743d5a2993bcfd42d"
+license = "0BSD"
+[tools.dryer]
+repository = "https://github.com/unclebob/dryer.git"
+ref = "HEAD"
+commit = "66ff6d21a42c04afcad89c78a80066176d1294b0"
+license = "0BSD"
+[tools.mutator]
+repository = "https://github.com/unclebob/mutator.git"
+ref = "HEAD"
+commit = "a5a0cb803b66e0cdb8bf471b3b08af701d424a41"
+license = "0BSD"

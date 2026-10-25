@@ -133,8 +133,8 @@ configure_pi() {
       (umask 077 && printf '{}\n' >"$target")
     fi
   done
-  apply_jq_deltas "$PI_SETTINGS_FILE" "$REPO/pi/settings.jq" "Pi settings" || true
-  apply_jq_deltas "$PI_WEB_CONFIG_FILE" "$REPO/pi/web-search.jq" "Pi web access" || true
+  apply_jq_deltas "$PI_SETTINGS_FILE" "$REPO/agents/harnesses/pi/settings.jq" "Pi settings" || true
+  apply_jq_deltas "$PI_WEB_CONFIG_FILE" "$REPO/agents/harnesses/pi/web-search.jq" "Pi web access" || true
   source="$(jq -r '.packages[-1]' "$PI_SETTINGS_FILE")"
   if ! pi_web_installed "$source"; then
     if ! have npm; then
@@ -301,7 +301,7 @@ if [ ! -f "$OPENCODE_CONFIG" ]; then
   info "seeding OpenCode config from Omarchy default"
   omarchy refresh config opencode/opencode.json
 fi
-apply_jq_deltas "$OPENCODE_CONFIG" "$REPO/opencode/settings.jq" "OpenCode settings" || true
+apply_jq_deltas "$OPENCODE_CONFIG" "$REPO/agents/harnesses/opencode/settings.jq" "OpenCode settings" || true
 unset OPENCODE_CONFIG
 
 # Prefer Omarchy's dev-env channel for uv/go so PATH ownership stays consistent.
@@ -324,6 +324,10 @@ ensure_dev_env_tool() {
 
 ensure_dev_env_tool uv python
 ensure_dev_env_tool go go
+
+# Skills are managed copies; only the disposable CLI environment stays local. [D-AGENT-SKILLS]
+step "Shared coding-agent skills and companion tools"
+python3 -B "$REPO/.github/scripts/agent_skills.py" install
 
 # ── XDG user dirs ────────────────────────────────────────────────────────────
 # Collapse unused Documents/Music and add XDG_PROJECTS_DIR for local scripts. [F-CLI]
@@ -367,9 +371,11 @@ prestow_backup "$HOME/.config/hypr/dotfiles.lua"
 prestow_backup \
   "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json" \
   "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
-STOW_PKGS=(bash ssh bin hypr tmux nvim uwsm omarchy claude pi)
+STOW_PKGS=(bash ssh bin hypr tmux nvim uwsm omarchy)
 stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
 success "stowed: ${STOW_PKGS[*]}"
+# Agent static files use their own Stow directory; shared guidance is copied. [D-AGENT-SKILLS]
+python3 -B "$REPO/.github/scripts/agent_config.py" install
 configure_pi
 
 # Stale user launchers survive package removal because pacman never owned them.
@@ -540,7 +546,7 @@ fi
   warn "missing ${CLAUDE_THEME_FILE/#$HOME/\~} — run 'omarchy theme set <name>' to generate it"
 # `|| true`: apply_jq_deltas returns 1 on "no change" under set -e; a real jq
 # error still dies inside the helper.
-apply_jq_deltas "$CLAUDE_SETTINGS_FILE" "$REPO/claude/settings.jq" "claude settings" || true
+apply_jq_deltas "$CLAUDE_SETTINGS_FILE" "$REPO/agents/harnesses/claude/settings.jq" "claude settings" || true
 
 # ── validation ───────────────────────────────────────────────────────────────
 if have hyprctl && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then

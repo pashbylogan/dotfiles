@@ -144,7 +144,7 @@ updates. Pi uses the shared repo-root `AGENTS.md` guidance.
 To select Pi for Omarchy's agent shortcut, use Omarchy menu → Setup → Defaults
 → Agent → Pi. Authentication and session state stay local to the machine.
 
-The `pi/` overlay sets the default model to `openai/gpt-6.1-sol` and uses
+The `agents/harnesses/pi/` overlay sets the default model to `openai/gpt-6.1-sol` and uses
 `gpt-6-luna` for web search and page answers through your ChatGPT login. Search
 falls back to keyless Exa; page fetching falls back to keyless Jina Reader.
 Images, PDFs, GitHub content, source checks, and stored-content retrieval are
@@ -161,6 +161,36 @@ Scanned PDFs need OCR or visual inspection; local extraction is limited to
 20 MB and 100 pages. Video frame extraction uses Quattro's ffmpeg/yt-dlp tools;
 full video analysis requires separate Gemini credentials. Exa and Jina's keyless
 services have usage limits, and Jina receives URLs when direct fetching fails.
+
+### Shared coding-agent skills
+
+`agents/` owns shared user instructions, portable skills, reviewed source pins,
+and harness-specific static assets/settings deltas. Static scripts/extensions
+use per-file Stow links from `agents/harnesses/`; shared instructions and skills
+use managed **copies**, while mutable settings keep narrow jq merges. Auth and
+runtime state are never imported. Local edits or unknown conflicts stop deployment;
+unrelated files remain untouched. [D-AGENT-SKILLS]
+
+On non-Omarchy/headless hosts, install just this portable subset:
+
+```sh
+make agents
+make verify-agents
+make check-agent-updates  # explicit upstream check; no files changed
+```
+
+Restart agent sessions, or `/reload` in Pi. Source, provenance, controlled updates,
+rollback, and conflict resolution are documented in [`agents/README.md`](agents/README.md).
+The isolated tool environment is disposable local state; dotfiles is the only
+source repository. The optional UML viewer is not installed. Codex and Pi use
+`~/.agents/skills/` directly; OpenCode retains compatibility copies until the
+installed version's shared-root discovery is positively verified.
+
+Ask another agent to use `simplify` (Pi: `/skill:simplify [target or focus]`) to
+review changes from four cleanup angles in parallel, deduplicate findings, and
+apply behavior-preserving fixes. If subagents are unavailable, it covers all
+four angles inline and reports the fallback. Claude Code keeps its native
+`/simplify`; no competing personal skill is installed there.
 
 ### Operations
 

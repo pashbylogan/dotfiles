@@ -95,13 +95,32 @@
       "related": ["D-SCRIPTS-MINIMAL", "D-IDEMPOTENT", "F-CLI"]
     },
     {
+      "id": "D-AGENT-SKILLS",
+      "title": "Central agent sources, per-file Stow harness assets, shared instructions, managed skills, and explicit upstream checks",
+      "canonical": "decisions.html#D-AGENT-SKILLS",
+      "appears_in": ["README.md", "architecture.html"],
+      "code_paths": [
+        "agents/",
+        ".github/scripts/agent_skills.py",
+        ".github/scripts/test_agent_skills.py",
+        ".github/scripts/agent_config.py",
+        ".github/scripts/test_agent_config.py",
+        ".github/scripts/agent_sources.py",
+        ".github/scripts/test_agent_sources.py",
+        "install",
+        "Makefile",
+        ".github/scripts/verify.sh"
+      ],
+      "related": ["D-IDEMPOTENT", "D-CI", "D-DELTA-STORAGE"]
+    },
+    {
       "id": "D-OPENCODE-LSP",
       "title": "Enable OpenCode's built-in LSP dispatch globally through a narrow jq delta over Omarchy's seeded user config; rely on project-aware lazy matching rather than a blanket system LSP bundle",
       "canonical": "decisions.html#D-OPENCODE-LSP",
       "appears_in": [],
       "code_paths": [
         "install",
-        "opencode/settings.jq",
+        "agents/harnesses/opencode/settings.jq",
         ".github/scripts/verify.sh"
       ],
       "related": [
@@ -299,9 +318,9 @@
       "appears_in": [],
       "code_paths": [
         "install",
-        "claude/settings.jq",
-        "claude/.stow-local-ignore",
-        "claude/.claude/statusline-command.sh",
+        "agents/harnesses/claude/settings.jq",
+        "agents/harnesses/claude/.stow-local-ignore",
+        "agents/harnesses/claude/.claude/statusline-command.sh",
         ".github/scripts/verify.sh"
       ],
       "related": [
@@ -419,10 +438,10 @@
         "Makefile",
         ".github/scripts/verify.sh",
         ".github/scripts/test_pi.py",
-        "pi/settings.jq",
-        "pi/web-search.jq",
-        "pi/.stow-local-ignore",
-        "pi/.pi/agent/extensions/pi-web-access-pdf-compat.ts"
+        "agents/harnesses/pi/settings.jq",
+        "agents/harnesses/pi/web-search.jq",
+        "agents/harnesses/pi/.stow-local-ignore",
+        "agents/harnesses/pi/.pi/agent/extensions/pi-web-access-pdf-compat.ts"
       ],
       "related": ["D-DELTA-STORAGE", "D-IDEMPOTENT", "F-APP-CHANNELS", "D-CI"]
     }
@@ -505,7 +524,7 @@
       "appears_in": ["decisions.html"],
       "code_paths": [
         "install",
-        "opencode/settings.jq",
+        "agents/harnesses/opencode/settings.jq",
         ".github/scripts/verify.sh"
       ],
       "related": ["D-OPENCODE-LSP", "D-DEV-ENV"]

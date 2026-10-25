@@ -17,14 +17,14 @@ POSIX_SHFMT_FLAGS  := -ln posix -i 2 -ci
 BASH_FILES := install lib/style.sh $(wildcard bin/.local/bin/*) \
 	bash/.config/dotfiles/shell.sh \
 	bash/.config/dotfiles/shell.local.sh.example \
-	claude/.claude/statusline-command.sh \
+	agents/harnesses/claude/.claude/statusline-command.sh \
 	$(wildcard .github/scripts/*.sh)
 POSIX_FILES := $(wildcard uwsm/.config/uwsm/env.d/*.sh)
 SHELL_FILES := $(BASH_FILES) $(POSIX_FILES)
-PRETTIER_GLOBS := docs/*.html docs/registry.json pi/.pi/agent/extensions/*.ts
+PRETTIER_GLOBS := docs/*.html docs/registry.json agents/harnesses/pi/.pi/agent/extensions/*.ts
 DOCS_CHECK     := .github/scripts/check_docs.py
 # Pi's mutable JSON overlays and static extension share the gate. [D-PI-WEB]
-JQ_FILTERS     := $(wildcard claude/*.jq) $(wildcard nvim/*.jq) $(wildcard opencode/*.jq) $(wildcard pi/*.jq)
+JQ_FILTERS     := $(wildcard agents/harnesses/claude/*.jq) $(wildcard nvim/*.jq) $(wildcard agents/harnesses/opencode/*.jq) $(wildcard agents/harnesses/pi/*.jq)
 
 # ── output styling ───────────────────────────────────────────────────────────
 # Mirror the shell palette (lib/style.sh: ── headers ──, ℹ info, ⚠ warn) so `make`
@@ -38,7 +38,7 @@ NC     := \033[0m
 endif
 
 .DEFAULT_GOAL := help
-.PHONY: help ci fmt tools update update-firmware verify pkg-residue
+.PHONY: help ci fmt tools update update-firmware verify pkg-residue agents verify-agents agent-config verify-agent-config agent-skills verify-agent-skills check-agent-updates
 
 # ── checks ───────────────────────────────────────────────────────────────────
 help: ## Show this menu
@@ -59,6 +59,10 @@ ci: ## Run the full gate: shellcheck + shfmt + prettier + jq filter parse + docs
 	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_prune_mise.py'
 	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_pi.py'
 	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_wifi_login.py'
+	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_agent_skills.py'
+	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_agent_config.py'
+	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_agent_sources.py'
+	python3 -B .github/scripts/agent_sources.py verify
 	@echo "OK - all checks passed"
 
 fmt: ## Auto-fix formatting in place (shfmt + prettier)
@@ -110,6 +114,28 @@ update-firmware: ## Update firmware (fwupd)
 	@printf "\n$(BOLD)── Firmware (fwupd) ──$(NC)\n"
 	@printf "$(CYAN)$$ omarchy update firmware$(NC)\n"
 	@omarchy update firmware || printf "$(YELLOW)⚠$(NC) 'omarchy update firmware' returned non-zero (no fwupd devices? offline? expected on some hardware).\n"
+
+# Headless hosts can converge just this portable subset. [D-AGENT-SKILLS]
+agents: ## Install shared guidance, static harness assets, skills and tools
+	$(MAKE) --no-print-directory agent-config
+	$(MAKE) --no-print-directory agent-skills
+
+verify-agents: verify-agent-config verify-agent-skills ## Verify the complete portable agent overlay
+
+agent-config: ## Stow static harness files and deploy shared user instructions
+	python3 -B .github/scripts/agent_config.py install
+
+verify-agent-config: ## Check harness assets and shared instructions without writes
+	python3 -B .github/scripts/agent_config.py verify
+
+check-agent-updates: ## Report upstream changes against reviewed pins (network; no writes)
+	python3 -B .github/scripts/agent_sources.py check-updates
+
+agent-skills: ## Install managed skill copies and the pinned companion CLI environment
+	python3 -B .github/scripts/agent_skills.py install
+
+verify-agent-skills: ## Check skill copies and companion runtime without network or writes
+	python3 -B .github/scripts/agent_skills.py verify
 
 verify: ## Health-check the live overlay (hyprctl, managed blocks, stow links, dev-env tools, XDG dirs)
 	bash .github/scripts/verify.sh
