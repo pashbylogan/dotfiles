@@ -505,21 +505,30 @@ unset STARSHIP_TOML
 # Stow owns only the plugin. `plugin disable` clears a module from the layout and
 # `put` places one without moving it if already present, so the sequence is
 # idempotent. [D-QUICKSHELL-DELTAS][D-IDEMPOTENT][F-CLI]
-# Our clone must be visible in the plugin index before `put` will accept it.
-omarchy-shell shell rescanPlugins >/dev/null 2>&1 || true
-# The clone supersedes stock workspaces, which an Omarchy update can re-place.
-omarchy plugin disable omarchy.workspaces >/dev/null 2>&1 || true
-# `move`, not `put`: `put` leaves an already-placed widget wherever it is, so a
-# clone dragged to another lane would fail verification with no way to reconcile.
-# Both return 0 even when they gave up: they retry for ~3s and then report
-# "omarchy-shell is not running" on stderr. Gate on the shell so a headless run
-# says so instead of claiming a convergence that did not happen.
+# Every step below needs the running shell, and `plugin disable`/`bar move`
+# return 0 even when they gave up (they retry ~3s, then complain on stderr), so
+# gate once and say so instead of claiming a convergence that did not happen.
 if ! omarchy-shell shell ping >/dev/null 2>&1; then
-  warn "omarchy-shell is not running — bar layout not converged; re-run ./install from a session"
-elif omarchy bar move pashbyl.workspaces --section left --after omarchy.menu >/dev/null 2>&1; then
-  success "Quickshell bar layout converged"
+  warn "omarchy-shell is not running — bar layout and plugins not converged; re-run ./install from a session"
 else
-  warn "could not place pashbyl.workspaces — check 'omarchy plugin list'"
+  # Our clone must be visible in the plugin index before `move` will accept it.
+  omarchy-shell shell rescanPlugins >/dev/null 2>&1 || true
+  # The clone supersedes stock workspaces, which an Omarchy update can re-place.
+  omarchy plugin disable omarchy.workspaces >/dev/null 2>&1 || true
+  # `move`, not `put`: `put` leaves an already-placed widget wherever it is, so a
+  # clone dragged to another lane would fail verification with no way to reconcile.
+  if omarchy bar move pashbyl.workspaces --section left --after omarchy.menu >/dev/null 2>&1; then
+    success "Quickshell bar layout converged"
+  else
+    warn "could not place pashbyl.workspaces — check 'omarchy plugin list'"
+  fi
+  # Third-party plugin stays Omarchy's git checkout, not Stow, so `plugin update`
+  # keeps its diff review. Added once; enable state and placement are then the
+  # user's. [D-WIRELESS-DISPLAY]
+  if [ ! -d "$HOME/.config/omarchy/plugins/omarchy-wireless-display/.git" ] &&
+    ! omarchy plugin add https://github.com/alchemy/omarchy-wireless-display.git --enable --yes; then
+    warn "could not add omarchy-wireless-display — check 'omarchy plugin list'"
+  fi
 fi
 
 # Overlay our Claude Code settings idempotently. Claude rewrites settings.json

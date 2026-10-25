@@ -285,6 +285,18 @@
       "related": ["D-DELTA-STORAGE", "D-IDEMPOTENT"]
     },
     {
+      "id": "D-WIRELESS-DISPLAY",
+      "title": "Mirror to the TV through the omarchy-wireless-display plugin, added once with omarchy plugin add, and the plugin author's doubletake-alchemy-bin AirPlay backend; the waycast Miracast root helper and pre-opened firewall rules are deliberately absent",
+      "canonical": "decisions.html#D-WIRELESS-DISPLAY",
+      "appears_in": [],
+      "code_paths": [
+        "install",
+        "packages.aur.txt",
+        ".github/scripts/verify.sh"
+      ],
+      "related": ["D-QUICKSHELL-DELTAS", "D-MONITORS", "F-APP-CHANNELS"]
+    },
+    {
       "id": "D-TERM-GHOSTTY",
       "title": "Ghostty is the default terminal and alternate terminals are denied: install guards the official Ghostty flows and removes stale Alacritty/Foot user launchers",
       "canonical": "decisions.html#D-TERM-GHOSTTY",

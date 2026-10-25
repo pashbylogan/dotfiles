@@ -241,6 +241,18 @@ if grep -qF 'root.bar.run("hyprctl dispatch " + Util.shellQuote("hl.dsp.focus' \
 else
   miss "workspace click dispatch drifted from Quattro's supported form"
 fi
+# Git checkout, not a copy, or `omarchy plugin update` has nothing to pull.
+# [D-WIRELESS-DISPLAY]
+if [ -d "$HOME/.config/omarchy/plugins/omarchy-wireless-display/.git" ]; then
+  pass "wireless display plugin is an Omarchy-managed checkout"
+else
+  miss "wireless display plugin missing — re-run ./install from a session"
+fi
+if pkg_installed doubletake-alchemy-bin; then
+  pass "AirPlay backend (doubletake-alchemy-bin) installed"
+else
+  miss "doubletake-alchemy-bin missing — re-run ./install"
+fi
 if have omarchy-shell && omarchy-shell shell ping >/dev/null 2>&1; then
   pass "Quickshell IPC responds"
 else

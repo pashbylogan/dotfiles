@@ -15,3 +15,8 @@ google-cloud-cli
 # GKE auth plugin kubectl invokes by name (binary in /usr/bin); split of the
 # google-cloud-cli base above, whose credentials it uses. [F-APP-CHANNELS]
 google-cloud-cli-component-gke-gcloud-auth-plugin
+
+# AirPlay sender behind the omarchy-wireless-display plugin. Its author's fork
+# until the plugin stops passing `-mode`, which upstream doubletake-bin rejects.
+# [D-WIRELESS-DISPLAY]
+doubletake-alchemy-bin

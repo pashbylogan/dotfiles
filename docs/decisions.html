@@ -1074,6 +1074,114 @@
         </tbody>
       </table>
 
+      <h2>Wireless display</h2>
+      <p>
+        Omarchy ships no wireless casting, so mirroring to the Samsung TV goes
+        through a reviewed marketplace plugin and the AirPlay backend it drives.
+        Wired mirroring stays on Omarchy's own
+        <code>omarchy-hyprland-monitor-internal-mirror</code>.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Choice</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="D-WIRELESS-DISPLAY">
+            <td>
+              <code class="meta">D-WIRELESS-DISPLAY</code> Wireless display
+              plugin
+            </td>
+            <td>
+              <code>install</code> runs
+              <code>omarchy plugin add … --enable --yes</code> for
+              <code>omarchy-wireless-display</code> once, only while the shell
+              is running, and then leaves its enable state, placement, and
+              updates to the user and <code>omarchy plugin update</code>. The
+              AirPlay backend is the plugin author's
+              <code>doubletake-alchemy-bin</code> fork in
+              <code>packages.aur.txt</code>. The Miracast backend
+              <code>waycast</code> is deliberately absent. No firewall rule is
+              pre-opened.
+            </td>
+            <td>
+              <p>
+                Of the marketplace casting plugins (reviewed 2026-10-25), this
+                is the only one tested by its author on a Samsung Tizen TV. It
+                passes <code>omarchy-plugin-validate</code>, uses no shell API
+                missing from Quattro, and never rewrites monitor rules, so the
+                <code>D-MONITORS</code> layouts stay authoritative.
+                <code>omarchy-projector-cast</code> was rejected because it
+                forces <code>hl.monitor</code> modes and
+                <code>position = "0x0"</code> by output name, and calls a
+                <code>Style.radius()</code> that this shell lacks.
+                <code>hardie.omarchy-cast</code> was rejected for root scripts
+                that stop and start <code>systemd-networkd</code>.
+              </p>
+              <p>
+                A plugin is unsandboxed code in the shell process, and
+                <code>plugin add</code> clones the default branch unpinned.
+                Stowing a vendored copy would hide upstream changes, while the
+                Omarchy checkout keeps <code>plugin update</code>'s diff review
+                before each fast-forward.
+              </p>
+              <p>
+                Security review, 2026-10-25, at <code>f4aa3fc</code>: Codex
+                (read-only) found no hidden behaviour, privilege use, downloads,
+                listeners, or telemetry. Receiver names from the LAN reach no
+                shell or script text, and are rendered as plain text. The PIN
+                travels on stdin and is not persisted by the plugin. Its
+                hardening findings need preconditions this machine lacks:
+                numeric <code>OMARCHY_WIRELESS_DISPLAY_*</code> settings are
+                evaluated as Bash arithmetic, which needs control of the shell's
+                environment (already user-level code execution); and there is a
+                shared <code>/tmp</code> fallback, used only when
+                <code>XDG_RUNTIME_DIR</code> is unset, on a single-user machine.
+                PID files are trusted without identity checks, log caps do not
+                bound <code>awk</code> memory, and some backend calls lack an
+                overall deadline; these are reliability issues. The
+                <code>doubletake-alchemy-bin</code> release was built by GitHub
+                Actions from tagged commit <code>a6e4a48</code>, matching the
+                package's recorded revision and checksum but not attested. It
+                installs user-level binaries only. The doubletake daemon source
+                was not audited. Re-review any update diff before accepting it.
+              </p>
+              <p>
+                AirPlay runs over the existing network and needs no root
+                component. As of <code>f4aa3fc</code> the plugin passes
+                <code>-mode</code> to <code>doubletake-ctl connect</code> even
+                when mirroring, and upstream <code>doubletake-bin</code> 0.5.0
+                rejects that flag (observed 2026-10-25 against a Samsung Q70AA),
+                so the fork is required. That is a plugin bug: it already reads
+                the daemon's <code>per_session_mode</code> capability and could
+                omit the flag. Once fixed upstream, <code>doubletake-bin</code>
+                would do, and the fork's remaining advantage is its PTP-to-NTP
+                timing fallback for Samsung receivers; it is otherwise 44
+                commits behind. Swapping packages needs one interactive
+                <code>yay -S</code>, because <code>--noconfirm</code> declines
+                the package conflict. <code>waycast</code> (Miracast) needs a
+                root D-Bus helper, a passwordless polkit rule for the active
+                session, an edit to <code>/etc/ufw/before.rules</code>, and a
+                boot-enabled service. It was 6 weeks old with a single author
+                when reviewed. Add it (built from source, not <code>-bin</code>)
+                only if the TV lacks AirPlay.
+              </p>
+              <p>
+                Omarchy's ufw denies inbound traffic by default, and the plugin
+                passes doubletake no port range. Receivers that start NTP timing
+                or request audio retransmits need inbound UDP. If picture or
+                sound stalls, allow a fixed <code>-port-range</code> from the
+                TV's address only, as doubletake's README describes, instead of
+                opening the LAN.
+              </p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
       <h2>Terminal (Ghostty default)</h2>
       <table>
         <thead>
@@ -1510,6 +1618,24 @@
     <section class="container">
       <h2>Sources</h2>
       <ul class="clean">
+        <li>
+          Wireless display: the
+          <a href="https://plugins.omarchy.org/">Omarchy plugin marketplace</a>
+          catalog;
+          <a href="https://github.com/alchemy/omarchy-wireless-display"
+            >omarchy-wireless-display</a
+          >
+          (reviewed at <code>f4aa3fc</code>);
+          <a href="https://github.com/omarroth/doubletake">doubletake</a>
+          (tested devices, firewall) and its
+          <a href="https://github.com/alchemy/doubletake">alchemy fork</a>;
+          <a href="https://github.com/alchemy/waycast">waycast</a> (networking
+          helper, Samsung codec notes); and
+          <a href="https://gitlab.gnome.org/GNOME/gnome-network-displays"
+            >GNOME Network Displays</a
+          >
+          (Miracast preflight checks).
+        </li>
         <li>
           Shared configuration patterns:
           <a href="https://github.com/sanketsudake/dotfiles"
