@@ -307,6 +307,11 @@ check_jq_fixed_point() {
 # OpenCode's global LSP delta remains tool-owned mutable state. [F-OPENCODE-LSP]
 check_jq_fixed_point "Claude" "$CLAUDE_SETTINGS_FILE" "$REPO/agents/harnesses/claude/settings.jq"
 check_jq_fixed_point "OpenCode" "$HOME/.config/opencode/opencode.json" "$REPO/agents/harnesses/opencode/settings.jq"
+if grep -qxF 'project_doc_fallback_filenames = ["CLAUDE.md"]' "$HOME/.codex/config.toml" 2>/dev/null; then
+  pass "Codex falls back to CLAUDE.md"
+else
+  miss "Codex CLAUDE.md fallback missing — re-run ./install"
+fi
 
 # Read the pin from the same delta as install; never invoke Pi or hydrate npm here. [D-PI-WEB]
 check_jq_fixed_point "Pi settings" "$PI_SETTINGS_FILE" "$REPO/agents/harnesses/pi/settings.jq"

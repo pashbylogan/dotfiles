@@ -8,10 +8,13 @@ conversation history, caches or downloaded runtime packages. [D-AGENT-SKILLS]
 
 - `instructions/AGENTS.md`: shared user-wide guidance. This is separate from the
   repository-root `AGENTS.md`, which describes working on dotfiles. It originated
-  from the existing Pi user guidance, with T3-only routing explicitly scoped to T3.
+  from the existing Pi user guidance. T3 runtime routing lives in the `t3-subagents`
+  skill, which the shared file points to, so non-T3 sessions don't carry it.
 - `harnesses/claude/`: Claude settings delta and static statusline Stow package.
 - `harnesses/pi/`: Pi settings/web deltas and static PDF-extension Stow package.
 - `harnesses/opencode/`: OpenCode settings delta (not a Stow package).
+- Codex: `./install` prepends `project_doc_fallback_filenames = ["CLAUDE.md"]` to
+  `~/.codex/config.toml` so Codex reads repos that only ship a CLAUDE.md.
 - `skills/`: canonical portable workflow skills and bundled references.
 - `tools/`: pyproject, uv lockfile, Python pin and disposable-project CLI tests.
 - `sources.toml`: reviewed upstream repositories, refs, commits, license notes,
@@ -63,7 +66,7 @@ No provider/model call was used for discovery. Claude and Pi source references
 stay untouched by the skill-copy deployment.
 
 Restart agent sessions, or `/reload` in Pi. Ask for the skill by name; Pi supports
-`/skill:ub-mode`, `/skill:crapper`, `/skill:dryer`, `/skill:mutator` and
+`/skill:ub-mode`, `/skill:ub-tools`, `/skill:t3-subagents` and
 `/skill:simplify` (with optional target/focus).
 
 ## Conflicts and drift
@@ -95,7 +98,8 @@ uv.lock. The pyproject remains uv's dependency input; validation prevents the
 provenance manifest and executable recipe from silently diverging.
 
 - `ub-mode` is vendored unchanged; upstream supplied no license file at the pin.
-- crapper/dryer/mutator integration skills are locally authored, with upstream
+- `ub-tools` is one locally authored skill holding crapper/dryer/mutator usage
+  notes under `references/<tool>/` (one listing entry instead of three), with upstream
   README/license references; their executable repositories are pinned separately.
 - `simplify` is a locally authored behavioral counterpart of Claude Code 2.1.310,
   not a verbatim prompt export. Its provenance explains the four review angles,

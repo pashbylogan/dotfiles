@@ -12,15 +12,11 @@ license = "No license file supplied by upstream at this revision"
 "SKILL.md" = "4120873db2e3681ea9b7de4d7105fc9d3406657c9ada91ce77b9b3c4962f3202"
 "README.md" = "1c8e56902f538453bb79674193e632bb1076624bcde0a00516d97410a18a6bd9"
 
-[skills.crapper]
+[skills.ub-tools]
 kind = "local"
-reference_tool = "crapper"
-[skills.dryer]
+reference_tools = ["crapper", "dryer", "mutator"]
+[skills.t3-subagents]
 kind = "local"
-reference_tool = "dryer"
-[skills.mutator]
-kind = "local"
-reference_tool = "mutator"
 [skills.simplify]
 kind = "local"
 reference = "Claude Code 2.1.310; see references/provenance.md"

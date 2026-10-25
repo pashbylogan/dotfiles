@@ -1,14 +1,9 @@
----
-name: mutator
-description: Evaluate test thoroughness using Uncle Bob's mutation-testing tool. Use for ub-mode mutation checks, uncovered mutation sites, or surviving mutants that reveal missing behavioral assertions.
----
-
 # Mutator
 
-This is a locally maintained integration skill, not an upstream-authored skill.
+Locally maintained integration notes, not upstream-authored.
 The pinned upstream CLI is installed at `~/.local/bin/mutator`; its otherwise
 undeclared crapper dependency is explicitly installed in the same environment.
-Read `references/upstream.md` beside this skill before a full run.
+Read `upstream.md` beside this file before a full run.
 
 Run from the project root, starting with a small source file:
 
@@ -29,5 +24,3 @@ mutator --use-existing-coverage --max-workers 2 --test-command 'project-specific
 - Exit 0: executed mutants killed; 2: baseline failed; 3: survivors. Uncovered sites are not executed, so exit 0 does not prove complete coverage. Compilation failures and timeouts count as kills; inspect suspicious results.
 - Cover uncovered code and add meaningful assertions for survivors. Remove demonstrably dead code only after checking intended behavior. Document equivalent mutants rather than contorting code to kill them.
 - Report baseline, exact command, scope, cache/coverage provenance, killed/survived/uncovered counts, and unresolved gaps. Follow project policy for generated metrics.
-
-Maintenance: the `agents/` directory in your dotfiles checkout (see its README).

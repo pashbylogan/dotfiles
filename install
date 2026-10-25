@@ -544,6 +544,24 @@ fi
 # error still dies inside the helper.
 apply_jq_deltas "$CLAUDE_SETTINGS_FILE" "$REPO/agents/harnesses/claude/settings.jq" "claude settings" || true
 
+# Codex reads only AGENTS.md; let it fall back to repos' CLAUDE.md. Codex owns
+# config.toml, so assert just this top-level key, prepended where TOML requires it. [D-AGENT-SKILLS]
+CODEX_CONFIG="$HOME/.codex/config.toml"
+CODEX_FALLBACK='project_doc_fallback_filenames = ["CLAUDE.md"]'
+mkdir -p "$(dirname "$CODEX_CONFIG")"
+touch "$CODEX_CONFIG"
+if ! grep -q '^project_doc_fallback_filenames' "$CODEX_CONFIG"; then
+  {
+    printf '%s\n' "$CODEX_FALLBACK"
+    cat "$CODEX_CONFIG"
+  } >"$CODEX_CONFIG.dotfiles.tmp"
+  cp -f "$CODEX_CONFIG.dotfiles.tmp" "$CODEX_CONFIG"
+  rm -f "$CODEX_CONFIG.dotfiles.tmp"
+  info "Codex falls back to CLAUDE.md"
+elif ! grep -qxF "$CODEX_FALLBACK" "$CODEX_CONFIG"; then
+  warn "${CODEX_CONFIG/#$HOME/\~} sets its own project_doc_fallback_filenames; left unchanged"
+fi
+
 # ── validation ───────────────────────────────────────────────────────────────
 if have hyprctl && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
   step "Validate Hyprland"

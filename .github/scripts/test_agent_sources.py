@@ -36,6 +36,13 @@ class AgentSourcesTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Tool recipe differs'):
             validate_sources(repo)
 
+    def test_unknown_reference_tool_rejected(self):
+        repo = self.fixture()
+        manifest = repo / 'agents/sources.toml'
+        manifest.write_text(manifest.read_text().replace('"mutator"]', '"missing"]'))
+        with self.assertRaisesRegex(ValueError, 'Unknown reference tool'):
+            validate_sources(repo)
+
     def test_unknown_skill_rejected(self):
         repo = self.fixture()
         (repo / 'agents/skills/unknown').mkdir()

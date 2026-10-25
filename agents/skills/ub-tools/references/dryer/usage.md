@@ -1,13 +1,8 @@
----
-name: dryer
-description: Find structural code duplication with Uncle Bob's dryer. Use for ub-mode duplication checks, duplicate-code review, or before consolidating similar functions.
----
-
 # Dryer
 
-This is a locally maintained integration skill, not an upstream-authored skill.
+Locally maintained integration notes, not upstream-authored.
 The pinned upstream CLI is installed at `~/.local/bin/dryer`.
-Read `references/upstream.md` beside this skill for normalization details.
+Read `upstream.md` beside this file for normalization details.
 
 Run from the project root:
 
@@ -24,5 +19,3 @@ dryer --threshold 0.8 --changed
 - Output: stdout plus `.metrics/dry.edn`. A normal report exits 0 even when duplicates exist: inspect candidates instead of treating exit status as a quality gate.
 - Pin behavior with tests before consolidating; rerun tests and dryer afterward.
 - Follow project policy for generated metrics; report scope, threshold, reviewed candidates, justified exceptions, and remaining duplication.
-
-Maintenance: the `agents/` directory in your dotfiles checkout (see its README).

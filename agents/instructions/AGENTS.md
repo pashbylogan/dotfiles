@@ -2,19 +2,11 @@
 
 These rules apply when a subagent is used; they do not request delegation or define when to delegate.
 
-The runtime-routing rules below apply inside T3 Code when its orchestration tools
-are available. Outside T3, use the host's available delegation mechanism, preserve
-explicit model/runtime requests, and report missing capabilities rather than
-inventing tool support.
+Inside T3 Code, when its orchestration tools are available, load the `t3-subagents` skill before launching a subagent. Elsewhere, use the host's delegation mechanism, preserve explicit model/runtime requests, and report missing capabilities rather than inventing tool support.
 
-## Runtime and model selection
+## Skill precedence
 
-- Choose the subagent's model deliberately, not automatically the parent's. Account for total tokens, cost, and rework while preserving correctness; free does not mean token-efficient.
-- Default to Pi for GPT/OpenAI models. Free OpenCode models through OpenCode are also allowed without asking. Other runtimes require an explicit request; never choose the Codex runtime just because a model is OpenAI.
-- Consult `orchestrator_capabilities` for live IDs and options; search omitted candidates as needed and reuse discoveries within the task. Match the model to the delegated task using observed reliability, capability, and cost, not price alone.
-- Set `target.providerInstanceId` to `pi` or `opencode` and use that runtime's exact catalog model ID. Omit the target only to deliberately inherit both runtime and model. Briefly state the choice and rationale.
-- Use supported reasoning options at the lowest sufficient effort; override or clear unsuitable inherited settings. Honor explicit model requests, report unavailability, and disclose material fallbacks; never silently switch runtimes or select paid OpenCode models.
-- Catalog presence does not guarantee access through the configured credentials and endpoint. If a child fails with an unsupported-model, access, or configuration error, inspect the full error and verify the provider/model routing before retrying; do not repeat the same launch unchanged. Any fallback must preserve the runtime and model-request constraints above. If no permitted working option is available, report the blocker.
+- When `ub-mode` is loaded, its rules (test first, the ub-tools gates) override ponytail's minimal-testing guidance. Otherwise ponytail is the default.
 
 ## Handoffs and results
 

@@ -1,13 +1,8 @@
----
-name: crapper
-description: Measure cyclomatic complexity and coverage-weighted CRAP scores using Uncle Bob's crapper. Use for ub-mode quality checks or when asked to find complex, under-tested functions.
----
-
 # Crapper
 
-This is a locally maintained integration skill, not an upstream-authored skill.
+Locally maintained integration notes, not upstream-authored.
 The pinned upstream CLI is installed at `~/.local/bin/crapper`.
-Read `references/upstream.md` beside this skill for language-specific behavior.
+Read `upstream.md` beside this file for language-specific behavior.
 
 Run from the project root, targeting changed files first:
 
@@ -25,5 +20,3 @@ crapper --no-coverage path/to/source
 - ub-mode requires each function's CRAP strictly below 10. `--threshold 10` exits 2 only for values *above* 10, so explicitly inspect equality at 10; do not present that flag as an exact ub-mode gate.
 - Reproduce high scores, improve behavioral tests or simplify the function, then rerun. Do not refactor solely to game the metric.
 - Report scope, coverage provenance, test failures, worst scores, remaining violations, and generated files.
-
-Maintenance: the `agents/` directory in your dotfiles checkout (see its README).

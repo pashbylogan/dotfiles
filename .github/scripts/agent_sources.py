@@ -30,8 +30,7 @@ def validate_sources(repo=REPO):
         if not (agents / 'skills' / name / 'SKILL.md').is_file():
             raise ValueError(f'Missing SKILL.md: {name}')
         if skill['kind'] == 'local':
-            tool = skill.get('reference_tool')
-            if tool and tool not in data.get('tools', {}):
+            if set(skill.get('reference_tools', [])) - set(data.get('tools', {})):
                 raise ValueError(f'Unknown reference tool: {name}')
             continue
         hashes = skill.get('sha256', {})
