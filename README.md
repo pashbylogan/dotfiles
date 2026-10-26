@@ -283,7 +283,15 @@ weaken a "clean" result; `--quick` and `--skip-malware` stay unprivileged.
 Run `security-scan` directly: sudo's restricted PATH may not include the
 stowed command in `~/.local/bin`. Logs land in
 `~/.local/state/security-scan/<timestamp>/` and are owned by the invoking user
-even under `sudo`. A full sweep takes tens of minutes, and ClamAV's size limits
+even under `sudo`. The default log tree is created as the invoking user so
+later quick scans can write to it. If an earlier version left its parent
+root-owned, repair that directory once (no recursive ownership change needed):
+
+```sh
+sudo chown "$USER:$(id -gn)" "$HOME/.local/state/security-scan"
+```
+
+A full sweep takes tens of minutes, and ClamAV's size limits
 still skip files over 100 MB and containers over 400 MB. Exit status is `0`
 clean, `1` detections or an incomplete scan, and `2` usage error; `--strict`
 also fails on posture findings.

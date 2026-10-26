@@ -5,6 +5,7 @@
 
 import os
 from pathlib import Path
+import pwd
 import subprocess
 import tempfile
 import unittest
@@ -75,7 +76,7 @@ class SecurityScanTests(unittest.TestCase):
         self.assertIn("Posture checks", result.stdout)
         self.assertFalse(self.capture.exists())
 
-    def test_quick_scan_does_not_request_sudo(self):
+    def mock_clamscan(self):
         self.command(
             "clamscan",
             '''for arg do
@@ -83,6 +84,47 @@ class SecurityScanTests(unittest.TestCase):
 done
 ''',
         )
+
+    def test_default_log_parent_is_created_as_invoking_user(self):
+        user = pwd.getpwuid(os.getuid()).pw_name
+        home = self.root / "home"
+        home.mkdir()
+        self.command(
+            "getent",
+            f"printf '%s\\n' '{user}:x:{os.getuid()}:{os.getgid()}::{home}:/bin/sh'\n",
+        )
+        self.command(
+            "sudo",
+            f'''printf '%s\\n' "$@" > '{self.capture}'
+[ "$1" = -u ] && [ "$2" = '{user}' ] && [ "$3" = -- ] || exit 99
+shift 3
+[ "$1" = mkdir ] || exit 99
+exec "$@"
+''',
+        )
+        # Simulate root routing in a copy; every command still runs unprivileged.
+        simulated_root = self.root / "root-security-scan"
+        simulated_root.write_text(SCRIPT.read_text().replace('"$EUID"', '"0"'))
+        simulated_root.chmod(0o755)
+        self.env.update(SUDO_USER=user, XDG_STATE_HOME=str(home / ".local/state"))
+        self.mock_clamscan()
+        result = self.run_scan(
+            "--quick", "--skip-posture", "--no-freshclam", script=simulated_root
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            self.capture.read_text().splitlines()[:5],
+            ["-u", user, "--", "mkdir", "-p"],
+        )
+        parent = home / ".local/state/security-scan"
+        self.assertEqual(parent.stat().st_uid, os.getuid())
+        self.capture.unlink()
+        result = self.run_scan("--quick", "--skip-posture", "--no-freshclam")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(self.capture.exists())
+
+    def test_quick_scan_does_not_request_sudo(self):
+        self.mock_clamscan()
         result = self.run_scan(
             "--quick", "--skip-posture", "--no-freshclam",
             "--log-dir", str(self.root / "logs"),

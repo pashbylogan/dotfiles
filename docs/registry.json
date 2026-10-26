@@ -397,7 +397,7 @@
     },
     {
       "id": "D-SECURITY-SCAN",
-      "title": "Read-only stowed security-scan runs ClamAV plus host posture checks, requests sudo for a full sweep, and never deletes or quarantines",
+      "title": "Read-only stowed security-scan runs ClamAV plus host posture checks, requests sudo for a full sweep, keeps default logs user-owned, and never deletes or quarantines",
       "canonical": "decisions.html#D-SECURITY-SCAN",
       "appears_in": ["README.md", "findings.html"],
       "code_paths": [

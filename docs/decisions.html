@@ -621,10 +621,13 @@
         <code>--move</code>, never changes configuration, and never enables (or
         relies on) the ClamAV daemon. Logs are written under the invoking user's
         <code>~/.local/state/security-scan/&lt;timestamp&gt;/</code> and chowned
-        back through <code>sudo</code>. Exit status separates usage errors
-        (<code>2</code>), detections or incomplete scans (<code>1</code>), and
-        clean runs (<code>0</code>); <code>--strict</code> also fails on posture
-        findings.
+        back through <code>sudo</code>. Default log directories and their state
+        ancestors are created as the invoking user before scanning, so a root
+        run cannot leave a root-owned parent blocking later quick scans.
+        Explicit <code>--log-dir</code> paths retain their existing handling.
+        Exit status separates usage errors (<code>2</code>), detections or
+        incomplete scans (<code>1</code>), and clean runs (<code>0</code>);
+        <code>--strict</code> also fails on posture findings.
       </p>
       <p>
         The wrapper reports what a bare <code>clamscan</code> run hides: files

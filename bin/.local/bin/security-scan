@@ -477,7 +477,14 @@ main() {
     have sudo || die "a whole-machine scan needs sudo (or --quick for your own files)"
     exec sudo -- "$(readlink -f "${BASH_SOURCE[0]}")" "$@"
   fi
-  [ -n "$LOG_DIR" ] || LOG_DIR="$(state_base)/$PROG/$(date +%Y%m%dT%H%M%S)"
+  if [ -z "$LOG_DIR" ]; then
+    LOG_DIR="$(state_base)/$PROG/$(date +%Y%m%dT%H%M%S)"
+    # Create every default-state ancestor as the caller, not just chown the leaf.
+    if [ "$EUID" -eq 0 ] && [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != root ]; then
+      sudo -u "$SUDO_USER" -- mkdir -p -m 700 -- "$LOG_DIR" ||
+        die "cannot create user-owned log dir: $LOG_DIR"
+    fi
+  fi
   preflight
   banner
   if [ "$SKIP_MALWARE" -eq 0 ]; then
