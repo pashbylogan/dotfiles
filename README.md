@@ -291,6 +291,18 @@ root-owned, repair that directory once (no recursive ownership change needed):
 sudo chown "$USER:$(id -gn)" "$HOME/.local/state/security-scan"
 ```
 
+The privileged-file check traverses mounted filesystems, excluding `/proc`,
+`/sys`, and `/dev`, using the same scope for permission bits and capabilities.
+Host package ownership applies only to live-host files. Numeric Snapper snapshot
+copies and containerd snapshot `fs/` trees remain in separate
+`privileged-files-snapshots.txt` and `privileged-files-containers.txt` inventories;
+their provenance is **not** verified by the host's package database. Unexpected
+privileged files elsewhere (including other files under container storage) still
+raise findings. Traversal, capability-tool, or package-database failures mark the
+check incomplete; unprivileged posture runs may therefore exit `1`. For complete
+posture-only coverage, use `sudo "$(readlink -f "$(command -v security-scan)")" --skip-malware`.
+The full malware scan still includes snapshots and container storage.
+
 A full sweep takes tens of minutes, and ClamAV's size limits
 still skip files over 100 MB and containers over 400 MB. Exit status is `0`
 clean, `1` detections or an incomplete scan, and `2` usage error; `--strict`

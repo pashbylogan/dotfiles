@@ -331,30 +331,64 @@ check_sockets() {
 # outside the package manager.
 check_privileged_files() {
   if ! have pacman; then
-    info 'pacman not found — privileged-file check skipped'
+    SCAN_ERRORS=$((SCAN_ERRORS + 1))
+    warn 'pacman not found — privileged-file ownership check incomplete'
     return 0
   fi
   local raw="$LOG_DIR/privileged-files.txt" unowned="$LOG_DIR/privileged-files-unowned.txt"
-  local path
-  local -a roots=(/)
-  if [ "$(stat -c %d / 2>/dev/null || printf 0)" != "$(stat -c %d "$TARGET_HOME" 2>/dev/null || printf 0)" ]; then
-    roots+=("$TARGET_HOME")
+  local bits="$LOG_DIR/privileged-files-bits.txt" caps="$LOG_DIR/privileged-files-capabilities.txt"
+  local errors="$LOG_DIR/privileged-files-errors.txt" host="$LOG_DIR/privileged-files-host.txt"
+  local snapshots="$LOG_DIR/privileged-files-snapshots.txt" containers="$LOG_DIR/privileged-files-containers.txt"
+  local path incomplete=0
+  local -a cap_args=(-exec getcap '{}' +)
+  if ! have getcap; then
+    cap_args=(-false)
+    incomplete=1
+    warn 'getcap not found — privileged-file capability check incomplete'
   fi
-  for path in "${roots[@]}"; do
-    find "$path" -xdev -type f \( -perm -4000 -o -perm -2000 \) 2>/dev/null || true
-    if have getcap; then
-      getcap -r "$path" 2>/dev/null | awk '{ print $1 }' || true
-    fi
-  done | sort -u >"$raw"
+  : >"$bits"
+  # One traversal keeps bit and capability scopes identical, including mounted
+  # home/data filesystems; only kernel/device trees are excluded.
+  find / \( -path /proc -o -path /sys -o -path /dev \) -prune -o -type f \
+    \( \( \( -perm -4000 -o -perm -2000 \) -fprint "$bits" \) , "${cap_args[@]}" \) \
+    >"$caps" 2>"$errors" || incomplete=1
+  [ ! -s "$errors" ] || incomplete=1
+  sed -nE 's/ cap_[^ ]+( \[rootid=[0-9]+\])?$//p' "$caps" | sort -u - "$bits" >"$raw"
+  : >"$host"
+  : >"$snapshots"
+  : >"$containers"
   : >"$unowned"
   while IFS= read -r path; do
-    pacman -Qqo "$path" >/dev/null 2>&1 || printf '%s\n' "$path" >>"$unowned"
+    # Stored filesystem copies have their own package provenance, not the
+    # host's. Keep their evidence without weakening checks elsewhere.
+    if [[ "$path" =~ ^/\.snapshots/[0-9]+/snapshot/ ]]; then
+      printf '%s\n' "$path" >>"$snapshots"
+    elif [[ "$path" =~ ^/var/lib/containerd/io\.containerd\.snapshotter\.v1\.[^/]+/snapshots/[0-9]+/fs/ ]]; then
+      printf '%s\n' "$path" >>"$containers"
+    else
+      printf '%s\n' "$path" >>"$host"
+    fi
   done <"$raw"
+  info "stored-copy privileged files: $(wc -l <"$snapshots" | tr -d ' ') snapshot, $(wc -l <"$containers" | tr -d ' ') container; separate inventories, provenance not verified"
+  if ! pacman -Qq >/dev/null 2>&1; then
+    incomplete=1
+    warn 'host package database could not be read — ownership check incomplete'
+  else
+    while IFS= read -r path; do
+      pacman -Qqo "$path" >/dev/null 2>&1 || printf '%s\n' "$path" >>"$unowned"
+    done <"$host"
+  fi
+  if [ "$incomplete" -ne 0 ]; then
+    SCAN_ERRORS=$((SCAN_ERRORS + 1))
+    warn "privileged-file check incomplete — see $(pretty "$errors"); rerun with root access if needed"
+  fi
   if [ ! -s "$unowned" ]; then
-    ok "every privileged file belongs to a package ($(wc -l <"$raw" | tr -d ' ') checked)"
+    if [ "$incomplete" -eq 0 ]; then
+      ok "every live-host privileged file belongs to a package ($(wc -l <"$host" | tr -d ' ') checked)"
+    fi
     return 0
   fi
-  finding "$(wc -l <"$unowned" | tr -d ' ') privileged file(s) owned by no package"
+  finding "$(wc -l <"$unowned" | tr -d ' ') live-host privileged file(s) owned by no package"
   sed 's/^/    /' "$unowned" | head -n 50 || true
 }
 

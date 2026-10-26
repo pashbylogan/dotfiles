@@ -630,6 +630,22 @@
         <code>--strict</code> also fails on posture findings.
       </p>
       <p>
+        Privileged-file discovery uses one traversal for permission bits and
+        capabilities across mounted filesystems, excluding <code>/proc</code>,
+        <code>/sys</code>, and <code>/dev</code>. The host package database only
+        validates live-host paths. Numeric Snapper snapshot trees and containerd
+        snapshot <code>fs/</code> trees are retained in separate
+        <code>privileged-files-snapshots.txt</code> and
+        <code>privileged-files-containers.txt</code> inventories, not treated as
+        unowned host files. These inventories do not verify stored-copy
+        provenance; files elsewhere in container storage still receive host
+        ownership checks. Traversal, capability-tool, and package-database
+        failures mark the scan incomplete rather than claiming clean ownership.
+        Posture-only runs do not auto-elevate: use sudo with the resolved script
+        path for complete coverage. Malware scanning still includes stored
+        copies; nothing is stripped of privileges or deleted to clear a finding.
+      </p>
+      <p>
         The wrapper reports what a bare <code>clamscan</code> run hides: files
         over 100 MB and containers over 400 MB are skipped by ClamAV's defaults,
         a scan that ends with errors is not reported as clean, and a stale
