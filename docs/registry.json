@@ -518,11 +518,12 @@
     },
     {
       "id": "F-APP-CHANNELS",
-      "title": "App channels are Omarchy-native first: Brave Origin, Ghostty, ChatGPT, Hermes, T3 Code (installer and theme), and Discord use Quattro flows, agents use mise wrappers with missing Pi launchers restored natively, Spotify uses its sync-repo service package, Slack and Claude Desktop use Omarchy sync-repo packages, and explicit extras stay in manifests",
+      "title": "App channels are Omarchy-native first: Brave Origin, Ghostty, ChatGPT, T3 Code (installer and theme), and Discord use Quattro flows, local Hermes Desktop is denied in favor of Saruman, agents use mise wrappers with missing Pi launchers restored natively, Spotify uses its sync-repo service package, Slack and Claude Desktop use Omarchy sync-repo packages, and explicit extras stay in manifests",
       "canonical": "findings.html#F-APP-CHANNELS",
       "appears_in": ["README.md", "decisions.html"],
       "code_paths": [
         "install",
+        "packages.remove.txt",
         "packages.txt",
         "packages.aur.txt",
         ".github/scripts/verify.sh"

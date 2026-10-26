@@ -164,14 +164,11 @@ if [ -f packages.aur.txt ]; then
 fi
 
 # AI desktop apps use supported Omarchy installers rather than generic package
-# entries; Hermes initializes its runtime and T3 Code selects the Omarchy theme.
+# entries; T3 Code selects the Omarchy theme.
 # [F-APP-CHANNELS][D-IDEMPOTENT]
 step "AI desktop apps"
 if ! pacman -Qq openai-codex-desktop >/dev/null 2>&1; then
   omarchy install ai chatgpt
-fi
-if ! pacman -Qq hermes-desktop >/dev/null 2>&1; then
-  omarchy install ai hermes
 fi
 if ! pacman -Qq t3code-bin >/dev/null 2>&1; then
   omarchy install ai t3-code

@@ -97,10 +97,12 @@ Each ends in an interactive auth flow.
     to workspace 3 in `hypr/dotfiles.lua`. If huddles or screen sharing regress in the native app,
     use Slack in the browser as the fallback; do not add a tray dependency unless
     the local tray behavior stops working. [F-APP-CHANNELS]
-11. **ChatGPT, Hermes, and T3 Code** — open each desktop app and complete its
+11. **ChatGPT and T3 Code** — open each desktop app and complete its
     account/provider setup. `./install` uses Omarchy menu → Install → AI →
-    ChatGPT / Hermes / T3 Code. Hermes receives its managed runtime; T3 Code
-    receives and selects the current Omarchy theme. [F-APP-CHANNELS]
+    ChatGPT / T3 Code. T3 Code receives and selects the current Omarchy theme.
+    Hermes runs on Saruman; the local desktop is denied in `packages.remove.txt`.
+    Its browser workspace is deferred until an official Docker release includes
+    it; the existing dashboard is not that workspace. [F-APP-CHANNELS]
 12. **Spotify** — sign in to your account. Installed from Quattro's supported
     sync-repo package by `./install`, pinned to workspace 10.
 

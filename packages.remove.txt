@@ -36,6 +36,9 @@ xournalpp
 # would create two Discord application identities. [D-PKG-REMOVE][D-WEBAPP]
 discord
 
+# Hermes runs on Saruman; do not restore the local desktop. [F-APP-CHANNELS]
+hermes-desktop
+
 # User-removed browsers (not omarchy builtins, so no ~/.local/share/omarchy/
 # audit applies). Brave Origin is the sole browser. [D-PKG-REMOVE]
 chromium

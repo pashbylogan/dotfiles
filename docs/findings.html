@@ -180,10 +180,20 @@
           >D-BROWSER-DEFAULT</a
         >): Omarchy's install/default path, flags, extensions, policies, and
         theme refresh all target stable. Ghostty likewise uses the native
-        terminal installer. ChatGPT and Hermes likewise use their respective
-        <code>Install → AI</code> flows, not direct package entries: Hermes
-        additionally initializes its managed runtime and synchronizes its theme.
-        Coding agents use Quattro's lazy mise wrappers and update inside
+        terminal installer. ChatGPT uses its native
+        <code>Install → AI</code> flow, not a direct package entry. Hermes runs
+        on Saruman instead of a local desktop: <code>hermes-desktop</code> is
+        denied in <code>packages.remove.txt</code>. Remove an existing local
+        installation with <code>omarchy remove ai hermes</code> to clean up its
+        managed runtime too; retaining chats, memories, skills, and credentials
+        is the native default. As checked on 26 October 2026, the browser-hosted
+        Desktop workspace landed upstream after the official
+        <code>v0.22.5</code>
+        release; that release's Docker image does not provide
+        <code>hermes webapp</code>. Wait for an official Docker release before
+        enabling that workspace on Saruman. Its existing Web Dashboard is a
+        different interface, not a replacement desktop workspace. Coding agents
+        use Quattro's lazy mise wrappers and update inside
         <code>omarchy update</code>; the repo owns only config deltas. Obsidian
         is a retained base package rather than a manifest entry;
         <code>spotify</code> uses the sync-repo package selected by Quattro's
@@ -814,6 +824,22 @@ hyprctl reload</code></pre>
 
       <h2>Sources</h2>
       <ul class="clean">
+        <li>
+          <a
+            href="https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/desktop.md"
+            >Hermes browser-hosted Desktop documentation</a
+          >;
+          <a
+            href="https://github.com/NousResearch/hermes-agent/commit/b5eb5ee7a8a38ac96b62f44e0febf563922839e1"
+            >browser-workspace server feature (25 October 2026)</a
+          >;
+          <a
+            href="https://github.com/NousResearch/hermes-agent/releases/tag/v0.22.5"
+            >v0.22.5 release (23 October 2026)</a
+          >; installed
+          <code>/usr/share/omarchy/bin/omarchy-remove-ai-hermes</code>
+          (managed runtime removal and default user-data retention).
+        </li>
         <li>
           Installed Omarchy <code>4.0.6</code>:
           <code>/usr/share/omarchy/bin/omarchy-install-ai-t3-code</code>,
