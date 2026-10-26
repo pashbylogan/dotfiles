@@ -8,8 +8,11 @@ conversation history, caches or downloaded runtime packages. [D-AGENT-SKILLS]
 
 - `instructions/AGENTS.md`: shared user-wide guidance. This is separate from the
   repository-root `AGENTS.md`, which describes working on dotfiles. It originated
-  from the existing Pi user guidance. T3 runtime routing lives in the `t3-subagents`
-  skill, which the shared file points to, so non-T3 sessions don't carry it.
+  from the existing Pi user guidance. Its `T3 Code only` section keeps ephemeral
+  scratch in `/tmp` and favors direct work, targeted evidence, actionable messages,
+  scoped locks and risk-sized review; these defaults do not apply outside T3.
+  T3 runtime routing lives in the `t3-subagents` skill, which the shared file
+  points to, so non-T3 sessions don't carry it.
 - `harnesses/claude/`: Claude settings delta and static statusline Stow package.
 - `harnesses/pi/`: Pi settings/web/Sol-pi deltas and static PDF-extension Stow package. [D-PI-WEB]
 - `harnesses/opencode/`: OpenCode settings delta (not a Stow package).

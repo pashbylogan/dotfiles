@@ -319,25 +319,31 @@
               scripts/extensions are per-file Stow packages under
               <code>agents/harnesses/</code>; mutable settings retain jq deltas,
               and credentials/state stay local. Shared instructions and skills
-              use managed copies. Pi and Codex discover the shared skill root
-              natively; the local Codex API confirmed duplicate discovery before
-              obsolete managed Codex copies were archived. Retain OpenCode
-              compatibility copies: v2.1.4's API did not confirm discovery,
-              despite latest documentation. Use ownership hashes to reject local
-              edits, unknown conflicts and symlinks; never prune unrelated
-              resources. The Python environment and executable links remain
-              local, disposable state. The primary install/verify flows include
-              this subset; standalone Make targets support headless hosts
-              without Omarchy. The portable aggregate also converges Pi's
-              package/configuration overlay through the existing agent-config
-              step; it requires an existing Pi and Node/npm runtime, as
-              documented in D-PI-WEB. No separate hidden source repository or
-              background skill synchronization. The portable
-              <code>simplify</code> skill reproduces Claude Code 2.1.310's four
-              cleanup angles, parallel review and apply-fixes flow, with an
-              explicit inline fallback. Do not deploy that skill to Claude's
-              personal skill root: preserve its bundled command and native
-              invocation semantics. The other roots receive managed copies.
+              use managed copies. A T3-only instruction section keeps ephemeral
+              non-project artifacts under <code>/tmp</code> and favors direct
+              work, one coordinator, targeted evidence, actionable updates,
+              resource-scoped locks and risk-sized review. It preserves explicit
+              requests and safety gates without changing standalone harness
+              behavior or moving T3 state/worktrees. Pi and Codex discover the
+              shared skill root natively; the local Codex API confirmed
+              duplicate discovery before obsolete managed Codex copies were
+              archived. Retain OpenCode compatibility copies: v2.1.4's API did
+              not confirm discovery, despite latest documentation. Use ownership
+              hashes to reject local edits, unknown conflicts and symlinks;
+              never prune unrelated resources. The Python environment and
+              executable links remain local, disposable state. The primary
+              install/verify flows include this subset; standalone Make targets
+              support headless hosts without Omarchy. The portable aggregate
+              also converges Pi's package/configuration overlay through the
+              existing agent-config step; it requires an existing Pi and
+              Node/npm runtime, as documented in D-PI-WEB. No separate hidden
+              source repository or background skill synchronization. The
+              portable <code>simplify</code> skill reproduces Claude Code
+              2.1.310's four cleanup angles, parallel review and apply-fixes
+              flow, with an explicit inline fallback. Do not deploy that skill
+              to Claude's personal skill root: preserve its bundled command and
+              native invocation semantics. The other roots receive managed
+              copies.
             </td>
             <td>
               A durable source of truth without checkout-dependent skill links.

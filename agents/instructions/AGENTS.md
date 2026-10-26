@@ -17,3 +17,14 @@ Inside T3 Code, when its orchestration tools are available, load the `t3-subagen
 ## Instruction hygiene
 
 - Keep AGENTS.md short, actionable, and durable. Include non-obvious preferences and recurring gotchas, not generic advice, volatile model lists, or tutorials. Keep project-specific commands near the project; link detailed guidance for on-demand reading. Prune or revise rules based on observed failures.
+
+# T3 Code only
+
+Apply these defaults only inside T3 Code, not standalone harness sessions. Preserve explicit user requests, approval gates, runtime/model constraints, and resource safety.
+
+- Put non-project scratch scripts, reports, downloads and build outputs in a private task directory under `/tmp` (`mktemp -d /tmp/t3-task-XXXXXX`), even when T3 starts in persistent scratch. Keep project work and requested durable deliverables in their designated locations; do not relocate T3 state or active worktrees. Clean only your own disposable files; identify retained `/tmp` outputs as temporary.
+- Work directly by default. Delegate bounded independent work only when parallelism, context isolation or independent judgment justifies startup and integration. Many files or long logs alone are not a reason. Prefer one coordinator directly supervising workers, not dispatch-only relay layers.
+- Keep reads and tool output targeted; reuse still-applicable evidence and reference artifacts rather than repeatedly copying full logs, briefs or policy packets. Do not economize by skipping necessary understanding or verification.
+- Batch related updates. Send assignments, decisions, actionable blockers, material changes, safety events and completion—not acknowledgment-only replies or unchanged status reminders. Preserve required lease renewals and explicitly requested heartbeats.
+- Use completion notifications; check status only when needed mid-turn. Scope locks to the actual shared operation/resource so runtime waits do not block unrelated isolated edits or CPU-only checks.
+- Review small changes inline, including cleanup lenses; avoid automatic per-lens agent fan-out. Use independent review when risk or an explicit request warrants it. Recheck changed risks after fixes, not another broad planning/review cycle; stop when acceptance criteria are met.
