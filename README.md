@@ -26,6 +26,10 @@ represents. Each numbered step is necessary in order.
 
 ### SSH + GitHub
 
+These setup instructions target Omarchy. For Ubuntu's native agent, follow
+[Ubuntu SSH agent](docs/ubuntu-ssh-agent.md): use `ssh-add` after a reboot and
+let SSH clients share the systemd agent without per-repository socket overrides.
+
 3. **Generate an ed25519 keypair** — `ssh/.ssh/config` hard-codes
    `IdentityFile ~/.ssh/id_ed25519`, so pin the path explicitly:
    ```sh
