@@ -324,14 +324,16 @@
               work, one coordinator, targeted evidence, actionable updates,
               resource-scoped locks and risk-sized review. It preserves explicit
               requests and safety gates without changing standalone harness
-              behavior or moving T3 state/worktrees. The T3 subagent skill
-              routes by ambiguity, consequence and verifiability, with stable
-              rules in its SKILL.md and replaceable task defaults in
+              behavior or moving T3 state/worktrees. Shared instructions own
+              whether to delegate or retry, handoffs and verification. Once that
+              decision is made, the T3 subagent skill selects runtime/model by
+              ambiguity, consequence and verifiability, with stable rules in its
+              SKILL.md and replaceable task defaults in
               <code>references/model-routing.md</code>. Keep free-endpoint
               privacy facts separate from quality claims. Keep current model
               choices and candidate/validation status in the reference so model
-              replacements do not require rewriting this decision. Permit one
-              checked escalation, not repeated cheap retries; compare actual
+              replacements do not require rewriting this decision. Model
+              recommendations do not trigger or limit retries. Compare actual
               success, latency, total cost and parent rework before promoting
               replacements, and retain rollback evidence. T3 owns live
               capabilities, launch, permissions, isolation and lifecycle; these

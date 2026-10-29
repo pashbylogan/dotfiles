@@ -7,14 +7,15 @@ T3 before launching; this file is not a catalog snapshot. [D-AGENT-SKILLS]
 
 ## Current choices
 
-Apply the launch and escalation rules in `../SKILL.md` to every route.
+Use these defaults only after delegation or a retry has been chosen under the
+shared instructions. Apply the target-selection rules in `../SKILL.md`.
 
 | Route | Typical task | Runtime / model | Effort starting point | Status / constraints |
 | --- | --- | --- | --- | --- |
 | Bounded worker | Narrow search, extraction, checkable summary, log triage | `opencode` / `opencode/deepseek-v4.1-flash-free` | No explicit reasoning override; clear incompatible inherited options | Existing default; not locally benchmarked. See `free-models.md` for privacy eligibility. |
 | Standard implementer | Scoped change, tests, straightforward debugging with acceptance checks | `pi` / `openai/gpt-6.1-terra` | Lowest sufficient supported effort, starting at `low` if available | Candidate default; not locally validated. |
 | Deep reasoner | Architecture, API shape, hard debugging, conflicting evidence, unverified or high-consequence judgment | `pi` / `openai/gpt-6.1-sol` | `medium` if supported; raise to `high` when depth warrants it | Strong-model baseline, not a measured winner. |
-| Independent reviewer | Risk-driven correctness or design review | Deep-reasoner selection above | Same as deep reasoner | No automatic reviewer or second review round. Consider a different capable model only with evidence of useful independent judgment and within runtime/request constraints. |
+| Independent reviewer | Correctness or design review | Deep-reasoner selection above | Same as deep reasoner | Consider a different capable model only with evidence of useful independent judgment and within runtime/request constraints. |
 | Visual specialist | Screenshot reasoning or computer-use tasks | Standard-implementer selection above, only with required runtime tools | Lowest sufficient supported effort | Deep reasoner only if it supports the needed modality/tools; otherwise report the limitation. Candidate, not locally validated. |
 
 Explicit user choices and privacy/runtime constraints override this table. If a
@@ -41,9 +42,10 @@ falling back to a cheaper model merely because it is listed.
    unacceptable quality regressions. Record date, task set, settings, results
    and remaining risks here or in a linked durable report. Roll back regressions.
 
-Do not launch benchmark children during ordinary work just to maintain this
-reference, or build a router service, private catalog or duplicate T3 presets.
-Revisit this boundary if shipped T3 task-aware defaults supersede the policy.
+This maintenance checklist does not trigger delegation or evaluation runs.
+Keep routing as guidance rather than a router service, private catalog or
+duplicate T3 presets. Revisit this boundary if shipped T3 task-aware defaults
+supersede the policy.
 
 ## Evidence and limits
 

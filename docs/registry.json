@@ -95,7 +95,7 @@
     },
     {
       "id": "D-AGENT-SKILLS",
-      "title": "Central agent sources, per-file Stow assets, shared instructions with T3-only scratch and efficiency defaults, task-based routing with replaceable model candidates, managed skills, and explicit upstream checks",
+      "title": "Central agent sources, per-file Stow assets, shared instructions with T3-only scratch and efficiency defaults, shared delegation policy separate from task-based runtime/model selection with replaceable candidates, managed skills, and explicit upstream checks",
       "canonical": "decisions.html#D-AGENT-SKILLS",
       "appears_in": ["README.md", "architecture.html"],
       "code_paths": [
