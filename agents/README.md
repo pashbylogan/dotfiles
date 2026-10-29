@@ -12,7 +12,11 @@ conversation history, caches or downloaded runtime packages. [D-AGENT-SKILLS]
   scratch in `/tmp` and favors direct work, targeted evidence, actionable messages,
   scoped locks and risk-sized review; these defaults do not apply outside T3.
   T3 runtime routing lives in the `t3-subagents` skill, which the shared file
-  points to, so non-T3 sessions don't carry it.
+  points to, so non-T3 sessions don't carry it. Stable task/risk rules live in
+  its `SKILL.md`; replaceable defaults and the candidate promotion/rollback
+  checklist live in `references/model-routing.md`. `references/free-models.md`
+  records free-endpoint privacy eligibility, not model quality. T3 still owns
+  capability discovery, launches, permissions, isolation and child lifecycle.
 - `harnesses/claude/`: Claude settings delta and static statusline Stow package.
 - `harnesses/pi/`: Pi settings/web/Sol-pi deltas and static PDF-extension Stow package. [D-PI-WEB]
 - `harnesses/opencode/`: OpenCode settings delta (not a Stow package).
