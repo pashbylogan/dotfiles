@@ -22,7 +22,7 @@ kind = "local"
 reference = "Locally authored, generalised from a project-specific cleanup skill"
 [skills.simplify]
 kind = "local"
-reference = "Claude Code 2.1.310; see references/provenance.md"
+reference = "Claude Code 2.1.314 native prompt; see references/provenance.md"
 
 [tools.crapper]
 repository = "https://github.com/unclebob/crapper.git"

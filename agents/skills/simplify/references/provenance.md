@@ -1,48 +1,29 @@
 # Provenance and compatibility
 
-This skill is a locally authored behavioral reimplementation, not an official
-Anthropic skill, a verbatim prompt export, or a promise of identical model output.
-It requires no Claude Code executable, account, plugin or API at execution time.
+`SKILL.md` mirrors the `/simplify` prompt that **Claude Code 2.1.314** loads,
+copied word for word from the loaded skill text so other agents get the same
+review quality. It is not an official Anthropic skill and needs no Claude Code
+executable, account, plugin or API at execution time.
 
-Reference inspected: installed **Claude Code 2.1.310**, whose bundled command
-registration and prompt templates were inspected read-only. Its simplify flow is:
+## Only deviations from the native prompt
 
-1. Gather the target diff, including working-tree changes where relevant.
-2. Run four independent cleanup reviewers concurrently: reuse, simplification,
-   efficiency, and altitude (root-cause depth).
-3. Merge duplicate findings, apply appropriate behavior-preserving fixes, and
-   summarize fixes/skips. It is quality cleanup, not correctness bug hunting.
-4. When its agent tool is unavailable, cover all four angles inline and disclose
-   the fallback.
+- "via the Agent tool" became "via the host's subagent tool", so it works in
+  other harnesses.
+- `/code-review` became "a code review"; other hosts don't have that command.
+- Claude Code has two versions of the prompt: one with the Agent tool and one
+  without. They are merged here. The inline-fallback paragraph and the "state it
+  was single-pass" summary line come from the no-Agent-tool version.
 
-Older descriptions of `/simplify` often mention three reviewers. This skill
-tracks the four-angle behavior observed in 2.1.310, not that older formulation.
-No proprietary implementation or full original prompt is bundled here.
-
-## Deliberate portability adaptations
-
-- Uses the current harness's permitted subagent tools, models and approvals.
-  It never assumes a Claude-only Agent tool or starts top-level conversations.
-- Handles missing or partially failed subagent support without false fan-out
-  claims; the parent can cover missing angles inline.
-- Reviewers are read-only; the parent verifies findings and owns all edits.
-- Accounts for untracked files, empty/unborn repositories, explicit targets,
-  user changes, project instructions, tests and side-effect boundaries.
-- Deployment deliberately omits `~/.claude/skills/simplify`: Claude Code already
-  has the native command, and installing a personal skill with the same name can
-  override it or alter invocation/commit behavior. Other configured roots receive
-  managed copies. Existing user-owned simplify skills are not overwritten.
+Deployment deliberately omits `~/.claude/skills/simplify`: Claude Code already
+has the native command, and a personal skill with the same name can override it.
 
 ## Sources and updates
 
-- Claude Code skills documentation:
-  <https://code.claude.com/docs/en/skills>
-  (skills, invocation and personal-skill behavior; includes the special
-  pre-commit handling of user-provided `simplify`/`verify` skills).
-- Local reference executable: `~/.local/share/claude/versions/2.1.310`.
+- Claude Code skills documentation: <https://code.claude.com/docs/en/skills>
+- Reference: the `simplify` command registration in the Claude Code 2.1.314
+  binary (two prompt variants, chosen by whether the Agent tool is available)
+  and the text it loads when invoked.
 
-Updates are manual: inspect an explicitly identified Claude Code release,
-compare its review angles and orchestration, revise this skill and provenance
-in dotfiles together, then run `make ci`, `make agent-skills` and
-`make verify-agent-skills`. Do not scrape a moving binary automatically at
-install time. Deployment copies remain independent of the reference executable.
+Updates are manual: invoke `/simplify` in an explicitly identified Claude Code
+release, diff its loaded text against `SKILL.md`, update both files, then run
+`make ci`, `make agent-skills` and `make verify-agent-skills`.

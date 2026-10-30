@@ -125,9 +125,9 @@ provenance manifest and executable recipe from silently diverging.
 - `ub-tools` is one locally authored skill holding crapper/dryer/mutator usage
   notes under `references/<tool>/` (one listing entry instead of three), with upstream
   README/license references; their executable repositories are pinned separately.
-- `simplify` is a locally authored behavioral counterpart of Claude Code 2.1.310,
-  not a verbatim prompt export. Its provenance explains the four review angles,
-  portable delegation, inline fallback and native-Claude exclusion.
+- `simplify` mirrors Claude Code 2.1.314's native `/simplify` prompt word for word.
+  Its provenance lists the only deviations: host-neutral subagent wording, the
+  merged inline fallback, and leaving it out of Claude's own skills root.
 - `uml-viewer` remains optional and is not installed.
 
 `make check-agent-updates` resolves the explicitly declared upstream refs with
