@@ -1,6 +1,7 @@
 ---
 name: cleanup
-description: Tear down the debris left after a piece of work has landed: merged branches and their remotes, this task's worktree, generated artifacts and session scratch files. Use when work is merged and the user is moving on, says "clean up", "tidy up" or "clean up after this", or invokes /cleanup. Read-only until it has shown a manifest and been told to go.
+description: >-
+  Tear down the debris left after a piece of work has landed: merged branches and their remotes, this task's worktree, generated artifacts and session scratch files. Use when work is merged and the user is moving on, says "clean up", "tidy up" or "clean up after this", or invokes /cleanup. Read-only until it has shown a manifest and been told to go.
 ---
 
 # Clean up after a landed task
