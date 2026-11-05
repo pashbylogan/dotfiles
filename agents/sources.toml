@@ -24,6 +24,10 @@ reference = "Locally authored, generalised from a project-specific cleanup skill
 kind = "local"
 reference = "Claude Code 2.1.314 native prompt; see references/provenance.md"
 
+[skills.hill-climb]
+kind = "local"
+reference = "User-supplied hill-climb.skill archive; installed unchanged with examples and research references"
+
 [tools.crapper]
 repository = "https://github.com/unclebob/crapper.git"
 ref = "HEAD"

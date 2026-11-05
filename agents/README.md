@@ -4,6 +4,10 @@ Dotfiles owns portable instructions/skills, harness-specific configuration sourc
 and pinned companion-tool recipes. It does **not** own credentials, sessions,
 conversation history, caches or downloaded runtime packages. [D-AGENT-SKILLS]
 
+The `hill-climb` skill designs eval-driven iteration loops; its `SKILL.md` and
+`references/` are preserved unchanged from the user-supplied `hill-climb.skill`
+archive. It deploys to all three managed skill roots below. [D-AGENT-SKILLS]
+
 ## Layout and ownership
 
 - `instructions/AGENTS.md`: shared user-wide guidance. This is separate from the

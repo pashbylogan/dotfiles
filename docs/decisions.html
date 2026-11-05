@@ -356,7 +356,11 @@
               the subagent tool host-neutral and merges in the native inline
               fallback. Do not deploy that skill to Claude's personal skill
               root: preserve its bundled command and native invocation
-              semantics. The other roots receive managed copies.
+              semantics. The other roots receive managed copies. The
+              <code>hill-climb</code> skill and its examples/research references
+              are preserved unchanged from the user-supplied archive and deploy
+              to all three managed roots; it designs eval-driven loops rather
+              than starting an autonomous climb during installation.
             </td>
             <td>
               A durable source of truth without checkout-dependent skill links.
