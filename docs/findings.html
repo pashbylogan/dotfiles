@@ -193,7 +193,7 @@
         <code>hermes webapp</code>. Wait for an official Docker release before
         enabling that workspace on Saruman. Its existing Web Dashboard is a
         different interface, not a replacement desktop workspace. Coding agents
-        use Quattro's lazy mise wrappers and update inside
+        use Omarchy's native lazy mise shims and update inside
         <code>omarchy update</code>; the repo owns only config deltas. Obsidian
         is a retained base package rather than a manifest entry;
         <code>spotify</code> uses the sync-repo package selected by Quattro's
@@ -210,21 +210,23 @@
       </p>
       <p>
         T3 Code also uses <code>omarchy install ai t3-code</code>, rather than a
-        package-manifest entry. On Omarchy <code>4.0.6</code> on 23 October
-        2026, <code>t3code-bin 0.1.2-1</code> is installed from the Omarchy sync
-        repository. The supported installer adds that package, publishes the
-        generated palette to <code>~/.t3/userdata/themes/omarchy.json</code>,
-        selects it through <code>t3 theme set omarchy</code>, and opens the app.
-        Subsequent Omarchy theme switches atomically refresh the palette. The
-        package supplies <code>/usr/bin/t3</code>, <code>/usr/bin/t3code</code>,
-        and the Apps-menu launcher; no repo-owned launcher or PATH addition is
-        needed. <code>install</code> runs the native flow only when the package
-        is missing, and <code>make verify</code> checks package presence. T3's
-        mutable <code>~/.t3/</code> state and
-        <code>~/.config/t3code-v2/</code> Electron profile remain unstowed:
-        provider accounts, app preferences, projects, sessions, and worktrees
-        belong to the app and machine. Provider CLIs retain their existing
-        Omarchy mise ownership.
+        package-manifest entry. Audited against installed Omarchy
+        <code>4.5.0-3</code>: migration <code>1792345511.sh</code> replaces
+        <code>t3code-bin</code> with a self-updating native AppImage at
+        <code>~/.local/share/t3code/T3-Code.AppImage</code>. The supported
+        installer supplies its desktop entry and CLI and publishes the palette
+        to <code>~/.t3/userdata/themes/omarchy.json</code>. Subsequent Omarchy
+        theme switches refresh the palette. <code>install</code> uses
+        <code>stable --no-launch</code> only if the executable or launcher is
+        missing; installation and verification share the
+        <code>t3code_installed</code> predicate in <code>lib/style.sh</code> to
+        check those artifacts rather than the retired package. Mutable
+        <code>~/.t3/</code> state and the existing
+        <code>~/.config/t3code-v2/</code> profile remain unstowed: accounts,
+        projects, sessions, and worktrees belong to the app and machine. The
+        app-generated <code>com.t3tools.T3Code.desktop</code> entry can remain
+        the active URL handler; neither it nor the profile is a deprecated
+        package artifact. Provider CLIs retain Omarchy mise ownership.
       </p>
       <p>
         The native Slack preference is deliberately narrow. Native Slack
@@ -272,23 +274,26 @@
         <code>gvfs</code>) is already part of the Omarchy baseline.
       </p>
       <p>
-        Claude Code, OpenCode, and Pi use Omarchy's binary channel. Quattro
-        installs lightweight wrappers that run
-        <code>mise use -g</code> before execution, bypass the normal release-age
-        delay, and execute the resolved tool. This preserves user config while
-        keeping install, default-agent selection, and upgrades on one supported
-        Omarchy path.
+        Omarchy 4.5 declares default tools in
+        <code>/etc/mise/conf.d/omarchy-tools.toml</code> and generates native
+        lazy shims in <code>~/.local/share/mise/shims/</code>. Migration
+        <code>1791382872.sh</code> retires recognized legacy
+        <code>~/.local/bin</code> wrappers without touching custom ones. Agent
+        declarations typically auto-update every four hours with no release-age
+        delay; <code>omarchy update</code> also runs mise upgrades. The stock
+        set now includes Antigravity's <code>agy</code>, not the retired Gemini
+        wrapper. Verification checks shim resolution without launching agents or
+        downloading them.
       </p>
       <p>
-        Pi is part of Quattro's stock agent set. <code>install</code> ensures
-        its executable <code>~/.local/bin/pi</code> launcher exists with
-        <code>omarchy mise install pi</code>, even when the application refresh
-        is unnecessary. An existing launcher is preserved. The
-        <a href="decisions.html#D-PI-WEB">D-PI-WEB</a> overlay invokes it to
-        provision a missing or incorrect web-access extension, which downloads
-        Pi on a fresh machine; Quattro's updater owns subsequent upgrades. Pi
-        stays out of both package manifests, and its authentication and session
-        state remain machine-local. Pi reads the repo's shared
+        Pi is part of Omarchy's stock lazy tool set. The
+        <a href="decisions.html#D-PI-WEB">D-PI-WEB</a> overlay invokes
+        <code>pi</code> through PATH to provision a missing or incorrect
+        web-access extension, downloading Pi on a fresh machine. Do not call
+        <code>omarchy mise install pi</code> to recreate a retired wrapper:
+        native mise declarations own provisioning and upgrades. Pi stays out of
+        both package manifests, and its authentication and session state remain
+        machine-local. Pi reads the repo's shared
         <code>AGENTS.md</code> natively. The stock menu offers Setup → Defaults
         → Agent → Pi. Verified on Omarchy <code>4.0.4</code> on 2 October 2026:
         <code>mise latest pi</code> resolves to <code>1.0.0</code>.
@@ -391,10 +396,10 @@
             <td>
               Canonical install path for language tools. Today
               <code>python</code> installs Python via
-              <code>mise use --global python@latest</code> then drops uv via
-              Astral's installer; <code>go</code> uses
-              <code>mise use --global go@latest</code>. Pulls latest at the
-              moment it runs (no version pin) — see
+              <code>mise use --global python@latest</code> then installs the
+              system-declared mise uv (or selects it globally when opted out);
+              <code>go</code> uses <code>mise use --global go@latest</code>.
+              Pulls latest at the moment it runs (no version pin) — see
               <a href="decisions.html#D-DEV-ENV">D-DEV-ENV</a>.
             </td>
           </tr>
@@ -841,21 +846,20 @@ hyprctl reload</code></pre>
           (managed runtime removal and default user-data retention).
         </li>
         <li>
-          Installed Omarchy <code>4.0.6</code>:
+          Installed Omarchy <code>4.5.0-3</code>:
           <code>/usr/share/omarchy/bin/omarchy-install-ai-t3-code</code>,
-          <code>/usr/share/omarchy/bin/omarchy-theme-set-t3code</code>,
-          <code>/usr/share/omarchy/default/omarchy/omarchy-menu.jsonc</code>,
-          <code>/usr/share/applications/t3code.desktop</code>, and
-          <code>pacman -Si t3code-bin</code> /
-          <code>pacman -Qi t3code-bin</code>
-          (native installer, theme lifecycle, launcher, and package channel).
+          <code>/usr/share/omarchy/bin/omarchy-install-t3code-app</code>,
+          <code>/usr/share/omarchy/bin/omarchy-theme-set-t3code</code>, and
+          <code>/usr/share/omarchy/migrations/1792345511.sh</code>
+          (native self-updating AppImage, launcher, and theme lifecycle).
         </li>
         <li>
-          Installed Omarchy <code>4.0.4</code>:
-          <code>/usr/share/omarchy/install/user/mise.sh</code>,
-          <code>/usr/share/omarchy/bin/omarchy-mise-install</code>, and
-          <code>/usr/share/omarchy/default/omarchy/omarchy-menu.jsonc</code>
-          (Pi wrapper lifecycle and default-agent menu).
+          Installed Omarchy <code>4.5.0-3</code>:
+          <code>/etc/mise/conf.d/omarchy-tools.toml</code>,
+          <code>/usr/share/omarchy/migrations/1791382872.sh</code>,
+          <code>/usr/share/omarchy/bin/omarchy-install-dev-env</code>, and
+          <code>/usr/share/omarchy/bin/omarchy-update-mise</code>
+          (native lazy shims, wrapper retirement, uv ownership, and updates).
         </li>
         <li>
           <a href="https://github.com/earendil-works/pi/releases/tag/v1.0.0"

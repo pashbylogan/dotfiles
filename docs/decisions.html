@@ -120,23 +120,24 @@
                   syntax errors surface here rather than at
                   <code>./install</code> time), and
                   <code>.github/scripts/check_docs.py</code> for docs integrity,
-                  plus Python tests for update delegation and failure handling,
-                  Pi bootstrap, and captive-portal helper behavior.
+                  plus automatic discovery of all
+                  <code>.github/scripts/test_*.py</code> Python suites in one
+                  interpreter, so new tests need no Makefile entry.
                   <code>make fmt</code>
                   auto-fixes.
                 </li>
                 <li>
                   <code>make update</code> — the frequent, low-risk channel:
                   <code>omarchy update -y</code> (pacman + AUR + omarchy
-                  migrations and Quattro-owned mise agent updates), then
-                  <code>uv self update</code> because uv remains outside mise,
-                  then native mise cleanup and <code>make verify</code>. Run in
-                  a terminal: Omarchy owns orphan review, and 4.0.5 still
-                  prompts for it despite <code>-y</code>. No separate repo
-                  preflight or package-removal policy. Non-zero Omarchy, uv, or
-                  cleanup exits are warned, then the wrapper continues through
-                  the remaining channel and read-only verification so
-                  independent drift is still reported.
+                  migrations and Omarchy-owned mise tools, including uv), then
+                  native mise cleanup and <code>make verify</code>. No separate
+                  uv self-update runs against the mise-managed install. Run in a
+                  terminal: Omarchy owns orphan review, and 4.0.5 still prompts
+                  for it despite <code>-y</code>. No separate repo preflight or
+                  package-removal policy. Non-zero Omarchy or cleanup exits are
+                  warned, then the wrapper continues through the remaining
+                  channel and read-only verification so independent drift is
+                  still reported.
                 </li>
                 <li>
                   <code>make update-firmware</code> — firmware only:
@@ -175,8 +176,8 @@
                   <a href="decisions.html#D-TERM-GHOSTTY">D-TERM-GHOSTTY</a>),
                   stow links resolve into the repo (including the
                   <code>uwsm/env.d</code> SSH-agent fragment and dangling
-                  detection), mise agent wrappers, dev-env tools, XDG/SSH state,
-                  and live Hypr appearance values (see
+                  detection), native mise agent shims, dev-env tools, XDG/SSH
+                  state, and live Hypr appearance values (see
                   <a href="decisions.html#D-LOOKNFEEL">D-LOOKNFEEL</a>).
                 </li>
                 <li>
@@ -209,10 +210,8 @@
               pacman owns the tool, <code>omarchy pkg drop</code> it (graceful
               on dep-conflict refusal); if not on PATH, install via
               <code>omarchy install dev-env</code>. No path pinning — omarchy
-              lands each tool wherever the underlying installer defaults today
-              (Astral's <code>~/.local/bin/uv</code>; mise's
-              <code>~/.local/share/mise/shims/go</code>) and
-              <code>command -v</code> finds it.
+              lands each tool wherever upstream defaults today (currently mise
+              shims for both uv and Go), and <code>command -v</code> finds it.
             </td>
             <td>
               The user's rule:
@@ -224,10 +223,11 @@
               changes.
               <strong>Latest-at-bootstrap caveat:</strong>
               <code>omarchy install dev-env</code> pulls latest at the time it
-              runs (mise <code>@latest</code>, Astral installer), so a fresh
-              bootstrap on different days may yield different versions;
-              <code>make update</code> runs <code>uv self update</code>;
-              Quattro's main updater owns mise-backed tool and agent upgrades.
+              runs (mise <code>@latest</code>), so a fresh bootstrap on
+              different days may yield different versions. Omarchy 4.5 declares
+              uv and Node in its system mise config with native lazy shims; its
+              main updater owns tool and agent upgrades. No uv self-update or
+              repo-owned agent wrapper is needed.
             </td>
           </tr>
           <tr id="D-PI-WEB">
@@ -417,7 +417,7 @@
               genuine extras; <code>packages.remove.txt</code> is the persistent
               deny-list applied with <code>omarchy pkg drop</code>. The broad
               Remove Preinstalled flow is not used because it also removes
-              retained Quattro apps, OmaCalc, and agent wrappers.
+              retained Quattro apps, OmaCalc, and agent tooling.
               <ul>
                 <li>
                   <code>packages.txt</code> / <code>packages.aur.txt</code> —
@@ -432,7 +432,7 @@
                   <code>claude-desktop</code> use Omarchy's sync-repo packages
                   through <code>packages.txt</code>, not the AUR. T3 Code
                   instead uses <code>omarchy install ai t3-code</code> so its
-                  sync-repo package also receives the native Omarchy theme
+                  self-updating AppImage also receives the native Omarchy theme
                   setup; app state and provider authentication remain local.
                   Operator CLI utilities use the same official-repository path:
                   <code>nmap</code> comes from Arch <code>extra</code> through
@@ -481,7 +481,7 @@
               explicit, so the deny-list is durable desired state rather than a
               one-time cleanup. <code>install</code> seeds a missing mutable
               OpenCode config only to apply the user's LSP delta; Quattro still
-              owns the OpenCode binary through its mise wrapper.
+              owns the OpenCode binary through its native lazy mise shim.
               <strong>Audit rule:</strong> before adding a name to
               <code>packages.remove.txt</code>, grep
               <code>/usr/share/omarchy/</code> for usage — Omarchy wires some
@@ -529,14 +529,15 @@
             <td>
               Quattro's broad Remove Preinstalled flow would also remove
               retained packages, OmaCalc, TUI wrappers, and mise-backed agent
-              launchers, including Pi. The overlay restores a missing Pi wrapper
-              through <code>omarchy mise install pi</code>; Omarchy retains
-              binary and update ownership. Its application refresh can recopy
-              stock desktop files, so a small persistent delta is required.
-              Calling the supported remover preserves Quattro's ownership of
-              launcher and icon cleanup instead of restating or editing packaged
-              files — which is also why the retained-launcher check compares
-              against the packaged file instead of pinning an upstream URL.
+              tools, including Pi. Omarchy 4.5's native lazy mise shims own
+              binary provisioning and updates; do not recreate the retired
+              <code>~/.local/bin</code> wrappers. Its application refresh can
+              recopy stock desktop files, so a small persistent delta is
+              required. Calling the supported remover preserves Quattro's
+              ownership of launcher and icon cleanup instead of restating or
+              editing packaged files — which is also why the retained-launcher
+              check compares against the packaged file instead of pinning an
+              upstream URL.
             </td>
           </tr>
           <tr id="D-BROWSER-DEFAULT">
@@ -1135,8 +1136,8 @@
 
       <h2>Quickshell deltas</h2>
       <p>
-        The overlay carries one supported Quickshell plugin for dynamic
-        workspaces, placed with Quattro's own <code>omarchy bar</code> CLI. Both
+        The overlay uses the stock monitor-aware workspaces widget, placed with
+        Omarchy's own <code>omarchy bar</code> CLI. Both
         <code>shell.toml</code> and <code>shell.json</code> stay mutable and
         user-owned; the repo writes nothing into <code>shell.toml</code>, so bar
         colors follow the active theme.
@@ -1156,8 +1157,9 @@
               shape
             </td>
             <td>
-              Stow the supported user-owned
-              <code>pashbyl.workspaces</code> plugin. Keep
+              Use stock <code>omarchy.workspaces</code>; retire the
+              <code>pashbyl.workspaces</code> clone and only remove its known
+              repo-owned symlinks, preserving independently edited files. Keep
               <code>shell.toml</code> mutable and set nothing in it: pinning
               <code>bar.active</code> would override every theme's red with
               Quickshell's own <code>#a55555</code> fallback. Keep
@@ -1167,18 +1169,24 @@
               sources the same
               <code>omarchy-shell-config</code> normalize/commit helpers a
               hand-written jq filter used to reimplement.
-              <code>plugin disable</code> clears the stock workspaces module,
-              which an Omarchy update can re-place, and
-              <code>bar put</code> places the personal clone after the menu
-              without moving an already-placed one, so upstream re-additions and
-              interrupted runs converge to the same state.
+              <code>plugin disable pashbyl.workspaces</code> retires the clone
+              from the layout;
+              <code
+                >bar move omarchy.workspaces --section left --after
+                omarchy.menu</code
+              >
+              converges stock placement, including widgets already placed in
+              another section.
             </td>
             <td>
               Quattro documents plugins as the supported widget seam, and its
               own <code>omarchy bar</code> CLI already owns layout convergence,
-              so the repo drives that rather than reimplementing it. Quickshell
-              atomically replaces <code>shell.toml</code> when settings change,
-              which is why it stays unstowed and unwritten.
+              so the repo drives that rather than reimplementing it. In Omarchy
+              4.5 stock workspaces follow each monitor's block of ten; the old
+              clone hardcoded IDs 1–10 and would hide other monitors'
+              workspaces. Following stock also avoids maintaining copied QML.
+              Quickshell atomically replaces <code>shell.toml</code> when
+              settings change, which is why it stays unstowed and unwritten.
             </td>
           </tr>
         </tbody>
@@ -1560,8 +1568,8 @@
           >Reference baseline = stock Quattro plus explicit deltas</span
         >
         Do not run the broad <strong>Remove Preinstalled</strong> flow: it also
-        removes retained Quattro apps, OmaCalc, and lazy agent wrappers. Start
-        from stock Quattro, apply additive manifests and the narrow package
+        removes retained Quattro apps, OmaCalc, and agent tooling. Start from
+        stock Quattro, apply additive manifests and the narrow package
         deny-list, and leave Omarchy-owned bindings untouched except for
         explicit personal Lua overrides. Reproduction recipe: install Quattro →
         <code>./install</code>.
@@ -1877,6 +1885,18 @@
           define supported APIs, log delegation, local archives and native
           compact-and-continue behavior. The old npm 0.1.0 release lacks these
           Pi 1.x fixes; use the reviewed commit rather than a moving branch.
+        </li>
+        <li>
+          Installed Omarchy 4.5.0-3:
+          <code
+            >/usr/share/omarchy/shell/plugins/bar/widgets/Workspaces.qml</code
+          >
+          reads monitor-local workspace blocks from
+          <code>~/.local/state/omarchy/monitor-workspaces</code>; the retired
+          personal clone only handled IDs 1–10.
+          <code>/etc/mise/conf.d/omarchy-tools.toml</code> and migration
+          <code>1791382872.sh</code> establish native lazy shims, including uv
+          and Pi, in place of the old agent wrappers.
         </li>
         <li>
           Installed Omarchy Quattro:

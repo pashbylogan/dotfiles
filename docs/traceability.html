@@ -106,7 +106,8 @@
           <tr>
             <td><code>D-CI</code></td>
             <td>
-              Makefile = single source of truth for repo ops (CI gates +
+              Makefile = single source of truth for repo ops (CI gates with
+              automatic Python test discovery +
               <code>make update</code> for packages and self-managed tools,
               Omarchy-owned orphan review and native mise pruning with
               running-process retention, opt-in
@@ -118,6 +119,7 @@
             <td>
               <code>Makefile</code>,
               <code>.github/scripts/test_update.py</code>,
+              <code>.github/scripts/test_omarchy_alignment.py</code>,
               <code>.github/workflows/ci.yml</code>,
               <code>.github/scripts/check_docs.py</code>,
               <code>.github/scripts/verify.sh</code>
@@ -126,8 +128,8 @@
           <tr>
             <td><code>D-DEV-ENV</code></td>
             <td>
-              uv/go owned by <code>omarchy install dev-env</code>; install
-              reconciles pacman copies
+              uv/Go use native mise dev-env ownership; install reconciles pacman
+              copies and Omarchy updates uv without self-update
             </td>
             <td><a href="decisions.html#D-DEV-ENV">decisions</a></td>
             <td><code>install</code></td>
@@ -270,16 +272,14 @@
           <tr>
             <td><code>D-QUICKSHELL-DELTAS</code></td>
             <td>
-              Supported Quickshell workspace plugin, placed with Quattro's own
-              <code>omarchy bar</code> CLI; shell.toml and shell.json both stay
-              mutable and unwritten
+              Stock monitor-aware workspaces after the menu, old clone retired
+              through native plugin/bar commands; mutable shell config unstowed
             </td>
             <td>
               <a href="decisions.html#D-QUICKSHELL-DELTAS">decisions</a>
             </td>
             <td>
-              <code>install</code>, <code>.github/scripts/verify.sh</code>, and
-              the tracked Quickshell extension files
+              <code>install</code>, <code>.github/scripts/verify.sh</code>
             </td>
           </tr>
           <tr>
@@ -572,13 +572,14 @@
             <td><code>F-APP-CHANNELS</code></td>
             <td>
               App channels are Omarchy-native first: Quattro owns Brave Origin,
-              Ghostty, ChatGPT, T3 Code (native installer and theme), the
-              Discord web app, mise agent wrappers (including Pi, restored
-              natively when missing), and Obsidian; Spotify follows Quattro's
-              sync-repo service package, Slack and Claude Desktop use Omarchy
-              sync-repo packages (Slack retains its browser fallback), and other
-              explicit extras follow their audited package channels; local
-              Hermes Desktop is denied in favor of Saruman, with browser
+              Ghostty, ChatGPT, T3 Code (native self-updating AppImage and
+              theme, shared installation check in <code>lib/style.sh</code>),
+              the Discord web app, native lazy mise agent shims (including Pi,
+              without restoring retired wrappers), and Obsidian; Spotify follows
+              Quattro's sync-repo service package, Slack and Claude Desktop use
+              Omarchy sync-repo packages (Slack retains its browser fallback),
+              and other explicit extras follow their audited package channels;
+              local Hermes Desktop is denied in favor of Saruman, with browser
               workspace deployment deferred until an official Docker release
             </td>
             <td><a href="findings.html#F-APP-CHANNELS">findings</a></td>

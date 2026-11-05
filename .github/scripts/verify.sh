@@ -94,8 +94,6 @@ check_link "$HOME/.config/tmux/local.conf"
 check_link "$HOME/.claude/statusline-command.sh"
 # The PDF fix is user-owned; Omarchy's theme extension remains separate. [D-PI-WEB]
 check_link "$HOME/.pi/agent/extensions/pi-web-access-pdf-compat.ts"
-check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json"
-check_link "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
 check_link "$HOME/.config/omarchy/backgrounds/tokyo-night/humpback.jpg"
 
 # The hypr.* namespace is purged by Quattro on reload; dotfiles.* is not.
@@ -215,32 +213,17 @@ SHELL_JSON="$HOME/.config/omarchy/shell.json"
 if [ ! -f "$SHELL_JSON" ]; then
   miss "$(pretty "$SHELL_JSON") missing — re-run ./install"
 elif jq -e '
-  [.bar.layout.left[], .bar.layout.center[], .bar.layout.right[]] as $all
+  [.bar.layout[][]] as $all
   | (.bar.layout.left | map(.id) | index("omarchy.menu")) as $menu
-  | (.bar.layout.left | map(.id) | index("pashbyl.workspaces")) as $ws
-  | (($all | map(select(.id == "pashbyl.workspaces")) | length) == 1)
-    and (($all | map(select(.id == "omarchy.workspaces")) | length) == 0)
+  | (.bar.layout.left | map(.id) | index("omarchy.workspaces")) as $ws
+  | (($all | map(select(.id == "omarchy.workspaces")) | length) == 1)
+    and (($all | map(select(.id == "pashbyl.workspaces")) | length) == 0)
     and ($ws != null)
     and ($menu == null or $ws == ($menu + 1))
 ' "$SHELL_JSON" >/dev/null 2>&1; then
-  pass "workspace module placed after the menu; stock module absent"
+  pass "stock monitor-aware workspaces placed after the menu; old clone absent"
 else
   miss "Quickshell bar layout drifted — re-run ./install"
-fi
-if jq -e '
-  .id == "pashbyl.workspaces"
-  and .entryPoints.barWidget == "Workspaces.qml"
-  and .omarchy.clonedFrom == "omarchy.workspaces"
-' "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json" >/dev/null 2>&1; then
-  pass "workspace plugin manifest matches the supported clone shape"
-else
-  miss "workspace plugin manifest is invalid"
-fi
-if grep -qF 'root.bar.run("hyprctl dispatch " + Util.shellQuote("hl.dsp.focus' \
-  "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml" 2>/dev/null; then
-  pass "workspace click uses Quattro Lua dispatch"
-else
-  miss "workspace click dispatch drifted from Quattro's supported form"
 fi
 # Git checkout, not a copy, or `omarchy plugin update` has nothing to pull.
 # [D-WIRELESS-DISPLAY]
@@ -287,21 +270,26 @@ for stale_pkg in "${!STALE_TERMINAL_LAUNCHERS[@]}"; do
 done
 unset stale_pkg stale_file
 
-# Quattro owns agent installation and updates through mise wrappers; the repo
-# restores Pi's native wrapper and owns config deltas. [F-APP-CHANNELS][D-CLAUDE-CONFIG][D-OPENCODE-LSP]
+# Native lazy shims replace retired wrappers; `mise activate` can put installed
+# binaries ahead of shims. Never launch agents to check them. [F-APP-CHANNELS][D-CLAUDE-CONFIG][D-OPENCODE-LSP]
 if have mise; then
-  pass "mise is available for Quattro agent wrappers"
+  pass "mise is available for Omarchy's lazy tools"
 else
-  miss "mise missing — Quattro agent wrappers cannot install/update"
+  miss "mise missing — Omarchy lazy tools cannot install/update"
 fi
-for agent in codex claude crush gemini copilot opencode pi omp grok; do
-  if [ -x "$HOME/.local/bin/$agent" ] && grep -qF 'mise use -g' "$HOME/.local/bin/$agent"; then
-    pass "$agent uses an Omarchy mise wrapper"
+for agent in codex claude crush agy copilot opencode pi omp grok; do
+  agent_shim="$HOME/.local/share/mise/shims/$agent"
+  agent_path="$(command -v "$agent" || true)"
+  if [ -x "$agent_shim" ] && {
+    [ "$agent_path" -ef "$agent_shim" ] ||
+      [[ $agent_path == "$HOME/.local/share/mise/installs/"* ]]
+  }; then
+    pass "$agent uses native mise provisioning"
   else
-    miss "$agent mise wrapper missing or drifted"
+    miss "$agent mise shim missing or shadowed — check PATH and run 'mise reshim'"
   fi
 done
-unset agent
+unset agent agent_shim agent_path
 
 check_jq_fixed_point() {
   local label="$1" target="$2" filter="$3" expected actual
@@ -392,15 +380,17 @@ check_tool uv
 check_tool go
 
 # AI-specific flows select T3 Code's Omarchy theme.
-# T3 Code owns its mutable state; only package presence is asserted here. [F-APP-CHANNELS]
-for ai_desktop_pkg in openai-codex-desktop t3code-bin; do
-  if pkg_installed "$ai_desktop_pkg"; then
-    pass "$ai_desktop_pkg installed"
-  else
-    miss "$ai_desktop_pkg missing — re-run ./install"
-  fi
-done
-unset ai_desktop_pkg
+# T3 Code is a self-updating AppImage, no longer a package. [F-APP-CHANNELS]
+if t3code_installed; then
+  pass "T3 Code native AppImage and launcher installed"
+else
+  miss "T3 Code AppImage or launcher missing — re-run ./install"
+fi
+if pkg_installed openai-codex-desktop; then
+  pass "openai-codex-desktop installed"
+else
+  miss "openai-codex-desktop missing — re-run ./install"
+fi
 
 check_xdg() {
   local key="$1" expected="$2" file="$HOME/.config/user-dirs.dirs" alt=""

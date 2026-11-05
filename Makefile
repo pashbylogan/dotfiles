@@ -56,13 +56,7 @@ ci: ## Run the full gate: shellcheck + shfmt + prettier + jq filter parse + docs
 	@for f in $(JQ_FILTERS); do echo '{}' | jq -f "$$f" >/dev/null || { echo "jq filter failed: $$f"; exit 1; }; done
 	@if [ -n "$(JQ_FILTERS)" ]; then echo "jq filters parse + smoke pass: $(JQ_FILTERS)"; fi
 	python3 $(DOCS_CHECK)
-	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_update.py'
-	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_pi.py'
-	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_wifi_login.py'
-	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_security_scan.py'
-	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_agent_skills.py'
-	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_agent_config.py'
-	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_agent_sources.py'
+	/usr/bin/python3 -B -m unittest discover -s .github/scripts -p 'test_*.py'
 	python3 -B .github/scripts/agent_sources.py verify
 	@echo "OK - all checks passed"
 
@@ -80,22 +74,15 @@ tools: ## Show required tools + how to install them on Omarchy
 
 # ── machine maintenance ──────────────────────────────────────────────────────
 # `make update` bundles the frequent, low-risk channels: Omarchy/pacman/AUR
-# packages plus uv's self-managed release. Quattro owns mise updates. Firmware is the lone
+# packages and mise tools (including uv). Firmware is the lone
 # opt-in exception (`make update-firmware`) because it alone carries
 # device-specific reboot/power-cycle risk. [D-CI]
-update: ## Packages + Omarchy migrations + uv + unused mise cleanup, then verify
+update: ## Packages + Omarchy migrations/tools + unused mise cleanup, then verify
 	@printf "$(CYAN)ℹ$(NC) If 'omarchy update -y' triggers a reboot, verify won't run — re-run 'make update' after.\n"
 	@printf "$(CYAN)ℹ$(NC) Run in a terminal: Omarchy owns orphan review and may still prompt with -y.\n"
 	@printf "\n$(BOLD)── Packages & Omarchy migrations ──$(NC)\n"
 	@printf "$(CYAN)$$ omarchy update -y$(NC)\n"
-	@omarchy update -y || printf "$(YELLOW)⚠$(NC) 'omarchy update -y' returned non-zero; continuing to uv, cleanup, and verification.\n"
-	@printf "\n$(BOLD)── uv self-update ──$(NC)\n"
-	@if command -v uv >/dev/null 2>&1; then \
-		printf "$(CYAN)$$ uv self update$(NC)\n"; \
-		uv self update || printf "$(YELLOW)⚠$(NC) 'uv self update' returned non-zero; continuing to cleanup and verification.\n"; \
-	else \
-		printf "$(CYAN)ℹ$(NC) uv not found on PATH — skipped.\n"; \
-	fi
+	@omarchy update -y || printf "$(YELLOW)⚠$(NC) 'omarchy update -y' returned non-zero; continuing to cleanup and verification.\n"
 	@printf "\n$(BOLD)── Unused mise versions ──$(NC)\n"
 	@# An update failure must not fall through to older mise without process protection. [D-CI]
 	@if version="$$(mise version)" && printf '2026.10.13\n%s\n' "$${version%% *}" | sort -V -C; then \

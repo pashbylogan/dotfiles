@@ -20,6 +20,13 @@ fi
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
+# Share the native T3 installation contract between convergence and verification.
+# The self-updating AppImage has no package receipt. [F-APP-CHANNELS]
+t3code_installed() {
+  [ -x "$HOME/.local/share/t3code/T3-Code.AppImage" ] &&
+    [ -f "$HOME/.local/share/applications/t3code.desktop" ]
+}
+
 # Declarative manifests accept comments, whitespace, blank lines, and CRLF.
 # Keep install and verification on one parser so desired state cannot drift.
 parse_list_file() {

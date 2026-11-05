@@ -170,8 +170,8 @@ step "AI desktop apps"
 if ! pacman -Qq openai-codex-desktop >/dev/null 2>&1; then
   omarchy install ai chatgpt
 fi
-if ! pacman -Qq t3code-bin >/dev/null 2>&1; then
-  omarchy install ai t3-code
+if ! t3code_installed; then
+  omarchy install ai t3-code stable --no-launch
 fi
 
 # Quattro natively owns Brave Origin setup, extensions, policies, and theme
@@ -216,7 +216,7 @@ fi
 
 # Restore missing retained launchers through Quattro's application lifecycle.
 # The refresh is not per-app — it recopies the whole packaged set and reruns the
-# mise wrapper install — so run it once for all misses. It may also recopy denied
+# tool shim setup — so run it once for all misses. It may also recopy denied
 # launchers, removed just below. [D-WEBAPP][F-APP-CHANNELS]
 missing_webapps=()
 mapfile -t RETAINED_WEBAPPS < <(retained_webapps)
@@ -239,13 +239,6 @@ if [ "${#missing_webapps[@]}" -gt 0 ]; then
   done
 fi
 unset retained_webapp missing_webapps
-
-# Pi stays on Quattro's lazy mise path even when no application refresh runs.
-# Preserve an existing launcher; Omarchy owns its contents and upgrades. [F-APP-CHANNELS]
-if [ ! -x "$HOME/.local/bin/pi" ]; then
-  info "restoring Pi's Omarchy mise wrapper"
-  omarchy mise install pi
-fi
 
 # Quattro refreshes packaged launchers into the user application directory.
 # Reapply only the explicit stock-webapp deltas through its supported remover;
@@ -335,9 +328,16 @@ prestow_backup "$HOME/.claude/statusline-command.sh"
 # Preserve the working PDF fix when moving its static user file into Stow. [D-PI-WEB]
 prestow_backup "$HOME/.pi/agent/extensions/pi-web-access-pdf-compat.ts"
 prestow_backup "$HOME/.config/hypr/dotfiles.lua"
-prestow_backup \
-  "$HOME/.config/omarchy/plugins/pashbyl.workspaces/manifest.json" \
-  "$HOME/.config/omarchy/plugins/pashbyl.workspaces/Workspaces.qml"
+# Retire only our old Stow links; preserve independently edited plugin files.
+# Stock now handles monitor-local workspace blocks. [D-QUICKSHELL-DELTAS]
+for plugin_file in manifest.json Workspaces.qml; do
+  old_plugin="$HOME/.config/omarchy/plugins/pashbyl.workspaces/$plugin_file"
+  if [ -L "$old_plugin" ] &&
+    [ "$(readlink -m "$old_plugin")" = "$REPO/omarchy/.config/omarchy/plugins/pashbyl.workspaces/$plugin_file" ]; then
+    rm "$old_plugin"
+  fi
+done
+unset plugin_file old_plugin
 STOW_PKGS=(bash ssh bin hypr tmux nvim uwsm omarchy human)
 stow -R -t "$HOME" --no-folding "${STOW_PKGS[@]}"
 success "stowed: ${STOW_PKGS[*]}"
@@ -347,7 +347,7 @@ if ! have npm; then
   have npm || die "npm unavailable after Omarchy Node setup — check mise's PATH"
 fi
 # Agent static files use their own Stow directory; shared guidance is copied. [D-AGENT-SKILLS]
-PI_BIN="$HOME/.local/bin/pi" python3 -B "$REPO/.github/scripts/agent_config.py" install
+python3 -B "$REPO/.github/scripts/agent_config.py" install
 
 # Stale user launchers survive package removal because pacman never owned them.
 # [D-PKG-REMOVE][D-TERM-GHOSTTY]
@@ -475,27 +475,20 @@ EOF
 fi
 unset STARSHIP_TOML
 
-# Quattro's bar CLI owns layout convergence, routing through the official
-# omarchy-shell-config normalize/commit helpers, so shell.json stays mutable and
-# Stow owns only the plugin. `plugin disable` clears a module from the layout and
-# `put` places one without moving it if already present, so the sequence is
-# idempotent. [D-QUICKSHELL-DELTAS][D-IDEMPOTENT][F-CLI]
+# Keep stock monitor-aware workspaces; only its position is personal. The native
+# CLI owns mutable shell.json convergence. [D-QUICKSHELL-DELTAS][D-IDEMPOTENT][F-CLI]
 # Every step below needs the running shell, and `plugin disable`/`bar move`
 # return 0 even when they gave up (they retry ~3s, then complain on stderr), so
 # gate once and say so instead of claiming a convergence that did not happen.
 if ! omarchy-shell shell ping >/dev/null 2>&1; then
   warn "omarchy-shell is not running — bar layout and plugins not converged; re-run ./install from a session"
 else
-  # Our clone must be visible in the plugin index before `move` will accept it.
-  omarchy-shell shell rescanPlugins >/dev/null 2>&1 || true
-  # The clone supersedes stock workspaces, which an Omarchy update can re-place.
-  omarchy plugin disable omarchy.workspaces >/dev/null 2>&1 || true
-  # `move`, not `put`: `put` leaves an already-placed widget wherever it is, so a
-  # clone dragged to another lane would fail verification with no way to reconcile.
-  if omarchy bar move pashbyl.workspaces --section left --after omarchy.menu >/dev/null 2>&1; then
+  omarchy plugin disable pashbyl.workspaces >/dev/null 2>&1 || true
+  # Unlike `put`, `move` also repairs a widget dragged into another section.
+  if omarchy bar move omarchy.workspaces --section left --after omarchy.menu >/dev/null 2>&1; then
     success "Quickshell bar layout converged"
   else
-    warn "could not place pashbyl.workspaces — check 'omarchy plugin list'"
+    warn "could not place omarchy.workspaces — check 'omarchy plugin list'"
   fi
   # Third-party plugin stays Omarchy's git checkout, not Stow, so `plugin update`
   # keeps its diff review. Added once; enable state and placement are then the

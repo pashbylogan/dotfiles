@@ -58,7 +58,7 @@ class UpdateTests(unittest.TestCase):
         result, commands = self.run_update()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(commands, [
-            "omarchy update -y", "uv self update", "mise version",
+            "omarchy update -y", "mise version",
             "mise prune --tools --yes", "verify",
         ])
         self.assertIn("Omarchy owns orphan review", result.stdout)
@@ -69,10 +69,10 @@ class UpdateTests(unittest.TestCase):
         self.assertIn("returned non-zero", result.stdout)
         self.assertEqual(commands[-2:], ["mise prune --tools --yes", "verify"])
 
-    def test_uv_failure_still_prunes_and_verifies(self):
+    def test_mise_managed_uv_is_not_self_updated(self):
         result, commands = self.run_update(uv=1)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("'uv self update' returned non-zero", result.stdout)
+        self.assertFalse(any(command.startswith("uv ") for command in commands))
         self.assertEqual(commands[-2:], ["mise prune --tools --yes", "verify"])
 
     def test_old_mise_is_not_pruned_even_when_update_fails(self):

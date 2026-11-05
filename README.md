@@ -21,7 +21,7 @@ represents. Each numbered step is necessary in order.
    follow-up `git config` is needed.
 2. **Keep the stock Quattro baseline.** Do not run the broad Remove
    Preinstalled flow: Quattro owns retained apps, OmaCalc, and its lazy agent
-   wrappers. `packages.remove.txt` and `webapps.remove.txt` are the explicit
+   tools. `packages.remove.txt` and `webapps.remove.txt` are the explicit
    persistent deny-lists applied by this repo. [D-BASELINE][D-WEBAPP]
 
 ### SSH + GitHub
@@ -141,8 +141,7 @@ in secrets/host values. Re-run `./install` to link the real files into `~`.
 
 ### Pi coding agent
 
-`./install` ensures Pi's Omarchy-owned launcher exists through
-`omarchy mise install pi`. It uses that launcher to provision the pinned
+`./install` uses Pi's Omarchy-owned native lazy mise shim on PATH to provision the pinned
 `pi-web-access@0.44.0` extension and a commit-pinned Sol-pi revision when missing
 or incorrect, downloading Pi on a fresh machine. Quattro's updater owns subsequent mise-backed agent
 updates. Pi uses the shared repo-root `AGENTS.md` guidance.
@@ -219,17 +218,19 @@ four angles inline and reports the fallback. Claude Code keeps its native
 
 ### T3 Code
 
-`./install` installs T3 Code through `omarchy install ai t3-code` when
-`t3code-bin` is missing. The supported flow installs Omarchy's sync-repo package,
-selects the Omarchy palette, and opens the app. Subsequent theme changes are
-managed by Omarchy; package updates arrive through `make update`. `make verify`
-checks that the package is installed. [F-APP-CHANNELS]
+`./install` uses `omarchy install ai t3-code stable --no-launch` when the native
+AppImage or launcher is missing. Omarchy 4.5 installs
+`~/.local/share/t3code/T3-Code.AppImage`, selects the Omarchy palette, and supplies
+the Apps-menu launcher. The app updates itself; Omarchy manages subsequent theme
+changes. `make verify` checks the executable and launcher, not the retired
+`t3code-bin` package. [F-APP-CHANNELS]
 
-Use the packaged `t3` CLI or launch T3 Code from the Apps menu. Add projects and
-connect your providers in the app; the existing Omarchy agent wrappers remain
-the CLI installation path. T3 Code's `~/.t3/` state and
-`~/.config/t3code-v2/` Electron profile stay machine-local, including accounts,
-provider settings, project registrations, sessions, and worktrees. This repo's
+Use the native `t3` CLI or launch T3 Code from the Apps menu. Add projects and
+connect your providers in the app; Omarchy's native lazy mise shims remain
+the agent CLI installation path. T3 Code's `~/.t3/` state and existing
+`~/.config/t3code-v2/` profile stay machine-local, including accounts,
+provider settings, project registrations, sessions, and worktrees. The profile
+and app-generated URL-handler launcher are not obsolete package leftovers. This repo's
 `AGENTS.md` remains the project guidance for the selected coding agent.
 
 ### Operations
@@ -240,7 +241,7 @@ provider settings, project registrations, sessions, and worktrees. This repo's
 | `make ci`              | Lint + format check + docs integrity (run before committing) |
 | `make fmt`             | Auto-fix formatting (shfmt + prettier)                       |
 | `make verify`          | Live overlay health check (read-only)                        |
-| `make update`          | Omarchy packages + mise agents + uv + unused mise cleanup, then verification |
+| `make update`          | Omarchy packages/tools (including uv) + unused mise cleanup, then verification |
 | `make update-firmware` | Firmware only (fwupd) — opt-in                               |
 | `pkg-residue <package>` | Read-only audit for package leftovers after removal [D-PKG-REMOVE] |
 | `security-scan`        | Read-only ClamAV + posture scan (see [Security scans](#security-scans)) |
@@ -328,7 +329,9 @@ Run in a terminal. `omarchy update -y` owns package, migration, mise-backed
 agent updates, and orphan review; on Omarchy 4.0.5 it can still ask whether to
 remove orphans despite `-y`. There is no separate repo preflight or automatic
 package-removal policy. Review the proposed removals and decline if unsure.
-Then run `uv self update` because uv remains outside mise, native mise cleanup,
+Omarchy 4.5 declares uv and agent CLIs in `/etc/mise/conf.d/omarchy-tools.toml`
+and provides native lazy shims; do not recreate the retired `~/.local/bin` agent
+wrappers or run `uv self update` on a mise install. Then run native mise cleanup
 and `make verify`. Update and cleanup failures are warned so remaining work and
 read-only verification still run.
 [F-CLI][D-CI]

@@ -71,15 +71,16 @@
               Package-backed platform under <code>/usr/share/omarchy</code>; the
               mutable Hyprland entry point and Quickshell
               <code>shell.json</code>; terminal/browser integration; the
-              separate <code>omarchy-nvim</code> tree; coding-agent mise
-              wrappers; migrations, themes, and package/system updates.
+              separate <code>omarchy-nvim</code> tree; native lazy mise tool
+              declarations/shims; migrations, themes, and package/system
+              updates.
             </td>
           </tr>
           <tr>
             <td><strong>This repo</strong></td>
             <td>
               Personal overlays only: a reloadable Hyprland Lua module,
-              Quickshell plugin/command/theme deltas, user backgrounds, bash
+              Quickshell layout/command/theme deltas, user backgrounds, bash
               additions, ssh config, personal commands, nvim
               keymap/plugin/extras deltas, and explicit package
               additions/removals — plus repo hygiene (a <code>Makefile</code> +
@@ -160,9 +161,10 @@
         different mechanism: <code>install</code> drives Quattro's own
         <code>omarchy bar</code> / <code>omarchy plugin</code> CLI, which routes
         through the same <code>omarchy-shell-config</code> normalize, atomic
-        commit, and reload path. The plugin is a user-owned extension file;
-        mutable <code>shell.toml</code> receives no TOML delta and the layout
-        stays unstowed. See
+        commit, and reload path. The workspace widget is stock and
+        monitor-aware; only its placement after the menu is personal. The old
+        clone is retired. Mutable <code>shell.toml</code> receives no TOML delta
+        and the layout stays unstowed. See
         <a href="decisions.html#D-QUICKSHELL-DELTAS">D-QUICKSHELL-DELTAS</a>.
       </p>
       <p>
