@@ -56,7 +56,12 @@ let SSH clients share the systemd agent without per-repository socket overrides.
 
 ### Install the overlay
 
-6. **Clone and run install.**
+6. **Clone and run install.** First deployment of the global-workspace adapter
+   must run from a TTY after logging out of Hyprland; the installer refuses it
+   from the desktop. Follow
+   [activation, rollback and acceptance gates](docs/decisions.html#D-GLOBAL-WORKSPACES),
+   including the stock bar's known limitation above workspace 10.
+   [D-GLOBAL-WORKSPACES]
    ```sh
    git clone git@github.com:<you>/dotfiles.git ~/Projects/dotfiles
    cd ~/Projects/dotfiles

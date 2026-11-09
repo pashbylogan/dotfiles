@@ -20,6 +20,13 @@ die() {
   exit 1
 }
 
+# The old manager's callbacks survive reload; first deployment needs logout. [D-GLOBAL-WORKSPACES]
+WORKSPACE_ADAPTER="$HOME/.config/default/hypr/monitor-workspaces.lua"
+if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] &&
+  [ "$(readlink -m "$WORKSPACE_ADAPTER")" != "$REPO/hypr/.config/default/hypr/monitor-workspaces.lua" ]; then
+  die "Global workspace activation requires logout first; run from a TTY (see docs/decisions.html#D-GLOBAL-WORKSPACES)."
+fi
+
 # ── helpers ──────────────────────────────────────────────────────────────────
 # Re-anchor managed blocks at EOF because load order decides precedence.
 # Body comes from stdin. [D-DELTA-STORAGE][D-IDEMPOTENT]
@@ -328,6 +335,8 @@ prestow_backup "$HOME/.claude/statusline-command.sh"
 # Preserve the working PDF fix when moving its static user file into Stow. [D-PI-WEB]
 prestow_backup "$HOME/.pi/agent/extensions/pi-web-access-pdf-compat.ts"
 prestow_backup "$HOME/.config/hypr/dotfiles.lua"
+# A user-owned module shadows the packaged implementation, not its file. [D-GLOBAL-WORKSPACES]
+prestow_backup "$WORKSPACE_ADAPTER"
 # Retire only our old Stow links; preserve independently edited plugin files.
 # Stock now handles monitor-local workspace blocks. [D-QUICKSHELL-DELTAS]
 for plugin_file in manifest.json Workspaces.qml; do

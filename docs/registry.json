@@ -218,6 +218,19 @@
       "related": ["D-CAPS-CTRL"]
     },
     {
+      "id": "D-GLOBAL-WORKSPACES",
+      "title": "Stateless native global-workspace adapter; fresh-login activation and live acceptance required",
+      "canonical": "decisions.html#D-GLOBAL-WORKSPACES",
+      "appears_in": ["README.md", "architecture.html"],
+      "code_paths": [
+        "hypr/.config/default/hypr/monitor-workspaces.lua",
+        ".github/scripts/test_global_workspaces.py",
+        ".github/scripts/verify.sh",
+        "install"
+      ],
+      "related": ["D-WORKSPACE-RULES", "D-QUICKSHELL-DELTAS", "F-HYPR-SEAM"]
+    },
+    {
       "id": "D-SLACK-HUDDLE-FLOAT",
       "title": "Float the Slack huddle window (matched on title) while the main Slack window stays tiled",
       "canonical": "decisions.html#D-SLACK-HUDDLE-FLOAT",

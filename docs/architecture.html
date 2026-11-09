@@ -163,8 +163,13 @@
         through the same <code>omarchy-shell-config</code> normalize, atomic
         commit, and reload path. The workspace widget is stock and
         monitor-aware; only its placement after the menu is personal. The old
-        clone is retired. Mutable <code>shell.toml</code> receives no TOML delta
-        and the layout stays unstowed. See
+        clone is retired. The stateless user module described in
+        <a href="decisions.html#D-GLOBAL-WORKSPACES">D-GLOBAL-WORKSPACES</a>
+        bypasses monitor-block reconciliation through normal Lua search order;
+        it does not replace the stock widget, whose block interpretation remains
+        a known limitation above workspace 10. Activation requires a fresh
+        login. Mutable <code>shell.toml</code> receives no TOML delta and the
+        layout stays unstowed. See
         <a href="decisions.html#D-QUICKSHELL-DELTAS">D-QUICKSHELL-DELTAS</a>.
       </p>
       <p>

@@ -86,6 +86,8 @@ check_link() {
 
 check_link "$HOME/.config/dotfiles/shell.sh"
 check_link "$HOME/.config/hypr/dotfiles.lua"
+# This verifies deployment only; a fresh login is still required. [D-GLOBAL-WORKSPACES]
+check_link "$HOME/.config/default/hypr/monitor-workspaces.lua"
 check_link "$HOME/.config/dotfiles/nvim.lua"
 check_link "$HOME/.config/dotfiles/nvim-plugins.lua"
 check_link "$HOME/.config/uwsm/env.d/dotfiles.sh"

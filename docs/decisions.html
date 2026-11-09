@@ -1138,6 +1138,97 @@
         </tbody>
       </table>
 
+      <h2 id="D-GLOBAL-WORKSPACES">Global workspace adapter</h2>
+      <p>
+        <code>D-GLOBAL-WORKSPACES</code>: use one stateless, user-owned module
+        at <code>hypr/.config/default/hypr/monitor-workspaces.lua</code> to
+        shadow Omarchy's monitor-workspace manager through bootstrap's normal
+        module search order. Its four compatibility methods return native focus,
+        window-move and workspace-move dispatchers. Numbered bindings now mean
+        global IDs, not monitor-local slots. There are no event subscriptions,
+        saved blocks, renumbering, preload hooks or copied upstream files. Keep
+        current tiling bindings and unrelated Omarchy improvements intact;
+        next/previous and scrolling retain stock monitor-local semantics. Native
+        Hyprland, not this overlay, handles disconnected monitors.
+      </p>
+      <p>
+        The stock bar is unchanged. Its block-of-ten interpretation is only
+        compatible while its displayed block is zero: an ID above 10, including
+        one created for another monitor, can display a slot whose click focuses
+        the wrong global ID. Clearing old block state does not fix that case.
+        The adapter accepts arbitrary IDs but the complete desktop solution is
+        not accepted until real bar and hotplug tests pass. Do not silently move
+        occupied workspaces into 1–10 to hide this limitation.
+      </p>
+      <h3>Activation and rollback</h3>
+      <ol>
+        <li>
+          Save work and record client/workspace IDs before logout. Log out of
+          Hyprland fully; from a separate TTY, confirm its old compositor and
+          shell have exited. A reload is not a clean transition: old manager
+          callbacks can survive. The installer refuses first deployment when its
+          environment identifies a live Hyprland session; do not bypass that
+          guard by unsetting the variable in the desktop.
+        </li>
+        <li>
+          After logout, back up and move aside
+          <code>~/.local/state/omarchy/monitor-workspaces</code> and
+          <code>~/.local/state/omarchy/monitor-workspaces-merged</code>, if
+          present, into a new dated directory under
+          <code>~/.local/state/dotfiles/</code>. Keep the earlier
+          <code>workspace-rollback-20261105-170918/</code> recovery archive
+          untouched. Do not retire state while the old manager can rewrite it.
+        </li>
+        <li>
+          From the repository, run
+          <code>stow -R -t "$HOME" --no-folding hypr</code> to deploy only the
+          already-tested Hypr overlay, without installing packages or running
+          the full installer. Inspect any conflicting target before replacing
+          it. Normal future <code>./install</code> also deploys this module and
+          backs up conflicting files. Start a fresh graphical login, then run
+          <code>hyprctl configerrors</code> and <code>make verify</code>.
+        </li>
+        <li>
+          To roll back, log out again, remove only the adapter symlink after
+          confirming it resolves into this repository, restore the two saved
+          state files and any pre-existing shadow module, and start a fresh
+          login. Omarchy then loads its packaged manager. A future Stow/install
+          will redeploy the adapter unless this repo change is also reverted.
+        </li>
+      </ol>
+      <h3>Acceptance gates</h3>
+      <p>
+        <code>.github/scripts/test_global_workspaces.py</code> checks global
+        arguments, follow behavior, directional dispatchers, lack of state or
+        load-time dispatch, the first-deployment guard and isolated Stow. With
+        installed Omarchy and Hyprland, it also runs the actual keybindings-menu
+        Lua scanner and validates all 38 workspace-binding replay expressions
+        using <code>Hyprland --verify-config</code> in a private temporary
+        home/runtime. These construct dispatchers without executing them.
+        Missing Lua or installed desktop integration tools cause the
+        corresponding tests to skip; CI is not live desktop proof.
+      </p>
+      <ul>
+        <li>
+          Check actual SUPER+1…0, window moves with and without follow,
+          next/previous, scrolling, and directional monitor moves.
+        </li>
+        <li>
+          Click the bar on every monitor and replay workspace actions from the
+          keybindings menu. Verify the focused global ID, not just the label.
+          Exercise an ID above 10 if one exists; a mismatch blocks acceptance.
+        </li>
+        <li>
+          With disposable windows, test close-all's return to workspace 1. Never
+          run close-all against unsaved work merely to test the adapter.
+        </li>
+        <li>
+          Unplug/replug the actual dock/monitor and compare occupied IDs,
+          windows and app assignments. Do not renumber occupied IDs. Check
+          config errors and test a logged-out rollback before declaring success.
+        </li>
+      </ul>
+
       <h2>Quickshell deltas</h2>
       <p>
         The overlay uses the stock monitor-aware workspaces widget, placed with
@@ -1188,9 +1279,11 @@
               so the repo drives that rather than reimplementing it. In Omarchy
               4.5 stock workspaces follow each monitor's block of ten; the old
               clone hardcoded IDs 1–10 and would hide other monitors'
-              workspaces. Following stock also avoids maintaining copied QML.
-              Quickshell atomically replaces <code>shell.toml</code> when
-              settings change, which is why it stays unstowed and unwritten.
+              workspaces. Following stock avoids maintaining copied QML, but the
+              global adapter above leaves a known bar mismatch for IDs above 10;
+              keeping the stock widget is not acceptance evidence. Quickshell
+              atomically replaces <code>shell.toml</code> when settings change,
+              which is why it stays unstowed and unwritten.
             </td>
           </tr>
         </tbody>
@@ -1740,6 +1833,22 @@
     <section class="container">
       <h2>Sources</h2>
       <ul class="clean">
+        <li>
+          Omarchy's
+          <a
+            href="https://github.com/omacom/omarchy/commit/f2bd3cef6f8f0e6788f85073f87e7a1a064d11b4"
+            >per-monitor workspace introduction</a
+          >
+          and its immediate parent establish the native-dispatcher baseline.
+          Installed Omarchy 4.5.0-3 bootstrap, tiling bindings, keybindings menu
+          and workspace widget establish the adapter's four-method interface and
+          the remaining bar block constraint. Hyprland 0.56.2's
+          <a
+            href="https://github.com/hyprwm/Hyprland/blob/v0.56.2/src/output/Monitor.cpp"
+            >monitor teardown/recovery source</a
+          >
+          supports native hotplug feasibility, not a claim of tested behavior.
+        </li>
         <li>
           Task routing (reviewed 2026-10-29):
           <a href="https://arxiv.org/abs/2601.07206">LLMRouterBench</a>
